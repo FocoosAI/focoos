@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["focoos**"]
+
+[project]
+name = "focoos"
+description = "Focoos SDK"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "requests",
+    "Pillow~=10.4.0",
+    "supervision~=0.24.0",
+]
+version = "0.0.1"
+authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]
+keywords = ["computer_vision", "object_detection", "segmentation", "model_serving"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "isort",
+    "black",
+    "flake8",
+    "python-dotenv",
+]
