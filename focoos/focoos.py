@@ -21,7 +21,7 @@ class FocoosModel:
         pass
 
 class RemoteModel(FocoosModel):
-    def __init__(self, model_name:str,api_key:str,host_url:str):
+    def __init__(self, model_name:str,api_key:str, host_url:str="https://api.dev.focoos.ai/v0"):
         self.model_name = model_name
         self.host_url = host_url
         self.api_key = api_key
@@ -107,30 +107,25 @@ class Focoos:
             self.logger.error(f"Failed to unload model: {res.status_code} {res.text}")
             raise ValueError(f"Failed to unload model: {res.status_code} {res.text}")
 
-    def get_model(self, model_ref:str, deployment_mode:DeploymentMode=DeploymentMode.LOCAL)-> FocoosModel:
-        model_info = self.get_model_info(model_ref)
-        status = model_info['status']
-        self.logger.info(f"Model status: {status}")
-        if deployment_mode == DeploymentMode.LOCAL:
-            raise NotImplementedError("Local deployment is not implemented yet 🤖")
-        elif deployment_mode == DeploymentMode.REMOTE:
-            deployment_status = self._deployment_info(model_ref)["status"]
-            self.logger.info(f"🤖 Deployment status: {deployment_status}")
-            if deployment_status == "READY":
-                return RemoteModel(model_ref, self.api_key, self.host_url)
-            else:
+    def get_remote_model(self, model_ref:str, auto_deploy:bool=True)-> RemoteModel:
+        deployment_status = self._deployment_info(model_ref)["status"]
+        self.logger.info(f"🤖 Deployment status: {deployment_status}")
+        if deployment_status == "READY":
+            return RemoteModel(model_ref, self.api_key, self.host_url)
+        else:
+            if auto_deploy:
                 self.logger.info(f"🚀 Deploying model {model_ref} to inference endpoint... this might take a while.")
                 res = self._deploy_model(model_ref)
-
                 for i in range(10):
                     deployment_status = self._deployment_info(model_ref)["status"]
                     if deployment_status == "READY":
                         break
                     self.logger.info(f"Waiting for model {model_ref} to be ready ... {i}")
                     time.sleep(1+i)
-                self.logger.info(f"✨ Model {model_ref} deployed successfull: {res}")
                 return RemoteModel(model_ref, self.api_key, self.host_url)
-                
+            else:
+                raise ValueError(f"Model {model_ref} is not ready")
+        
     
     def _deployment_info(self, model_name:str):
         res = requests.get(f"{self.host_url}/models/{model_name}/deploy", headers=self.default_headers)
