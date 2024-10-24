@@ -3,11 +3,8 @@ import logging.config
 from functools import cache
 
 
-
 class ColoredFormatter(logging.Formatter):
-    log_format = (
-        "[%(asctime)s][%(levelname)s][%(name)s]: %(message)s"
-    )
+    log_format = "[%(asctime)s][%(levelname)s][%(name)s]: %(message)s"
     grey = "\x1b[38;21m"
     green = "\x1b[1;32m"
     yellow = "\x1b[1;33m"

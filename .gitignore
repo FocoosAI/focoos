@@ -83,3 +83,4 @@ profile_default/
 ipython_config.py
 
 .env
+.focoos
