@@ -84,3 +84,5 @@ ipython_config.py
 
 .env
 .focoos
+.data
+notebooks/.data

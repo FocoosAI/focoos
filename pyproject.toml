@@ -14,7 +14,9 @@ dependencies = [
     "requests",
     "Pillow~=10.4.0",
     "supervision~=0.24.0",
-    "pydantic~=2.5.2",
+    "pydantic~=2.8.2",
+    "pydantic-settings~=2.5.0",
+    "tqdm~=4.66.6",
 ]
 version = "0.0.1"
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]
