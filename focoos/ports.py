@@ -2,7 +2,7 @@ import json
 import re
 from datetime import datetime
 from enum import Enum
-from typing import Annotated, List, Literal, Optional, Union
+from typing import Annotated, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -133,12 +133,6 @@ class NewModel(FocoosBaseModel):
             max_length=150,
         ),
     ]
-    hyperparameters: Annotated[
-        Hyperparameters,
-        Field(
-            description="🕹️ The hyperparameters of the model",
-        ),
-    ]
 
 
 class TraininingInfo(FocoosBaseModel):
@@ -157,26 +151,6 @@ class TraininingInfo(FocoosBaseModel):
     artifact_location: Optional[str] = None
 
 
-class ModelMetadata(FocoosBaseModel):
-    ref: str
-    name: str
-    description: Optional[str] = None
-    owner_ref: str
-    project_ref: str
-    focoos_model: str
-    task: FocoosTask
-    created_at: datetime
-    updated_at: datetime
-    status: ModelStatus
-    metrics: Optional[dict] = None
-    latencies: Optional[list[dict]] = None
-    classes: Optional[list[str]] = None
-    im_size: Optional[int] = None
-    hyperparameters: Hyperparameters
-    training_info: Optional[TraininingInfo] = None
-    location: Optional[str] = None
-
-
 class ModelPreview(FocoosBaseModel):
     ref: str
     name: str
@@ -187,13 +161,13 @@ class ModelPreview(FocoosBaseModel):
 
 
 class DatasetInfo(FocoosBaseModel):
-    dataset_url: Annotated[
+    url: Annotated[
         str,
         Field(
             description="🗂️ Dataset url to use for the project, must be a valid S3 URL",
         ),
     ]
-    dataset_name: Annotated[
+    name: Annotated[
         str,
         Field(
             description="🗂️ Dataset name",
@@ -208,19 +182,73 @@ class DatasetInfo(FocoosBaseModel):
         ),
     ]
 
-    @field_validator("dataset_url")
+    @field_validator("url")
     def validate_s3_url(cls, v: str):
         if not S3_URL_REGEX.match(v):
             raise ValueError("Invalid S3 URL format, must be s3://BUCKET_NAME/path")
         return v
 
 
-class ProjectMetadata(FocoosBaseModel):
+class ModelMetadata(FocoosBaseModel):
     ref: str
     name: str
     description: Optional[str] = None
+    owner_ref: str
+    focoos_model: str
+    task: FocoosTask
     created_at: datetime
     updated_at: datetime
-    task: FocoosTask
-    models: List[str] = []
+    status: ModelStatus
+    metrics: Optional[dict] = None
+    latencies: Optional[list[dict]] = None
+    classes: Optional[list[str]] = None
+    im_size: Optional[int] = None
+    hyperparameters: Optional[Hyperparameters] = None
+    training_info: Optional[TraininingInfo] = None
+    location: Optional[str] = None
     dataset: Optional[DatasetInfo] = None
+
+
+class DatasetMetadata(FocoosBaseModel):
+    ref: str
+    name: str
+    layout: DatasetLayout
+    description: Optional[str] = None
+
+
+class TrainInstance(str, Enum):
+    ML_G4DN_XLARGE = "ml.g4dn.xlarge"
+    ML_G5_XLARGE = "ml.g5.xlarge"
+    ML_G5_12XLARGE = "ml.g5.12xlarge"
+
+
+class NewTrain(FocoosBaseModel):
+    anyma_version: str = Field(
+        "anyma-sagemaker-cu12-torch22-0110",
+        description="anyma version used to train the model",
+    )
+    instance_type: TrainInstance = Field(
+        TrainInstance.ML_G4DN_XLARGE,
+        description="instance type used to train the model",
+    )
+    volume_size: int = Field(
+        50,
+        description="volume size used to train the model",
+        ge=10,
+        le=1000,
+    )
+    max_runtime_in_seconds: int = Field(
+        36000,
+        description="max runtime in seconds used to train the model",
+        ge=3600,
+        le=360000,
+    )
+    dataset_ref: str = Field(
+        description="dataset ref to use for the training",
+    )
+    hyperparameters: Annotated[
+        Hyperparameters,
+        Field(
+            description="🕹️ The hyperparameters of the model",
+        ),
+    ]

@@ -5,14 +5,13 @@ from supervision import Detections
 
 from focoos.cloud_model import CloudModel
 from focoos.ports import (
+    DatasetMetadata,
     FocoosEnvHostUrl,
     ModelMetadata,
     ModelPreview,
     ModelStatus,
     NewModel,
-    ProjectMetadata,
 )
-from focoos.project import Project
 from focoos.utils.logger import get_logger, setup_logging
 from focoos.utils.system import HttpClient
 
@@ -37,55 +36,6 @@ class Focoos:
         else:
             self.logger.error(f"Failed to get user info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get user info: {res.status_code} {res.text}")
-
-    def list_projects(self) -> list[ProjectMetadata]:
-        res = self.http_client.get(f"projects/")
-        if res.status_code == 200:
-            return [ProjectMetadata(**project) for project in res.json()]
-        else:
-            self.logger.error(f"Failed to list projects: {res.status_code} {res.text}")
-            raise ValueError(f"Failed to list projects: {res.status_code} {res.text}")
-
-    def create_project(
-        self,
-        project_name: str,
-        description: str,
-        dataset_url: str,
-        dataset_name: str,
-        dataset_layout: str,
-        task: str = "detection",
-    ) -> Optional[Project]:
-        dataset = {
-            "dataset_url": dataset_url,
-            "dataset_name": dataset_name,
-            "layout": dataset_layout,
-        }
-        res = self.http_client.post(
-            f"projects/",
-            data={
-                "name": project_name,
-                "description": description,
-                "dataset": dataset,
-                "task": task,
-            },
-        )
-        if res.status_code in [200, 201]:
-            return Project(res.json()["ref"], self.http_client, res.json())
-        else:
-            self.logger.warning(
-                f"Failed to create project: {res.status_code} {res.text}"
-            )
-            return None
-
-    def get_project(self, project_ref: str) -> Optional[Project]:
-        res = self.http_client.get(f"projects/{project_ref}")
-        if res.status_code == 200:
-            return Project(project_ref, self.http_client, res.json())
-        else:
-            self.logger.error(
-                f"Failed to get project info: {res.status_code} {res.text}"
-            )
-            return None
 
     def get_model_info(self, model_name: str):
         res = self.http_client.get(f"models/{model_name}")
@@ -117,3 +67,22 @@ class Focoos:
 
     def get_model(self, model_ref: str) -> CloudModel:
         return CloudModel(model_ref, self.http_client)
+
+    def new_model(self, model: NewModel) -> Optional[CloudModel]:
+        res = self.http_client.post(f"models/", data=model.model_dump())
+        print(res.json())
+        if res.status_code in [200, 201]:
+            return CloudModel(res.json()["ref"], self.http_client)
+        else:
+            self.logger.warning(
+                f"Failed to create new model: {res.status_code} {res.text}"
+            )
+            return None
+
+    def list_shared_datasets(self) -> list[DatasetMetadata]:
+        res = self.http_client.get(f"datasets/shared")
+        if res.status_code == 200:
+            return [DatasetMetadata.from_json(dataset) for dataset in res.json()]
+        else:
+            self.logger.error(f"Failed to list datasets: {res.status_code} {res.text}")
+            raise ValueError(f"Failed to list datasets: {res.status_code} {res.text}")

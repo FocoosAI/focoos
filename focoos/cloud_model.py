@@ -5,7 +5,7 @@ from typing import Union
 
 from supervision import Detections
 
-from focoos.ports import DeploymentMode, ModelMetadata, ModelStatus
+from focoos.ports import DeploymentMode, ModelMetadata, ModelStatus, NewTrain
 from focoos.utils.logger import get_logger
 from focoos.utils.system import HttpClient
 
@@ -31,12 +31,34 @@ class CloudModel:
             self.logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
 
+    def train(self, new_train: NewTrain):
+        res = self.http_client.post(
+            f"models/{self.model_ref}/train", data=new_train.model_dump()
+        )
+        if res.status_code == 200:
+            return res.json()
+        else:
+            self.logger.warning(f"Failed to train model: {res.status_code} {res.text}")
+            return None
+
+    def train_status(self):
+        res = self.http_client.get(f"models/{self.model_ref}/train/status")
+        if res.status_code == 200:
+            return res.json()
+        else:
+            self.logger.error(
+                f"Failed to get train status: {res.status_code} {res.text}"
+            )
+            raise ValueError(
+                f"Failed to get train status: {res.status_code} {res.text}"
+            )
+
     def deploy(
         self, deployment_mode: DeploymentMode = DeploymentMode.REMOTE, wait: bool = True
     ):
         if deployment_mode != DeploymentMode.REMOTE:
             raise ValueError("Only remote deployment is supported at the moment")
-
+        self.info()
         if self.metadata.status not in [
             ModelStatus.DEPLOYED,
             ModelStatus.TRAINING_COMPLETED,
@@ -91,12 +113,14 @@ class CloudModel:
             raise ValueError(f"Failed to unload model: {res.status_code} {res.text}")
 
     def train_logs(self) -> list[str]:
-        res = self.http_client.get(f"models/{self.model_ref}/train-logs")
+        res = self.http_client.get(f"models/{self.model_ref}/train/logs")
         if res.status_code == 200:
             return res.json()
         else:
-            self.logger.error(f"Failed to get train logs: {res.status_code} {res.text}")
-            raise ValueError(f"Failed to get train logs: {res.status_code} {res.text}")
+            self.logger.warning(
+                f"Failed to get train logs: {res.status_code} {res.text}"
+            )
+            return []
 
     def _deployment_info(self):
         res = self.http_client.get(f"models/{self.model_ref}/deploy")
