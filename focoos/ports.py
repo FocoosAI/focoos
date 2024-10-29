@@ -1,5 +1,6 @@
 import json
 import re
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Annotated, Literal, Optional, Union
@@ -252,3 +253,14 @@ class NewTrain(FocoosBaseModel):
             description="🕹️ The hyperparameters of the model",
         ),
     ]
+
+
+@dataclass
+class OnnxEngineOpts:
+    fp16: Optional[bool] = False
+    cuda: Optional[bool] = False
+    vino: Optional[bool] = False
+    verbose: Optional[bool] = False
+    trt: Optional[bool] = False
+    coreml: Optional[bool] = False
+    warmup_iter: int = 0

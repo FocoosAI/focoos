@@ -4,8 +4,16 @@ from pathlib import Path
 from typing import Union
 
 from supervision import Detections
+from tqdm import tqdm
 
-from focoos.ports import DeploymentMode, ModelMetadata, ModelStatus, NewTrain
+from focoos.ports import (
+    DeploymentMode,
+    ModelMetadata,
+    ModelStatus,
+    NewTrain,
+    OnnxEngineOpts,
+)
+from focoos.runtime import ONNXRuntime
 from focoos.utils.logger import get_logger
 from focoos.utils.system import HttpClient
 
@@ -16,17 +24,19 @@ class CloudModel:
         self.logger = get_logger()
         self.http_client = http_client
         self.max_deploy_wait = 10
-        self.metadata: ModelMetadata = None
-        self.info()
+        self.metadata: ModelMetadata = self.get_info()
+        self.runtime = None
+        self.model_dir = os.path.join(
+            os.path.expanduser("~"), ".cache", "focoos", self.model_ref
+        )
         self.logger.info(
             f"[RemoteModel]: ref: {self.model_ref} name: {self.metadata.name} description: {self.metadata.description} status: {self.metadata.status}"
         )
 
-    def info(self) -> ModelMetadata:
+    def get_info(self) -> ModelMetadata:
         res = self.http_client.get(f"models/{self.model_ref}")
         if res.status_code == 200:
-            self.metadata = ModelMetadata(**res.json())
-            return self.metadata
+            return ModelMetadata(**res.json())
         else:
             self.logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
@@ -56,9 +66,7 @@ class CloudModel:
     def deploy(
         self, deployment_mode: DeploymentMode = DeploymentMode.REMOTE, wait: bool = True
     ):
-        if deployment_mode != DeploymentMode.REMOTE:
-            raise ValueError("Only remote deployment is supported at the moment")
-        self.info()
+        self.get_info()
         if self.metadata.status not in [
             ModelStatus.DEPLOYED,
             ModelStatus.TRAINING_COMPLETED,
@@ -66,7 +74,12 @@ class CloudModel:
             raise ValueError(
                 f"Model {self.model_ref} is not in a valid state to be deployed. Current status: {self.metadata.status}, expected: {ModelStatus.TRAINING_COMPLETED}"
             )
-
+        if deployment_mode == DeploymentMode.LOCAL:
+            model_dir = self._download_model()
+            self.runtime = ONNXRuntime(
+                model=model_dir, opts=OnnxEngineOpts(cuda=True, coreml=True)
+            )
+            return
         if self.metadata.status == ModelStatus.DEPLOYED:
             deployment_info = self._deployment_info()
             self.logger.debug(
@@ -134,7 +147,9 @@ class CloudModel:
                 f"Failed to get deployment info: {res.status_code} {res.text}"
             )
 
-    def infer(self, image_path: Union[str, Path], threshold: float = 0.5) -> Detections:
+    def remote_infer(
+        self, image_path: Union[str, Path], threshold: float = 0.5
+    ) -> Detections:
         if not os.path.exists(image_path):
             self.logger.error(f"Image file not found: {image_path}")
             raise FileNotFoundError(f"Image file not found: {image_path}")
@@ -172,3 +187,46 @@ class CloudModel:
         else:
             self.logger.error(f"Failed to infer: {res.status_code} {res.text}")
             raise ValueError(f"Failed to infer: {res.status_code} {res.text}")
+
+    def _download_model(
+        self,
+    ):
+        model_path = os.path.join(self.model_dir, "model.onnx")
+        metadata_path = os.path.join(self.model_dir, "focoos_metadata.json")
+        if os.path.exists(model_path) and os.path.exists(metadata_path):
+            self.logger.info(f"📥 Model already downloaded")
+            return model_path
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        presigned_url = self.http_client.get(
+            f"models/{self.model_ref}/download?format=onnx"
+        )
+        if presigned_url.status_code == 200:
+            with open(metadata_path, "w") as f:
+                f.write(self.metadata.model_dump_json())
+            model_uri = presigned_url.json()
+            self.logger.debug(f"Model URI: {model_uri}")
+            self.logger.info(f"📥 Downloading model from Focoos Cloud.. ")
+            response = self.http_client.get_external_url(model_uri, stream=True)
+            if response.status_code == 200:
+                total_size = int(response.headers.get("content-length", 0))
+                self.logger.info(f"📥 Size: {total_size / (1024**2):.2f} MB")
+                with open(model_path, "wb") as f, tqdm(
+                    desc=str(model_path).split("/")[-1],
+                    total=total_size,
+                    unit="B",
+                    unit_scale=True,
+                    unit_divisor=1024,
+                ) as bar:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                        bar.update(len(chunk))
+                self.logger.info(f"📥 File downloaded: {model_path}")
+                return model_path
+        else:
+            self.logger.error(
+                f"Failed to download model: {presigned_url.status_code} {presigned_url.text}"
+            )
+            raise ValueError(
+                f"Failed to download model: {presigned_url.status_code} {presigned_url.text}"
+            )

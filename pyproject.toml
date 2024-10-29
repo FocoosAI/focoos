@@ -32,3 +32,13 @@ dev = [
     "flake8",
     "python-dotenv",
 ]
+
+inference = [
+    "onnxruntime==1.17"
+]
+inference-gpu = [
+    "onnxruntime-gpu==1.17",
+]
+inference-coreml = [
+    "onnxruntime-coreml"
+]
