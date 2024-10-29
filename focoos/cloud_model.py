@@ -39,10 +39,8 @@ class CloudModel:
         if res.status_code == 200:
             return ModelMetadata(**res.json())
         else:
-            self.logger.error(
-                f"Failed to get model info: {res.status_code} {res.text}")
-            raise ValueError(
-                f"Failed to get model info: {res.status_code} {res.text}")
+            self.logger.error(f"Failed to get model info: {res.status_code} {res.text}")
+            raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
 
     def train(self, new_train: NewTrain):
         res = self.http_client.post(
@@ -51,8 +49,7 @@ class CloudModel:
         if res.status_code == 200:
             return res.json()
         else:
-            self.logger.warning(
-                f"Failed to train model: {res.status_code} {res.text}")
+            self.logger.warning(f"Failed to train model: {res.status_code} {res.text}")
             return None
 
     def train_status(self):
@@ -90,10 +87,10 @@ class CloudModel:
                 opts=OnnxEngineOpts(
                     cuda=True,
                     coreml=True,
-                    warmup_iter=0,
+                    warmup_iter=10,
                     trt=False,
                     verbose=False,
-                    fp16=True,
+                    fp16=False,
                 ),
             )
             return
@@ -131,20 +128,16 @@ class CloudModel:
                 )
             return res.json()
         else:
-            self.logger.error(
-                f"Failed to deploy model: {res.status_code} {res.text}")
-            raise ValueError(
-                f"Failed to deploy model: {res.status_code} {res.text}")
+            self.logger.error(f"Failed to deploy model: {res.status_code} {res.text}")
+            raise ValueError(f"Failed to deploy model: {res.status_code} {res.text}")
 
     def unload(self):
         res = self.http_client.delete(f"models/{self.model_ref}/deploy")
         if res.status_code in [200, 204, 409]:
             return res.json()
         else:
-            self.logger.error(
-                f"Failed to unload model: {res.status_code} {res.text}")
-            raise ValueError(
-                f"Failed to unload model: {res.status_code} {res.text}")
+            self.logger.error(f"Failed to unload model: {res.status_code} {res.text}")
+            raise ValueError(f"Failed to unload model: {res.status_code} {res.text}")
 
     def train_logs(self) -> list[str]:
         res = self.http_client.get(f"models/{self.model_ref}/train/logs")
@@ -228,8 +221,7 @@ class CloudModel:
             model_uri = presigned_url.json()
             self.logger.debug(f"Model URI: {model_uri}")
             self.logger.info(f"📥 Downloading model from Focoos Cloud.. ")
-            response = self.http_client.get_external_url(
-                model_uri, stream=True)
+            response = self.http_client.get_external_url(model_uri, stream=True)
             if response.status_code == 200:
                 total_size = int(response.headers.get("content-length", 0))
                 self.logger.info(f"📥 Size: {total_size / (1024**2):.2f} MB")
