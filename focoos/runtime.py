@@ -7,7 +7,7 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image
 
-from focoos.ports import OnnxEngineOpts
+from focoos.ports import LatencyMetrics, OnnxEngineOpts
 from focoos.utils.logger import get_logger
 
 GPU_ID = 0
@@ -38,9 +38,9 @@ def image_to_byte_array(image: Image.Image) -> bytes:
 class ONNXRuntime:
     def __init__(self, model: str, opts: OnnxEngineOpts):
         self.logger = get_logger()
-        self.logger.info(f"[Onnxruntime device] {ort.get_device()}")
+        self.logger.info(f"[onnxruntime device] {ort.get_device()}")
         self.logger.info(
-            f"[Onnxruntime available providers] {ort.get_available_providers()}"
+            f"[onnxruntime available providers] {ort.get_available_providers()}"
         )
         self.name = Path(model).stem
         self.opts = opts
@@ -109,13 +109,13 @@ class ONNXRuntime:
         self.dtype = dtype
         self.binding = binding
         self.ort_sess = ort.InferenceSession(model, options, providers=providers)
-        self.logger.info(f"[OnnxRuntime] Providers:{self.ort_sess.get_providers()}")
+        self.logger.info(f"[onnxruntime] Providers:{self.ort_sess.get_providers()}")
         if self.ort_sess.get_inputs()[0].type == "tensor(uint8)":
             self.dtype = np.uint8
         else:
             self.dtype = np.float32
-        self.logger.info(f"[OnnxRuntime] dtype {self.dtype}")
         if self.opts.warmup_iter > 0:
+            self.logger.info(f"⏱️ [onnxruntime] Warming up model ..")
             for i in range(0, self.opts.warmup_iter):
                 np_image = np.random.rand(1, 3, 640, 640).astype(self.dtype)
                 input_name = self.ort_sess.get_inputs()[0].name
@@ -137,11 +137,11 @@ class ONNXRuntime:
                     self.ort_sess.run_with_iobinding(io_binding)
                     t1 = perf_counter()
                     io_binding.copy_outputs_to_cpu()
-                    self.logger.info(f"Warmup {i} time: {t1 - t0:.3f} ms")
+                    self.logger.info(f"Warmup {i} time: {t1 - t0:.3f} s")
                 else:
                     self.ort_sess.run(out_name, {input_name: np_image})
 
-            self.logger.info(f"[ONNX] {self.name} WARMUP DONE")
+            self.logger.info(f"⏱️ [onnxruntime] {self.name} WARMUP DONE")
 
     def __call__(self, img_bytes: bytes) -> Tuple[np.ndarray, Image.Image]:
         np_image, pil_img = preprocess_image(img_bytes, dtype=self.dtype)
@@ -193,8 +193,57 @@ class ONNXRuntime:
         )
         return postprocess_out, out_img
 
-    def benchmark(
-        self, batch_size: int = 1, input_shape: tuple = (3, 640, 640), iters: int = 100
-    ):
-        pass
-        # !TODO add benchmark
+    def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
+        self.logger.info(f"⏱️ [onnxruntime] Benchmarking latency..")
+        size = size if isinstance(size, (tuple, list)) else (size, size)
+
+        durations = []
+        np_input = (255 * np.random.random((1, 3, size[0], size[1]))).astype(self.dtype)
+        input_name = self.ort_sess.get_inputs()[0].name
+        out_name = self.ort_sess.get_outputs()[0].name
+
+        if self.binding:
+            io_binding = self.ort_sess.io_binding()
+
+            io_binding.bind_input(
+                input_name,
+                "cuda",
+                device_id=0,
+                element_type=self.dtype,
+                shape=np_input.shape,
+                buffer_ptr=np_input.ctypes.data,
+            )
+
+            io_binding.bind_cpu_input(input_name, np_input)
+            io_binding.bind_output(out_name, "cuda")
+        else:
+            out_name = [output.name for output in self.ort_sess.get_outputs()]
+
+        for step in range(iterations + 5):
+            if self.binding:
+                start = perf_counter()
+                self.ort_sess.run_with_iobinding(io_binding)
+                # print(len(outputs))
+                end = perf_counter()
+                # out = io_binding.copy_outputs_to_cpu()
+            else:
+                start = perf_counter()
+                out = self.ort_sess.run(out_name, {input_name: np_input})
+                end = perf_counter()
+
+            if step >= 5:
+                durations.append((end - start) * 1000)
+        durations = np.array(durations)
+        # time.sleep(0.1)
+        metrics = LatencyMetrics(
+            fps=int(1000 / durations.mean()),
+            engine="onnx",
+            mean=round(durations.mean(), 3),
+            max=round(durations.max(), 3),
+            min=round(durations.min(), 3),
+            std=round(durations.std(), 3),
+            im_size=size,
+            device="",
+        )
+        self.logger.info(f"🔥 FPS: {metrics.fps}")
+        return metrics

@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 from focoos.ports import (
     DeploymentMode,
+    LatencyMetrics,
     ModelMetadata,
     ModelStatus,
     NewTrain,
@@ -63,6 +64,11 @@ class CloudModel:
                 f"Failed to get train status: {res.status_code} {res.text}"
             )
 
+    def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
+        if self.runtime is None:
+            raise ValueError("Model is not deployed (locally)")
+        return self.runtime.benchmark(iterations=iterations, size=size)
+
     def deploy(
         self, deployment_mode: DeploymentMode = DeploymentMode.REMOTE, wait: bool = True
     ):
@@ -77,7 +83,15 @@ class CloudModel:
         if deployment_mode == DeploymentMode.LOCAL:
             model_dir = self._download_model()
             self.runtime = ONNXRuntime(
-                model=model_dir, opts=OnnxEngineOpts(cuda=True, coreml=True)
+                model=model_dir,
+                opts=OnnxEngineOpts(
+                    cuda=True,
+                    coreml=True,
+                    warmup_iter=0,
+                    trt=False,
+                    verbose=False,
+                    fp16=True,
+                ),
             )
             return
         if self.metadata.status == ModelStatus.DEPLOYED:
@@ -196,8 +210,8 @@ class CloudModel:
         if os.path.exists(model_path) and os.path.exists(metadata_path):
             self.logger.info(f"📥 Model already downloaded")
             return model_path
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        if not os.path.exists(self.model_dir):
+            os.makedirs(self.model_dir)
         presigned_url = self.http_client.get(
             f"models/{self.model_ref}/download?format=onnx"
         )

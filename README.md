@@ -16,6 +16,17 @@
 
 
 # Focoos SDK
+
+# Install
+
+```bash
+pip install .
+```
+
+- local inference: `pip install .[inference]`
+- local inference with GPU: `pip install .[inference-gpu]`
+- local inference with CoreML: `pip install .[inference-coreml]`
+
 ## 🤖 Cloud Inference
 ```python
 from focoos import Focoos

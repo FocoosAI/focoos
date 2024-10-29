@@ -264,3 +264,15 @@ class OnnxEngineOpts:
     trt: Optional[bool] = False
     coreml: Optional[bool] = False
     warmup_iter: int = 0
+
+
+@dataclass
+class LatencyMetrics:
+    fps: int
+    engine: str
+    min: float
+    max: float
+    mean: float
+    std: float
+    im_size: int
+    device: str

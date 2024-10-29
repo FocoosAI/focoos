@@ -34,10 +34,10 @@ dev = [
 ]
 
 inference = [
-    "onnxruntime==1.17"
+    "onnxruntime==1.17.0"
 ]
 inference-gpu = [
-    "onnxruntime-gpu==1.17",
+    "onnxruntime-gpu==1.17.0",
 ]
 inference-coreml = [
     "onnxruntime-coreml"
