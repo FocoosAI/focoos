@@ -86,3 +86,4 @@ ipython_config.py
 .focoos
 .data
 notebooks/.data
+.venv
