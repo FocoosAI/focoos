@@ -1,22 +1,28 @@
 import os
 import time
 from pathlib import Path
-from typing import Union
+from typing import Optional, Tuple, Union
 
-from supervision import Detections
+import numpy as np
+from PIL import Image
+from supervision import BoxAnnotator, Detections, LabelAnnotator, MaskAnnotator
 from tqdm import tqdm
 
 from focoos.ports import (
     DeploymentMode,
+    Detection,
+    FocoosTask,
+    Hyperparameters,
     LatencyMetrics,
     ModelMetadata,
     ModelStatus,
-    NewTrain,
     OnnxEngineOpts,
+    TrainInstance,
 )
 from focoos.runtime import ONNXRuntime
 from focoos.utils.logger import get_logger
 from focoos.utils.system import HttpClient
+from focoos.utils.vision import image_loader, image_preprocess
 
 
 class CloudModel:
@@ -33,6 +39,9 @@ class CloudModel:
         self.logger.info(
             f"[RemoteModel]: ref: {self.model_ref} name: {self.metadata.name} description: {self.metadata.description} status: {self.metadata.status}"
         )
+        self.label_annotator = LabelAnnotator(text_padding=10, border_radius=10)
+        self.box_annotator = BoxAnnotator()
+        self.mask_annotator = MaskAnnotator()
 
     def get_info(self) -> ModelMetadata:
         res = self.http_client.get(f"models/{self.model_ref}")
@@ -42,9 +51,25 @@ class CloudModel:
             self.logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
 
-    def train(self, new_train: NewTrain):
+    def train(
+        self,
+        dataset_ref: str,
+        hyperparameters: Hyperparameters,
+        anyma_version: str = "anyma-sagemaker-cu12-torch22-0111",
+        instance_type: TrainInstance = TrainInstance.ML_G4DN_XLARGE,
+        volume_size: int = 50,
+        max_runtime_in_seconds: int = 36000,
+    ):
         res = self.http_client.post(
-            f"models/{self.model_ref}/train", data=new_train.model_dump()
+            f"models/{self.model_ref}/train",
+            data={
+                "dataset_ref": dataset_ref,
+                "anyma_version": anyma_version,
+                "instance_type": instance_type,
+                "volume_size": volume_size,
+                "max_runtime_in_seconds": max_runtime_in_seconds,
+                "hyperparameters": hyperparameters.model_dump(),
+            },
         )
         if res.status_code == 200:
             return res.json()
@@ -83,15 +108,16 @@ class CloudModel:
         if deployment_mode == DeploymentMode.LOCAL:
             model_dir = self._download_model()
             self.runtime = ONNXRuntime(
-                model=model_dir,
+                model_path=model_dir,
                 opts=OnnxEngineOpts(
                     cuda=True,
                     coreml=True,
-                    warmup_iter=10,
+                    warmup_iter=0,
                     trt=False,
                     verbose=False,
                     fp16=False,
                 ),
+                model_metadata=self.metadata,
             )
             return
         if self.metadata.status == ModelStatus.DEPLOYED:
@@ -161,9 +187,50 @@ class CloudModel:
                 f"Failed to get deployment info: {res.status_code} {res.text}"
             )
 
+    def _annotate(self, im: np.ndarray, detections: Detections) -> np.ndarray:
+        labels = None
+        if self.metadata.classes is not None:
+            labels = [
+                f"{self.metadata.classes[class_id]}: {confid*100:.1f}"
+                for class_id, confid in zip(detections.class_id, detections.confidence)
+            ]
+        if self.metadata.task == FocoosTask.DETECTION:
+            annotated_im = self.box_annotator.annotate(
+                scene=im.copy(), detections=detections
+            )
+
+            annotated_im = self.label_annotator.annotate(
+                scene=annotated_im, detections=detections, labels=labels
+            )
+        elif self.metadata.task == FocoosTask.SEMSEG:
+            annotated_im = self.mask_annotator.annotate(
+                scene=im.copy(), detections=detections
+            )
+        return annotated_im
+
+    def infer(
+        self,
+        image_path: Union[str, Path],
+        threshold: float = 0.5,
+        annotate: bool = False,
+    ) -> Tuple[Detections, Optional[np.ndarray]]:
+        if self.runtime is None:
+            raise ValueError("Model is not deployed (locally)")
+        resize = self.metadata.im_size
+        self.logger.debug(f"Resize: {resize}")
+        im1, im0 = image_preprocess(image_path, resize=resize)
+        t0 = time.time()
+        detections = self.runtime(im1.astype(np.float32), threshold)
+        t1 = time.time()
+        self.logger.debug(f"Inference time: {t1-t0:.3f} seconds")
+        im = None
+        if annotate:
+            im = self._annotate(im0, detections)
+        return detections, im
+
     def remote_infer(
         self, image_path: Union[str, Path], threshold: float = 0.5
-    ) -> Detections:
+    ) -> list[Detection]:
         if not os.path.exists(image_path):
             self.logger.error(f"Image file not found: {image_path}")
             raise FileNotFoundError(f"Image file not found: {image_path}")
@@ -176,14 +243,12 @@ class CloudModel:
         t1 = time.time()
         if res.status_code == 200:
             self.logger.debug(f"Inference time: {t1-t0:.3f} seconds")
-            return res.json()
+            return [Detection(**d) for d in res.json().get("detections", [])]
         else:
             self.logger.error(f"Failed to infer: {res.status_code} {res.text}")
             raise ValueError(f"Failed to infer: {res.status_code} {res.text}")
 
-    def infer_preview(
-        self, image_path: Union[str, Path], threshold: float = 0.5
-    ) -> Detections:
+    def infer_preview(self, image_path: Union[str, Path], threshold: float = 0.5):
         if not os.path.exists(image_path):
             self.logger.error(f"Image file not found: {image_path}")
             raise FileNotFoundError(f"Image file not found: {image_path}")

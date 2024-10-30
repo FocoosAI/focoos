@@ -56,7 +56,8 @@ class FocoosTask(str, Enum):
     INSTANCE_SEGMENTATION = "instseg"
 
 
-class Hyperparameters(BaseModel):
+@dataclass
+class Hyperparameters(FocoosBaseModel):
     batch_size: int = Field(
         16,
         ge=1,
@@ -107,33 +108,6 @@ class Hyperparameters(BaseModel):
                     "Wandb project name must only contain characters, dashes, underscores, and dots."
                 )
         return value
-
-
-class NewModel(FocoosBaseModel):
-    name: Annotated[
-        str,
-        Field(
-            description="💫 Model name",
-            min_length=2,
-            max_length=50,
-        ),
-    ]
-    focoos_model: Annotated[
-        str,
-        Field(
-            default="focoos_rtdetr",
-            description=f"🍕 Focoos foundational model to fine tune",
-        ),
-    ]
-    description: Annotated[
-        str,
-        Field(
-            default="🤖 A pixel wizard that sees what others can’t!",
-            description="The model description",
-            min_length=2,
-            max_length=150,
-        ),
-    ]
 
 
 class TraininingInfo(FocoosBaseModel):
@@ -223,36 +197,11 @@ class TrainInstance(str, Enum):
     ML_G5_12XLARGE = "ml.g5.12xlarge"
 
 
-class NewTrain(FocoosBaseModel):
-    anyma_version: str = Field(
-        "anyma-sagemaker-cu12-torch22-0110",
-        description="anyma version used to train the model",
-    )
-    instance_type: TrainInstance = Field(
-        TrainInstance.ML_G4DN_XLARGE,
-        description="instance type used to train the model",
-    )
-    volume_size: int = Field(
-        50,
-        description="volume size used to train the model",
-        ge=10,
-        le=1000,
-    )
-    max_runtime_in_seconds: int = Field(
-        36000,
-        description="max runtime in seconds used to train the model",
-        ge=3600,
-        le=360000,
-    )
-    dataset_ref: str = Field(
-        description="dataset ref to use for the training",
-    )
-    hyperparameters: Annotated[
-        Hyperparameters,
-        Field(
-            description="🕹️ The hyperparameters of the model",
-        ),
-    ]
+class Detection(FocoosBaseModel):
+    bbox: Optional[list[float]] = None
+    conf: float
+    id: str
+    mask: Optional[str] = None
 
 
 @dataclass

@@ -6,8 +6,9 @@ from typing import Tuple
 import numpy as np
 import onnxruntime as ort
 from PIL import Image
+from supervision import Detections
 
-from focoos.ports import LatencyMetrics, OnnxEngineOpts
+from focoos.ports import FocoosTask, LatencyMetrics, ModelMetadata, OnnxEngineOpts
 from focoos.utils.logger import get_logger
 
 GPU_ID = 0
@@ -35,16 +36,61 @@ def image_to_byte_array(image: Image.Image) -> bytes:
     return img_byte_arr
 
 
+def det_postprocess(
+    out: np.ndarray, im0_shape: Tuple[int, int], conf_threshold: float
+) -> Detections:
+    cls_ids, boxes, confs = out
+    boxes[:, 0::2] *= im0_shape[1]
+    boxes[:, 1::2] *= im0_shape[0]
+    high_conf_indices = np.where(confs > conf_threshold)
+
+    return Detections(
+        xyxy=boxes[high_conf_indices].astype(int),
+        class_id=cls_ids[high_conf_indices].astype(int),
+        confidence=confs[high_conf_indices].astype(float),
+    )
+
+
+def semseg_postprocess(
+    out: np.ndarray, im0_shape: Tuple[int, int], conf_threshold: float
+) -> Detections:
+    cls_ids, mask, confs = out[0][0], out[1][0], out[2][0]
+    print(
+        f"cls_ids.shape {cls_ids.shape}, mask.shape {mask.shape}, confs.shape {confs.shape}"
+    )
+    masks = np.zeros((len(cls_ids), *mask.shape), dtype=bool)
+    for i, cls_id in enumerate(cls_ids):
+        masks[i, mask == i] = True
+    high_conf_indices = np.where(confs > conf_threshold)[0]
+    masks = masks[high_conf_indices].astype(bool)
+    cls_ids = cls_ids[high_conf_indices].astype(int)
+    confs = confs[high_conf_indices].astype(float)
+    return Detections(
+        mask=masks,
+        # xyxy is required from supervisio
+        xyxy=np.zeros(shape=(len(high_conf_indices), 4), dtype=np.uint8),
+        class_id=cls_ids,
+        confidence=confs,
+    )
+
+
 class ONNXRuntime:
-    def __init__(self, model: str, opts: OnnxEngineOpts):
+    def __init__(
+        self, model_path: str, opts: OnnxEngineOpts, model_metadata: ModelMetadata
+    ):
         self.logger = get_logger()
         self.logger.info(f"[onnxruntime device] {ort.get_device()}")
         self.logger.info(
             f"[onnxruntime available providers] {ort.get_available_providers()}"
         )
-        self.name = Path(model).stem
+        self.name = Path(model_path).stem
         self.opts = opts
-
+        self.model_metadata = model_metadata
+        self.postprocess_fn = (
+            det_postprocess
+            if model_metadata.task == FocoosTask.DETECTION
+            else semseg_postprocess
+        )
         options = ort.SessionOptions()
         if opts.verbose:
             options.log_severity_level = 0
@@ -105,10 +151,12 @@ class ONNXRuntime:
             providers.append("CoreMLExecutionProvider")
         else:
             binding = None
+
+        binding = None  # TODO: remove this
         providers.append("CPUExecutionProvider")
         self.dtype = dtype
         self.binding = binding
-        self.ort_sess = ort.InferenceSession(model, options, providers=providers)
+        self.ort_sess = ort.InferenceSession(model_path, options, providers=providers)
         self.logger.info(f"[onnxruntime] Providers:{self.ort_sess.get_providers()}")
         if self.ort_sess.get_inputs()[0].type == "tensor(uint8)":
             self.dtype = np.uint8
@@ -137,19 +185,18 @@ class ONNXRuntime:
                     self.ort_sess.run_with_iobinding(io_binding)
                     t1 = perf_counter()
                     io_binding.copy_outputs_to_cpu()
-                    self.logger.info(f"Warmup {i} time: {t1 - t0:.3f} s")
                 else:
                     self.ort_sess.run(out_name, {input_name: np_image})
 
             self.logger.info(f"⏱️ [onnxruntime] {self.name} WARMUP DONE")
 
-    def __call__(self, img_bytes: bytes) -> Tuple[np.ndarray, Image.Image]:
-        np_image, pil_img = preprocess_image(img_bytes, dtype=self.dtype)
+    def __call__(self, im: np.ndarray, conf_threshold: float) -> Detections:
         out_name = None
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
         t_all_0 = perf_counter()
         if self.binding is not None:
+            print(f"binding {self.binding}")
             io_binding = self.ort_sess.io_binding()
 
             io_binding.bind_input(
@@ -157,11 +204,11 @@ class ONNXRuntime:
                 self.binding,
                 device_id=GPU_ID,
                 element_type=self.dtype,
-                shape=np_image.shape,
-                buffer_ptr=np_image.ctypes.data,
+                shape=im.shape,
+                buffer_ptr=im.ctypes.data,
             )
 
-            io_binding.bind_cpu_input(input_name, np_image)
+            io_binding.bind_cpu_input(input_name, im)
             io_binding.bind_output(out_name[0], self.binding)
             t0 = perf_counter()
             self.ort_sess.run_with_iobinding(io_binding)
@@ -169,29 +216,17 @@ class ONNXRuntime:
             out = io_binding.copy_outputs_to_cpu()
         else:
             t0 = perf_counter()
-            out = self.ort_sess.run(out_name, {input_name: np_image})
+            out = self.ort_sess.run(out_name, {input_name: im})
             t1 = perf_counter()
         t_all_1 = perf_counter()
+        print(f"len(out) {len(out)}")
         print(out[0][0].shape)
         t_post0 = perf_counter()
-        if len(out[0].shape) == 3:
-            postprocess_out = np.argmax(out, axis=1)[0]
-        else:
-            postprocess_out = out[0]
-        t_post1 = perf_counter()
 
-        output_colored = self.cmap[postprocess_out]
-        out_img = postprocess_image(cmapped_image=output_colored, input_image=pil_img)
-
-        self.logger.debug(f"[{self.name}][Inference Time] {t1-t0:.3f} ms")
-        self.logger.debug(f"[{self.name}][Argmax Time] {t_post1-t_post0:.3f} ms")
-        self.logger.debug(
-            f"[{self.name}][Inference TotalTime] {t_post1-t_all_0:.3f} ms"
+        detections = self.postprocess_fn(
+            out, (im.shape[2], im.shape[3]), conf_threshold
         )
-        self.logger.debug(
-            f"[{self.name}][Inference with Data Time] {t_all_1-t_all_0:.3f} ms"
-        )
-        return postprocess_out, out_img
+        return detections
 
     def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
         self.logger.info(f"⏱️ [onnxruntime] Benchmarking latency..")
@@ -201,7 +236,6 @@ class ONNXRuntime:
         np_input = (255 * np.random.random((1, 3, size[0], size[1]))).astype(self.dtype)
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = self.ort_sess.get_outputs()[0].name
-
         if self.binding:
             io_binding = self.ort_sess.io_binding()
 

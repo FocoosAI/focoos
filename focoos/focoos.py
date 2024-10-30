@@ -12,7 +12,6 @@ from focoos.ports import (
     ModelMetadata,
     ModelPreview,
     ModelStatus,
-    NewModel,
 )
 from focoos.utils.logger import get_logger, setup_logging
 from focoos.utils.system import HttpClient
@@ -74,8 +73,17 @@ class Focoos:
     def get_model(self, model_ref: str) -> CloudModel:
         return CloudModel(model_ref, self.http_client)
 
-    def new_model(self, model: NewModel) -> Optional[CloudModel]:
-        res = self.http_client.post(f"models/", data=model.model_dump())
+    def new_model(
+        self, name: str, focoos_model: str, description: str
+    ) -> Optional[CloudModel]:
+        res = self.http_client.post(
+            f"models/",
+            data={
+                "name": name,
+                "focoos_model": focoos_model,
+                "description": description,
+            },
+        )
         print(res.json())
         if res.status_code in [200, 201]:
             return CloudModel(res.json()["ref"], self.http_client)
