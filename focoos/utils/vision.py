@@ -112,6 +112,8 @@ def focoos_detections_to_supervision(inference_output: FocoosDetections) -> Dete
     xyxy = np.array([d.bbox for d in inference_output.detections])
     class_id = np.array([d.cls_id for d in inference_output.detections])
     confidence = np.array([d.conf for d in inference_output.detections])
+    if xyxy.shape[0] == 0:
+        xyxy = np.empty((0, 4))
     _masks = []
     for det in inference_output.detections:
         if det.mask:

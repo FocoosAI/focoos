@@ -56,7 +56,6 @@ class FocoosTask(str, Enum):
     INSTANCE_SEGMENTATION = "instseg"
 
 
-@dataclass
 class Hyperparameters(FocoosBaseModel):
     batch_size: int = Field(
         16,

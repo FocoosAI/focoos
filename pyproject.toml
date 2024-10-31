@@ -38,6 +38,8 @@ dev = [
     "black",
     "flake8",
     "python-dotenv",
+    "gradio~=5.3.0",
+    "sniffio~=1.2.0",
 ]
 
 inference = ["onnxruntime==1.18.0"]
