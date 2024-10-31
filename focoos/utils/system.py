@@ -10,12 +10,21 @@ class HttpClient:
             "user_agent": "focoos/0.0.1",
         }
 
-    def get(self, path: str, params: dict = None, extra_headers: dict = None):
+    def get_external_url(self, path: str, params: dict = None, stream: bool = False):
+        return requests.get(path, params=params, stream=stream)
+
+    def get(
+        self,
+        path: str,
+        params: dict = None,
+        extra_headers: dict = None,
+        stream: bool = False,
+    ):
         url = f"{self.host_url}/{path}"
         headers = self.default_headers
         if extra_headers:
             headers.update(extra_headers)
-        return requests.get(url, headers=headers, params=params)
+        return requests.get(url, headers=headers, params=params, stream=stream)
 
     def post(
         self, path: str, data: dict = None, extra_headers: dict = None, files=None

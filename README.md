@@ -1,7 +1,7 @@
 # Focoos Foundational Models
 
 | Model Name          | Task                  | Metrics | Domain                          |
-|---------------------|-----------------------|---------|---------------------------------|
+| ------------------- | --------------------- | ------- | ------------------------------- |
 | focoos_object365    | Detection             | -       | Common Objects, 365 classes     |
 | focoos_rtdetr       | Detection             | -       | Common Objects, 80 classes      |
 | focoos_cts_medium   | Semantic Segmentation | -       | Autonomous driving, 30 classes  |
@@ -16,6 +16,16 @@
 
 
 # Focoos SDK
+
+# Install
+
+```bash
+pip install .
+```
+
+- local inference (CPU, COREML): `pip install .[inference]`
+- local inference with GPU (CUDA): `pip install .[inference-gpu]`
+
 ## 🤖 Cloud Inference
 ```python
 from focoos import Focoos

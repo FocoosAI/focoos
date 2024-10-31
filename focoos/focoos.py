@@ -1,23 +1,28 @@
+import os
 from typing import Optional
 
 import requests
 from supervision import Detections
+from tqdm import tqdm
 
-from focoos.cloud_model import CloudModel
+from focoos.model import FocoosModel
 from focoos.ports import (
     DatasetMetadata,
     FocoosEnvHostUrl,
     ModelMetadata,
     ModelPreview,
     ModelStatus,
-    NewModel,
 )
 from focoos.utils.logger import get_logger, setup_logging
 from focoos.utils.system import HttpClient
 
 
 class Focoos:
-    def __init__(self, api_key: str, host_url: FocoosEnvHostUrl = FocoosEnvHostUrl.DEV):
+    def __init__(
+        self,
+        api_key: str = os.getenv("FOCOOS_API_KEY"),
+        host_url: FocoosEnvHostUrl = FocoosEnvHostUrl.DEV,
+    ):
         self.logger = setup_logging()
         self.api_key = api_key
         if not self.api_key:
@@ -37,10 +42,10 @@ class Focoos:
             self.logger.error(f"Failed to get user info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get user info: {res.status_code} {res.text}")
 
-    def get_model_info(self, model_name: str):
+    def get_model_info(self, model_name: str) -> ModelMetadata:
         res = self.http_client.get(f"models/{model_name}")
         if res.status_code == 200:
-            return res.json()
+            return ModelMetadata.from_json(res.json())
         else:
             self.logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
@@ -65,14 +70,23 @@ class Focoos:
                 f"Failed to list focoos models: {res.status_code} {res.text}"
             )
 
-    def get_model(self, model_ref: str) -> CloudModel:
-        return CloudModel(model_ref, self.http_client)
+    def get_model(self, model_ref: str) -> FocoosModel:
+        return FocoosModel(model_ref, self.http_client)
 
-    def new_model(self, model: NewModel) -> Optional[CloudModel]:
-        res = self.http_client.post(f"models/", data=model.model_dump())
+    def new_model(
+        self, name: str, focoos_model: str, description: str
+    ) -> Optional[FocoosModel]:
+        res = self.http_client.post(
+            f"models/",
+            data={
+                "name": name,
+                "focoos_model": focoos_model,
+                "description": description,
+            },
+        )
         print(res.json())
         if res.status_code in [200, 201]:
-            return CloudModel(res.json()["ref"], self.http_client)
+            return FocoosModel(res.json()["ref"], self.http_client)
         else:
             self.logger.warning(
                 f"Failed to create new model: {res.status_code} {res.text}"

@@ -14,11 +14,20 @@ dependencies = [
     "requests",
     "Pillow~=10.4.0",
     "supervision~=0.24.0",
-    "pydantic~=2.5.2",
+    "pydantic~=2.8.2",
+    "pydantic-settings~=2.5.0",
+    "tqdm~=4.66.6",
+    "numpy~=1.26.4",
+    "scipy~=1.14.1",
 ]
 version = "0.0.1"
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]
-keywords = ["computer_vision", "object_detection", "segmentation", "model_serving"]
+keywords = [
+    "computer_vision",
+    "object_detection",
+    "segmentation",
+    "model_serving",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -30,3 +39,6 @@ dev = [
     "flake8",
     "python-dotenv",
 ]
+
+inference = ["onnxruntime==1.18.0"]
+inference-gpu = ["onnxruntime-gpu==1.18.0"]

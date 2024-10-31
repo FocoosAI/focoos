@@ -1,5 +1,6 @@
 import json
 import re
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Annotated, Literal, Optional, Union
@@ -55,7 +56,8 @@ class FocoosTask(str, Enum):
     INSTANCE_SEGMENTATION = "instseg"
 
 
-class Hyperparameters(BaseModel):
+@dataclass
+class Hyperparameters(FocoosBaseModel):
     batch_size: int = Field(
         16,
         ge=1,
@@ -106,33 +108,6 @@ class Hyperparameters(BaseModel):
                     "Wandb project name must only contain characters, dashes, underscores, and dots."
                 )
         return value
-
-
-class NewModel(FocoosBaseModel):
-    name: Annotated[
-        str,
-        Field(
-            description="💫 Model name",
-            min_length=2,
-            max_length=50,
-        ),
-    ]
-    focoos_model: Annotated[
-        str,
-        Field(
-            default="focoos_rtdetr",
-            description=f"🍕 Focoos foundational model to fine tune",
-        ),
-    ]
-    description: Annotated[
-        str,
-        Field(
-            default="🤖 A pixel wizard that sees what others can’t!",
-            description="The model description",
-            min_length=2,
-            max_length=150,
-        ),
-    ]
 
 
 class TraininingInfo(FocoosBaseModel):
@@ -222,33 +197,37 @@ class TrainInstance(str, Enum):
     ML_G5_12XLARGE = "ml.g5.12xlarge"
 
 
-class NewTrain(FocoosBaseModel):
-    anyma_version: str = Field(
-        "anyma-sagemaker-cu12-torch22-0110",
-        description="anyma version used to train the model",
-    )
-    instance_type: TrainInstance = Field(
-        TrainInstance.ML_G4DN_XLARGE,
-        description="instance type used to train the model",
-    )
-    volume_size: int = Field(
-        50,
-        description="volume size used to train the model",
-        ge=10,
-        le=1000,
-    )
-    max_runtime_in_seconds: int = Field(
-        36000,
-        description="max runtime in seconds used to train the model",
-        ge=3600,
-        le=360000,
-    )
-    dataset_ref: str = Field(
-        description="dataset ref to use for the training",
-    )
-    hyperparameters: Annotated[
-        Hyperparameters,
-        Field(
-            description="🕹️ The hyperparameters of the model",
-        ),
-    ]
+class FocoosDet(FocoosBaseModel):
+    bbox: Optional[list[float]] = None
+    conf: Optional[float] = None
+    cls_id: Optional[int] = None
+    label: Optional[str] = None
+    mask: Optional[str] = None
+
+
+class FocoosDetections(FocoosBaseModel):
+    detections: list[FocoosDet]
+    latency: Optional[dict] = None
+
+
+@dataclass
+class OnnxEngineOpts:
+    fp16: Optional[bool] = False
+    cuda: Optional[bool] = False
+    vino: Optional[bool] = False
+    verbose: Optional[bool] = False
+    trt: Optional[bool] = False
+    coreml: Optional[bool] = False
+    warmup_iter: int = 0
+
+
+@dataclass
+class LatencyMetrics:
+    fps: int
+    engine: str
+    min: float
+    max: float
+    mean: float
+    std: float
+    im_size: int
+    device: str
