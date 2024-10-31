@@ -1,5 +1,7 @@
 import os
 
+import cv2
+
 import gradio as gr
 from focoos import Focoos, FocoosEnvHostUrl
 
@@ -35,7 +37,7 @@ def run_inference(model_name, image, conf):
     else:
         model = loaded_models[model_name]
     detections, annotated_image = model.remote_infer(image, conf, annotate=True)
-    return annotated_image, detections.model_dump()
+    return cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB), detections.model_dump()
 
 
 with gr.Blocks() as demo:
@@ -53,7 +55,7 @@ with gr.Blocks() as demo:
             )
             start_btn = gr.Button("Run Inference")
         with gr.Column():
-            output_image = gr.Image(type="numpy")
+            output_image = gr.Image(type="pil")
             output_detections = gr.JSON()
     examples = gr.Examples(
         fn=run_inference,
