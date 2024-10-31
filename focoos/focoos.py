@@ -5,7 +5,7 @@ import requests
 from supervision import Detections
 from tqdm import tqdm
 
-from focoos.cloud_model import CloudModel
+from focoos.model import FocoosModel
 from focoos.ports import (
     DatasetMetadata,
     FocoosEnvHostUrl,
@@ -70,12 +70,12 @@ class Focoos:
                 f"Failed to list focoos models: {res.status_code} {res.text}"
             )
 
-    def get_model(self, model_ref: str) -> CloudModel:
-        return CloudModel(model_ref, self.http_client)
+    def get_model(self, model_ref: str) -> FocoosModel:
+        return FocoosModel(model_ref, self.http_client)
 
     def new_model(
         self, name: str, focoos_model: str, description: str
-    ) -> Optional[CloudModel]:
+    ) -> Optional[FocoosModel]:
         res = self.http_client.post(
             f"models/",
             data={
@@ -86,7 +86,7 @@ class Focoos:
         )
         print(res.json())
         if res.status_code in [200, 201]:
-            return CloudModel(res.json()["ref"], self.http_client)
+            return FocoosModel(res.json()["ref"], self.http_client)
         else:
             self.logger.warning(
                 f"Failed to create new model: {res.status_code} {res.text}"

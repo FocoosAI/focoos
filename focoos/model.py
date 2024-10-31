@@ -1,16 +1,18 @@
 import os
 import time
 from pathlib import Path
+from time import perf_counter
 from typing import Optional, Tuple, Union
 
 import numpy as np
 from PIL import Image
-from supervision import BoxAnnotator, Detections, LabelAnnotator, MaskAnnotator
+from supervision import Detections, LabelAnnotator, MaskAnnotator, RoundBoxAnnotator
 from tqdm import tqdm
 
 from focoos.ports import (
     DeploymentMode,
-    Detection,
+    FocoosDet,
+    FocoosDetections,
     FocoosTask,
     Hyperparameters,
     LatencyMetrics,
@@ -22,10 +24,16 @@ from focoos.ports import (
 from focoos.runtime import ONNXRuntime
 from focoos.utils.logger import get_logger
 from focoos.utils.system import HttpClient
-from focoos.utils.vision import image_loader, image_preprocess
+from focoos.utils.vision import (
+    focoos_detections_to_supervision,
+    image_loader,
+    image_preprocess,
+    scale_detections,
+    sv_to_focoos_detections,
+)
 
 
-class CloudModel:
+class FocoosModel:
     def __init__(self, model_ref: str, http_client: HttpClient):
         self.model_ref = model_ref
         self.logger = get_logger()
@@ -40,7 +48,7 @@ class CloudModel:
             f"[RemoteModel]: ref: {self.model_ref} name: {self.metadata.name} description: {self.metadata.description} status: {self.metadata.status}"
         )
         self.label_annotator = LabelAnnotator(text_padding=10, border_radius=10)
-        self.box_annotator = BoxAnnotator()
+        self.box_annotator = RoundBoxAnnotator()
         self.mask_annotator = MaskAnnotator()
 
     def get_info(self) -> ModelMetadata:
@@ -51,7 +59,7 @@ class CloudModel:
             self.logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
 
-    def train(
+    def remote_train(
         self,
         dataset_ref: str,
         hyperparameters: Hyperparameters,
@@ -188,10 +196,15 @@ class CloudModel:
             )
 
     def _annotate(self, im: np.ndarray, detections: Detections) -> np.ndarray:
-        labels = None
-        if self.metadata.classes is not None:
+        classes = self.metadata.classes
+        if classes is not None:
             labels = [
-                f"{self.metadata.classes[class_id]}: {confid*100:.1f}"
+                f"{classes[int(class_id)]}: {confid*100:.0f}%"
+                for class_id, confid in zip(detections.class_id, detections.confidence)
+            ]
+        else:
+            labels = [
+                f"{str(class_id)}: {confid*100:.0f}%"
                 for class_id, confid in zip(detections.class_id, detections.confidence)
             ]
         if self.metadata.task == FocoosTask.DETECTION:
@@ -213,24 +226,43 @@ class CloudModel:
         image_path: Union[str, Path],
         threshold: float = 0.5,
         annotate: bool = False,
-    ) -> Tuple[Detections, Optional[np.ndarray]]:
+    ) -> Tuple[FocoosDetections, Optional[np.ndarray]]:
         if self.runtime is None:
             raise ValueError("Model is not deployed (locally)")
-        resize = self.metadata.im_size
+        resize = None  #!TODO remove this, and take it from the metadata
+        if self.metadata.task == FocoosTask.DETECTION:
+            resize = 640  #!TODO remove this, and take it from the metadata
         self.logger.debug(f"Resize: {resize}")
+        t0 = perf_counter()
         im1, im0 = image_preprocess(image_path, resize=resize)
-        t0 = time.time()
+        t1 = perf_counter()
         detections = self.runtime(im1.astype(np.float32), threshold)
-        t1 = time.time()
-        self.logger.debug(f"Inference time: {t1-t0:.3f} seconds")
+        t2 = perf_counter()
+        if resize:
+            detections = scale_detections(
+                detections, (resize, resize), (im0.shape[1], im0.shape[0])
+            )
+
+        self.logger.debug(f"Inference time: {t2-t1:.3f} seconds")
         im = None
         if annotate:
             im = self._annotate(im0, detections)
-        return detections, im
+
+        out = sv_to_focoos_detections(detections, classes=self.metadata.classes)
+        t3 = perf_counter()
+        out.latency = {
+            "inference": round(t2 - t1, 3),
+            "preprocess": round(t1 - t0, 3),
+            "postprocess": round(t3 - t2, 3),
+        }
+        return out, im
 
     def remote_infer(
-        self, image_path: Union[str, Path], threshold: float = 0.5
-    ) -> list[Detection]:
+        self,
+        image_path: Union[str, Path],
+        threshold: float = 0.5,
+        annotate: bool = False,
+    ) -> Tuple[FocoosDetections, Optional[np.ndarray]]:
         if not os.path.exists(image_path):
             self.logger.error(f"Image file not found: {image_path}")
             raise FileNotFoundError(f"Image file not found: {image_path}")
@@ -243,26 +275,19 @@ class CloudModel:
         t1 = time.time()
         if res.status_code == 200:
             self.logger.debug(f"Inference time: {t1-t0:.3f} seconds")
-            return [Detection(**d) for d in res.json().get("detections", [])]
-        else:
-            self.logger.error(f"Failed to infer: {res.status_code} {res.text}")
-            raise ValueError(f"Failed to infer: {res.status_code} {res.text}")
-
-    def infer_preview(self, image_path: Union[str, Path], threshold: float = 0.5):
-        if not os.path.exists(image_path):
-            self.logger.error(f"Image file not found: {image_path}")
-            raise FileNotFoundError(f"Image file not found: {image_path}")
-        files = {"file": open(image_path, "rb")}
-        t0 = time.time()
-        res = self.http_client.post(
-            f"models/{self.model_ref}/inference?confidence_threshold={threshold}",
-            extra_headers={"Accept": "image/jpeg"},
-            files=files,
-        )
-        t1 = time.time()
-        if res.status_code == 200:
-            self.logger.debug(f"Inference time: {t1-t0:.3f} seconds")
-            return res.content
+            detections = FocoosDetections(
+                detections=[
+                    FocoosDet.model_validate(d)
+                    for d in res.json().get("detections", [])
+                ],
+                latency=res.json().get("latency", None),
+            )
+            preview = None
+            if annotate:
+                im0 = image_loader(image_path)
+                sv_detections = focoos_detections_to_supervision(detections)
+                preview = self._annotate(im0, sv_detections)
+            return detections, preview
         else:
             self.logger.error(f"Failed to infer: {res.status_code} {res.text}")
             raise ValueError(f"Failed to infer: {res.status_code} {res.text}")

@@ -1,13 +1,17 @@
+import base64
+import io
+import time
 from pathlib import Path
 from typing import Optional, Tuple, Union
 
 import cv2
 import numpy as np
 import PIL.Image as Image
+from scipy.ndimage import zoom
 from supervision import Detections
 from typing_extensions import Buffer
 
-from focoos.ports import ModelMetadata
+from focoos.ports import FocoosDet, FocoosDetections, ModelMetadata
 
 
 def index_to_class(class_ids: list[int], classes: list[str]) -> list[str]:
@@ -62,3 +66,93 @@ def image_preprocess(
             im0.transpose(2, 0, 1)[np.newaxis, :]  # HWC->1CHW
         ).astype(dtype)
         return im1, im0
+
+
+def scale_mask(mask: np.ndarray, target_shape: tuple) -> np.ndarray:
+    """
+    Resizes a boolean mask to the specified target resolution.
+
+    Parameters:
+        mask (np.ndarray): Binary mask as a boolean NumPy array.
+        target_shape (tuple): Tuple specifying the target resolution (height, width).
+
+    Returns:
+        np.ndarray: Resized boolean mask with the target dimensions.
+    """
+    # Calculate scale factors for height and width
+    scale_factors = (target_shape[0] / mask.shape[0], target_shape[1] / mask.shape[1])
+
+    # Resize the mask using zoom with nearest-neighbor interpolation (order=0)
+    scaled_mask = zoom(mask, scale_factors, order=0) > 0.5
+
+    return scaled_mask.astype(bool)
+
+
+def scale_detections(
+    detections: Detections, in_shape: tuple, out_shape: tuple
+) -> Detections:
+    if in_shape[0] == out_shape[0] and in_shape[1] == out_shape[1]:
+        return detections
+    t0 = time.time()
+    if detections.xyxy is not None:
+        x_ratio = out_shape[0] / in_shape[0]
+        y_ratio = out_shape[1] / in_shape[1]
+        detections.xyxy = detections.xyxy * np.array(
+            [x_ratio, y_ratio, x_ratio, y_ratio]
+        )
+    t1 = time.time()
+    return detections
+
+
+def base64mask_to_mask(base64mask: str) -> np.ndarray:
+    return np.array(Image.open(io.BytesIO(base64.b64decode(base64mask))))
+
+
+def focoos_detections_to_supervision(inference_output: FocoosDetections) -> Detections:
+    xyxy = np.array([d.bbox for d in inference_output.detections])
+    class_id = np.array([d.cls_id for d in inference_output.detections])
+    confidence = np.array([d.conf for d in inference_output.detections])
+    _masks = []
+    for det in inference_output.detections:
+        if det.mask:
+            mask = base64mask_to_mask(det.mask)
+            _masks.append(mask)
+    masks = np.array(_masks).astype(bool) if len(_masks) > 0 else None
+    return Detections(
+        xyxy=xyxy,
+        class_id=class_id,
+        confidence=confidence,
+        mask=masks,
+    )
+
+
+def binary_mask_to_base64(binary_mask):
+    # Converti l'array NumPy in un oggetto immagine PIL
+    # Converte True in 255 (bianco) e False in 0 (nero)
+    binary_mask = binary_mask.astype(np.uint8) * 255
+    binary_mask_image = Image.fromarray(binary_mask)
+
+    # Salva l'immagine in memoria
+    with io.BytesIO() as buffer:
+        binary_mask_image.save(buffer, bitmap_format="png", format="PNG")
+        encoded_png = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    return encoded_png
+
+
+def sv_to_focoos_detections(
+    detections: Detections, classes: Optional[list[str]] = None
+) -> FocoosDetections:
+    res = []
+    for xyxy, mask, conf, cls_id, track_id, _ in detections:
+        det = FocoosDet(
+            cls_id=int(cls_id) if cls_id is not None else None,
+            bbox=[round(float(x), 2) for x in xyxy],
+            mask=binary_mask_to_base64(mask) if mask is not None else None,
+            conf=round(float(conf), 2) if conf is not None else None,
+            label=classes[cls_id]
+            if classes is not None and cls_id is not None
+            else None,
+        )
+        res.append(det)
+    return FocoosDetections(detections=res)

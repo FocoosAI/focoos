@@ -197,11 +197,17 @@ class TrainInstance(str, Enum):
     ML_G5_12XLARGE = "ml.g5.12xlarge"
 
 
-class Detection(FocoosBaseModel):
+class FocoosDet(FocoosBaseModel):
     bbox: Optional[list[float]] = None
-    conf: float
-    id: str
+    conf: Optional[float] = None
+    cls_id: Optional[int] = None
+    label: Optional[str] = None
     mask: Optional[str] = None
+
+
+class FocoosDetections(FocoosBaseModel):
+    detections: list[FocoosDet]
+    latency: Optional[dict] = None
 
 
 @dataclass

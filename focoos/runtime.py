@@ -55,9 +55,6 @@ def semseg_postprocess(
     out: np.ndarray, im0_shape: Tuple[int, int], conf_threshold: float
 ) -> Detections:
     cls_ids, mask, confs = out[0][0], out[1][0], out[2][0]
-    print(
-        f"cls_ids.shape {cls_ids.shape}, mask.shape {mask.shape}, confs.shape {confs.shape}"
-    )
     masks = np.zeros((len(cls_ids), *mask.shape), dtype=bool)
     for i, cls_id in enumerate(cls_ids):
         masks[i, mask == i] = True
@@ -79,8 +76,8 @@ class ONNXRuntime:
         self, model_path: str, opts: OnnxEngineOpts, model_metadata: ModelMetadata
     ):
         self.logger = get_logger()
-        self.logger.info(f"[onnxruntime device] {ort.get_device()}")
-        self.logger.info(
+        self.logger.debug(f"[onnxruntime device] {ort.get_device()}")
+        self.logger.debug(
             f"[onnxruntime available providers] {ort.get_available_providers()}"
         )
         self.name = Path(model_path).stem
@@ -194,7 +191,6 @@ class ONNXRuntime:
         out_name = None
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
-        t_all_0 = perf_counter()
         if self.binding is not None:
             print(f"binding {self.binding}")
             io_binding = self.ort_sess.io_binding()
@@ -210,18 +206,10 @@ class ONNXRuntime:
 
             io_binding.bind_cpu_input(input_name, im)
             io_binding.bind_output(out_name[0], self.binding)
-            t0 = perf_counter()
             self.ort_sess.run_with_iobinding(io_binding)
-            t1 = perf_counter()
             out = io_binding.copy_outputs_to_cpu()
         else:
-            t0 = perf_counter()
             out = self.ort_sess.run(out_name, {input_name: im})
-            t1 = perf_counter()
-        t_all_1 = perf_counter()
-        print(f"len(out) {len(out)}")
-        print(out[0][0].shape)
-        t_post0 = perf_counter()
 
         detections = self.postprocess_fn(
             out, (im.shape[2], im.shape[3]), conf_threshold

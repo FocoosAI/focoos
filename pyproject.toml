@@ -18,6 +18,7 @@ dependencies = [
     "pydantic-settings~=2.5.0",
     "tqdm~=4.66.6",
     "numpy~=1.26.4",
+    "scipy~=1.14.1",
 ]
 version = "0.0.1"
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]
