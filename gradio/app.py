@@ -51,7 +51,7 @@ with gr.Blocks() as demo:
                 value=list(focoos_models)[0],
             )
             conf = gr.Slider(
-                maximum=1, minimum=0, value=0.5, label="Confidencte threshold"
+                maximum=0.9, minimum=0, value=0.5, label="Confidencte threshold"
             )
             start_btn = gr.Button("Run Inference")
         with gr.Column():

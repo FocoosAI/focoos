@@ -277,8 +277,7 @@ class FocoosModel:
             self.logger.debug(f"Inference time: {t1-t0:.3f} seconds")
             detections = FocoosDetections(
                 detections=[
-                    FocoosDet.model_validate(d)
-                    for d in res.json().get("detections", [])
+                    FocoosDet.from_json(d) for d in res.json().get("detections", [])
                 ],
                 latency=res.json().get("latency", None),
             )
