@@ -6,7 +6,7 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 from PIL import Image
-from supervision import Detections, LabelAnnotator, MaskAnnotator, RoundBoxAnnotator
+from supervision import BoxAnnotator, Detections, LabelAnnotator, MaskAnnotator
 from tqdm import tqdm
 
 from focoos.ports import (
@@ -48,7 +48,7 @@ class FocoosModel:
             f"[RemoteModel]: ref: {self.model_ref} name: {self.metadata.name} description: {self.metadata.description} status: {self.metadata.status}"
         )
         self.label_annotator = LabelAnnotator(text_padding=10, border_radius=10)
-        self.box_annotator = RoundBoxAnnotator()
+        self.box_annotator = BoxAnnotator()
         self.mask_annotator = MaskAnnotator()
 
     def get_info(self) -> ModelMetadata:
