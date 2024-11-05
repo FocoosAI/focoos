@@ -53,7 +53,7 @@ class Focoos:
     def list_models(self) -> list[ModelPreview]:
         res = self.http_client.get(f"models/")
         if res.status_code == 200:
-            return res.json()
+            return [ModelPreview.from_json(r) for r in res.json()]
         else:
             self.logger.error(f"Failed to list models: {res.status_code} {res.text}")
             raise ValueError(f"Failed to list models: {res.status_code} {res.text}")
@@ -73,6 +73,18 @@ class Focoos:
     def get_model(self, model_ref: str) -> FocoosModel:
         return FocoosModel(model_ref, self.http_client)
 
+    def get_model_by_name(self, name: str) -> Optional[FocoosModel]:
+        found = False
+        models = self.list_models()
+        for model in models:
+            if name == model.name:
+                found = True
+                break
+        if found:
+            return self.get_model(model.ref)
+        else:
+            return None
+
     def new_model(
         self, name: str, focoos_model: str, description: str
     ) -> Optional[FocoosModel]:
@@ -84,9 +96,11 @@ class Focoos:
                 "description": description,
             },
         )
-        print(res.json())
         if res.status_code in [200, 201]:
             return FocoosModel(res.json()["ref"], self.http_client)
+        elif res.status_code in [409]:
+            self.logger.info("Model already exists - returning existing model.")
+            return self.get_model_by_name(name)
         else:
             self.logger.warning(
                 f"Failed to create new model: {res.status_code} {res.text}"
@@ -100,3 +114,13 @@ class Focoos:
         else:
             self.logger.error(f"Failed to list datasets: {res.status_code} {res.text}")
             raise ValueError(f"Failed to list datasets: {res.status_code} {res.text}")
+
+    def get_dataset_by_name(self, name: str) -> Optional[DatasetMetadata]:
+        found = False
+        datasets = self.list_shared_datasets()
+        for dataset in datasets:
+            if name == dataset.name:
+                found = True
+                break
+
+        return dataset if found else None

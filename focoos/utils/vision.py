@@ -152,9 +152,9 @@ def sv_to_focoos_detections(
             bbox=[round(float(x), 2) for x in xyxy],
             mask=binary_mask_to_base64(mask) if mask is not None else None,
             conf=round(float(conf), 2) if conf is not None else None,
-            label=classes[cls_id]
-            if classes is not None and cls_id is not None
-            else None,
+            label=(
+                classes[cls_id] if classes is not None and cls_id is not None else None
+            ),
         )
         res.append(det)
     return FocoosDetections(detections=res)

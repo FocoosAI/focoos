@@ -1,7 +1,7 @@
 import os
 import time
 from pathlib import Path
-from time import perf_counter
+from time import perf_counter, sleep
 from typing import Optional, Tuple, Union
 
 import numpy as np
@@ -183,6 +183,18 @@ class FocoosModel:
             )
             return []
 
+    def train_metrics(self, period=60) -> Optional[dict]:
+        res = self.http_client.get(
+            f"models/{self.model_ref}/train/all-metrics?period={period}&aggregation_type=Average"
+        )
+        if res.status_code == 200:
+            return res.json()
+        else:
+            self.logger.warning(
+                f"Failed to get train logs: {res.status_code} {res.text}"
+            )
+            return None
+
     def _deployment_info(self):
         res = self.http_client.get(f"models/{self.model_ref}/deploy")
         if res.status_code == 200:
@@ -215,7 +227,10 @@ class FocoosModel:
             annotated_im = self.label_annotator.annotate(
                 scene=annotated_im, detections=detections, labels=labels
             )
-        elif self.metadata.task == FocoosTask.SEMSEG:
+        elif self.metadata.task in [
+            FocoosTask.SEMSEG,
+            FocoosTask.INSTANCE_SEGMENTATION,
+        ]:
             annotated_im = self.mask_annotator.annotate(
                 scene=im.copy(), detections=detections
             )
@@ -314,13 +329,16 @@ class FocoosModel:
             if response.status_code == 200:
                 total_size = int(response.headers.get("content-length", 0))
                 self.logger.info(f"📥 Size: {total_size / (1024**2):.2f} MB")
-                with open(model_path, "wb") as f, tqdm(
-                    desc=str(model_path).split("/")[-1],
-                    total=total_size,
-                    unit="B",
-                    unit_scale=True,
-                    unit_divisor=1024,
-                ) as bar:
+                with (
+                    open(model_path, "wb") as f,
+                    tqdm(
+                        desc=str(model_path).split("/")[-1],
+                        total=total_size,
+                        unit="B",
+                        unit_scale=True,
+                        unit_divisor=1024,
+                    ) as bar,
+                ):
                     for chunk in response.iter_content(chunk_size=8192):
                         f.write(chunk)
                         bar.update(len(chunk))
@@ -333,3 +351,93 @@ class FocoosModel:
             raise ValueError(
                 f"Failed to download model: {presigned_url.status_code} {presigned_url.text}"
             )
+
+    def _log_metrics(self):
+        metrics = self.train_metrics()
+        if metrics:
+            iter = (
+                metrics["iter"][-1]
+                if "iter" in metrics and len(metrics["iter"]) > 0
+                else -1
+            )
+            total_loss = (
+                metrics["total_loss"][-1]
+                if "total_loss" in metrics and len(metrics["total_loss"]) > 0
+                else -1
+            )
+            if self.metadata.task == FocoosTask.SEMSEG:
+                accuracy = (
+                    metrics["mIoU"][-1]
+                    if "mIoU" in metrics and len(metrics["mIoU"]) > 0
+                    else "-"
+                )
+                eval_metric = "mIoU"
+            else:
+                accuracy = (
+                    metrics["fwIoU"][-1]
+                    if "fwIoU" in metrics and len(metrics["fwIoU"]) > 0
+                    else "-"
+                )
+                eval_metric = "mAP50"
+            self.logger.info(
+                f"Iter {iter:.0f}: Loss {total_loss:.2f}, {eval_metric} {accuracy}"
+            )
+
+    def monitor_train(self, update_period=30):
+        completed_status = ["Completed", "Failed", "Stopped"]
+        # init to make do-while
+        status = {"main_status": "Flag", "secondary_status": "Flag"}
+        prev_status = status
+
+        while status["main_status"] not in completed_status:
+            prev_status = status
+            status = self.train_status()
+            elapsed = status.get("elapsed_time", 0)
+
+            # Model at the startup
+            if not status["main_status"] or status["main_status"] in ["Pending"]:
+                if prev_status["main_status"] != status["main_status"]:
+                    self.logger.info("[0s] Waiting for resources...")
+                sleep(update_period)
+                continue
+
+            # Training in progress
+            if status["main_status"] in ["InProgress"]:
+                if prev_status["secondary_status"] != status["secondary_status"]:
+                    if status["secondary_status"] in ["Starting", "Pending"]:
+                        self.logger.info(
+                            f"[0s] {status['main_status']}: {status['secondary_status']}"
+                        )
+                    else:
+                        self.logger.info(
+                            f"[{elapsed//60}m:{elapsed%60}s] {status['main_status']}: {status['secondary_status']}"
+                        )
+                if status["secondary_status"] in ["Training"]:
+                    self._log_metrics()
+                sleep(update_period)
+                continue
+
+            if status["main_status"] == "Completed":
+                self._log_metrics()
+                return
+            else:
+                self.logger.info(
+                    f"Model is not training, status: {status['main_status']}"
+                )
+                return
+
+    def stop_traing(self):
+        res = self.http_client.delete(f"models/{self.model_ref}/train")
+        if res.status_code != 200:
+            self.logger.error(
+                f"Failed to get stop training: {res.status_code} {res.text}"
+            )
+            raise ValueError(
+                f"Failed to get stop training: {res.status_code} {res.text}"
+            )
+
+    def delete_model(self):
+        res = self.http_client.delete(f"models/{self.model_ref}")
+        if res.status_code != 204:
+            self.logger.error(f"Failed to delete model: {res.status_code} {res.text}")
+            raise ValueError(f"Failed to delete model: {res.status_code} {res.text}")
