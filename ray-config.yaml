@@ -17,10 +17,10 @@ applications:
   import_path: ray-serve:app
   runtime_env: {"pip": ["requests", "Pillow~=10.4.0",
   "supervision~=0.24.0", "pydantic~=2.8.2",
-  "pydantic-settings~=2.5.0", "tqdm~=4.66.6", "numpy~=1.26.4", "scipy~=1.14.1","gradio","opencv-python==4.9.0.80"],
+  "pydantic-settings~=2.5.0", "tqdm~=4.66.6", "scipy~=1.14.1","gradio","opencv-python==4.9.0.80"],
   "env_vars": {"NUM_MODELS_PER_REPLICA": "25"}
   }
-  deployments:
+deployments:
   - name: multi-model
     num_replicas: 1
     ray_actor_options:
