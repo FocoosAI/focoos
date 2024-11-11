@@ -88,7 +88,7 @@ class Focoos:
     def get_remote_model(self, model_ref: str) -> RemoteModel:
         return RemoteModel(model_ref, self.http_client)
 
-    def new_remote_model(
+    def new_model(
         self, name: str, focoos_model: str, description: str
     ) -> Optional[RemoteModel]:
         res = self.http_client.post(
