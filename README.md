@@ -32,9 +32,9 @@ from focoos import Focoos
 
 focoos = Focoos(api_key=os.getenv("FOCOOS_API_KEY"))
 
-model = focoos.get_model("focoos_object365")
-
-detections = model.remote_infer("./image.jpg", threshold=0.4)
+model = focoos.get_remote_model("focoos_object365")
+model.deploy()
+detections = model.infer("./image.jpg", threshold=0.4)
 ```
 ## 🤖 Cloud Inference with Gradio
 
@@ -50,11 +50,11 @@ python gradio/app.py
 
 ## Local Inference
 ```python
-from focoos import Focoos,DeploymentMode
+from focoos import Focoos
 
 focoos = Focoos(api_key=os.getenv("FOCOOS_API_KEY"))
 
-model = focoos.get_model("focoos_object365")
-model.deploy(deployment_mode=DeploymentMode.LOCAL)
-detections = model.remote_infer("./image.jpg", threshold=0.4)
+model = focoos.get_local_model("focoos_object365")
+
+detections = model.infer("./image.jpg", threshold=0.4)
 ```

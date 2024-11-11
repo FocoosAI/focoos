@@ -8,7 +8,13 @@ import onnxruntime as ort
 from PIL import Image
 from supervision import Detections
 
-from focoos.ports import FocoosTask, LatencyMetrics, ModelMetadata, OnnxEngineOpts
+from focoos.ports import (
+    FocoosTask,
+    LatencyMetrics,
+    ModelMetadata,
+    OnnxEngineOpts,
+    RuntimeTypes,
+)
 from focoos.utils.logger import get_logger
 
 GPU_ID = 0
@@ -269,3 +275,34 @@ class ONNXRuntime:
         )
         self.logger.info(f"🔥 FPS: {metrics.fps}")
         return metrics
+
+
+def get_runtime(
+    runtime_type: RuntimeTypes,
+    model_path: str,
+    model_metadata: ModelMetadata,
+    warmup_iter: int = 0,
+) -> ONNXRuntime:
+    if runtime_type == RuntimeTypes.ONNX_CUDA32:
+        opts = OnnxEngineOpts(
+            cuda=True, verbose=False, fp16=False, warmup_iter=warmup_iter
+        )
+    elif runtime_type == RuntimeTypes.ONNX_CUDA16:
+        opts = OnnxEngineOpts(
+            cuda=True, verbose=False, fp16=True, warmup_iter=warmup_iter
+        )
+    elif runtime_type == RuntimeTypes.ONNX_TRT32:
+        opts = OnnxEngineOpts(
+            cuda=False, verbose=False, trt=True, fp16=False, warmup_iter=warmup_iter
+        )
+    elif runtime_type == RuntimeTypes.ONNX_TRT16:
+        opts = OnnxEngineOpts(
+            cuda=False, verbose=False, trt=True, fp16=True, warmup_iter=warmup_iter
+        )
+    elif runtime_type == RuntimeTypes.ONNX_CPU:
+        opts = OnnxEngineOpts(cuda=False, verbose=False, warmup_iter=warmup_iter)
+    elif runtime_type == RuntimeTypes.COREML:
+        opts = OnnxEngineOpts(
+            cuda=False, verbose=False, coreml=True, warmup_iter=warmup_iter
+        )
+    return ONNXRuntime(model_path, opts, model_metadata)

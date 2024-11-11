@@ -1,10 +1,21 @@
+from typing import Optional
+
 import requests
+
+from focoos.config import FocoosConfig
+
+config = FocoosConfig()
 
 
 class HttpClient:
-    def __init__(self, api_key: str, host_url: str = "https://api.dev.focoos.ai/v0"):
-        self.api_key = api_key
+    def __init__(
+        self, api_key: Optional[str] = None, host_url: str = config.default_host_url
+    ):
+        if not api_key and not config.focoos_api_key:
+            raise ValueError("API key is required")
+        self.api_key = api_key or config.focoos_api_key
         self.host_url = host_url
+
         self.default_headers = {
             "Authorization": f"Bearer {self.api_key}",
             "user_agent": "focoos/0.0.1",
@@ -16,8 +27,8 @@ class HttpClient:
     def get(
         self,
         path: str,
-        params: dict = None,
-        extra_headers: dict = None,
+        params: Optional[dict] = None,
+        extra_headers: Optional[dict] = None,
         stream: bool = False,
     ):
         url = f"{self.host_url}/{path}"
@@ -27,7 +38,11 @@ class HttpClient:
         return requests.get(url, headers=headers, params=params, stream=stream)
 
     def post(
-        self, path: str, data: dict = None, extra_headers: dict = None, files=None
+        self,
+        path: str,
+        data: Optional[dict] = None,
+        extra_headers: Optional[dict] = None,
+        files=None,
     ):
         url = f"{self.host_url}/{path}"
         headers = self.default_headers
@@ -35,7 +50,7 @@ class HttpClient:
             headers.update(extra_headers)
         return requests.post(url, headers=headers, json=data, files=files)
 
-    def delete(self, path: str, extra_headers: dict = None):
+    def delete(self, path: str, extra_headers: Optional[dict] = None):
         url = f"{self.host_url}/{path}"
         headers = self.default_headers
         if extra_headers:
