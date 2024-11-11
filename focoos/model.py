@@ -223,7 +223,7 @@ class FocoosModel:
 
     def infer(
         self,
-        image_path: Union[str, Path],
+        image: Union[bytes, str, Path, np.ndarray, Image.Image],
         threshold: float = 0.5,
         annotate: bool = False,
     ) -> Tuple[FocoosDetections, Optional[np.ndarray]]:
@@ -234,7 +234,7 @@ class FocoosModel:
             resize = 640  #!TODO remove this, and take it from the metadata
         self.logger.debug(f"Resize: {resize}")
         t0 = perf_counter()
-        im1, im0 = image_preprocess(image_path, resize=resize)
+        im1, im0 = image_preprocess(image, resize=resize)
         t1 = perf_counter()
         detections = self.runtime(im1.astype(np.float32), threshold)
         t2 = perf_counter()
