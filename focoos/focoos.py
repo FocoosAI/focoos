@@ -1,5 +1,5 @@
 import os
-from typing import Optional
+from typing import Optional, Union
 
 import requests
 from supervision import Detections
@@ -59,7 +59,7 @@ class Focoos:
     def list_models(self) -> list[ModelPreview]:
         res = self.http_client.get(f"models/")
         if res.status_code == 200:
-            return res.json()
+            return [ModelPreview.from_json(r) for r in res.json()]
         else:
             logger.error(f"Failed to list models: {res.status_code} {res.text}")
             raise ValueError(f"Failed to list models: {res.status_code} {res.text}")
@@ -83,7 +83,7 @@ class Focoos:
             return LocalModel(model_dir)
         else:
             _model_dir = self._download_model(model_ref)
-            return LocalModel(model_dir)
+            return LocalModel(_model_dir)
 
     def get_remote_model(self, model_ref: str) -> RemoteModel:
         return RemoteModel(model_ref, self.http_client)
@@ -99,9 +99,11 @@ class Focoos:
                 "description": description,
             },
         )
-        print(res.json())
         if res.status_code in [200, 201]:
             return RemoteModel(res.json()["ref"], self.http_client)
+        if res.status_code == 409:
+            logger.warning(f"Model already exists: {name}")
+            return self.get_model_by_name(name, remote=True)
         else:
             logger.warning(f"Failed to create new model: {res.status_code} {res.text}")
             return None
@@ -163,3 +165,30 @@ class Focoos:
         else:
             logger.error(f"Failed to download model: {res.status_code} {res.text}")
             raise ValueError(f"Failed to download model: {res.status_code} {res.text}")
+
+    def get_dataset_by_name(self, name: str) -> Optional[DatasetMetadata]:
+        found = False
+        datasets = self.list_shared_datasets()
+        for dataset in datasets:
+            if name == dataset.name:
+                found = True
+                break
+
+        return dataset if found else None
+
+    def get_model_by_name(
+        self, name: str, remote=True
+    ) -> Optional[Union[RemoteModel, LocalModel]]:
+        found = False
+        models = self.list_models()
+        for model in models:
+            if name == model.name:
+                found = True
+                break
+        if found:
+            if remote:
+                return self.get_remote_model(model.ref)
+            else:
+                return self.get_local_model(model.ref)
+        else:
+            return None

@@ -87,3 +87,4 @@ ipython_config.py
 .data
 notebooks/.data
 .venv
+/data

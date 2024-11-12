@@ -150,8 +150,8 @@ class ONNXRuntime:
                 )
             )
         elif opts.coreml and "CoreMLExecutionProvider" in available_providers:
-            # options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-            providers.append("CoreMLExecutionProvider")
+        #     # options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+              providers.append("CoreMLExecutionProvider")
         else:
             binding = None
 
