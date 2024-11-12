@@ -32,11 +32,11 @@ def run_inference(model_name, image, conf):
     if not model_name or not image or not conf:
         raise gr.Error("Model name and image are required")
     if model_name not in loaded_models:
-        model = focoos.get_model(model_name)
+        model = focoos.get_remote_model(model_name)
         loaded_models[model_name] = model
     else:
         model = loaded_models[model_name]
-    detections, annotated_image = model.remote_infer(image, conf, annotate=True)
+    detections, annotated_image = model.infer(image, conf, annotate=True)
     return cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB), detections.model_dump()
 
 

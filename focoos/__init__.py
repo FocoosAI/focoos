@@ -1,3 +1,3 @@
 from .focoos import Focoos
-from .model import FocoosModel
 from .ports import *
+from .remote_model import RemoteModel

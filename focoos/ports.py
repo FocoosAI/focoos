@@ -231,3 +231,12 @@ class LatencyMetrics:
     std: float
     im_size: int
     device: str
+
+
+class RuntimeTypes(str, Enum):
+    ONNX_CUDA32 = "onnx_cuda32"
+    ONNX_CUDA16 = "onnx_cuda16"
+    ONNX_TRT32 = "onnx_trt32"
+    ONNX_TRT16 = "onnx_trt16"
+    ONNX_CPU = "onnx_cpu"
+    COREML = "coreml"
