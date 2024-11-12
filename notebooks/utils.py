@@ -123,7 +123,7 @@ def start_gradio(model, paths, allowed_paths=["/Users/fcdl94/Develop/focoos/data
         cv2.imwrite(tmp_path, img_to_save)
         image = tmp_path
 
-        detections, annotated_image = model.remote_infer(image, conf, annotate=True)
+        detections, annotated_image = model.infer(image, conf, annotate=True)
         os.remove(tmp_path)
         return cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB), detections.model_dump()
 

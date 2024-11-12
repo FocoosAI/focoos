@@ -261,11 +261,11 @@ class RemoteModel:
                 eval_metric = "mIoU"
             else:
                 accuracy = (
-                    metrics["mAP50"][-1]
-                    if "mAP50" in metrics and len(metrics["mAP50"]) > 0
+                    metrics["AP50"][-1]
+                    if "AP50" in metrics and len(metrics["AP50"]) > 0
                     else "-"
                 )
-                eval_metric = "mAP50"
+                eval_metric = "AP50"
             logger.info(
                 f"Iter {iter:.0f}: Loss {total_loss:.2f}, {eval_metric} {accuracy}"
             )

@@ -82,8 +82,8 @@ class Focoos:
         if os.path.exists(os.path.join(model_dir, "model.onnx")):
             return LocalModel(model_dir)
         else:
-            _model_dir = self._download_model(model_ref)
-            return LocalModel(_model_dir)
+            self._download_model(model_ref)
+            return LocalModel(model_dir)
 
     def get_remote_model(self, model_ref: str) -> RemoteModel:
         return RemoteModel(model_ref, self.http_client)
