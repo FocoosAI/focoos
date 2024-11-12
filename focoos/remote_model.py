@@ -97,7 +97,7 @@ class RemoteModel:
             )
 
     def deploy(self, wait: bool = True):
-        self.get_info()
+        self.metadata = self.get_info()
         if self.metadata.status not in [
             ModelStatus.DEPLOYED,
             ModelStatus.TRAINING_COMPLETED,
