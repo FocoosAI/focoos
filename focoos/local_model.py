@@ -73,7 +73,10 @@ class LocalModel:
             annotated_im = self.label_annotator.annotate(
                 scene=annotated_im, detections=detections, labels=labels
             )
-        elif self.metadata.task == FocoosTask.SEMSEG:
+        elif self.metadata.task in [
+            FocoosTask.SEMSEG,
+            FocoosTask.INSTANCE_SEGMENTATION,
+        ]:
             annotated_im = self.mask_annotator.annotate(
                 scene=im.copy(), detections=detections
             )

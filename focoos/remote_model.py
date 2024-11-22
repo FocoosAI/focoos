@@ -204,6 +204,7 @@ class RemoteModel:
         if not os.path.exists(image_path):
             logger.error(f"Image file not found: {image_path}")
             raise FileNotFoundError(f"Image file not found: {image_path}")
+
         files = {"file": open(image_path, "rb")}
         t0 = time.time()
         res = self.http_client.post(
@@ -307,7 +308,7 @@ class RemoteModel:
                 logger.info(f"Model is not training, status: {status['main_status']}")
                 return
 
-    def stop_traing(self):
+    def stop_training(self):
         res = self.http_client.delete(f"models/{self.model_ref}/train")
         if res.status_code != 200:
             logger.error(f"Failed to get stop training: {res.status_code} {res.text}")
