@@ -5,6 +5,9 @@ install:
 install-dev:
 	@pip install -e ".[dev]" --no-cache-dir
 
+install-demo:
+	@pip install -e ".[demo]" --no-cache-dir
+
 install-pre-commit:
 	@pre-commit install
 
