@@ -1,0 +1,35 @@
+name: Run Focoos tests
+on:
+  pull_request:
+  workflow_dispatch:
+env:
+  DOCKER_BUILDKIT: 1
+  AWS_REGION: eu-west-1
+jobs:
+  Run-test:
+    runs-on: actions-runner-cpu
+    permissions:
+      id-token: write # This is required for requesting the JWT
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: install make
+        run: sudo apt-get update && sudo apt-get install ffmpeg libsm6 libxext6 make  -y
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+          cache: "pip"
+      - name: Install dependencies
+        run: make install-dev
+      - name: Run test
+        run: make test
+      - name: Pytest coverage comment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-xml-coverage-path: ./tests/coverage.xml
+          junitxml-path: ./tests/junit.xml
+          report-only-changed-files: true

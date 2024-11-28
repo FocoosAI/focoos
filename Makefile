@@ -3,7 +3,7 @@
 install:
 	@pip install . --no-cache-dir
 install-dev:
-	@pip install -e ".[dev]" --no-cache-dir
+	@pip install -e ".[inference,dev]" --no-cache-dir
 
 install-pre-commit:
 	@pre-commit install
@@ -14,6 +14,8 @@ lint:
 	@black .
 run-pre-commit:
 	@pre-commit run --all-files
+test:
+	@pytest -s --cov=focoos --cov-report="xml:tests/coverage.xml" --junitxml=./tests/junit.xml   && rm -f .coverage
 clean:
 	@rm -rf build dist *.egg-info .tox .nox .coverage .coverage.* .cache .pytest_cache htmlcov
 	@find . -type d -name "__pycache__" -exec rm -r {} +
