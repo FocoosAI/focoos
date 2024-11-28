@@ -27,6 +27,7 @@ jobs:
           branch: main
           file_pattern: pyproject.toml
           add_options: --update
+
           tagging_message: '${{ steps.get_next_version.outputs.new_tag }}'
       - name: Tag version
         id: tag_version
