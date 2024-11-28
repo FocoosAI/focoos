@@ -7,6 +7,7 @@ include = ["focoos**"]
 
 [project]
 name = "focoos"
+version = "0.0.1"
 description = "Focoos SDK"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -20,7 +21,7 @@ dependencies = [
     "numpy~=1.26.4",
     "scipy~=1.14.1",
 ]
-version = "0.0.1"
+
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]
 keywords = [
     "computer_vision",
