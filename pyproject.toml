@@ -7,7 +7,7 @@ include = ["focoos**"]
 
 [project]
 name = "focoos"
-version = "0.0.1"
+version = "v0.0.1"
 description = "Focoos SDK"
 readme = "README.md"
 requires-python = ">=3.10"
