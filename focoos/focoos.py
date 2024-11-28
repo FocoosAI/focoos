@@ -64,10 +64,10 @@ class Focoos:
             logger.error(f"Failed to list models: {res.status_code} {res.text}")
             raise ValueError(f"Failed to list models: {res.status_code} {res.text}")
 
-    def list_focoos_models(self):
+    def list_focoos_models(self) -> list[ModelPreview]:
         res = self.http_client.get(f"models/focoos-models")
         if res.status_code == 200:
-            return res.json()
+            return [ModelPreview.from_json(r) for r in res.json()]
         else:
             logger.error(f"Failed to list focoos models: {res.status_code} {res.text}")
             raise ValueError(
