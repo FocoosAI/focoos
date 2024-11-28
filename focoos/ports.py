@@ -187,6 +187,7 @@ class ModelMetadata(FocoosBaseModel):
 class DatasetMetadata(FocoosBaseModel):
     ref: str
     name: str
+    task: FocoosTask
     layout: DatasetLayout
     description: Optional[str] = None
 
