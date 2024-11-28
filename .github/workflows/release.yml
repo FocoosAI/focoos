@@ -27,11 +27,12 @@ jobs:
           branch: main
           file_pattern: pyproject.toml
           add_options: --update
-      - name: get next version without tagging
+      - name: get next version with tagging
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.2
         with:
             github_token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v2
       - name: Create a GitHub release
         uses: ncipollo/release-action@v1
         with:
