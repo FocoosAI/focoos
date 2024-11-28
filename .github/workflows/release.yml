@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Step 1: Ottenere la prossima versione senza creare un tag
+
       - name: Get next version without tagging
         id: get_next_version
         uses: mathieudutour/github-tag-action@v6.2
@@ -30,22 +30,19 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "[bot]: update version to ${{ steps.get_next_version.outputs.new_version }}"
-          branch: main
           file_pattern: pyproject.toml
-
       # Step 4: Attendere che il commit sia sincronizzato su GitHub
       - name: Wait for commit sync
         run: sleep 15
       - uses: actions/checkout@v4
       # Step 5: Creare e taggare la nuova versione
       - name: Tag version
+
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           dry_run: false
-
-      # Step 6: Creare una release su GitHub
       - name: Create a GitHub release
         uses: ncipollo/release-action@v1
         with:
