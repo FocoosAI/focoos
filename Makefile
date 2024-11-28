@@ -3,7 +3,7 @@
 install:
 	@pip install . --no-cache-dir
 install-dev:
-	@pip install -e ".[dev]" --no-cache-dir
+	@pip install -e ".[inference,dev]" --no-cache-dir
 
 install-pre-commit:
 	@pre-commit install
