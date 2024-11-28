@@ -88,3 +88,4 @@ ipython_config.py
 notebooks/.data
 .venv
 /data
+tests/junit.xml

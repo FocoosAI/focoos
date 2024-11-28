@@ -26,14 +26,14 @@ class Focoos:
     def __init__(
         self,
         api_key: str = config.focoos_api_key,  # type: ignore
-        host_url: FocoosEnvHostUrl = config.default_host_url,
+        host_url: str = config.default_host_url,
     ):
         self.api_key = api_key
         if not self.api_key:
             logger.error("API key is required 🤖")
             raise ValueError("API key is required 🤖")
 
-        self.http_client = HttpClient(api_key, host_url.value)
+        self.http_client = HttpClient(api_key, host_url)
         self.user_info = self._get_user_info()
         self.cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "focoos")
         logger.info(
