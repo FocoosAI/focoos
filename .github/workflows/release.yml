@@ -5,36 +5,38 @@ on:
       - main
   workflow_dispatch:
 jobs:
-  build:
+  release:
     runs-on: actions-runner-cpu
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v2
-      - name: get next version without tagging
+
+      - name: Get next version without tagging
         id: get_next_version
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           dry_run: true
+
       - name: Update pyproject.toml with new version tag
         run: |
           sed -i 's/version = ".*"/version = "${{ steps.get_next_version.outputs.new_version }}"/' pyproject.toml
-      - name: Update project version and commit
+
+      - name: Commit updated pyproject.toml
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "[bot]: update version to ${{ steps.get_next_version.outputs.new_version }}"
-          branch: main
           file_pattern: pyproject.toml
-          add_options: --update
+          branch: main
 
-          tagging_message: '${{ steps.get_next_version.outputs.new_tag }}'
-      - name: Tag version
+      - name: Create and tag version
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           dry_run: false
+
       - name: Create a GitHub release
         uses: ncipollo/release-action@v1
         with:
