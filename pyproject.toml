@@ -7,7 +7,7 @@ include = ["focoos**"]
 
 [project]
 name = "focoos"
-version = "0.1.1"
+version = "0.1.2"
 description = "Focoos SDK"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -43,4 +43,4 @@ dev = [
     "gradio~=5.3.0",
     "sniffio~=1.2.0",
 ]
-gpu = ["onnxruntime-gpu==1.20.1"]
+gpu = ["onnxruntime-gpu==1.20.1","nvidia-cuda-runtime-cu12==12.4.127"]
