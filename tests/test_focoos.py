@@ -1,7 +1,9 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from focoos.ports import ModelMetadata, DatasetMetadata, ModelPreview
+
 from focoos.focoos import Focoos
+from focoos.ports import DatasetMetadata, ModelMetadata, ModelPreview
 from focoos.utils.system import HttpClient
 
 

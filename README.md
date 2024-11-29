@@ -17,16 +17,29 @@
 
 # Focoos SDK
 
+
+## Requirements
+For **local inference**, ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
+
+To install cuDNN 9:
+```bash
+apt-get -y install cudnn9-cuda-12
+```
+
+To perform inference using TensorRT, ensure you have TensorRT version 10.5 installed.
+
 # Install
 
 ```bash
 pip install .
 ```
 
-- local inference (CPU, COREML): `pip install .[inference]`
-- local inference with GPU (CUDA): `pip install .[inference-gpu]`
+- local inference (CPU, COREML): `pip install .`
+- local inference with GPU (CUDA): `pip install .[gpu]`
+
 
 ## 🤖 Cloud Inference
+
 ```python
 from focoos import Focoos
 

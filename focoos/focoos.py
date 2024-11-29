@@ -1,21 +1,13 @@
 import os
 from typing import Optional, Union
 
-import requests
-from supervision import Detections
 from tqdm import tqdm
 
 from focoos.config import FocoosConfig
 from focoos.local_model import LocalModel
-from focoos.ports import (
-    DatasetMetadata,
-    FocoosEnvHostUrl,
-    ModelMetadata,
-    ModelPreview,
-    ModelStatus,
-)
+from focoos.ports import DatasetMetadata, ModelMetadata, ModelPreview, ModelStatus
 from focoos.remote_model import RemoteModel
-from focoos.utils.logger import get_logger, setup_logging
+from focoos.utils.logger import setup_logging
 from focoos.utils.system import HttpClient
 
 logger = setup_logging()

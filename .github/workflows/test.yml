@@ -7,7 +7,7 @@ env:
   AWS_REGION: eu-west-1
 jobs:
   Run-test:
-    runs-on: actions-runner-cpu
+    runs-on: ubuntu-22.04
     permissions:
       id-token: write # This is required for requesting the JWT
       contents: read
@@ -24,7 +24,7 @@ jobs:
           python-version: "3.12"
           cache: "pip"
       - name: Install dependencies
-        run: make install-dev
+        run: pip install .[dev]
       - name: Run test
         run: make test
       - name: Pytest coverage comment

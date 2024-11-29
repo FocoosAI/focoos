@@ -150,8 +150,8 @@ class ONNXRuntime:
                 )
             )
         elif opts.coreml and "CoreMLExecutionProvider" in available_providers:
-        #     # options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-              providers.append("CoreMLExecutionProvider")
+            #     # options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+            providers.append("CoreMLExecutionProvider")
         else:
             binding = None
 
@@ -270,7 +270,7 @@ class ONNXRuntime:
             max=round(durations.max(), 3),
             min=round(durations.min(), 3),
             std=round(durations.std(), 3),
-            im_size=size,
+            im_size=size[0],
             device="",
         )
         self.logger.info(f"🔥 FPS: {metrics.fps}")
@@ -286,10 +286,6 @@ def get_runtime(
     if runtime_type == RuntimeTypes.ONNX_CUDA32:
         opts = OnnxEngineOpts(
             cuda=True, verbose=False, fp16=False, warmup_iter=warmup_iter
-        )
-    elif runtime_type == RuntimeTypes.ONNX_CUDA16:
-        opts = OnnxEngineOpts(
-            cuda=True, verbose=False, fp16=True, warmup_iter=warmup_iter
         )
     elif runtime_type == RuntimeTypes.ONNX_TRT32:
         opts = OnnxEngineOpts(

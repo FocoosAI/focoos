@@ -1,4 +1,4 @@
 {
-    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.typeCheckingMode": "basic",
     "python.analysis.autoImportCompletions": true
 }
