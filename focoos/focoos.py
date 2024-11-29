@@ -9,7 +9,6 @@ from focoos.config import FocoosConfig
 from focoos.local_model import LocalModel
 from focoos.ports import (
     DatasetMetadata,
-    FocoosEnvHostUrl,
     ModelMetadata,
     ModelPreview,
     ModelStatus,

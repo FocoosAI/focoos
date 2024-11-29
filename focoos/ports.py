@@ -11,6 +11,10 @@ S3_URL_REGEX = re.compile(
     r"^s3://" r"(?P<bucket>[a-zA-Z0-9.-]+)/" r"(?P<path>.+(\.tar\.gz|\.zip)?)$"
 )
 
+DEV_API_URL = "https://api.dev.focoos.ai/v0"
+PROD_API_URL = "https://api.focoos.ai/v0"
+LOCAL_API_URL = "http://localhost:8501/v0"
+
 
 class FocoosBaseModel(BaseModel):
     @classmethod
@@ -21,12 +25,6 @@ class FocoosBaseModel(BaseModel):
         else:
             data_dict = data
         return cls.model_validate(data_dict)
-
-
-class FocoosEnvHostUrl(str, Enum):
-    DEV = "https://api.dev.focoos.ai/v0"
-    PROD = "https://api.focoos.ai/v0"
-    LOCAL = "http://localhost:8501/v0"
 
 
 class DeploymentMode(str, Enum):

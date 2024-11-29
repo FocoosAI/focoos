@@ -4,13 +4,13 @@ import cv2
 from dotenv import load_dotenv
 
 import gradio as gr
-from focoos import Focoos, FocoosEnvHostUrl
+from focoos import Focoos
 
 load_dotenv()
 ASSETS_DIR = os.path.dirname(os.path.abspath(__file__)) + "/assets"
 
 focoos_models = []
-focoos = Focoos(api_key=os.getenv("FOCOOS_API_KEY"), host_url=FocoosEnvHostUrl.PROD)
+focoos = Focoos(api_key=os.getenv("FOCOOS_API_KEY"))
 focoos_models = [
     model["ref"]
     for model in focoos.list_focoos_models()
