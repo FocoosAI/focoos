@@ -30,12 +30,21 @@ To perform inference using TensorRT, ensure you have TensorRT version 10.5 insta
 
 # Install
 
+Nvidia GPU:
 ```bash
-pip install .
+pip install .[gpu]
 ```
 
-- local inference (CPU, COREML): `pip install .`
-- local inference with GPU (CUDA): `pip install .[gpu]`
+Nvidia GPU,TensorRT:
+```bash
+pip install .[gpu,tensorrt]
+```
+
+CPU,COREML:
+```bash
+pip install .[cpu]
+```
+
 
 
 ## 🤖 Cloud Inference
