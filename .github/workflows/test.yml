@@ -24,7 +24,7 @@ jobs:
           python-version: "3.12"
           cache: "pip"
       - name: Install dependencies
-        run: make install-dev
+        run: pip install .[dev]
       - name: Run test
         run: make test
       - name: Pytest coverage comment

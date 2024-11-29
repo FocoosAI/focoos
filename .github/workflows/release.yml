@@ -33,11 +33,10 @@ jobs:
           file_pattern: pyproject.toml
       # Step 4: Attendere che il commit sia sincronizzato su GitHub
       - name: Wait for commit sync
-        run: sleep 15
+        run: sleep 10
       - uses: actions/checkout@v4
       # Step 5: Creare e taggare la nuova versione
       - name: Tag version
-
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.2
         with:

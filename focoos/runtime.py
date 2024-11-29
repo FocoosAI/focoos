@@ -287,10 +287,6 @@ def get_runtime(
         opts = OnnxEngineOpts(
             cuda=True, verbose=False, fp16=False, warmup_iter=warmup_iter
         )
-    elif runtime_type == RuntimeTypes.ONNX_CUDA16:
-        opts = OnnxEngineOpts(
-            cuda=True, verbose=False, fp16=True, warmup_iter=warmup_iter
-        )
     elif runtime_type == RuntimeTypes.ONNX_TRT32:
         opts = OnnxEngineOpts(
             cuda=False, verbose=False, trt=True, fp16=False, warmup_iter=warmup_iter

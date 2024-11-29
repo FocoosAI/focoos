@@ -20,6 +20,7 @@ dependencies = [
     "tqdm~=4.67.1",
     "numpy~=1.26.4",
     "scipy~=1.14.1",
+    "onnxruntime==1.20.1"
 ]
 
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]
@@ -42,6 +43,4 @@ dev = [
     "gradio~=5.3.0",
     "sniffio~=1.2.0",
 ]
-
-inference = ["onnxruntime==1.18.0"]
-inference-gpu = ["onnxruntime-gpu==1.18.0"]
+gpu = ["onnxruntime-gpu==1.20.1"]
