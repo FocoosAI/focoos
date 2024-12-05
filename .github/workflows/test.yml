@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 env:
   DOCKER_BUILDKIT: 1
-  AWS_REGION: eu-west-1
+  UV_SYSTEM_PYTHON: 1
 jobs:
   Run-test:
     runs-on: ubuntu-22.04
@@ -13,6 +13,9 @@ jobs:
       contents: read
       issues: write
       pull-requests: write
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11","3.12"]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -21,10 +24,13 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.12"
-          cache: "pip"
+          python-version:  ${{ matrix.python-version }}
+      - name: Install the latest version of uv and set the python version to 3.12
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version:  ${{ matrix.python-version }}
       - name: Install dependencies
-        run: pip install .[cpu,dev]
+        run: uv pip install .[cpu,dev]
       - name: Run test
         run: make test
       - name: Pytest coverage comment

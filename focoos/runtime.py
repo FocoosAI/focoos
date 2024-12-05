@@ -100,6 +100,14 @@ class ONNXRuntime:
         options.enable_profiling = opts.verbose
         # options.intra_op_num_threads = 1
         available_providers = ort.get_available_providers()
+        if opts.cuda and "CUDAExecutionProvider" not in available_providers:
+            self.logger.warning("CUDA ExecutionProvider not found.")
+        if opts.trt and "TensorrtExecutionProvider" not in available_providers:
+            self.logger.warning("Tensorrt ExecutionProvider not found.")
+        if opts.vino and "OpenVINOExecutionProvider" not in available_providers:
+            self.logger.warning("OpenVINO ExecutionProvider not found.")
+        if opts.coreml and "CoreMLExecutionProvider" not in available_providers:
+            self.logger.warning("CoreML ExecutionProvider not found.")
         # Set providers
         providers = []
         dtype = np.float32
@@ -160,7 +168,9 @@ class ONNXRuntime:
         self.dtype = dtype
         self.binding = binding
         self.ort_sess = ort.InferenceSession(model_path, options, providers=providers)
-        self.logger.info(f"[onnxruntime] Providers:{self.ort_sess.get_providers()}")
+        self.logger.info(
+            f"[onnxruntime] Active providers:{self.ort_sess.get_providers()}"
+        )
         if self.ort_sess.get_inputs()[0].type == "tensor(uint8)":
             self.dtype = np.uint8
         else:
@@ -297,7 +307,7 @@ def get_runtime(
         )
     elif runtime_type == RuntimeTypes.ONNX_CPU:
         opts = OnnxEngineOpts(cuda=False, verbose=False, warmup_iter=warmup_iter)
-    elif runtime_type == RuntimeTypes.COREML:
+    elif runtime_type == RuntimeTypes.ONNX_COREML:
         opts = OnnxEngineOpts(
             cuda=False, verbose=False, coreml=True, warmup_iter=warmup_iter
         )

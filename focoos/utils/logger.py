@@ -2,6 +2,8 @@ import logging
 import logging.config
 from functools import cache
 
+from focoos.config import FOCOOS_CONFIG, LogLevel
+
 
 class ColoredFormatter(logging.Formatter):
     log_format = "[%(asctime)s][%(levelname)s][%(name)s]: %(message)s"
@@ -43,7 +45,7 @@ LOGGING_CONFIG = {
         "default": {
             "class": "logging.StreamHandler",
             "formatter": "color",
-            "level": "DEBUG",
+            "level": FOCOOS_CONFIG.focoos_log_level,
         },
     },
     "root": {  # Configura il logger di default (root)
@@ -53,7 +55,7 @@ LOGGING_CONFIG = {
     "loggers": {
         "focoos": {
             "handlers": ["default"],
-            "level": "DEBUG",
+            "level": FOCOOS_CONFIG.focoos_log_level,
             "propagate": False,
         },
         "matplotlib": {"level": "WARNING"},
@@ -63,10 +65,10 @@ LOGGING_CONFIG = {
 
 
 @cache
-def get_logger(name="focoos", level=logging.DEBUG):
+def get_logger(name="focoos", level: LogLevel = FOCOOS_CONFIG.focoos_log_level):
     logger = logging.getLogger(name)
     logger.setLevel(level)
-    return logging.getLogger(name)
+    return logger
 
 
 def setup_logging():
