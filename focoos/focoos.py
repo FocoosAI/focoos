@@ -3,22 +3,21 @@ from typing import Optional, Union
 
 from tqdm import tqdm
 
-from focoos.config import FocoosConfig
+from focoos.config import FOCOOS_CONFIG
 from focoos.local_model import LocalModel
-from focoos.ports import DatasetMetadata, ModelMetadata, ModelPreview, ModelStatus
+from focoos.ports import DatasetMetadata, ModelMetadata, ModelPreview
 from focoos.remote_model import RemoteModel
 from focoos.utils.logger import setup_logging
 from focoos.utils.system import HttpClient
 
 logger = setup_logging()
-config = FocoosConfig()
 
 
 class Focoos:
     def __init__(
         self,
-        api_key: str = config.focoos_api_key,  # type: ignore
-        host_url: str = config.default_host_url,
+        api_key: str = FOCOOS_CONFIG.focoos_api_key,  # type: ignore
+        host_url: str = FOCOOS_CONFIG.default_host_url,
     ):
         self.api_key = api_key
         if not self.api_key:

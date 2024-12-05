@@ -5,35 +5,23 @@ from time import sleep
 from typing import Optional, Tuple, Union
 
 import numpy as np
-from PIL import Image
 from supervision import BoxAnnotator, Detections, LabelAnnotator, MaskAnnotator
-from tqdm import tqdm
 
-from focoos.config import FocoosConfig
 from focoos.ports import (
-    DeploymentMode,
     FocoosDet,
     FocoosDetections,
     FocoosTask,
     Hyperparameters,
-    LatencyMetrics,
     ModelMetadata,
     ModelStatus,
-    OnnxEngineOpts,
     TrainInstance,
 )
-from focoos.runtime import ONNXRuntime
 from focoos.utils.logger import get_logger
 from focoos.utils.system import HttpClient
 from focoos.utils.vision import (
     focoos_detections_to_supervision,
     image_loader,
-    image_preprocess,
-    scale_detections,
-    sv_to_focoos_detections,
 )
-
-config = FocoosConfig()
 
 logger = get_logger()
 

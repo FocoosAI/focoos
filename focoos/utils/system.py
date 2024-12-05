@@ -2,18 +2,15 @@ from typing import Optional
 
 import requests
 
-from focoos.config import FocoosConfig
-
-config = FocoosConfig()
+from focoos.config import FOCOOS_CONFIG
 
 
 class HttpClient:
     def __init__(
-        self, api_key: Optional[str] = None, host_url: str = config.default_host_url
+        self, api_key: str = FOCOOS_CONFIG.focoos_api_key, # type: ignore
+        host_url: str = FOCOOS_CONFIG.default_host_url
     ):
-        if not api_key and not config.focoos_api_key:
-            raise ValueError("API key is required")
-        self.api_key = api_key or config.focoos_api_key
+        self.api_key = api_key
         self.host_url = host_url
 
         self.default_headers = {
