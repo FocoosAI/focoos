@@ -8,12 +8,10 @@ from focoos.config import FOCOOS_CONFIG
 class HttpClient:
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        host_url: str = FOCOOS_CONFIG.default_host_url,
+        api_key: str,
+        host_url: str,
     ):
-        if not api_key and not FOCOOS_CONFIG.focoos_api_key:
-            raise ValueError("API key is required")
-        self.api_key = api_key or FOCOOS_CONFIG.focoos_api_key
+        self.api_key = api_key
         self.host_url = host_url
 
         self.default_headers = {
