@@ -7,8 +7,9 @@ from focoos.config import FOCOOS_CONFIG
 
 class HttpClient:
     def __init__(
-        self, api_key: str = FOCOOS_CONFIG.focoos_api_key, # type: ignore
-        host_url: str = FOCOOS_CONFIG.default_host_url
+        self,
+        api_key: str = FOCOOS_CONFIG.focoos_api_key,  # type: ignore
+        host_url: str = FOCOOS_CONFIG.default_host_url,
     ):
         self.api_key = api_key
         self.host_url = host_url

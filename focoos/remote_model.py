@@ -18,10 +18,7 @@ from focoos.ports import (
 )
 from focoos.utils.logger import get_logger
 from focoos.utils.system import HttpClient
-from focoos.utils.vision import (
-    focoos_detections_to_supervision,
-    image_loader,
-)
+from focoos.utils.vision import focoos_detections_to_supervision, image_loader
 
 logger = get_logger()
 
