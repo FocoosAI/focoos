@@ -100,6 +100,14 @@ class ONNXRuntime:
         options.enable_profiling = opts.verbose
         # options.intra_op_num_threads = 1
         available_providers = ort.get_available_providers()
+        if opts.cuda and "CUDAExecutionProvider" not in available_providers:
+            self.logger.warning("CUDA ExecutionProvider not found.")
+        if opts.trt and "TensorrtExecutionProvider" not in available_providers:
+            self.logger.warning("Tensorrt ExecutionProvider not found.")
+        if opts.vino and "OpenVINOExecutionProvider" not in available_providers:
+            self.logger.warning("OpenVINO ExecutionProvider not found.")
+        if opts.coreml and "CoreMLExecutionProvider" not in available_providers:
+            self.logger.warning("CoreML ExecutionProvider not found.")
         # Set providers
         providers = []
         dtype = np.float32
@@ -150,8 +158,8 @@ class ONNXRuntime:
                 )
             )
         elif opts.coreml and "CoreMLExecutionProvider" in available_providers:
-        #     # options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-              providers.append("CoreMLExecutionProvider")
+            #     # options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+            providers.append("CoreMLExecutionProvider")
         else:
             binding = None
 
@@ -160,7 +168,9 @@ class ONNXRuntime:
         self.dtype = dtype
         self.binding = binding
         self.ort_sess = ort.InferenceSession(model_path, options, providers=providers)
-        self.logger.info(f"[onnxruntime] Providers:{self.ort_sess.get_providers()}")
+        self.logger.info(
+            f"[onnxruntime] Active providers:{self.ort_sess.get_providers()}"
+        )
         if self.ort_sess.get_inputs()[0].type == "tensor(uint8)":
             self.dtype = np.uint8
         else:
@@ -270,7 +280,7 @@ class ONNXRuntime:
             max=round(durations.max(), 3),
             min=round(durations.min(), 3),
             std=round(durations.std(), 3),
-            im_size=size,
+            im_size=size[0],
             device="",
         )
         self.logger.info(f"🔥 FPS: {metrics.fps}")
@@ -287,10 +297,6 @@ def get_runtime(
         opts = OnnxEngineOpts(
             cuda=True, verbose=False, fp16=False, warmup_iter=warmup_iter
         )
-    elif runtime_type == RuntimeTypes.ONNX_CUDA16:
-        opts = OnnxEngineOpts(
-            cuda=True, verbose=False, fp16=True, warmup_iter=warmup_iter
-        )
     elif runtime_type == RuntimeTypes.ONNX_TRT32:
         opts = OnnxEngineOpts(
             cuda=False, verbose=False, trt=True, fp16=False, warmup_iter=warmup_iter
@@ -301,7 +307,7 @@ def get_runtime(
         )
     elif runtime_type == RuntimeTypes.ONNX_CPU:
         opts = OnnxEngineOpts(cuda=False, verbose=False, warmup_iter=warmup_iter)
-    elif runtime_type == RuntimeTypes.COREML:
+    elif runtime_type == RuntimeTypes.ONNX_COREML:
         opts = OnnxEngineOpts(
             cuda=False, verbose=False, coreml=True, warmup_iter=warmup_iter
         )

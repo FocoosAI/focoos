@@ -83,8 +83,10 @@ profile_default/
 ipython_config.py
 
 .env
+.envrc
 .focoos
 .data
 notebooks/.data
 .venv
 /data
+tests/junit.xml

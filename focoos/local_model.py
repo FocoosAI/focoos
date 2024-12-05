@@ -7,7 +7,7 @@ import numpy as np
 from PIL import Image
 from supervision import BoxAnnotator, Detections, LabelAnnotator, MaskAnnotator
 
-from focoos.config import FocoosConfig
+from focoos.config import FOCOOS_CONFIG
 from focoos.ports import (
     FocoosDetections,
     FocoosTask,
@@ -24,14 +24,13 @@ from focoos.utils.vision import (
 )
 
 logger = get_logger(__name__)
-config = FocoosConfig()
 
 
 class LocalModel:
     def __init__(
         self,
         model_dir: Union[str, Path],
-        runtime_type: RuntimeTypes = config.runtime_type,
+        runtime_type: RuntimeTypes = FOCOOS_CONFIG.runtime_type,
     ):
         logger.debug(f"Runtime type: {runtime_type}, Loading model from {model_dir},")
         if not os.path.exists(model_dir):
@@ -46,7 +45,7 @@ class LocalModel:
             runtime_type,
             str(os.path.join(model_dir, "model.onnx")),
             self.metadata,
-            config.warmup_iter,
+            FOCOOS_CONFIG.warmup_iter,
         )
 
     def _read_metadata(self) -> ModelMetadata:

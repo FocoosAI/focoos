@@ -1,0 +1,41 @@
+name: Run Focoos tests
+on:
+  pull_request:
+  workflow_dispatch:
+env:
+  DOCKER_BUILDKIT: 1
+  UV_SYSTEM_PYTHON: 1
+jobs:
+  Run-test:
+    runs-on: ubuntu-22.04
+    permissions:
+      id-token: write # This is required for requesting the JWT
+      contents: read
+      issues: write
+      pull-requests: write
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11","3.12"]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: install make
+        run: sudo apt-get update && sudo apt-get install ffmpeg libsm6 libxext6 make  -y
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version:  ${{ matrix.python-version }}
+      - name: Install the latest version of uv and set the python version to 3.12
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version:  ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: uv pip install .[cpu,dev]
+      - name: Run test
+        run: make test
+      - name: Pytest coverage comment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-xml-coverage-path: ./tests/coverage.xml
+          junitxml-path: ./tests/junit.xml
+          report-only-changed-files: true

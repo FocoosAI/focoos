@@ -14,19 +14,42 @@
 | focoos_isaid_nano   | Semantic Segmentation | -       | Satellite Imagery, 15 classes   |
 | focoos_isaid_medium | Semantic Segmentation | -       | Satellite Imagery, 15 classes   |
 
-
 # Focoos SDK
+
+## Requirements
+
+For **local inference**, ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
+
+To install cuDNN 9:
+
+```bash
+apt-get -y install cudnn9-cuda-12
+```
+
+To perform inference using TensorRT, ensure you have TensorRT version 10.5 installed.
 
 # Install
 
+Nvidia GPU:
+
 ```bash
-pip install .
+pip install '.[gpu]'
 ```
 
-- local inference (CPU, COREML): `pip install .[inference]`
-- local inference with GPU (CUDA): `pip install .[inference-gpu]`
+Nvidia GPU,TensorRT:
+
+```bash
+pip install '.[gpu,tensorrt]'
+```
+
+CPU,COREML:
+
+```bash
+pip install '.[cpu]'
+```
 
 ## 🤖 Cloud Inference
+
 ```python
 from focoos import Focoos
 
@@ -36,12 +59,13 @@ model = focoos.get_remote_model("focoos_object365")
 model.deploy()
 detections = model.infer("./image.jpg", threshold=0.4)
 ```
+
 ## 🤖 Cloud Inference with Gradio
 
 setup FOCOOS_API_KEY_GRADIO environment variable with your Focoos API key
 
 ```bash
-pip install .[gradio]
+pip install '.[gradio]'
 ```
 
 ```bash
@@ -49,6 +73,7 @@ python gradio/app.py
 ```
 
 ## Local Inference
+
 ```python
 from focoos import Focoos
 

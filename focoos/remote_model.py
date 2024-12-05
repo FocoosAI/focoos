@@ -5,35 +5,20 @@ from time import sleep
 from typing import Optional, Tuple, Union
 
 import numpy as np
-from PIL import Image
 from supervision import BoxAnnotator, Detections, LabelAnnotator, MaskAnnotator
-from tqdm import tqdm
 
-from focoos.config import FocoosConfig
 from focoos.ports import (
-    DeploymentMode,
     FocoosDet,
     FocoosDetections,
     FocoosTask,
     Hyperparameters,
-    LatencyMetrics,
     ModelMetadata,
     ModelStatus,
-    OnnxEngineOpts,
     TrainInstance,
 )
-from focoos.runtime import ONNXRuntime
 from focoos.utils.logger import get_logger
 from focoos.utils.system import HttpClient
-from focoos.utils.vision import (
-    focoos_detections_to_supervision,
-    image_loader,
-    image_preprocess,
-    scale_detections,
-    sv_to_focoos_detections,
-)
-
-config = FocoosConfig()
+from focoos.utils.vision import focoos_detections_to_supervision, image_loader
 
 logger = get_logger()
 
@@ -136,15 +121,19 @@ class RemoteModel:
 
     def infer(
         self,
-        image_path: Union[str, Path],
+        image: Union[str, Path, bytes],
         threshold: float = 0.5,
         annotate: bool = False,
     ) -> Tuple[FocoosDetections, Optional[np.ndarray]]:
-        if not os.path.exists(image_path):
-            logger.error(f"Image file not found: {image_path}")
-            raise FileNotFoundError(f"Image file not found: {image_path}")
-
-        files = {"file": open(image_path, "rb")}
+        image_bytes = None
+        if not isinstance(image, bytes):
+            if not os.path.exists(image):
+                logger.error(f"Image file not found: {image}")
+                raise FileNotFoundError(f"Image file not found: {image}")
+            image_bytes = open(image, "rb").read()
+        else:
+            image_bytes = image
+        files = {"file": image_bytes}
         t0 = time.time()
         res = self.http_client.post(
             f"models/{self.model_ref}/inference?confidence_threshold={threshold}",
@@ -161,7 +150,7 @@ class RemoteModel:
             )
             preview = None
             if annotate:
-                im0 = image_loader(image_path)
+                im0 = image_loader(image)
                 sv_detections = focoos_detections_to_supervision(detections)
                 preview = self._annotate(im0, sv_detections)
             return detections, preview

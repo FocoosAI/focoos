@@ -10,13 +10,13 @@ install-demo:
 
 install-pre-commit:
 	@pre-commit install
-
-
 lint:
 	@isort . --profile=black
 	@black .
 run-pre-commit:
 	@pre-commit run --all-files
+test:
+	@pytest -s --cov=focoos --cov-report="xml:tests/coverage.xml" --junitxml=./tests/junit.xml   && rm -f .coverage
 clean:
 	@rm -rf build dist *.egg-info .tox .nox .coverage .coverage.* .cache .pytest_cache htmlcov
 	@find . -type d -name "__pycache__" -exec rm -r {} +

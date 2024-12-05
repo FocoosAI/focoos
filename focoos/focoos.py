@@ -1,39 +1,30 @@
 import os
 from typing import Optional, Union
 
-import requests
-from supervision import Detections
 from tqdm import tqdm
 
-from focoos.config import FocoosConfig
+from focoos.config import FOCOOS_CONFIG
 from focoos.local_model import LocalModel
-from focoos.ports import (
-    DatasetMetadata,
-    FocoosEnvHostUrl,
-    ModelMetadata,
-    ModelPreview,
-    ModelStatus,
-)
+from focoos.ports import DatasetMetadata, ModelMetadata, ModelPreview, RuntimeTypes
 from focoos.remote_model import RemoteModel
-from focoos.utils.logger import get_logger, setup_logging
+from focoos.utils.logger import setup_logging
 from focoos.utils.system import HttpClient
 
 logger = setup_logging()
-config = FocoosConfig()
 
 
 class Focoos:
     def __init__(
         self,
-        api_key: str = config.focoos_api_key,  # type: ignore
-        host_url: FocoosEnvHostUrl = config.default_host_url,
+        api_key: str = FOCOOS_CONFIG.focoos_api_key,  # type: ignore
+        host_url: str = FOCOOS_CONFIG.default_host_url,
     ):
         self.api_key = api_key
         if not self.api_key:
             logger.error("API key is required 🤖")
             raise ValueError("API key is required 🤖")
 
-        self.http_client = HttpClient(api_key, host_url.value)
+        self.http_client = HttpClient(api_key, host_url)
         self.user_info = self._get_user_info()
         self.cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "focoos")
         logger.info(
@@ -64,10 +55,10 @@ class Focoos:
             logger.error(f"Failed to list models: {res.status_code} {res.text}")
             raise ValueError(f"Failed to list models: {res.status_code} {res.text}")
 
-    def list_focoos_models(self):
+    def list_focoos_models(self) -> list[ModelPreview]:
         res = self.http_client.get(f"models/focoos-models")
         if res.status_code == 200:
-            return res.json()
+            return [ModelPreview.from_json(r) for r in res.json()]
         else:
             logger.error(f"Failed to list focoos models: {res.status_code} {res.text}")
             raise ValueError(
@@ -77,13 +68,12 @@ class Focoos:
     def get_local_model(
         self,
         model_ref: str,
+        runtime_type: RuntimeTypes = FOCOOS_CONFIG.runtime_type,
     ) -> LocalModel:
         model_dir = os.path.join(self.cache_dir, model_ref)
-        if os.path.exists(os.path.join(model_dir, "model.onnx")):
-            return LocalModel(model_dir)
-        else:
+        if not os.path.exists(os.path.join(model_dir, "model.onnx")):
             self._download_model(model_ref)
-            return LocalModel(model_dir)
+        return LocalModel(model_dir, runtime_type)
 
     def get_remote_model(self, model_ref: str) -> RemoteModel:
         return RemoteModel(model_ref, self.http_client)

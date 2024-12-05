@@ -7,6 +7,7 @@ include = ["focoos**"]
 
 [project]
 name = "focoos"
+version = "0.1.4"
 description = "Focoos SDK"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -16,11 +17,11 @@ dependencies = [
     "supervision~=0.24.0",
     "pydantic~=2.8.2",
     "pydantic-settings~=2.5.0",
-    "tqdm~=4.66.6",
+    "tqdm~=4.67.1",
     "numpy~=1.26.4",
     "scipy~=1.14.1",
 ]
-version = "0.0.1"
+
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]
 keywords = [
     "computer_vision",
@@ -41,8 +42,6 @@ dev = [
     "gradio~=5.3.0",
     "sniffio~=1.2.0",
 ]
-
-inference = ["onnxruntime==1.18.0"]
-inference-gpu = ["onnxruntime-gpu==1.18.0"]
-
-demo = ["gradio~=5.6.0", "opencv-python~=4.9.0", "supervision~=0.24.0", "matplotlib~=3.8.2"]
+cpu = ["onnxruntime==1.20.1"]
+gpu = ["onnxruntime-gpu==1.20.1","nvidia-cuda-runtime-cu12==12.4.127"]
+tensorrt = ["tensorrt==10.5.0"]
