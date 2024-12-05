@@ -100,6 +100,14 @@ class ONNXRuntime:
         options.enable_profiling = opts.verbose
         # options.intra_op_num_threads = 1
         available_providers = ort.get_available_providers()
+        if opts.cuda and "CUDAExecutionProvider" not in available_providers:
+            self.logger.warning("CUDA ExecutionProvider not found.")
+        if opts.trt and "TensorrtExecutionProvider" not in available_providers:
+            self.logger.warning("Tensorrt ExecutionProvider not found.")
+        if opts.vino and "OpenVINOExecutionProvider" not in available_providers:
+            self.logger.warning("OpenVINO ExecutionProvider not found.")
+        if opts.coreml and "CoreMLExecutionProvider" not in available_providers:
+            self.logger.warning("CoreML ExecutionProvider not found.")
         # Set providers
         providers = []
         dtype = np.float32
@@ -156,15 +164,6 @@ class ONNXRuntime:
             binding = None
 
         binding = None  # TODO: remove this
-        if opts.cuda and "CUDAExecutionProvider" not in providers:
-            self.logger.warning("CUDA ExecutionProvider not found.")
-        if opts.trt and "TensorrtExecutionProvider" not in providers:
-            self.logger.warning("Tensorrt ExecutionProvider not found.")
-        if opts.vino and "OpenVINOExecutionProvider" not in providers:
-            self.logger.warning("OpenVINO ExecutionProvider not found.")
-        if opts.coreml and "CoreMLExecutionProvider" not in providers:
-            self.logger.warning("CoreML ExecutionProvider not found.")
-
         providers.append("CPUExecutionProvider")
         self.dtype = dtype
         self.binding = binding
