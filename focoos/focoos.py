@@ -160,7 +160,7 @@ class Focoos:
         found = False
         datasets = self.list_shared_datasets()
         for dataset in datasets:
-            if name == dataset.name:
+            if name.lower() == dataset.name.lower():
                 found = True
                 break
 
@@ -172,7 +172,7 @@ class Focoos:
         found = False
         models = self.list_models()
         for model in models:
-            if name == model.name:
+            if name.lower() == model.name.lower():
                 found = True
                 break
         if found:
