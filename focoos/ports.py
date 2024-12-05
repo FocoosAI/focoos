@@ -237,4 +237,4 @@ class RuntimeTypes(str, Enum):
     ONNX_TRT32 = "onnx_trt32"
     ONNX_TRT16 = "onnx_trt16"
     ONNX_CPU = "onnx_cpu"
-    COREML = "coreml"
+    ONNX_COREML = "onnx_coreml"
