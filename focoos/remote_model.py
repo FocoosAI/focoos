@@ -54,8 +54,9 @@ class RemoteModel:
 
     def get_info(self) -> ModelMetadata:
         res = self.http_client.get(f"models/{self.model_ref}")
+        self.metadata = ModelMetadata(**res.json())
         if res.status_code == 200:
-            return ModelMetadata(**res.json())
+            return self.metadata
         else:
             logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
@@ -96,58 +97,6 @@ class RemoteModel:
                 f"Failed to get train status: {res.status_code} {res.text}"
             )
 
-    def deploy(self, wait: bool = True):
-        self.metadata = self.get_info()
-        if self.metadata.status not in [
-            ModelStatus.DEPLOYED,
-            ModelStatus.TRAINING_COMPLETED,
-        ]:
-            raise ValueError(
-                f"Model {self.model_ref} is not in a valid state to be deployed. Current status: {self.metadata.status}, expected: {ModelStatus.TRAINING_COMPLETED}"
-            )
-        if self.metadata.status == ModelStatus.DEPLOYED:
-            deployment_info = self._deployment_info()
-            logger.debug(
-                f"Model {self.model_ref} is already deployed, deployment info: {deployment_info}"
-            )
-            return deployment_info
-
-        logger.info(
-            f"🚀 Deploying model {self.model_ref} to inference endpoint... this might take a while."
-        )
-        res = self.http_client.post(f"models/{self.model_ref}/deploy")
-        if res.status_code in [200, 201, 409]:
-            if res.status_code == 409:
-                logger.info(f"Status code 409, model is already deployed")
-
-            if wait:
-                for i in range(self.max_deploy_wait):
-                    logger.info(
-                        f"⏱️ Waiting for model {self.model_ref} to be ready... {i+1} of {self.max_deploy_wait}"
-                    )
-                    if self._deployment_info()["status"] == "READY":
-                        logger.info(f"✅ Model {self.model_ref} deployed successfully")
-                        return
-                    time.sleep(1 + i)
-                logger.error(
-                    f"Model {self.model_ref} deployment timed out after {self.max_deploy_wait} attempts."
-                )
-                raise ValueError(
-                    f"Model {self.model_ref} deployment timed out after {self.max_deploy_wait} attempts."
-                )
-            return res.json()
-        else:
-            logger.error(f"Failed to deploy model: {res.status_code} {res.text}")
-            raise ValueError(f"Failed to deploy model: {res.status_code} {res.text}")
-
-    def unload(self):
-        res = self.http_client.delete(f"models/{self.model_ref}/deploy")
-        if res.status_code in [200, 204, 409]:
-            return res.json()
-        else:
-            logger.error(f"Failed to unload model: {res.status_code} {res.text}")
-            raise ValueError(f"Failed to unload model: {res.status_code} {res.text}")
-
     def train_logs(self) -> list[str]:
         res = self.http_client.get(f"models/{self.model_ref}/train/logs")
         if res.status_code == 200:
@@ -155,16 +104,6 @@ class RemoteModel:
         else:
             logger.warning(f"Failed to get train logs: {res.status_code} {res.text}")
             return []
-
-    def _deployment_info(self):
-        res = self.http_client.get(f"models/{self.model_ref}/deploy")
-        if res.status_code == 200:
-            return res.json()
-        else:
-            logger.error(f"Failed to get deployment info: {res.status_code} {res.text}")
-            raise ValueError(
-                f"Failed to get deployment info: {res.status_code} {res.text}"
-            )
 
     def _annotate(self, im: np.ndarray, detections: Detections) -> np.ndarray:
         classes = self.metadata.classes
