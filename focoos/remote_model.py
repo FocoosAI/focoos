@@ -13,7 +13,6 @@ from focoos.ports import (
     FocoosTask,
     Hyperparameters,
     ModelMetadata,
-    ModelStatus,
     TrainInstance,
 )
 from focoos.utils.logger import get_logger
