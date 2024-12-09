@@ -165,16 +165,10 @@ class Focoos:
     def get_model_by_name(
         self, name: str, remote=True
     ) -> Optional[Union[RemoteModel, LocalModel]]:
-        found = False
         models = self.list_models()
         for model in models:
             if name.lower() == model.name.lower():
-                found = True
-                break
-        if found:
-            if remote:
-                return self.get_remote_model(model.ref)
-            else:
-                return self.get_local_model(model.ref)
-        else:
-            return None
+                if remote:
+                    return self.get_remote_model(model.ref)
+                else:
+                    return self.get_local_model(model.ref)
