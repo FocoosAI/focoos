@@ -4,6 +4,7 @@ from pathlib import Path
 from time import sleep
 from typing import Optional, Tuple, Union
 
+import cv2
 import numpy as np
 from supervision import BoxAnnotator, Detections, LabelAnnotator, MaskAnnotator
 
@@ -120,16 +121,19 @@ class RemoteModel:
 
     def infer(
         self,
-        image: Union[str, Path, bytes],
+        image: Union[str, Path, np.ndarray, bytes],
         threshold: float = 0.5,
         annotate: bool = False,
     ) -> Tuple[FocoosDetections, Optional[np.ndarray]]:
         image_bytes = None
-        if not isinstance(image, bytes):
+        if isinstance(image, str) or isinstance(image, Path):
             if not os.path.exists(image):
                 logger.error(f"Image file not found: {image}")
                 raise FileNotFoundError(f"Image file not found: {image}")
             image_bytes = open(image, "rb").read()
+        elif isinstance(image, np.ndarray):
+            _, buffer = cv2.imencode(".jpg", image)
+            image_bytes = buffer.tobytes()
         else:
             image_bytes = image
         files = {"file": image_bytes}
