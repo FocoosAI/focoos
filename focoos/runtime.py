@@ -1,3 +1,23 @@
+"""
+Runtime Module for ONNX-based Models
+
+This module provides the necessary functionality for loading, preprocessing,
+running inference, and benchmarking ONNX-based models using different execution
+providers such as CUDA, TensorRT, OpenVINO, and CPU. It includes utility functions
+for image preprocessing, postprocessing, and interfacing with the ONNXRuntime library.
+
+Functions:
+    preprocess_image: Preprocesses an image for model input.
+    postprocess_image: Postprocesses the output image from the model.
+    image_to_byte_array: Converts a PIL image to a byte array.
+    det_postprocess: Postprocesses detection model outputs into Detections.
+    semseg_postprocess: Postprocesses semantic segmentation model outputs into Detections.
+    get_runtime: Returns an ONNXRuntime instance configured for the given runtime type.
+
+Classes:
+    ONNXRuntime: A class that interfaces with ONNX Runtime for model inference.
+"""
+
 import io
 from pathlib import Path
 from time import perf_counter
@@ -21,6 +41,17 @@ GPU_ID = 0
 
 
 def preprocess_image(bytes, dtype=np.float32) -> Tuple[np.ndarray, Image.Image]:
+    """
+    Preprocesses the input image (in bytes) for inference by converting it to a numpy array.
+
+    Args:
+        bytes (bytes): Image data in bytes format (e.g., JPEG, PNG).
+        dtype (np.dtype, optional): The data type to cast the image array to. Defaults to np.float32.
+
+    Returns:
+        Tuple[np.ndarray, Image.Image]: A tuple containing the processed image as a numpy array
+                                        and the original PIL image.
+    """
     pil_img = Image.open(io.BytesIO(bytes))
     img_numpy = np.ascontiguousarray(
         np.array(pil_img).transpose(2, 0, 1)[np.newaxis, :]  # HWC->CHW
@@ -31,11 +62,30 @@ def preprocess_image(bytes, dtype=np.float32) -> Tuple[np.ndarray, Image.Image]:
 def postprocess_image(
     cmapped_image: np.ndarray, input_image: Image.Image
 ) -> Image.Image:
+    """
+    Postprocesses the output of an inference to blend the results with the original image.
+
+    Args:
+        cmapped_image (np.ndarray): The processed image, typically with segmentation or detection results.
+        input_image (Image.Image): The original input image.
+
+    Returns:
+        Image.Image: The blended image showing the result of postprocessing.
+    """
     out = Image.fromarray(cmapped_image)
     return Image.blend(input_image, out, 0.6)
 
 
 def image_to_byte_array(image: Image.Image) -> bytes:
+    """
+    Converts a PIL Image into a byte array.
+
+    Args:
+        image (Image.Image): The input image to be converted.
+
+    Returns:
+        bytes: The byte array representing the image.
+    """
     img_byte_arr = io.BytesIO()
     image.save(img_byte_arr, format="JPEG")
     img_byte_arr = img_byte_arr.getvalue()
@@ -45,6 +95,18 @@ def image_to_byte_array(image: Image.Image) -> bytes:
 def det_postprocess(
     out: np.ndarray, im0_shape: Tuple[int, int], conf_threshold: float
 ) -> Detections:
+    """
+    Postprocesses the output of an object detection model and filters detections
+    based on a confidence threshold.
+
+    Args:
+        out (np.ndarray): The output of the detection model.
+        im0_shape (Tuple[int, int]): The original shape of the input image (height, width).
+        conf_threshold (float): The confidence threshold for filtering detections.
+
+    Returns:
+        Detections: A Detections object containing the filtered bounding boxes, class ids, and confidences.
+    """
     cls_ids, boxes, confs = out
     boxes[:, 0::2] *= im0_shape[1]
     boxes[:, 1::2] *= im0_shape[0]
@@ -60,6 +122,18 @@ def det_postprocess(
 def semseg_postprocess(
     out: np.ndarray, im0_shape: Tuple[int, int], conf_threshold: float
 ) -> Detections:
+    """
+    Postprocesses the output of a semantic segmentation model and filters based
+    on a confidence threshold.
+
+    Args:
+        out (np.ndarray): The output of the semantic segmentation model.
+        im0_shape (Tuple[int, int]): The original shape of the input image (height, width).
+        conf_threshold (float): The confidence threshold for filtering detections.
+
+    Returns:
+        Detections: A Detections object containing the masks, class ids, and confidences.
+    """
     cls_ids, mask, confs = out[0][0], out[1][0], out[2][0]
     masks = np.zeros((len(cls_ids), *mask.shape), dtype=bool)
     for i, cls_id in enumerate(cls_ids):
@@ -78,9 +152,33 @@ def semseg_postprocess(
 
 
 class ONNXRuntime:
+    """
+    A class that interfaces with ONNX Runtime for model inference using different execution providers
+    (CUDA, TensorRT, OpenVINO, CoreML, etc.). It manages preprocessing, inference, and postprocessing
+    of data, as well as benchmarking the performance of the model.
+
+    Attributes:
+        logger (Logger): Logger for the ONNXRuntime instance.
+        name (str): The name of the model (derived from its path).
+        opts (OnnxEngineOpts): Options used for configuring the ONNX Runtime.
+        model_metadata (ModelMetadata): Metadata related to the model.
+        postprocess_fn (Callable): The function used to postprocess the model's output.
+        ort_sess (InferenceSession): The ONNXRuntime inference session.
+        dtype (np.dtype): The data type for the model input.
+        binding (Optional[str]): The binding type for the runtime (e.g., CUDA, CPU).
+    """
+
     def __init__(
         self, model_path: str, opts: OnnxEngineOpts, model_metadata: ModelMetadata
     ):
+        """
+        Initializes the ONNXRuntime instance with the specified model and configuration options.
+
+        Args:
+            model_path (str): Path to the ONNX model file.
+            opts (OnnxEngineOpts): The configuration options for ONNX Runtime.
+            model_metadata (ModelMetadata): Metadata for the model (e.g., task type).
+        """
         self.logger = get_logger()
         self.logger.debug(f"[onnxruntime device] {ort.get_device()}")
         self.logger.debug(
@@ -204,6 +302,16 @@ class ONNXRuntime:
             self.logger.info(f"⏱️ [onnxruntime] {self.name} WARMUP DONE")
 
     def __call__(self, im: np.ndarray, conf_threshold: float) -> Detections:
+        """
+        Runs inference on the provided input image and returns the model's detections.
+
+        Args:
+            im (np.ndarray): The preprocessed input image.
+            conf_threshold (float): The confidence threshold for filtering results.
+
+        Returns:
+            Detections: A Detections object containing the model's output detections.
+        """
         out_name = None
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
@@ -233,6 +341,16 @@ class ONNXRuntime:
         return detections
 
     def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
+        """
+        Benchmarks the model by running multiple inference iterations and measuring the latency.
+
+        Args:
+            iterations (int, optional): Number of iterations to run for benchmarking. Defaults to 20.
+            size (int, optional): The input image size for benchmarking. Defaults to 640.
+
+        Returns:
+            LatencyMetrics: The latency metrics (e.g., FPS, mean, min, max, and standard deviation).
+        """
         self.logger.info(f"⏱️ [onnxruntime] Benchmarking latency..")
         size = size if isinstance(size, (tuple, list)) else (size, size)
 
@@ -293,6 +411,19 @@ def get_runtime(
     model_metadata: ModelMetadata,
     warmup_iter: int = 0,
 ) -> ONNXRuntime:
+    """
+    Creates and returns an ONNXRuntime instance based on the specified runtime type
+    and model path, with options for various execution providers (CUDA, TensorRT, CPU, etc.).
+
+    Args:
+        runtime_type (RuntimeTypes): The type of runtime to use (e.g., ONNX_CUDA32, ONNX_TRT32).
+        model_path (str): The path to the ONNX model.
+        model_metadata (ModelMetadata): Metadata describing the model.
+        warmup_iter (int, optional): Number of warmup iterations before benchmarking. Defaults to 0.
+
+    Returns:
+        ONNXRuntime: A fully configured ONNXRuntime instance.
+    """
     if runtime_type == RuntimeTypes.ONNX_CUDA32:
         opts = OnnxEngineOpts(
             cuda=True, verbose=False, fp16=False, warmup_iter=warmup_iter

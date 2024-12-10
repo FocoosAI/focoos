@@ -1,3 +1,23 @@
+"""
+LocalModel Module
+
+This module provides the `LocalModel` class that allows loading, inference,
+and benchmark testing of models in a local environment. It supports detection
+and segmentation tasks, and utilizes ONNXRuntime for model execution.
+
+Classes:
+    LocalModel: A class for managing and interacting with local models.
+
+Methods:
+    __init__: Initializes the LocalModel instance, loading the model, metadata,
+              and setting up the runtime.
+    _read_metadata: Reads the model metadata from a JSON file.
+    _annotate: Annotates the input image with detection or segmentation results.
+    infer: Runs inference on an input image, with optional annotation.
+    benchmark: Benchmarks the model's inference performance over a specified
+               number of iterations and input size.
+"""
+
 import os
 from pathlib import Path
 from time import perf_counter
@@ -32,6 +52,20 @@ class LocalModel:
         model_dir: Union[str, Path],
         runtime_type: RuntimeTypes = FOCOOS_CONFIG.runtime_type,
     ):
+        """
+        Initialize the LocalModel instance.
+
+        Args:
+            model_dir (Union[str, Path]): Path to the model directory.
+            runtime_type (RuntimeTypes, optional): Type of runtime to use. Defaults to
+                                                FOCOOS_CONFIG.runtime_type.
+
+        Raises:
+            FileNotFoundError: If the specified model directory does not exist.
+
+        Initializes the model, loads metadata, and prepares the runtime environment
+        for inference.
+        """
         logger.debug(f"Runtime type: {runtime_type}, Loading model from {model_dir},")
         if not os.path.exists(model_dir):
             raise FileNotFoundError(f"Model directory not found: {model_dir}")
@@ -49,10 +83,29 @@ class LocalModel:
         )
 
     def _read_metadata(self) -> ModelMetadata:
+        """
+        Reads the model metadata from a JSON file.
+
+        Returns:
+            ModelMetadata: Metadata for the model.
+
+        Raises:
+            FileNotFoundError: If the metadata file does not exist in the model directory.
+        """
         metadata_path = os.path.join(self.model_dir, "focoos_metadata.json")
         return ModelMetadata.from_json(metadata_path)
 
     def _annotate(self, im: np.ndarray, detections: Detections) -> np.ndarray:
+        """
+        Annotates the input image with detection or segmentation results.
+
+        Args:
+            im (np.ndarray): The input image to annotate.
+            detections (Detections): Detected objects or segmented regions.
+
+        Returns:
+            np.ndarray: The annotated image with bounding boxes or masks.
+        """
         classes = self.metadata.classes
         if classes is not None:
             labels = [
@@ -87,6 +140,20 @@ class LocalModel:
         threshold: float = 0.5,
         annotate: bool = False,
     ) -> Tuple[FocoosDetections, Optional[np.ndarray]]:
+        """
+        Run inference on an input image and optionally annotate the results.
+
+        Args:
+            image (Union[bytes, str, Path, np.ndarray, Image.Image]): The input image to infer on.
+            threshold (float, optional): The confidence threshold for detections. Defaults to 0.5.
+            annotate (bool, optional): Whether to annotate the image with detection results. Defaults to False.
+
+        Returns:
+            Tuple[FocoosDetections, Optional[np.ndarray]]: The detections from the inference and the annotated image (if applicable).
+
+        Raises:
+            ValueError: If the model is not deployed locally.
+        """
         if self.runtime is None:
             raise ValueError("Model is not deployed (locally)")
         resize = None  #!TODO  check for segmentation
@@ -117,4 +184,14 @@ class LocalModel:
         return out, im
 
     def benchmark(self, iterations: int, size: int) -> LatencyMetrics:
+        """
+        Benchmark the model's inference performance over multiple iterations.
+
+        Args:
+            iterations (int): Number of iterations to run for benchmarking.
+            size (int): The input size for each benchmark iteration.
+
+        Returns:
+            LatencyMetrics: Latency metrics including time taken for inference.
+        """
         return self.runtime.benchmark(iterations, size)

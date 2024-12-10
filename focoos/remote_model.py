@@ -1,3 +1,29 @@
+"""
+RemoteModel Module
+
+This module provides a class to manage remote models in the Focoos ecosystem. It supports
+various functionalities including model training, deployment, inference, and monitoring.
+
+Classes:
+    RemoteModel: A class for interacting with remote models, managing their lifecycle,
+                 and performing inference.
+
+
+Modules:
+    HttpClient: Handles HTTP requests.
+    logger: Logging utility.
+    BoxAnnotator, LabelAnnotator, MaskAnnotator: Annotation tools for visualizing
+                 detections and segmentation tasks.
+    FocoosDet, FocoosDetections: Classes for representing and managing detections.
+    FocoosTask: Enum for defining supported tasks (e.g., DETECTION, SEMSEG).
+    Hyperparameters: Structure for training configuration parameters.
+    ModelMetadata: Contains metadata for the model.
+    ModelStatus: Enum for representing the current status of the model.
+    TrainInstance: Enum for defining available training instances.
+    image_loader: Utility function for loading images.
+    focoos_detections_to_supervision: Converter for Focoos detections to supervision format.
+"""
+
 import os
 import time
 from pathlib import Path
@@ -24,7 +50,30 @@ logger = get_logger()
 
 
 class RemoteModel:
+    """
+    Represents a remote model in the Focoos platform.
+
+    Attributes:
+        model_ref (str): Reference ID for the model.
+        http_client (HttpClient): Client for making HTTP requests.
+        max_deploy_wait (int): Maximum wait time for model deployment.
+        metadata (ModelMetadata): Metadata of the model.
+        label_annotator (LabelAnnotator): Annotator for adding labels to images.
+        box_annotator (BoxAnnotator): Annotator for drawing bounding boxes.
+        mask_annotator (MaskAnnotator): Annotator for drawing masks on images.
+    """
+
     def __init__(self, model_ref: str, http_client: HttpClient):
+        """
+        Initialize the RemoteModel instance.
+
+        Args:
+            model_ref (str): Reference ID for the model.
+            http_client (HttpClient): HTTP client instance for communication.
+
+        Raises:
+            ValueError: If model metadata retrieval fails.
+        """
         self.model_ref = model_ref
         self.http_client = http_client
         self.max_deploy_wait = 10
@@ -38,6 +87,15 @@ class RemoteModel:
         )
 
     def get_info(self) -> ModelMetadata:
+        """
+        Retrieve model metadata.
+
+        Returns:
+            ModelMetadata: Metadata of the model.
+
+        Raises:
+            ValueError: If the request fails.
+        """
         res = self.http_client.get(f"models/{self.model_ref}")
         if res.status_code != 200:
             logger.error(f"Failed to get model info: {res.status_code} {res.text}")
@@ -54,6 +112,27 @@ class RemoteModel:
         volume_size: int = 50,
         max_runtime_in_seconds: int = 36000,
     ):
+        """
+        Initiate the training of a remote model on the Focoos platform.
+
+        This method sends a request to the Focoos platform to start the training process for the model
+        referenced by `self.model_ref`. It requires a dataset reference and hyperparameters for training,
+        as well as optional configuration options for the instance type, volume size, and runtime.
+
+        Args:
+            dataset_ref (str): The reference ID of the dataset to be used for training.
+            hyperparameters (Hyperparameters): A structure containing the hyperparameters for the training process.
+            anyma_version (str, optional): The version of Anyma to use for training. Defaults to "anyma-sagemaker-cu12-torch22-0111".
+            instance_type (TrainInstance, optional): The type of training instance to use. Defaults to TrainInstance.ML_G4DN_XLARGE.
+            volume_size (int, optional): The size of the disk volume (in GB) for the training instance. Defaults to 50.
+            max_runtime_in_seconds (int, optional): The maximum runtime for training in seconds. Defaults to 36000.
+
+        Returns:
+            dict: A dictionary containing the response from the training initiation request. The content depends on the Focoos platform's response.
+
+        Raises:
+            ValueError: If the request to start training fails (e.g., due to incorrect parameters or server issues).
+        """
         res = self.http_client.post(
             f"models/{self.model_ref}/train",
             data={
@@ -72,6 +151,17 @@ class RemoteModel:
             return None
 
     def train_status(self):
+        """
+        Retrieve the current status of the model training.
+
+        Sends a request to check the training status of the model referenced by `self.model_ref`.
+
+        Returns:
+            dict: A dictionary containing the training status information.
+
+        Raises:
+            ValueError: If the request to get training status fails.
+        """
         res = self.http_client.get(f"models/{self.model_ref}/train/status")
         if res.status_code == 200:
             return res.json()
@@ -82,6 +172,19 @@ class RemoteModel:
             )
 
     def train_logs(self) -> list[str]:
+        """
+        Retrieve the training logs for the model.
+
+        This method sends a request to fetch the logs of the model's training process. If the request
+        is successful (status code 200), it returns the logs as a list of strings. If the request fails,
+        it logs a warning and returns an empty list.
+
+        Returns:
+            list[str]: A list of training logs as strings.
+
+        Raises:
+            None: Returns an empty list if the request fails.
+        """
         res = self.http_client.get(f"models/{self.model_ref}/train/logs")
         if res.status_code == 200:
             return res.json()
@@ -90,6 +193,20 @@ class RemoteModel:
             return []
 
     def _annotate(self, im: np.ndarray, detections: Detections) -> np.ndarray:
+        """
+        Annotate an image with detection results.
+
+        This method adds visual annotations to the provided image based on the model's detection results.
+        It handles different tasks (e.g., object detection, semantic segmentation, instance segmentation)
+        and uses the corresponding annotator (bounding box, label, or mask) to draw on the image.
+
+        Args:
+            im (np.ndarray): The image to be annotated, represented as a NumPy array.
+            detections (Detections): The detection results to be annotated, including class IDs and confidence scores.
+
+        Returns:
+            np.ndarray: The annotated image as a NumPy array.
+        """
         classes = self.metadata.classes
         if classes is not None:
             labels = [
@@ -124,6 +241,26 @@ class RemoteModel:
         threshold: float = 0.5,
         annotate: bool = False,
     ) -> Tuple[FocoosDetections, Optional[np.ndarray]]:
+        """
+        Perform inference on the provided image using the remote model.
+
+        This method sends an image to the remote model for inference and retrieves the detection results.
+        Optionally, it can annotate the image with the detection results.
+
+        Args:
+            image (Union[str, Path, bytes]): The image to infer on, which can be a file path, a string representing the path, or raw bytes.
+            threshold (float, optional): The confidence threshold for detections. Defaults to 0.5.
+            annotate (bool, optional): Whether to annotate the image with the detection results. Defaults to False.
+
+        Returns:
+            Tuple[FocoosDetections, Optional[np.ndarray]]:
+                - FocoosDetections: The detection results including class IDs, confidence scores, etc.
+                - Optional[np.ndarray]: The annotated image if `annotate` is True, else None.
+
+        Raises:
+            FileNotFoundError: If the provided image file path is invalid.
+            ValueError: If the inference request fails.
+        """
         image_bytes = None
         if isinstance(image, str) or isinstance(image, Path):
             if not os.path.exists(image):
@@ -161,6 +298,22 @@ class RemoteModel:
             raise ValueError(f"Failed to infer: {res.status_code} {res.text}")
 
     def train_metrics(self, period=60) -> Optional[dict]:
+        """
+        Retrieve training metrics for the model over a specified period.
+
+        This method fetches the training metrics for the remote model, including aggregated values,
+        such as average performance metrics over the given period.
+
+        Args:
+            period (int, optional): The period (in seconds) for which to fetch the metrics. Defaults to 60.
+
+        Returns:
+            Optional[dict]: A dictionary containing the training metrics if the request is successful,
+                            or None if the request fails.
+
+        Raises:
+            None explicitly, but may log warnings if the request fails.
+        """
         res = self.http_client.get(
             f"models/{self.model_ref}/train/all-metrics?period={period}&aggregation_type=Average"
         )
@@ -171,6 +324,25 @@ class RemoteModel:
             return None
 
     def _log_metrics(self):
+        """
+        Log the latest training metrics for the model.
+
+        This method retrieves the current training metrics, such as iteration, total loss, and evaluation
+        metrics (like mIoU for segmentation tasks or AP50 for detection tasks). It logs the most recent values
+        for these metrics, helping monitor the model's training progress.
+
+        The logged metrics depend on the model's task:
+            - For segmentation tasks (SEMSEG), the mean Intersection over Union (mIoU) is logged.
+            - For detection tasks, the Average Precision at 50% IoU (AP50) is logged.
+
+        Returns:
+            None: The method only logs the metrics without returning any value.
+
+        Logs:
+            - Iteration number.
+            - Total loss value.
+            - Relevant evaluation metric (mIoU or AP50).
+        """
         metrics = self.train_metrics()
         if metrics:
             iter = (
@@ -202,6 +374,26 @@ class RemoteModel:
             )
 
     def monitor_train(self, update_period=30):
+        """
+        Monitor the training process of the model and log its status periodically.
+
+        This method continuously checks the model's training status and logs updates based on the current state.
+        It monitors the primary and secondary statuses of the model, and performs the following actions:
+        - If the status is "Pending", it logs a waiting message and waits for resources.
+        - If the status is "InProgress", it logs the current status and elapsed time, and logs the training metrics if the model is actively training.
+        - If the status is "Completed", it logs the final metrics and exits.
+        - If the training fails, is stopped, or any unexpected status occurs, it logs the status and exits.
+
+        Args:
+            update_period (int, optional): The time (in seconds) to wait between status checks. Default is 30 seconds.
+
+        Returns:
+            None: This method does not return any value but logs information about the training process.
+
+        Logs:
+            - The current training status, including elapsed time.
+            - Training metrics at regular intervals while the model is training.
+        """
         completed_status = ["Completed", "Failed", "Stopped"]
         # init to make do-while
         status = {"main_status": "Flag", "secondary_status": "Flag"}
@@ -239,6 +431,21 @@ class RemoteModel:
                 return
 
     def stop_training(self):
+        """
+        Stop the training process of the model.
+
+        This method sends a request to stop the training of the model identified by `model_ref`.
+        If the request fails, an error is logged and a `ValueError` is raised.
+
+        Raises:
+            ValueError: If the stop training request fails.
+
+        Logs:
+            - Error message if the request to stop training fails, including the status code and response text.
+
+        Returns:
+            None: This method does not return any value.
+        """
         res = self.http_client.delete(f"models/{self.model_ref}/train")
         if res.status_code != 200:
             logger.error(f"Failed to get stop training: {res.status_code} {res.text}")
@@ -247,6 +454,22 @@ class RemoteModel:
             )
 
     def delete_model(self):
+        """
+        Delete the model from the system.
+
+        This method sends a request to delete the model identified by `model_ref`.
+        If the request fails or the status code is not 204 (No Content), an error is logged
+        and a `ValueError` is raised.
+
+        Raises:
+            ValueError: If the delete model request fails or does not return a 204 status code.
+
+        Logs:
+            - Error message if the request to delete the model fails, including the status code and response text.
+
+        Returns:
+            None: This method does not return any value.
+        """
         res = self.http_client.delete(f"models/{self.model_ref}")
         if res.status_code != 204:
             logger.error(f"Failed to delete model: {res.status_code} {res.text}")
