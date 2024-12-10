@@ -1,0 +1,22 @@
+/* Light mode (default scheme) */
+[data-md-color-scheme="default"] {
+    --md-primary-fg-color: #63dca7;
+    --md-primary-bg-color: #000000;
+    --md-accent-fg-color: #025ee6;
+    --md-typeset-a-color: #025ee6;
+}
+[data-md-color-scheme=slate][data-md-color-primary=indigo] {
+    --md-typeset-a-color: #63dca7;
+}
+/* Dark mode (slate scheme) */
+[data-md-color-scheme="slate"] {
+    --md-primary-fg-color: #025ee6;
+    --md-primary-bg-color: #000000;
+    --md-accent-fg-color: #63dca7;
+    --md-typeset-a-color: #63dca7;
+}
+
+/* Override the first child of md-header__topic */
+.md-header__topic:first-child {
+    font-weight: 350;  /* Adjust to a normal font weight, 400 or another value */
+}

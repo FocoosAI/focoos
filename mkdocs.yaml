@@ -1,0 +1,101 @@
+site_name: Focoos AI SDK
+
+repo_url: https://github.com/FocoosAI/focoos
+edit_uri: edit/main/docs
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      media: "(prefers-color-scheme: light)"
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - scheme: slate
+      media: "(prefers-color-scheme: dark)"
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+  font:
+    text: Merriweather Sans
+    code: Red Hat Mono
+  logo: assets/logo.svg
+  favicon: assets/favicon.svg
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - content.code.copy
+    - navigation.tabs
+    - navigation.tabs.sticky
+
+extra_css:
+  - assets/stylesheets/custom.css
+
+plugins:
+  - search
+  - mkdocstrings:
+      enable_inventory: true
+      handlers:
+        python:
+          options:
+            docstring_style: google
+  - include-markdown
+
+nav:
+  - Home:
+    - Focoos AI: index.md
+    - Datasets: datasets.md
+    - Models: models.md
+  - Getting Started:
+      - Introduction: getting_started/introduction.md
+      - Installation: getting_started/installation.md
+      - Quickstart: getting_started/quickstart.md
+  - How to:
+      - Cloud Training: how_to/cloud_training.md
+      - Inference: how_to/inference.md
+  - API Reference:
+      - focoos: api/focoos.md
+      - remote model: api/remote_model.md
+      - local model: api/local_model.md
+      - runtime: api/runtime.md
+  - Development:
+      - Contributing: development/contributing.md
+      - Code of Conduct: development/code_of_conduct.md
+      - Changelog: development/changelog.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - pymdownx.snippets:
+      restrict_base_path: false
+  - admonition
+  - tables
+  - toc:
+      permalink: "#"
+  - attr_list
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+
+extra:
+  version:
+    provider: mike
+  analytics:
+    provider: google
+    property: G-RP4PM5PGLN
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/FocoosAI/focoos
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/company/focoosai
+
+copyright: Copyright &copy; 2024 FocoosAI
+
+watch:
+  - focoos
