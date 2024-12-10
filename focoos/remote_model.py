@@ -111,7 +111,7 @@ class RemoteModel:
         instance_type: TrainInstance = TrainInstance.ML_G4DN_XLARGE,
         volume_size: int = 50,
         max_runtime_in_seconds: int = 36000,
-    ):
+    ) -> dict | None:
         """
         Initiate the training of a remote model on the Focoos platform.
 
@@ -144,13 +144,12 @@ class RemoteModel:
                 "hyperparameters": hyperparameters.model_dump(),
             },
         )
-        if res.status_code == 200:
-            return res.json()
-        else:
+        if res.status_code != 200:
             logger.warning(f"Failed to train model: {res.status_code} {res.text}")
             return None
+        return res.json()
 
-    def train_status(self):
+    def train_status(self) -> dict | None:
         """
         Retrieve the current status of the model training.
 
@@ -163,13 +162,12 @@ class RemoteModel:
             ValueError: If the request to get training status fails.
         """
         res = self.http_client.get(f"models/{self.model_ref}/train/status")
-        if res.status_code == 200:
-            return res.json()
-        else:
+        if res.status_code != 200:
             logger.error(f"Failed to get train status: {res.status_code} {res.text}")
             raise ValueError(
                 f"Failed to get train status: {res.status_code} {res.text}"
             )
+        return res.json()
 
     def train_logs(self) -> list[str]:
         """
@@ -297,7 +295,7 @@ class RemoteModel:
             logger.error(f"Failed to infer: {res.status_code} {res.text}")
             raise ValueError(f"Failed to infer: {res.status_code} {res.text}")
 
-    def train_metrics(self, period=60) -> Optional[dict]:
+    def train_metrics(self, period=60) -> dict | None:
         """
         Retrieve training metrics for the model over a specified period.
 
@@ -310,18 +308,14 @@ class RemoteModel:
         Returns:
             Optional[dict]: A dictionary containing the training metrics if the request is successful,
                             or None if the request fails.
-
-        Raises:
-            None explicitly, but may log warnings if the request fails.
         """
         res = self.http_client.get(
             f"models/{self.model_ref}/train/all-metrics?period={period}&aggregation_type=Average"
         )
-        if res.status_code == 200:
-            return res.json()
-        else:
+        if res.status_code != 200:
             logger.warning(f"Failed to get train logs: {res.status_code} {res.text}")
             return None
+        return res.json()
 
     def _log_metrics(self):
         """
@@ -373,7 +367,7 @@ class RemoteModel:
                 f"Iter {iter:.0f}: Loss {total_loss:.2f}, {eval_metric} {accuracy}"
             )
 
-    def monitor_train(self, update_period=30):
+    def monitor_train(self, update_period=30) -> None:
         """
         Monitor the training process of the model and log its status periodically.
 
@@ -430,7 +424,7 @@ class RemoteModel:
                 logger.info(f"Model is not training, status: {status['main_status']}")
                 return
 
-    def stop_training(self):
+    def stop_training(self) -> None:
         """
         Stop the training process of the model.
 
@@ -453,7 +447,7 @@ class RemoteModel:
                 f"Failed to get stop training: {res.status_code} {res.text}"
             )
 
-    def delete_model(self):
+    def delete_model(self) -> None:
         """
         Delete the model from the system.
 
