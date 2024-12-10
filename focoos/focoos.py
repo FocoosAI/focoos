@@ -157,28 +157,18 @@ class Focoos:
             raise ValueError(f"Failed to download model: {res.status_code} {res.text}")
 
     def get_dataset_by_name(self, name: str) -> Optional[DatasetMetadata]:
-        found = False
         datasets = self.list_shared_datasets()
         for dataset in datasets:
-            if name == dataset.name:
-                found = True
-                break
-
-        return dataset if found else None
+            if name.lower() == dataset.name.lower():
+                return dataset
 
     def get_model_by_name(
         self, name: str, remote=True
     ) -> Optional[Union[RemoteModel, LocalModel]]:
-        found = False
         models = self.list_models()
         for model in models:
-            if name == model.name:
-                found = True
-                break
-        if found:
-            if remote:
-                return self.get_remote_model(model.ref)
-            else:
-                return self.get_local_model(model.ref)
-        else:
-            return None
+            if name.lower() == model.name.lower():
+                if remote:
+                    return self.get_remote_model(model.ref)
+                else:
+                    return self.get_local_model(model.ref)
