@@ -39,12 +39,11 @@ class RemoteModel:
 
     def get_info(self) -> ModelMetadata:
         res = self.http_client.get(f"models/{self.model_ref}")
-        self.metadata = ModelMetadata(**res.json())
-        if res.status_code == 200:
-            return self.metadata
-        else:
+        if res.status_code != 200:
             logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
+        self.metadata = ModelMetadata(**res.json())
+        return self.metadata
 
     def train(
         self,
