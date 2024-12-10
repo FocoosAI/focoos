@@ -4,6 +4,8 @@ on:
     branches:
       - main
   workflow_dispatch:
+env:
+  UV_SYSTEM_PYTHON: 1
 jobs:
   release:
     runs-on: ubuntu-22.04
@@ -11,7 +13,6 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-
 
       - name: Get next version without tagging
         id: get_next_version
