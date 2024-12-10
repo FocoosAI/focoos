@@ -56,7 +56,6 @@ from focoos import Focoos
 focoos = Focoos(api_key=os.getenv("FOCOOS_API_KEY"))
 
 model = focoos.get_remote_model("focoos_object365")
-model.deploy()
 detections = model.infer("./image.jpg", threshold=0.4)
 ```
 

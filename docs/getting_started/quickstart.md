@@ -20,9 +20,6 @@ focoos = Focoos(api_key=os.getenv("FOCOOS_API_KEY"))
 # Get the remote model (focoos_object365) from Focoos API
 model = focoos.get_remote_model("focoos_object365")
 
-# Deploy the model
-model.deploy()
-
 # Run inference on an image
 detections = model.infer("./image.jpg", threshold=0.4)
 
