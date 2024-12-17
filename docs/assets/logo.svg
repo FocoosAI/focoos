@@ -1,60 +1,742 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="Livello_1" data-name="Livello 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 450 150">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 1117.4 320.96">
   <defs>
     <style>
       .cls-1 {
-        fill: #191414;
+        fill: #63dca7;
       }
 
-      .cls-1, .cls-2, .cls-3, .cls-4 {
+      .cls-1, .cls-2, .cls-3, .cls-4, .cls-5, .cls-6, .cls-7, .cls-8, .cls-9, .cls-10, .cls-11, .cls-12, .cls-13, .cls-14, .cls-15, .cls-16, .cls-17, .cls-18, .cls-19, .cls-20, .cls-21, .cls-22, .cls-23, .cls-24, .cls-25, .cls-26, .cls-27, .cls-28 {
         stroke-width: 0px;
       }
 
-      .cls-2 {
-        fill: url(#Sfumatura_senza_nome_4);
+      .cls-2, .cls-6 {
+        fill: #025ee6;
       }
 
       .cls-3 {
-        fill: url(#Sfumatura_senza_nome_5);
+        fill: #e8e7e5;
       }
 
       .cls-4 {
+        fill: #1578ed;
+      }
+
+      .cls-5 {
+        fill: #cdcdcd;
+      }
+
+      .cls-6, .cls-10 {
+        opacity: .39;
+      }
+
+      .cls-29 {
+        stroke: #303030;
+        stroke-width: .47px;
+      }
+
+      .cls-29, .cls-30, .cls-31 {
+        fill: none;
+        stroke-miterlimit: 10;
+      }
+
+      .cls-7 {
+        fill: #000;
+      }
+
+      .cls-8 {
+        fill: #064591;
+      }
+
+      .cls-9 {
+        fill: #191414;
+      }
+
+      .cls-10, .cls-12 {
+        fill: #63dca7;
+      }
+
+      .cls-30 {
+        stroke: #1d1d1b;
+        stroke-width: .25px;
+      }
+
+      .cls-11 {
+        fill: #373941;
+        opacity: .05;
+      }
+
+      .cls-13 {
+        fill: url(#Sfumatura_senza_nome_4);
+      }
+
+      .cls-14 {
+        fill: url(#Sfumatura_senza_nome_5);
+      }
+
+      .cls-15 {
         fill: url(#Sfumatura_senza_nome_7);
       }
+
+      .cls-31 {
+        stroke: #848181;
+        stroke-width: .29px;
+      }
+
+      .cls-16 {
+        fill: url(#Sfumatura_senza_nome_7-4);
+      }
+
+      .cls-17 {
+        fill: url(#Sfumatura_senza_nome_7-2);
+      }
+
+      .cls-18 {
+        fill: url(#Sfumatura_senza_nome_7-3);
+      }
+
+      .cls-19 {
+        fill: url(#Sfumatura_senza_nome_7-5);
+      }
+
+      .cls-20 {
+        fill: url(#Sfumatura_senza_nome_4-4);
+      }
+
+      .cls-21 {
+        fill: url(#Sfumatura_senza_nome_4-5);
+      }
+
+      .cls-22 {
+        fill: url(#Sfumatura_senza_nome_4-2);
+      }
+
+      .cls-23 {
+        fill: url(#Sfumatura_senza_nome_4-3);
+      }
+
+      .cls-24 {
+        fill: url(#Sfumatura_senza_nome_5-2);
+      }
+
+      .cls-25 {
+        fill: url(#Sfumatura_senza_nome_5-4);
+      }
+
+      .cls-26 {
+        fill: url(#Sfumatura_senza_nome_5-5);
+      }
+
+      .cls-27 {
+        fill: url(#Sfumatura_senza_nome_5-3);
+      }
+
+      .cls-28 {
+        fill: #fff;
+      }
     </style>
-    <linearGradient id="Sfumatura_senza_nome_5" data-name="Sfumatura senza nome 5" x1="278.83" y1="31.86" x2="179.52" y2="118.14" gradientUnits="userSpaceOnUse">
+    <symbol id="New_Symbol_1" data-name="New Symbol 1" viewBox="0 0 4 4">
+      <g>
+        <line class="cls-31" x1="2" x2="2" y2="4"/>
+        <line class="cls-31" x1="4" y1="2" y2="2"/>
+      </g>
+    </symbol>
+    <linearGradient id="Sfumatura_senza_nome_5" data-name="Sfumatura senza nome 5" x1="4550.63" y1="3698.53" x2="4245.61" y2="3963.52" gradientUnits="userSpaceOnUse">
       <stop offset=".15" stop-color="#63dca7"/>
       <stop offset=".24" stop-color="#5cd3ab"/>
       <stop offset=".4" stop-color="#49bab7"/>
       <stop offset=".59" stop-color="#2a93cb"/>
       <stop offset=".81" stop-color="#025ee6"/>
     </linearGradient>
-    <linearGradient id="Sfumatura_senza_nome_4" data-name="Sfumatura senza nome 4" x1="219.14" y1="19.89" x2="201.21" y2="35.47" gradientUnits="userSpaceOnUse">
+    <linearGradient id="Sfumatura_senza_nome_4" data-name="Sfumatura senza nome 4" x1="4367.29" y1="3661.76" x2="4312.2" y2="3709.61" gradientUnits="userSpaceOnUse">
       <stop offset=".2" stop-color="#63dca7"/>
       <stop offset=".31" stop-color="#5cd3ab"/>
       <stop offset=".5" stop-color="#49bab7"/>
       <stop offset=".73" stop-color="#2a93cb"/>
       <stop offset="1" stop-color="#025ee6"/>
     </linearGradient>
-    <linearGradient id="Sfumatura_senza_nome_7" data-name="Sfumatura senza nome 7" x1="253.61" y1="117.6" x2="235.67" y2="133.18" gradientUnits="userSpaceOnUse">
+    <linearGradient id="Sfumatura_senza_nome_7" data-name="Sfumatura senza nome 7" x1="4473.15" y1="3961.88" x2="4418.07" y2="4009.73" gradientUnits="userSpaceOnUse">
       <stop offset=".06" stop-color="#63dca7"/>
       <stop offset=".07" stop-color="#5cd3ab"/>
       <stop offset=".07" stop-color="#49bab7"/>
       <stop offset=".08" stop-color="#2a93cb"/>
       <stop offset=".09" stop-color="#025ee6"/>
     </linearGradient>
+    <linearGradient id="Sfumatura_senza_nome_5-2" data-name="Sfumatura senza nome 5" y1="11.24" x2="4245.61" y2="276.22" xlink:href="#Sfumatura_senza_nome_5"/>
+    <linearGradient id="Sfumatura_senza_nome_4-2" data-name="Sfumatura senza nome 4" x1="4367.29" y1="-25.54" x2="4312.2" y2="22.32" xlink:href="#Sfumatura_senza_nome_4"/>
+    <linearGradient id="Sfumatura_senza_nome_7-2" data-name="Sfumatura senza nome 7" y1="274.59" y2="322.44" xlink:href="#Sfumatura_senza_nome_7"/>
+    <linearGradient id="Sfumatura_senza_nome_5-3" data-name="Sfumatura senza nome 5" x1="696.49" y1="50.07" x2="442.3" y2="270.89" xlink:href="#Sfumatura_senza_nome_5"/>
+    <linearGradient id="Sfumatura_senza_nome_4-3" data-name="Sfumatura senza nome 4" x1="543.7" y1="19.42" x2="497.8" y2="59.3" xlink:href="#Sfumatura_senza_nome_4"/>
+    <linearGradient id="Sfumatura_senza_nome_7-3" data-name="Sfumatura senza nome 7" x1="631.92" y1="269.53" x2="586.02" y2="309.41" xlink:href="#Sfumatura_senza_nome_7"/>
+    <linearGradient id="Sfumatura_senza_nome_5-4" data-name="Sfumatura senza nome 5" x1="2832.7" y1="104.9" x2="2695.66" y2="223.96" xlink:href="#Sfumatura_senza_nome_5"/>
+    <linearGradient id="Sfumatura_senza_nome_4-4" data-name="Sfumatura senza nome 4" x1="2750.33" y1="88.38" x2="2725.58" y2="109.88" xlink:href="#Sfumatura_senza_nome_4"/>
+    <linearGradient id="Sfumatura_senza_nome_7-4" data-name="Sfumatura senza nome 7" x1="2797.89" y1="223.22" x2="2773.14" y2="244.72" xlink:href="#Sfumatura_senza_nome_7"/>
+    <linearGradient id="Sfumatura_senza_nome_5-5" data-name="Sfumatura senza nome 5" x1="2832.7" y1="564.22" x2="2695.66" y2="683.28" xlink:href="#Sfumatura_senza_nome_5"/>
+    <linearGradient id="Sfumatura_senza_nome_4-5" data-name="Sfumatura senza nome 4" x1="2750.33" y1="547.7" x2="2725.58" y2="569.2" xlink:href="#Sfumatura_senza_nome_4"/>
+    <linearGradient id="Sfumatura_senza_nome_7-5" data-name="Sfumatura senza nome 7" x1="2797.89" y1="682.55" x2="2773.14" y2="704.05" xlink:href="#Sfumatura_senza_nome_7"/>
   </defs>
+  <rect class="cls-3" x="5458.68" y="-550.04" width="1072.81" height="1387.54"/>
+  <rect class="cls-9" x="3425.27" y="3137.25" width="1920" height="1387.54"/>
   <g>
-    <path class="cls-3" d="M277.81,83.66V30.69h-52.98v35.65h-44.28v52.98h52.98v-35.65h44.28ZM233.53,66.34v-26.95h35.59v35.59h-35.59v-8.63ZM224.83,83.66v26.95h-35.59v-35.59h35.59v8.63Z"/>
-    <rect class="cls-2" x="207.99" y="13.85" width="16.84" height="16.84"/>
-    <rect class="cls-4" x="233.53" y="119.31" width="16.84" height="16.84"/>
+    <g>
+      <rect class="cls-29" x="3537.49" y="3360.04" width="941.98" height="941.98"/>
+      <line class="cls-29" x1="3631.69" y1="3360.04" x2="3631.69" y2="4302.01"/>
+      <line class="cls-29" x1="3725.89" y1="3360.04" x2="3725.89" y2="4302.01"/>
+      <line class="cls-29" x1="3820.08" y1="3360.04" x2="3820.08" y2="4302.01"/>
+      <line class="cls-29" x1="3914.28" y1="3360.04" x2="3914.28" y2="4302.01"/>
+      <line class="cls-29" x1="4008.48" y1="3360.04" x2="4008.48" y2="4302.01"/>
+      <line class="cls-29" x1="4102.68" y1="3360.04" x2="4102.68" y2="4302.01"/>
+      <line class="cls-29" x1="4196.87" y1="3360.04" x2="4196.87" y2="4302.01"/>
+      <line class="cls-29" x1="4291.07" y1="3360.04" x2="4291.07" y2="4302.01"/>
+      <line class="cls-29" x1="4385.27" y1="3360.03" x2="4385.27" y2="4302.01"/>
+      <line class="cls-29" x1="4479.47" y1="3454.24" x2="3537.49" y2="3454.24"/>
+      <line class="cls-29" x1="4479.47" y1="3548.43" x2="3537.49" y2="3548.43"/>
+      <line class="cls-29" x1="4479.47" y1="3642.63" x2="3537.49" y2="3642.63"/>
+      <line class="cls-29" x1="4479.47" y1="3736.83" x2="3537.49" y2="3736.83"/>
+      <line class="cls-29" x1="4479.47" y1="3831.03" x2="3537.49" y2="3831.03"/>
+      <line class="cls-29" x1="4479.47" y1="3925.22" x2="3537.49" y2="3925.22"/>
+      <line class="cls-29" x1="4479.47" y1="4019.42" x2="3537.49" y2="4019.42"/>
+      <line class="cls-29" x1="4479.47" y1="4113.62" x2="3537.49" y2="4113.62"/>
+      <line class="cls-29" x1="4479.47" y1="4207.82" x2="3537.49" y2="4207.82"/>
+      <rect class="cls-11" x="3631.69" y="3831.02" width="94.2" height="94.2"/>
+      <rect class="cls-11" x="3631.69" y="3360.04" width="282.59" height="94.2"/>
+      <rect class="cls-11" x="4196.87" y="4113.62" width="94.2" height="94.2"/>
+      <rect class="cls-11" x="4291.07" y="3454.24" width="94.2" height="94.2"/>
+      <rect class="cls-11" x="4102.68" y="3642.63" width="94.2" height="94.2"/>
+      <use width="4" height="4" transform="translate(3627.92 3450.53) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3627.92 3544.67) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3627.92 3638.86) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3627.92 3733.06) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3627.92 3827.25) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3627.92 3921.39) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3627.92 4015.59) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3627.92 4109.78) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3627.92 4204.05) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3722.12 3450.53) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3722.12 3544.67) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3722.12 3638.86) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3722.12 3733.06) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3722.12 3827.25) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3722.12 3921.39) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3722.12 4015.59) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3722.12 4109.78) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3722.12 4204.05) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3816.32 3450.53) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3816.32 3544.67) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3816.32 3638.86) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3816.32 3733.06) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3816.32 3827.25) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3816.32 3921.39) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3816.32 4015.59) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3816.32 4109.78) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3816.32 4204.05) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3910.51 3450.53) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3910.51 3544.67) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3910.51 3638.86) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3910.51 3733.06) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3910.51 3827.25) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3910.51 3921.39) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3910.51 4015.59) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3910.51 4109.78) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(3910.51 4204.05) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4004.71 3450.53) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4004.71 3544.67) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4004.71 3638.86) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4004.71 3733.06) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4004.71 3827.25) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4004.71 3921.39) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4004.71 4015.59) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4004.71 4109.78) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4004.71 4204.05) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4098.91 3450.53) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4098.91 3544.67) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4098.91 3638.86) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4098.91 3733.06) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4098.91 3827.25) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4098.91 3921.39) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4098.91 4015.59) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4098.91 4109.78) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4098.91 4204.05) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4193.11 3450.53) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4193.11 3544.67) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4193.11 3638.86) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4193.11 3733.06) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4193.11 3827.25) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4193.11 3921.39) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4193.11 4015.59) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4193.11 4109.78) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4193.11 4204.05) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4287.3 3450.53) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4287.3 3544.67) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4287.3 3638.86) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4287.3 3733.06) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4287.3 3827.25) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4287.3 3921.39) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4287.3 4015.59) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4287.3 4109.78) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4287.3 4204.05) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4381.5 3450.53) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4381.5 3544.67) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4381.5 3638.86) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4381.5 3733.06) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4381.5 3827.25) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4381.5 3921.39) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4381.5 4015.59) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4381.5 4109.78) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4381.5 4204.05) scale(1.88)" xlink:href="#New_Symbol_1"/>
+      <rect class="cls-11" x="4008.48" y="4207.82" width="188.4" height="94.2"/>
+    </g>
+    <g>
+      <rect class="cls-29" x="4291.07" y="3360.04" width="941.98" height="941.98" transform="translate(9524.12 7662.05) rotate(180)"/>
+      <line class="cls-29" x1="5138.85" y1="3360.04" x2="5138.85" y2="4302.01"/>
+      <line class="cls-29" x1="5044.65" y1="3360.04" x2="5044.65" y2="4302.01"/>
+      <line class="cls-29" x1="4950.45" y1="3360.04" x2="4950.45" y2="4302.01"/>
+      <line class="cls-29" x1="4856.26" y1="3360.04" x2="4856.26" y2="4302.01"/>
+      <line class="cls-29" x1="4667.86" y1="3360.04" x2="4667.86" y2="4302.01"/>
+      <line class="cls-29" x1="4573.66" y1="3360.04" x2="4573.66" y2="4302.01"/>
+      <line class="cls-29" x1="4479.47" y1="3360.04" x2="4479.47" y2="4302.01"/>
+      <line class="cls-29" x1="4385.27" y1="3360.03" x2="4385.27" y2="4302.01"/>
+      <line class="cls-29" x1="4291.07" y1="3454.24" x2="5233.05" y2="3454.24"/>
+      <line class="cls-29" x1="4291.07" y1="3548.43" x2="5233.05" y2="3548.43"/>
+      <line class="cls-29" x1="4291.07" y1="3642.63" x2="5233.05" y2="3642.63"/>
+      <line class="cls-29" x1="4291.07" y1="3736.83" x2="5233.05" y2="3736.83"/>
+      <line class="cls-29" x1="4291.07" y1="3831.03" x2="5233.05" y2="3831.03"/>
+      <line class="cls-29" x1="4291.07" y1="3925.22" x2="5233.05" y2="3925.22"/>
+      <line class="cls-29" x1="4291.07" y1="4019.42" x2="5233.05" y2="4019.42"/>
+      <line class="cls-29" x1="4291.07" y1="4113.62" x2="5233.05" y2="4113.62"/>
+      <line class="cls-29" x1="4291.07" y1="4207.82" x2="5233.05" y2="4207.82"/>
+      <rect class="cls-11" x="5044.65" y="3831.02" width="94.2" height="94.2" transform="translate(10183.5 7756.24) rotate(180)"/>
+      <rect class="cls-11" x="4856.26" y="3360.04" width="282.59" height="94.2" transform="translate(9995.11 6814.28) rotate(180)"/>
+      <rect class="cls-11" x="4479.47" y="4113.62" width="94.2" height="94.2" transform="translate(9053.13 8321.44) rotate(180)"/>
+      <rect class="cls-11" x="4385.27" y="3454.24" width="94.2" height="94.2" transform="translate(8864.74 7002.67) rotate(180)"/>
+      <rect class="cls-11" x="4573.66" y="3642.63" width="94.2" height="94.2" transform="translate(9241.52 7379.46) rotate(180)"/>
+      <use width="4" height="4" transform="translate(5142.62 3450.53) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5142.62 3544.67) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5142.62 3638.86) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5142.62 3733.06) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5142.62 3827.25) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5142.62 3921.39) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5142.62 4015.59) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5142.62 4109.78) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5142.62 4204.05) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5048.42 3450.53) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5048.42 3544.67) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5048.42 3638.86) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5048.42 3733.06) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5048.42 3827.25) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5048.42 3921.39) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5048.42 4015.59) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5048.42 4109.78) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(5048.42 4204.05) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4954.22 3450.53) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4954.22 3544.67) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4954.22 3638.86) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4954.22 3733.06) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4954.22 3827.25) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4954.22 3921.39) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4954.22 4015.59) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4954.22 4109.78) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4954.22 4204.05) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4860.02 3450.53) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4860.02 3544.67) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4860.02 3638.86) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4860.02 3733.06) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4860.02 3827.25) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4860.02 3921.39) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4860.02 4015.59) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4860.02 4109.78) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4860.02 4204.05) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4765.83 3450.53) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4765.83 3544.67) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4765.83 3638.86) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4765.83 3733.06) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4765.83 3827.25) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4765.83 3921.39) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4765.83 4015.59) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4765.83 4109.78) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4765.83 4204.05) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4671.63 3450.53) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4671.63 3544.67) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4671.63 3638.86) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4671.63 3733.06) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4671.63 3827.25) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4671.63 3921.39) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4671.63 4015.59) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4671.63 4109.78) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4671.63 4204.05) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4577.43 3450.53) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4577.43 3544.67) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4577.43 3638.86) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4577.43 3733.06) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4577.43 3827.25) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4577.43 3921.39) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4577.43 4015.59) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4577.43 4109.78) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4577.43 4204.05) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4483.23 3450.53) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4483.23 3544.67) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4483.23 3638.86) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4483.23 3733.06) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4483.23 3827.25) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4483.23 3921.39) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4483.23 4015.59) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4483.23 4109.78) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4483.23 4204.05) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4389.04 3450.53) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4389.04 3544.67) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4389.04 3638.86) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4389.04 3733.06) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4389.04 3827.25) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4389.04 3921.39) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4389.04 4015.59) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4389.04 4109.78) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <use width="4" height="4" transform="translate(4389.04 4204.05) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+      <rect class="cls-11" x="4573.66" y="4207.82" width="188.4" height="94.2" transform="translate(9335.72 8509.83) rotate(180)"/>
+      <line class="cls-29" x1="4762.06" y1="3360.04" x2="4762.06" y2="4302.01"/>
+    </g>
   </g>
-  <path class="cls-1" d="M50.05,39.26h-30.56v22.38h29.28v8.68h-29.28v29.28h-9.17V30.59h39.73v8.68Z"/>
-  <path class="cls-1" d="M101.91,93.39c-5.06,5-11.21,7.49-18.44,7.49s-13.36-2.5-18.39-7.49c-5.03-4.99-7.54-11.14-7.54-18.44s2.51-13.44,7.54-18.44c5.03-4.99,11.16-7.49,18.39-7.49s13.37,2.5,18.44,7.49c5.06,5,7.59,11.14,7.59,18.44s-2.53,13.44-7.59,18.44ZM83.47,92.5c4.93,0,9.07-1.68,12.42-5.03,3.35-3.35,5.03-7.53,5.03-12.52s-1.68-9.17-5.03-12.52c-3.35-3.35-7.49-5.03-12.42-5.03s-8.97,1.68-12.32,5.03c-3.35,3.35-5.03,7.53-5.03,12.52s1.68,9.17,5.03,12.52c3.35,3.35,7.46,5.03,12.32,5.03Z"/>
-  <path class="cls-1" d="M142.82,100.88c-7.43,0-13.6-2.48-18.53-7.44-4.93-4.96-7.39-11.12-7.39-18.48s2.46-13.52,7.39-18.48c4.93-4.96,11.11-7.44,18.53-7.44,4.86,0,9.23,1.17,13.11,3.5,3.88,2.33,6.77,5.47,8.68,9.42l-7.2,4.14c-1.25-2.63-3.17-4.73-5.77-6.31-2.6-1.58-5.54-2.37-8.82-2.37-4.93,0-9.05,1.68-12.37,5.03-3.32,3.35-4.98,7.53-4.98,12.52s1.66,9.07,4.98,12.42c3.32,3.35,7.44,5.03,12.37,5.03,3.29,0,6.24-.77,8.87-2.32,2.63-1.54,4.63-3.63,6.01-6.26l7.3,4.24c-2.1,3.88-5.13,6.98-9.07,9.32-3.94,2.33-8.32,3.5-13.11,3.5Z"/>
   <g>
-    <path class="cls-1" d="M303.83,63.44c0,1.86.97,3.36,2.9,4.48,1.93,1.12,4.24,2.08,6.92,2.87,2.68.79,5.37,1.58,8.08,2.37,2.71.8,5,2.29,6.88,4.47,1.88,2.19,2.82,5,2.82,8.43,0,4.47-1.73,8.05-5.18,10.75-3.45,2.7-7.87,4.04-13.26,4.04-4.8,0-8.91-1.05-12.32-3.15-3.42-2.1-5.85-4.9-7.3-8.38l7.39-4.24c.79,2.37,2.27,4.24,4.44,5.62,2.17,1.38,4.76,2.07,7.79,2.07,2.83,0,5.16-.54,7-1.62,1.84-1.08,2.76-2.77,2.76-5.07,0-1.9-.95-3.43-2.86-4.58-1.91-1.15-4.2-2.12-6.88-2.93-2.68-.8-5.37-1.61-8.08-2.43-2.71-.81-5.02-2.27-6.92-4.37-1.91-2.1-2.86-4.8-2.86-8.08,0-4.27,1.66-7.79,4.98-10.55,3.32-2.76,7.48-4.14,12.47-4.14,4.01,0,7.57.9,10.7,2.71,3.12,1.81,5.47,4.32,7.05,7.54l-7.2,4.04c-1.77-4.2-5.29-6.31-10.55-6.31-2.43,0-4.5.56-6.21,1.69-1.71,1.12-2.56,2.72-2.56,4.77Z"/>
-    <path class="cls-1" d="M412.57,99.57l-5.41-15.93h-31.03l-5.85,15.93h-9.76l25.73-69.01h10.35l25.73,69.01h-9.76ZM379.24,75.06h24.79l-12.61-33.61-12.18,33.61Z"/>
-    <path class="cls-1" d="M430.51,30.56h9.17v69.01h-9.17V30.56Z"/>
+    <g>
+      <path class="cls-14" d="M4547.49,3857.64v-162.72h-162.72v109.5h-136.01v162.72h162.72v-109.5h136.01ZM4411.47,3804.41v-82.79h109.31v109.31h-109.31v-26.52ZM4384.77,3857.64v82.79h-109.31v-109.31h109.31v26.52Z"/>
+      <rect class="cls-13" x="4333.03" y="3643.19" width="51.72" height="51.72"/>
+      <rect class="cls-15" x="4411.47" y="3967.13" width="51.72" height="51.73"/>
+    </g>
+    <path class="cls-5" d="M3847.95,3721.27h-93.87v68.74h89.93v26.65h-89.93v89.93h-28.16v-211.96h122.03v26.65Z"/>
+    <path class="cls-5" d="M4007.22,3887.5c-15.55,15.34-34.42,23.01-56.62,23.01s-41.03-7.67-56.47-23.01c-15.44-15.34-23.16-34.22-23.16-56.62s7.72-41.28,23.16-56.63c15.44-15.34,34.26-23.01,56.47-23.01s41.08,7.67,56.62,23.01c15.54,15.34,23.32,34.22,23.32,56.63s-7.77,41.29-23.32,56.62ZM3950.6,3884.78c15.14,0,27.86-5.15,38.15-15.44,10.3-10.3,15.44-23.11,15.44-38.46s-5.15-28.16-15.44-38.46c-10.3-10.29-23.01-15.44-38.15-15.44s-27.56,5.15-37.85,15.44c-10.3,10.3-15.44,23.12-15.44,38.46s5.15,28.16,15.44,38.46c10.3,10.3,22.91,15.44,37.85,15.44Z"/>
+    <path class="cls-5" d="M4132.88,3910.52c-22.81,0-41.79-7.62-56.93-22.86-15.14-15.24-22.71-34.16-22.71-56.78s7.57-41.53,22.71-56.78c15.14-15.24,34.11-22.86,56.93-22.86,14.94,0,28.36,3.59,40.27,10.75,11.91,7.17,20.79,16.81,26.65,28.92l-22.1,12.72c-3.84-8.07-9.74-14.53-17.71-19.38-7.98-4.84-17.01-7.27-27.1-7.27-15.14,0-27.81,5.15-38,15.44-10.2,10.3-15.29,23.12-15.29,38.46s5.1,27.86,15.29,38.15c10.19,10.29,22.86,15.44,38,15.44,10.09,0,19.18-2.37,27.25-7.12,8.07-4.74,14.23-11.15,18.47-19.23l22.41,13.02c-6.46,11.91-15.75,21.45-27.86,28.61-12.11,7.16-25.54,10.75-40.27,10.75Z"/>
+    <g>
+      <path class="cls-5" d="M4627.4,3795.51c0,5.72,2.97,10.32,8.92,13.77,5.94,3.45,13.03,6.39,21.26,8.8,8.22,2.42,16.5,4.85,24.82,7.29,8.32,2.45,15.37,7.02,21.13,13.74,5.77,6.72,8.65,15.34,8.65,25.88,0,13.73-5.3,24.73-15.9,33-10.6,8.28-24.18,12.41-40.73,12.41-14.74,0-27.36-3.23-37.85-9.69-10.5-6.46-17.97-15.04-22.41-25.74l22.71-13.02c2.42,7.27,6.96,13.02,13.63,17.26,6.66,4.24,14.63,6.36,23.92,6.36,8.68,0,15.85-1.66,21.5-4.99,5.65-3.33,8.48-8.52,8.48-15.57,0-5.84-2.93-10.53-8.79-14.06-5.86-3.53-12.91-6.52-21.13-8.99-8.23-2.47-16.5-4.95-24.82-7.45-8.32-2.5-15.41-6.97-21.26-13.44-5.86-6.46-8.78-14.73-8.78-24.83,0-13.12,5.09-23.92,15.29-32.4,10.19-8.48,22.96-12.72,38.3-12.72,12.31,0,23.26,2.78,32.85,8.33,9.58,5.55,16.81,13.28,21.65,23.16l-22.1,12.41c-5.45-12.91-16.25-19.38-32.4-19.38-7.47,0-13.83,1.73-19.08,5.18-5.25,3.45-7.87,8.34-7.87,14.66Z"/>
+      <path class="cls-5" d="M4961.38,3906.48l-16.63-48.94h-95.31l-17.96,48.94h-29.98l79.03-211.96h31.79l79.03,211.96h-29.98ZM4859.02,3831.2h76.15l-38.74-103.25-37.41,103.25Z"/>
+      <path class="cls-5" d="M5016.49,3694.52h28.16v211.96h-28.16v-211.96Z"/>
+    </g>
   </g>
+  <rect class="cls-9" x="3425.27" y="-550.04" width="1920" height="1387.54"/>
+  <g>
+    <g>
+      <g>
+        <rect class="cls-29" x="3537.49" y="-327.25" width="941.98" height="941.98"/>
+        <line class="cls-29" x1="3631.69" y1="-327.25" x2="3631.69" y2="614.72"/>
+        <line class="cls-29" x1="3725.89" y1="-327.25" x2="3725.89" y2="614.72"/>
+        <line class="cls-29" x1="3820.08" y1="-327.25" x2="3820.08" y2="614.72"/>
+        <line class="cls-29" x1="3914.28" y1="-327.25" x2="3914.28" y2="614.72"/>
+        <line class="cls-29" x1="4008.48" y1="-327.25" x2="4008.48" y2="614.72"/>
+        <line class="cls-29" x1="4102.68" y1="-327.25" x2="4102.68" y2="614.72"/>
+        <line class="cls-29" x1="4196.87" y1="-327.25" x2="4196.87" y2="614.72"/>
+        <line class="cls-29" x1="4291.07" y1="-327.25" x2="4291.07" y2="614.72"/>
+        <line class="cls-29" x1="4385.27" y1="-327.26" x2="4385.27" y2="614.71"/>
+        <line class="cls-29" x1="4479.47" y1="-233.06" x2="3537.49" y2="-233.06"/>
+        <line class="cls-29" x1="4479.47" y1="-138.86" x2="3537.49" y2="-138.86"/>
+        <line class="cls-29" x1="4479.47" y1="-44.66" x2="3537.49" y2="-44.66"/>
+        <line class="cls-29" x1="4479.47" y1="49.54" x2="3537.49" y2="49.54"/>
+        <line class="cls-29" x1="4479.47" y1="143.73" x2="3537.49" y2="143.73"/>
+        <line class="cls-29" x1="4479.47" y1="237.93" x2="3537.49" y2="237.93"/>
+        <line class="cls-29" x1="4479.47" y1="332.13" x2="3537.49" y2="332.13"/>
+        <line class="cls-29" x1="4479.47" y1="426.33" x2="3537.49" y2="426.33"/>
+        <line class="cls-29" x1="4479.47" y1="520.52" x2="3537.49" y2="520.52"/>
+        <rect class="cls-11" x="3631.69" y="143.73" width="94.2" height="94.2"/>
+        <rect class="cls-11" x="3631.69" y="-327.25" width="282.59" height="94.2"/>
+        <rect class="cls-11" x="4196.87" y="426.33" width="94.2" height="94.2"/>
+        <rect class="cls-11" x="4291.07" y="-233.06" width="94.2" height="94.2"/>
+        <rect class="cls-11" x="4102.68" y="-44.66" width="94.2" height="94.2"/>
+        <use width="4" height="4" transform="translate(3627.92 -236.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3627.92 -142.63) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3627.92 -48.43) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3627.92 45.77) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3627.92 139.96) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3627.92 234.1) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3627.92 328.29) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3627.92 422.49) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3627.92 516.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3722.12 -236.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3722.12 -142.63) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3722.12 -48.43) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3722.12 45.77) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3722.12 139.96) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3722.12 234.1) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3722.12 328.29) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3722.12 422.49) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3722.12 516.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3816.32 -236.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3816.32 -142.63) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3816.32 -48.43) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3816.32 45.77) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3816.32 139.96) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3816.32 234.1) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3816.32 328.29) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3816.32 422.49) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3816.32 516.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3910.51 -236.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3910.51 -142.63) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3910.51 -48.43) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3910.51 45.77) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3910.51 139.96) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3910.51 234.1) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3910.51 328.29) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3910.51 422.49) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(3910.51 516.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4004.71 -236.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4004.71 -142.63) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4004.71 -48.43) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4004.71 45.77) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4004.71 139.96) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4004.71 234.1) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4004.71 328.29) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4004.71 422.49) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4004.71 516.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4098.91 -236.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4098.91 -142.63) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4098.91 -48.43) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4098.91 45.77) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4098.91 139.96) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4098.91 234.1) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4098.91 328.29) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4098.91 422.49) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4098.91 516.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4193.11 -236.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4193.11 -142.63) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4193.11 -48.43) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4193.11 45.77) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4193.11 139.96) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4193.11 234.1) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4193.11 328.29) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4193.11 422.49) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4193.11 516.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4287.3 -236.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4287.3 -142.63) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4287.3 -48.43) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4287.3 45.77) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4287.3 139.96) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4287.3 234.1) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4287.3 328.29) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4287.3 422.49) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4287.3 516.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4381.5 -236.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4381.5 -142.63) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4381.5 -48.43) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4381.5 45.77) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4381.5 139.96) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4381.5 234.1) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4381.5 328.29) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4381.5 422.49) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4381.5 516.76) scale(1.88)" xlink:href="#New_Symbol_1"/>
+        <rect class="cls-11" x="4008.48" y="520.52" width="188.4" height="94.2"/>
+      </g>
+      <g>
+        <rect class="cls-29" x="4291.07" y="-327.25" width="941.98" height="941.98" transform="translate(9524.12 287.47) rotate(180)"/>
+        <line class="cls-29" x1="5138.85" y1="-327.25" x2="5138.85" y2="614.72"/>
+        <line class="cls-29" x1="5044.65" y1="-327.25" x2="5044.65" y2="614.72"/>
+        <line class="cls-29" x1="4950.45" y1="-327.25" x2="4950.45" y2="614.72"/>
+        <line class="cls-29" x1="4856.26" y1="-327.25" x2="4856.26" y2="614.72"/>
+        <line class="cls-29" x1="4667.86" y1="-327.25" x2="4667.86" y2="614.72"/>
+        <line class="cls-29" x1="4573.66" y1="-327.25" x2="4573.66" y2="614.72"/>
+        <line class="cls-29" x1="4479.47" y1="-327.25" x2="4479.47" y2="614.72"/>
+        <line class="cls-29" x1="4385.27" y1="-327.26" x2="4385.27" y2="614.71"/>
+        <line class="cls-29" x1="4291.07" y1="-233.06" x2="5233.05" y2="-233.06"/>
+        <line class="cls-29" x1="4291.07" y1="-138.86" x2="5233.05" y2="-138.86"/>
+        <line class="cls-29" x1="4291.07" y1="-44.66" x2="5233.05" y2="-44.66"/>
+        <line class="cls-29" x1="4291.07" y1="49.54" x2="5233.05" y2="49.54"/>
+        <line class="cls-29" x1="4291.07" y1="143.73" x2="5233.05" y2="143.73"/>
+        <line class="cls-29" x1="4291.07" y1="237.93" x2="5233.05" y2="237.93"/>
+        <line class="cls-29" x1="4291.07" y1="332.13" x2="5233.05" y2="332.13"/>
+        <line class="cls-29" x1="4291.07" y1="426.33" x2="5233.05" y2="426.33"/>
+        <line class="cls-29" x1="4291.07" y1="520.52" x2="5233.05" y2="520.52"/>
+        <rect class="cls-11" x="5044.65" y="143.73" width="94.2" height="94.2" transform="translate(10183.5 381.65) rotate(180)"/>
+        <rect class="cls-11" x="4856.26" y="-327.25" width="282.59" height="94.2" transform="translate(9995.11 -560.31) rotate(180)"/>
+        <rect class="cls-11" x="4479.47" y="426.33" width="94.2" height="94.2" transform="translate(9053.13 946.85) rotate(180)"/>
+        <rect class="cls-11" x="4385.27" y="-233.06" width="94.2" height="94.2" transform="translate(8864.74 -371.92) rotate(180)"/>
+        <rect class="cls-11" x="4573.66" y="-44.66" width="94.2" height="94.2" transform="translate(9241.52 4.87) rotate(180)"/>
+        <use width="4" height="4" transform="translate(5142.62 -236.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5142.62 -142.63) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5142.62 -48.43) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5142.62 45.77) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5142.62 139.96) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5142.62 234.1) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5142.62 328.29) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5142.62 422.49) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5142.62 516.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5048.42 -236.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5048.42 -142.63) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5048.42 -48.43) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5048.42 45.77) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5048.42 139.96) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5048.42 234.1) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5048.42 328.29) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5048.42 422.49) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(5048.42 516.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4954.22 -236.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4954.22 -142.63) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4954.22 -48.43) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4954.22 45.77) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4954.22 139.96) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4954.22 234.1) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4954.22 328.29) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4954.22 422.49) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4954.22 516.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4860.02 -236.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4860.02 -142.63) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4860.02 -48.43) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4860.02 45.77) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4860.02 139.96) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4860.02 234.1) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4860.02 328.29) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4860.02 422.49) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4860.02 516.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4765.83 -236.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4765.83 -142.63) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4765.83 -48.43) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4765.83 45.77) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4765.83 139.96) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4765.83 234.1) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4765.83 328.29) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4765.83 422.49) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4765.83 516.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4671.63 -236.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4671.63 -142.63) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4671.63 -48.43) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4671.63 45.77) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4671.63 139.96) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4671.63 234.1) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4671.63 328.29) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4671.63 422.49) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4671.63 516.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4577.43 -236.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4577.43 -142.63) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4577.43 -48.43) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4577.43 45.77) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4577.43 139.96) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4577.43 234.1) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4577.43 328.29) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4577.43 422.49) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4577.43 516.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4483.23 -236.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4483.23 -142.63) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4483.23 -48.43) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4483.23 45.77) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4483.23 139.96) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4483.23 234.1) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4483.23 328.29) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4483.23 422.49) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4483.23 516.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4389.04 -236.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4389.04 -142.63) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4389.04 -48.43) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4389.04 45.77) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4389.04 139.96) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4389.04 234.1) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4389.04 328.29) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4389.04 422.49) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <use width="4" height="4" transform="translate(4389.04 516.76) rotate(-180) scale(1.88 -1.88)" xlink:href="#New_Symbol_1"/>
+        <rect class="cls-11" x="4573.66" y="520.52" width="188.4" height="94.2" transform="translate(9335.72 1135.24) rotate(180)"/>
+        <line class="cls-29" x1="4762.06" y1="-327.25" x2="4762.06" y2="614.72"/>
+      </g>
+    </g>
+    <g>
+      <g>
+        <path class="cls-24" d="M4547.49,170.34V7.62h-162.72v109.5h-136.01v162.72h162.72v-109.5h136.01ZM4411.47,117.12V34.33h109.31v109.31h-109.31v-26.52ZM4384.77,170.34v82.79h-109.31v-109.31h109.31v26.52Z"/>
+        <rect class="cls-22" x="4333.03" y="-44.1" width="51.72" height="51.72"/>
+        <rect class="cls-17" x="4411.47" y="279.84" width="51.72" height="51.73"/>
+      </g>
+      <path class="cls-5" d="M3847.95,33.97h-93.87v68.74h89.93v26.65h-89.93v89.93h-28.16V7.33h122.03v26.65Z"/>
+      <path class="cls-5" d="M4007.22,200.21c-15.55,15.34-34.42,23.01-56.62,23.01s-41.03-7.67-56.47-23.01c-15.44-15.34-23.16-34.22-23.16-56.62s7.72-41.28,23.16-56.63c15.44-15.34,34.26-23.01,56.47-23.01s41.08,7.67,56.62,23.01c15.54,15.34,23.32,34.22,23.32,56.63s-7.77,41.29-23.32,56.62ZM3950.6,197.48c15.14,0,27.86-5.15,38.15-15.44,10.3-10.3,15.44-23.11,15.44-38.46s-5.15-28.16-15.44-38.46c-10.3-10.29-23.01-15.44-38.15-15.44s-27.56,5.15-37.85,15.44c-10.3,10.3-15.44,23.12-15.44,38.46s5.15,28.16,15.44,38.46c10.3,10.3,22.91,15.44,37.85,15.44Z"/>
+      <path class="cls-5" d="M4132.88,223.22c-22.81,0-41.79-7.62-56.93-22.86-15.14-15.24-22.71-34.16-22.71-56.78s7.57-41.53,22.71-56.78c15.14-15.24,34.11-22.86,56.93-22.86,14.94,0,28.36,3.59,40.27,10.75,11.91,7.17,20.79,16.81,26.65,28.92l-22.1,12.72c-3.84-8.07-9.74-14.53-17.71-19.38-7.98-4.84-17.01-7.27-27.1-7.27-15.14,0-27.81,5.15-38,15.44-10.2,10.3-15.29,23.12-15.29,38.46s5.1,27.86,15.29,38.15c10.19,10.29,22.86,15.44,38,15.44,10.09,0,19.18-2.37,27.25-7.12,8.07-4.74,14.23-11.15,18.47-19.23l22.41,13.02c-6.46,11.91-15.75,21.45-27.86,28.61-12.11,7.16-25.54,10.75-40.27,10.75Z"/>
+      <g>
+        <path class="cls-5" d="M4627.4,108.21c0,5.72,2.97,10.32,8.92,13.77,5.94,3.45,13.03,6.39,21.26,8.8,8.22,2.42,16.5,4.85,24.82,7.29,8.32,2.45,15.37,7.02,21.13,13.74,5.77,6.72,8.65,15.34,8.65,25.88,0,13.73-5.3,24.73-15.9,33-10.6,8.28-24.18,12.41-40.73,12.41-14.74,0-27.36-3.23-37.85-9.69-10.5-6.46-17.97-15.04-22.41-25.74l22.71-13.02c2.42,7.27,6.96,13.02,13.63,17.26,6.66,4.24,14.63,6.36,23.92,6.36,8.68,0,15.85-1.66,21.5-4.99,5.65-3.33,8.48-8.52,8.48-15.57,0-5.84-2.93-10.53-8.79-14.06-5.86-3.53-12.91-6.52-21.13-8.99-8.23-2.47-16.5-4.95-24.82-7.45-8.32-2.5-15.41-6.97-21.26-13.44-5.86-6.46-8.78-14.73-8.78-24.83,0-13.12,5.09-23.92,15.29-32.4,10.19-8.48,22.96-12.72,38.3-12.72,12.31,0,23.26,2.78,32.85,8.33,9.58,5.55,16.81,13.28,21.65,23.16l-22.1,12.41c-5.45-12.91-16.25-19.38-32.4-19.38-7.47,0-13.83,1.73-19.08,5.18-5.25,3.45-7.87,8.34-7.87,14.66Z"/>
+        <path class="cls-5" d="M4961.38,219.19l-16.63-48.94h-95.31l-17.96,48.94h-29.98l79.03-211.96h31.79l79.03,211.96h-29.98ZM4859.02,143.91h76.15l-38.74-103.25-37.41,103.25Z"/>
+        <path class="cls-5" d="M5016.49,7.22h28.16v211.96h-28.16V7.22Z"/>
+      </g>
+    </g>
+    <g>
+      <g>
+        <rect class="cls-10" x="4256.51" y="-267.62" width="69.13" height="69.13" transform="translate(4524.13 4058.02) rotate(-90)"/>
+        <rect class="cls-12" x="4273.79" y="-250.34" width="34.56" height="34.56" transform="translate(4524.13 4058.02) rotate(-90)"/>
+      </g>
+      <g>
+        <rect class="cls-6" x="4359.68" y="493.77" width="51.17" height="51.17" transform="translate(3865.91 4904.63) rotate(-90)"/>
+        <rect class="cls-2" x="4372.48" y="506.56" width="25.59" height="25.59" transform="translate(3865.91 4904.63) rotate(-90)"/>
+      </g>
+      <rect class="cls-1" x="4655" y="-57.53" width="25.72" height="25.72" transform="translate(4712.53 4623.19) rotate(-90)"/>
+      <rect class="cls-8" x="4182.43" y="317.68" width="28.9" height="28.9" transform="translate(3864.75 4529) rotate(-90)"/>
+    </g>
+    <rect class="cls-5" x="3613.27" y="-160.04" width="42.36" height="42.36"/>
+    <rect class="cls-5" x="3815.41" y="317.4" width="29.46" height="29.46"/>
+    <rect class="cls-5" x="4936.6" y="-152.71" width="27.7" height="27.7"/>
+    <rect class="cls-5" x="5120.43" y="411.67" width="29.3" height="29.3"/>
+  </g>
+  <g>
+    <g>
+      <path class="cls-27" d="M693.87,182.66V47.05h-135.6v91.25h-113.35v135.6h135.6v-91.25h113.35ZM580.52,138.3v-68.99h91.09v91.09h-91.09v-22.1ZM558.27,182.66v68.99h-91.09v-91.09h91.09v22.1Z"/>
+      <rect class="cls-23" x="515.15" y="3.95" width="43.1" height="43.1"/>
+      <rect class="cls-18" x="580.52" y="273.91" width="43.1" height="43.11"/>
+    </g>
+    <path class="cls-5" d="M110.91,69.01H32.68v57.28h74.95v22.21H32.68v74.94H9.22V46.81h101.69v22.21Z"/>
+    <path class="cls-5" d="M243.64,207.55c-12.96,12.79-28.68,19.18-47.19,19.18s-34.19-6.39-47.06-19.18c-12.87-12.78-19.3-28.51-19.3-47.19s6.43-34.4,19.3-47.19c12.87-12.78,28.55-19.18,47.06-19.18s34.23,6.4,47.19,19.18c12.95,12.79,19.43,28.51,19.43,47.19s-6.48,34.4-19.43,47.19ZM196.45,205.28c12.62,0,23.21-4.29,31.79-12.87,8.58-8.58,12.87-19.26,12.87-32.05s-4.29-23.47-12.87-32.05c-8.58-8.58-19.18-12.87-31.79-12.87s-22.96,4.29-31.54,12.87c-8.58,8.58-12.87,19.26-12.87,32.05s4.29,23.47,12.87,32.05c8.58,8.58,19.09,12.87,31.54,12.87Z"/>
+    <path class="cls-5" d="M348.36,226.72c-19.01,0-34.82-6.35-47.44-19.05-12.62-12.7-18.93-28.47-18.93-47.31s6.31-34.61,18.93-47.31c12.62-12.7,28.43-19.05,47.44-19.05,12.45,0,23.63,2.99,33.56,8.96,9.92,5.97,17.32,14,22.21,24.1l-18.42,10.6c-3.2-6.73-8.12-12.11-14.76-16.15-6.65-4.04-14.17-6.06-22.58-6.06-12.62,0-23.18,4.29-31.67,12.87-8.5,8.58-12.74,19.26-12.74,32.05s4.25,23.21,12.74,31.79c8.49,8.58,19.05,12.87,31.67,12.87,8.41,0,15.98-1.98,22.71-5.93,6.73-3.95,11.86-9.29,15.39-16.02l18.67,10.85c-5.39,9.93-13.12,17.88-23.22,23.85-10.09,5.97-21.28,8.96-33.56,8.96Z"/>
+    <g>
+      <path class="cls-5" d="M760.46,130.88c0,4.77,2.48,8.6,7.43,11.47,4.95,2.88,10.86,5.33,17.72,7.34,6.85,2.01,13.75,4.04,20.68,6.08,6.94,2.04,12.81,5.85,17.61,11.45s7.21,12.79,7.21,21.57c0,11.44-4.42,20.61-13.25,27.5-8.83,6.9-20.15,10.35-33.94,10.35-12.28,0-22.8-2.69-31.54-8.07-8.75-5.38-14.97-12.53-18.67-21.45l18.93-10.85c2.02,6.06,5.8,10.85,11.35,14.38,5.55,3.53,12.2,5.3,19.93,5.3,7.23,0,13.21-1.38,17.92-4.16,4.71-2.77,7.07-7.1,7.07-12.98,0-4.87-2.44-8.77-7.33-11.72-4.88-2.94-10.76-5.44-17.61-7.5-6.86-2.06-13.75-4.13-20.68-6.21-6.94-2.08-12.84-5.81-17.72-11.2-4.88-5.38-7.32-12.28-7.32-20.69,0-10.93,4.25-19.93,12.74-27,8.49-7.07,19.13-10.6,31.92-10.6,10.26,0,19.39,2.31,27.38,6.94,7.99,4.63,14,11.06,18.04,19.3l-18.42,10.35c-4.54-10.76-13.54-16.15-27-16.15-6.23,0-11.53,1.44-15.9,4.32-4.38,2.88-6.56,6.95-6.56,12.21Z"/>
+      <path class="cls-5" d="M1038.79,223.36l-13.86-40.78h-79.42l-14.97,40.78h-24.98l65.86-176.64h26.5l65.86,176.64h-24.98ZM953.49,160.63h63.46l-32.28-86.04-31.18,86.04Z"/>
+      <path class="cls-5" d="M1084.72,46.72h23.47v176.64h-23.47V46.72Z"/>
+    </g>
+  </g>
+  <rect class="cls-9" x="2199.22" y="-104.49" width="1117.4" height="500.32"/>
+  <g>
+    <g>
+      <path class="cls-25" d="M2831.29,176.39v-73.11h-73.11v49.2h-61.11v73.11h73.11v-49.2h61.11ZM2770.18,152.47v-37.2h49.11v49.11h-49.11v-11.92ZM2758.18,176.39v37.2h-49.11v-49.11h49.11v11.92Z"/>
+      <rect class="cls-20" x="2734.94" y="80.03" width="23.24" height="23.24"/>
+      <rect class="cls-16" x="2770.18" y="225.58" width="23.24" height="23.24"/>
+    </g>
+    <path class="cls-5" d="M2516.98,115.11h-42.18v30.88h40.41v11.97h-40.41v40.41h-12.65v-95.24h54.83v11.97Z"/>
+    <path class="cls-5" d="M2588.55,189.8c-6.99,6.89-15.47,10.34-25.44,10.34s-18.44-3.45-25.37-10.34c-6.94-6.89-10.41-15.37-10.41-25.44s3.47-18.55,10.41-25.44c6.94-6.89,15.4-10.34,25.37-10.34s18.46,3.45,25.44,10.34c6.98,6.89,10.48,15.37,10.48,25.44s-3.49,18.55-10.48,25.44ZM2563.1,188.58c6.8,0,12.52-2.31,17.14-6.94,4.63-4.63,6.94-10.38,6.94-17.28s-2.31-12.65-6.94-17.28c-4.63-4.62-10.34-6.94-17.14-6.94s-12.38,2.31-17.01,6.94c-4.63,4.63-6.94,10.39-6.94,17.28s2.31,12.65,6.94,17.28c4.63,4.63,10.29,6.94,17.01,6.94Z"/>
+    <path class="cls-5" d="M2645.01,200.14c-10.25,0-18.78-3.42-25.58-10.27-6.8-6.85-10.2-15.35-10.2-25.51s3.4-18.66,10.2-25.51c6.8-6.85,15.33-10.27,25.58-10.27,6.71,0,12.74,1.61,18.09,4.83,5.35,3.22,9.34,7.55,11.97,12.99l-9.93,5.71c-1.72-3.63-4.38-6.53-7.96-8.71-3.58-2.18-7.64-3.27-12.18-3.27-6.8,0-12.5,2.31-17.07,6.94-4.58,4.63-6.87,10.39-6.87,17.28s2.29,12.52,6.87,17.14c4.58,4.62,10.27,6.94,17.07,6.94,4.53,0,8.62-1.07,12.24-3.2,3.63-2.13,6.39-5.01,8.3-8.64l10.07,5.85c-2.9,5.35-7.07,9.64-12.52,12.86-5.44,3.22-11.48,4.83-18.09,4.83Z"/>
+    <g>
+      <path class="cls-5" d="M2867.2,148.47c0,2.57,1.34,4.63,4.01,6.19,2.67,1.55,5.85,2.87,9.55,3.96,3.69,1.09,7.41,2.18,11.15,3.28,3.74,1.1,6.9,3.16,9.5,6.17s3.89,6.89,3.89,11.63c0,6.17-2.38,11.11-7.14,14.83-4.76,3.72-10.86,5.58-18.3,5.58-6.62,0-12.29-1.45-17.01-4.35-4.72-2.9-8.07-6.76-10.07-11.56l10.2-5.85c1.09,3.27,3.13,5.85,6.12,7.75,2.99,1.91,6.58,2.86,10.75,2.86,3.9,0,7.12-.75,9.66-2.24,2.54-1.5,3.81-3.83,3.81-7,0-2.63-1.32-4.73-3.95-6.32-2.63-1.58-5.8-2.93-9.49-4.04-3.7-1.11-7.42-2.23-11.15-3.35-3.74-1.12-6.92-3.13-9.55-6.04-2.63-2.9-3.95-6.62-3.95-11.16,0-5.9,2.29-10.75,6.87-14.56,4.58-3.81,10.32-5.71,17.21-5.71,5.53,0,10.45,1.25,14.76,3.74,4.31,2.5,7.55,5.96,9.73,10.41l-9.93,5.58c-2.45-5.8-7.3-8.71-14.56-8.71-3.36,0-6.21.78-8.57,2.33-2.36,1.55-3.54,3.75-3.54,6.58Z"/>
+      <path class="cls-5" d="M3017.26,198.33l-7.47-21.99h-42.82l-8.07,21.99h-13.47l35.51-95.24h14.29l35.51,95.24h-13.47ZM2971.27,164.51h34.21l-17.4-46.39-16.81,46.39Z"/>
+      <path class="cls-5" d="M3042.02,103.09h12.65v95.24h-12.65v-95.24Z"/>
+    </g>
+  </g>
+  <g>
+    <g>
+      <path class="cls-26" d="M2831.29,635.71v-73.11h-73.11v49.2h-61.11v73.11h73.11v-49.2h61.11ZM2770.18,611.8v-37.2h49.11v49.11h-49.11v-11.92ZM2758.18,635.71v37.2h-49.11v-49.11h49.11v11.92Z"/>
+      <rect class="cls-21" x="2734.94" y="539.36" width="23.24" height="23.24"/>
+      <rect class="cls-19" x="2770.18" y="684.91" width="23.24" height="23.24"/>
+    </g>
+    <path class="cls-9" d="M2516.98,574.44h-42.18v30.88h40.41v11.97h-40.41v40.41h-12.65v-95.24h54.83v11.97Z"/>
+    <path class="cls-9" d="M2588.55,649.13c-6.99,6.89-15.47,10.34-25.44,10.34s-18.44-3.45-25.37-10.34c-6.94-6.89-10.41-15.37-10.41-25.44s3.47-18.55,10.41-25.44c6.94-6.89,15.4-10.34,25.37-10.34s18.46,3.45,25.44,10.34c6.98,6.89,10.48,15.37,10.48,25.44s-3.49,18.55-10.48,25.44ZM2563.1,647.91c6.8,0,12.52-2.31,17.14-6.94,4.63-4.63,6.94-10.38,6.94-17.28s-2.31-12.65-6.94-17.28c-4.63-4.63-10.34-6.94-17.14-6.94s-12.38,2.31-17.01,6.94c-4.63,4.63-6.94,10.39-6.94,17.28s2.31,12.65,6.94,17.28c4.63,4.63,10.29,6.94,17.01,6.94Z"/>
+    <path class="cls-9" d="M2645.01,659.47c-10.25,0-18.78-3.42-25.58-10.27-6.8-6.85-10.2-15.35-10.2-25.51s3.4-18.66,10.2-25.51c6.8-6.85,15.33-10.27,25.58-10.27,6.71,0,12.74,1.61,18.09,4.83,5.35,3.22,9.34,7.55,11.97,12.99l-9.93,5.71c-1.72-3.63-4.38-6.53-7.96-8.71-3.58-2.18-7.64-3.27-12.18-3.27-6.8,0-12.5,2.31-17.07,6.94-4.58,4.63-6.87,10.39-6.87,17.28s2.29,12.52,6.87,17.14c4.58,4.62,10.27,6.94,17.07,6.94,4.53,0,8.62-1.07,12.24-3.2,3.63-2.13,6.39-5.01,8.3-8.64l10.07,5.85c-2.9,5.35-7.07,9.64-12.52,12.86-5.44,3.22-11.48,4.83-18.09,4.83Z"/>
+    <g>
+      <path class="cls-9" d="M2867.2,607.79c0,2.57,1.34,4.63,4.01,6.19,2.67,1.55,5.85,2.87,9.55,3.96,3.69,1.09,7.41,2.18,11.15,3.28,3.74,1.1,6.9,3.16,9.5,6.17s3.89,6.89,3.89,11.63c0,6.17-2.38,11.11-7.14,14.83-4.76,3.72-10.86,5.58-18.3,5.58-6.62,0-12.29-1.45-17.01-4.35-4.72-2.9-8.07-6.76-10.07-11.56l10.2-5.85c1.09,3.27,3.13,5.85,6.12,7.75,2.99,1.91,6.58,2.86,10.75,2.86,3.9,0,7.12-.75,9.66-2.24,2.54-1.5,3.81-3.83,3.81-7,0-2.63-1.32-4.73-3.95-6.32-2.63-1.58-5.8-2.93-9.49-4.04-3.7-1.11-7.42-2.23-11.15-3.35-3.74-1.12-6.92-3.13-9.55-6.04-2.63-2.9-3.95-6.62-3.95-11.16,0-5.9,2.29-10.75,6.87-14.56,4.58-3.81,10.32-5.71,17.21-5.71,5.53,0,10.45,1.25,14.76,3.74,4.31,2.5,7.55,5.96,9.73,10.41l-9.93,5.58c-2.45-5.8-7.3-8.71-14.56-8.71-3.36,0-6.21.78-8.57,2.33-2.36,1.55-3.54,3.75-3.54,6.58Z"/>
+      <path class="cls-9" d="M3017.26,657.66l-7.47-21.99h-42.82l-8.07,21.99h-13.47l35.51-95.24h14.29l35.51,95.24h-13.47ZM2971.27,623.83h34.21l-17.4-46.39-16.81,46.39Z"/>
+      <path class="cls-9" d="M3042.02,562.42h12.65v95.24h-12.65v-95.24Z"/>
+    </g>
+  </g>
+  <g>
+    <path class="cls-5" d="M2516.98-362.49h-42.18v30.88h40.41v11.97h-40.41v40.41h-12.65v-95.24h54.83v11.97Z"/>
+    <path class="cls-5" d="M2588.55-287.8c-6.99,6.89-15.47,10.34-25.44,10.34s-18.44-3.45-25.37-10.34c-6.94-6.89-10.41-15.37-10.41-25.44s3.47-18.55,10.41-25.44c6.94-6.89,15.4-10.34,25.37-10.34s18.46,3.45,25.44,10.34c6.98,6.89,10.48,15.37,10.48,25.44s-3.49,18.55-10.48,25.44ZM2563.1-289.02c6.8,0,12.52-2.31,17.14-6.94,4.63-4.63,6.94-10.38,6.94-17.28s-2.31-12.65-6.94-17.28c-4.63-4.62-10.34-6.94-17.14-6.94s-12.38,2.31-17.01,6.94c-4.63,4.63-6.94,10.39-6.94,17.28s2.31,12.65,6.94,17.28c4.63,4.63,10.29,6.94,17.01,6.94Z"/>
+    <path class="cls-5" d="M2645.01-277.46c-10.25,0-18.78-3.42-25.58-10.27-6.8-6.85-10.2-15.35-10.2-25.51s3.4-18.66,10.2-25.51c6.8-6.85,15.33-10.27,25.58-10.27,6.71,0,12.74,1.61,18.09,4.83,5.35,3.22,9.34,7.55,11.97,12.99l-9.93,5.71c-1.72-3.63-4.38-6.53-7.96-8.71-3.58-2.18-7.64-3.27-12.18-3.27-6.8,0-12.5,2.31-17.07,6.94-4.58,4.63-6.87,10.39-6.87,17.28s2.29,12.52,6.87,17.14c4.58,4.62,10.27,6.94,17.07,6.94,4.53,0,8.62-1.07,12.24-3.2,3.63-2.13,6.39-5.01,8.3-8.64l10.07,5.85c-2.9,5.35-7.07,9.64-12.52,12.86-5.44,3.22-11.48,4.83-18.09,4.83Z"/>
+    <g>
+      <path class="cls-5" d="M2867.2-329.13c0,2.57,1.34,4.63,4.01,6.19,2.67,1.55,5.85,2.87,9.55,3.96,3.69,1.09,7.41,2.18,11.15,3.28,3.74,1.1,6.9,3.16,9.5,6.17s3.89,6.89,3.89,11.63c0,6.17-2.38,11.11-7.14,14.83-4.76,3.72-10.86,5.58-18.3,5.58-6.62,0-12.29-1.45-17.01-4.35-4.72-2.9-8.07-6.76-10.07-11.56l10.2-5.85c1.09,3.27,3.13,5.85,6.12,7.75,2.99,1.91,6.58,2.86,10.75,2.86,3.9,0,7.12-.75,9.66-2.24,2.54-1.5,3.81-3.83,3.81-7,0-2.63-1.32-4.73-3.95-6.32-2.63-1.58-5.8-2.93-9.49-4.04-3.7-1.11-7.42-2.23-11.15-3.35-3.74-1.12-6.92-3.13-9.55-6.04-2.63-2.9-3.95-6.62-3.95-11.16,0-5.9,2.29-10.75,6.87-14.56,4.58-3.81,10.32-5.71,17.21-5.71,5.53,0,10.45,1.25,14.76,3.74,4.31,2.5,7.55,5.96,9.73,10.41l-9.93,5.58c-2.45-5.8-7.3-8.71-14.56-8.71-3.36,0-6.21.78-8.57,2.33-2.36,1.55-3.54,3.75-3.54,6.58Z"/>
+      <path class="cls-5" d="M3017.26-279.27l-7.47-21.99h-42.82l-8.07,21.99h-13.47l35.51-95.24h14.29l35.51,95.24h-13.47ZM2971.27-313.1h34.21l-17.4-46.39-16.81,46.39Z"/>
+      <path class="cls-5" d="M3042.02-374.51h12.65v95.24h-12.65v-95.24Z"/>
+    </g>
+    <g>
+      <path class="cls-7" d="M2771.15-227.09v-23.85h-75.89v-76.89h61.8v-46.71h-23.85v-24.85h24.85v23.85h75.89v76.89h-61.8v46.7h23.85v24.85h-24.85ZM2757.06-266.03v-46.71h-46.7v46.71h46.7ZM2818.86-313.74v-46.71h-46.71v46.71h46.71Z"/>
+      <path class="cls-28" d="M2757.56-398.89v23.85h-23.85v-23.85h23.85M2833.45-375.04v75.89h-61.8v47.7h-75.89v-75.89h61.8v-47.7h75.89M2771.65-313.24h47.7v-47.7h-47.7v47.7M2709.85-265.53h47.7v-47.7h-47.7v47.7M2795.5-251.44v23.85h-23.85v-23.85h23.85M2758.56-399.89h-25.85v25.85h23.85v45.7h-61.8v77.89h75.89v23.85h25.85v-25.85h-23.85v-45.7h61.8v-77.89h-75.89v-23.85h0ZM2772.65-359.94h45.7v45.7h-45.7v-45.7h0ZM2710.85-312.24h45.7v45.7h-45.7v-45.7h0Z"/>
+    </g>
+    <rect class="cls-30" x="2462.15" y="-374.46" width="592.52" height="95.24"/>
+    <path class="cls-5" d="M2831.29-374.37h-73.11v49.2h-61.11v73.11h73.11v-49.2h61.11v-73.11ZM2758.18-264.06h-49.11v-49.11h49.11v49.11ZM2819.29-313.26h-49.11v-49.11h49.11v49.11Z"/>
+    <line class="cls-30" x1="2462.15" y1="-313.24" x2="3054.67" y2="-313.24"/>
+    <line class="cls-30" x1="2462.15" y1="-301.26" x2="3054.67" y2="-301.26"/>
+    <rect class="cls-5" x="2734.95" y="-397.61" width="23.24" height="23.24"/>
+    <rect class="cls-5" x="2770.18" y="-252.06" width="23.24" height="23.24"/>
+    <g>
+      <line class="cls-30" x1="2597.4" y1="-347.53" x2="2528.81" y2="-278.95"/>
+      <line class="cls-30" x1="2528.81" y1="-347.53" x2="2597.4" y2="-278.95"/>
+    </g>
+  </g>
+  <polygon class="cls-1" points="3820.08 3402.67 3768.46 3402.67 3768.46 3454.3 3820.08 3454.3 3820.08 3402.67 3820.08 3402.67"/>
+  <polygon class="cls-1" points="3657.5 4087.81 3605.88 4087.81 3605.88 4139.43 3657.5 4139.43 3657.5 4087.81 3657.5 4087.81"/>
+  <polygon class="cls-4" points="4599.12 4088.1 4548.21 4088.1 4548.21 4139 4599.12 4139 4599.12 4088.1 4599.12 4088.1"/>
+  <polygon class="cls-4" points="5103.87 3960.2 5044.65 3960.2 5044.65 4019.42 5103.87 4019.42 5103.87 3960.2 5103.87 3960.2"/>
+  <polygon class="cls-4" points="5162.79 3433.55 5103.57 3433.55 5103.57 3492.77 5162.79 3492.77 5162.79 3433.55 5162.79 3433.55"/>
+  <path class="cls-1" d="M4178.87,3472.3v152.34h-342.41v-152.34h342.41M4196.87,3454.3h-378.41v188.34h378.41v-188.34h0Z"/>
+  <path class="cls-4" d="M5026.65,4037.42v246.59h-246.59v-246.59h246.59M5044.65,4019.42h-282.59v282.59h282.59v-282.59h0Z"/>
 </svg>
