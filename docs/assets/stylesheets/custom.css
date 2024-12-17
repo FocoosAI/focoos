@@ -1,22 +1,86 @@
-/* Light mode (default scheme) */
-[data-md-color-scheme="default"] {
-    --md-primary-fg-color: #63dca7;
-    --md-primary-bg-color: #000000;
-    --md-accent-fg-color: #025ee6;
-    --md-typeset-a-color: #025ee6;
-}
-[data-md-color-scheme=slate][data-md-color-primary=indigo] {
-    --md-typeset-a-color: #63dca7;
-}
 /* Dark mode (slate scheme) */
 [data-md-color-scheme="slate"] {
-    --md-primary-fg-color: #025ee6;
-    --md-primary-bg-color: #000000;
+    --md-primary-fg-color: #000000;
+    --md-primary-bg-color: #FFFFFF;
     --md-accent-fg-color: #63dca7;
     --md-typeset-a-color: #63dca7;
+
+    /* Background and font colors */
+    --md-default-bg-color: #191414;
+    --md-default-fg-color: #FFFFFF;
+
+    /* App bar color */
+    --md-header-bg-color: #000000;
+    --md-header-fg-color: #FFFFFF;
 }
 
-/* Override the first child of md-header__topic */
-.md-header__topic:first-child {
-    font-weight: 350;  /* Adjust to a normal font weight, 400 or another value */
+body, h2 {
+    font-weight: 400;
+    /* Regular weight */
+}
+
+h1, h2, body{
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    /* Medium weight */
+}
+
+code,
+pre {
+    font-family: 'DM Mono', monospace;
+    font-weight: 400;
+    /* Regular weight */
+}
+
+/* Active tabs and links */
+.md-tabs__item.md-tabs__item--active,
+.md-nav__link.md-nav__link--active {
+    font-weight: bold !important;
+}
+
+.md-nav__link.md-nav__link--active {
+    color: #FFFFFF;
+}
+
+@keyframes gradient-animation {
+    0% {
+        background-image: linear-gradient(to right, #025EE6, #63DCA7);
+        /* Blue to teal */
+    }
+
+    50% {
+        background-image: linear-gradient(to right, #63DCA7, #025EE6);
+        /* Teal to green */
+    }
+
+    100% {
+        background-image: linear-gradient(to right, #025EE6, #63DCA7);
+        /* Back to blue to teal */
+    }
+}
+
+/* Hover effects */
+.md-tabs__link:hover,
+.md-ellipsis:hover {
+    animation: gradient-animation 1s normal;
+    /* 1-second animation normal */
+    background-image: linear-gradient(to right, #025EE6, #63DCA7) !important;
+    /* Gradient effect */
+    background-position: top left !important;
+    background-clip: text !important;
+    -webkit-background-clip: text !important;
+    /* Clip the gradient to the text */
+    -webkit-text-fill-color: transparent !important;
+    /* Make the text transparent */
+    transition: all .3s linear !important;
+    /* Smooth transition for the gradient */
+}
+
+/* Fallback for older browsers without gradient support */
+@supports not (-webkit-background-clip: text) {
+    .md-tabs__link:hover,
+    .md-ellipsis:hover {
+        color: #63DCA7 !important;
+        /* Default accent color */
+    }
 }

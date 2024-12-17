@@ -6,19 +6,7 @@ edit_uri: edit/main/docs
 theme:
   name: material
   palette:
-    - scheme: default
-      media: "(prefers-color-scheme: light)"
-      toggle:
-        icon: material/weather-sunny
-        name: Switch to dark mode
     - scheme: slate
-      media: "(prefers-color-scheme: dark)"
-      toggle:
-        icon: material/weather-night
-        name: Switch to light mode
-  font:
-    text: Merriweather Sans
-    code: Red Hat Mono
   logo: assets/logo.svg
   favicon: assets/favicon.svg
   icon:
@@ -30,6 +18,7 @@ theme:
 
 extra_css:
   - assets/stylesheets/custom.css
+  - https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono&display=swap # Load Google Fonts (DM Sans Regular, Medium, and DM Mono)
 
 plugins:
   - search
@@ -43,9 +32,9 @@ plugins:
 
 nav:
   - Home:
-    - Focoos AI: index.md
-    - Datasets: datasets.md
-    - Models: models.md
+      - Focoos AI: index.md
+      - Datasets: datasets.md
+      - Models: models.md
   - Getting Started:
       - Introduction: getting_started/introduction.md
       - Installation: getting_started/installation.md
@@ -81,7 +70,6 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
-
 
 extra:
   version:
