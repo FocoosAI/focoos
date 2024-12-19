@@ -2,7 +2,7 @@
 files: ""
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: v5.0.0
     hooks:
       - id: check-ast
       - id: check-toml
@@ -47,6 +47,6 @@ repos:
     hooks:
       - id: nbstripout
   - repo: https://github.com/hadialqattan/pycln # remove unused import
-    rev: v2.3.0
+    rev: v2.4.0
     hooks:
       - id: pycln

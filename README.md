@@ -18,6 +18,8 @@
 
 ## Requirements
 
+### CUDA 12
+
 For **local inference**, ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
 
 To install cuDNN 9:
@@ -26,7 +28,13 @@ To install cuDNN 9:
 apt-get -y install cudnn9-cuda-12
 ```
 
+### (Optional) TensorRT
+
 To perform inference using TensorRT, ensure you have TensorRT version 10.5 installed.
+
+```bash
+sudo apt-get install tensorrt
+```
 
 # Install
 
