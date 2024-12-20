@@ -214,10 +214,10 @@ def get_system_info() -> SystemInfo:
     memory_info = psutil.virtual_memory()
     disk_info = psutil.disk_usage("/")
     gpu_info = GPUtil.getGPUs()
-    if not gpu_info:
-        gpu_info = None
+    if len(gpu_info) == 0:
         gpu_count = 0
         gpu_driver = None
+        gpus_info = None
     else:
         gpu_count = len(gpu_info)
         gpu_driver = gpu_info[0].driver
