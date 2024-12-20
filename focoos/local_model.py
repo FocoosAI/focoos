@@ -110,12 +110,12 @@ class LocalModel:
         if classes is not None:
             labels = [
                 f"{classes[int(class_id)]}: {confid*100:.0f}%"
-                for class_id, confid in zip(detections.class_id, detections.confidence)
+                for class_id, confid in zip(detections.class_id, detections.confidence)  # type: ignore
             ]
         else:
             labels = [
                 f"{str(class_id)}: {confid*100:.0f}%"
-                for class_id, confid in zip(detections.class_id, detections.confidence)
+                for class_id, confid in zip(detections.class_id, detections.confidence)  # type: ignore
             ]
         if self.metadata.task == FocoosTask.DETECTION:
             annotated_im = self.box_annotator.annotate(

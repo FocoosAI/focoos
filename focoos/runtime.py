@@ -36,6 +36,7 @@ from focoos.ports import (
     RuntimeTypes,
 )
 from focoos.utils.logger import get_logger
+from focoos.utils.system import get_cpu_name, get_gpu_name
 
 GPU_ID = 0
 
@@ -266,6 +267,7 @@ class ONNXRuntime:
         self.dtype = dtype
         self.binding = binding
         self.ort_sess = ort.InferenceSession(model_path, options, providers=providers)
+        self.active_providers = self.ort_sess.get_providers()
         self.logger.info(
             f"[onnxruntime] Active providers:{self.ort_sess.get_providers()}"
         )
@@ -391,15 +393,20 @@ class ONNXRuntime:
                 durations.append((end - start) * 1000)
         durations = np.array(durations)
         # time.sleep(0.1)
+        provider = self.active_providers[0]
+        if provider in ["CUDAExecutionProvider", "TensorrtExecutionProvider"]:
+            device = get_gpu_name()
+        else:
+            device = get_cpu_name()
         metrics = LatencyMetrics(
             fps=int(1000 / durations.mean()),
-            engine="onnx",
+            engine=f"onnx.{provider}",
             mean=round(durations.mean(), 3),
             max=round(durations.max(), 3),
             min=round(durations.min(), 3),
             std=round(durations.std(), 3),
             im_size=size[0],
-            device="",
+            device=str(device),
         )
         self.logger.info(f"🔥 FPS: {metrics.fps}")
         return metrics

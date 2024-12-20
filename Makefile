@@ -1,4 +1,4 @@
-.PHONY: install install-dev install-pre-commit run-pre-commit
+.PHONY: test install install-dev install-pre-commit run-pre-commit
 
 install:
 	@pip install . --no-cache-dir
@@ -8,8 +8,8 @@ install-dev:
 install-pre-commit:
 	@pre-commit install
 lint:
-	@isort . --profile=black
-	@black .
+	@isort ./focoos --profile=black
+	@black ./focoos
 run-pre-commit:
 	@pre-commit run --all-files
 test:
