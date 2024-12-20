@@ -8,8 +8,8 @@ install-dev:
 install-pre-commit:
 	@pre-commit install
 lint:
-	@isort . --profile=black
-	@black .
+	@isort ./focoos --profile=black
+	@black ./focoos
 run-pre-commit:
 	@pre-commit run --all-files
 test:
