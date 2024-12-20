@@ -238,3 +238,55 @@ class RuntimeTypes(str, Enum):
     ONNX_TRT16 = "onnx_trt16"
     ONNX_CPU = "onnx_cpu"
     ONNX_COREML = "onnx_coreml"
+
+
+class GPUInfo(FocoosBaseModel):
+    gpu_id: Optional[int] = None
+    gpu_name: Optional[str] = None
+    gpu_memory_total_gb: Optional[float] = None
+    gpu_memory_used_percentage: Optional[float] = None
+    gpu_temperature: Optional[float] = None
+    gpu_load_percentage: Optional[float] = None
+
+
+class SystemInfo(FocoosBaseModel):
+    focoos_host: Optional[str] = None
+    system: Optional[str] = None
+    system_name: Optional[str] = None
+    cpu_type: Optional[str] = None
+    cpu_cores: Optional[int] = None
+    memory_gb: Optional[float] = None
+    memory_used_percentage: Optional[float] = None
+    available_providers: Optional[list[str]] = None
+    disk_space_total_gb: Optional[float] = None
+    disk_space_used_percentage: Optional[float] = None
+    gpu_count: Optional[int] = None
+    gpu_driver: Optional[str] = None
+    gpu_cuda_version: Optional[str] = None
+    gpus_info: Optional[list[GPUInfo]] = None
+    packages_versions: Optional[dict[str, str]] = None
+
+    def pretty_print(self):
+        print("================ SYSTEM INFO ====================")
+        for key, value in self.model_dump().items():
+            if isinstance(value, list):
+                print(f"{key}:")
+                if key == "gpus_info":  # Formattazione speciale per gpus_info
+                    for item in value:
+                        print(f"- id: {item['gpu_id']}")
+                        for sub_key, sub_value in item.items():
+                            if sub_key != "gpu_id" and sub_value is not None:
+                                formatted_key = sub_key.replace("_", "-")
+                                print(f"    - {formatted_key}: {sub_value}")
+                else:
+                    for item in value:
+                        print(f"  - {item}")
+            elif (
+                isinstance(value, dict) and key == "packages_versions"
+            ):  # Formattazione speciale per packages_versions
+                print(f"{key}:")
+                for pkg_name, pkg_version in value.items():
+                    print(f"  - {pkg_name}: {pkg_version}")
+            else:
+                print(f"{key}: {value}")
+        print("================================================")

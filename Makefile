@@ -1,4 +1,4 @@
-.PHONY: install install-dev install-pre-commit run-pre-commit
+.PHONY: test install install-dev install-pre-commit run-pre-commit
 
 install:
 	@pip install . --no-cache-dir
