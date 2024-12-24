@@ -1,7 +1,5 @@
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from focoos.ports import SystemInfo
 from focoos.utils.system import (
     HttpClient,
