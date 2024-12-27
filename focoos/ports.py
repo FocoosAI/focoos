@@ -292,7 +292,7 @@ class SystemInfo(FocoosBaseModel):
         for key, value in self.model_dump().items():
             if isinstance(value, list):
                 print(f"{key}:")
-                if key == "gpus_info":  # Formattazione speciale per gpus_info
+                if key == "gpus_info":  # Special formatting for gpus_info.
                     for item in value:
                         print(f"- id: {item['gpu_id']}")
                         for sub_key, sub_value in item.items():
@@ -304,7 +304,7 @@ class SystemInfo(FocoosBaseModel):
                         print(f"  - {item}")
             elif (
                 isinstance(value, dict) and key == "packages_versions"
-            ):  # Formattazione speciale per packages_versions
+            ):  # Special formatting for packages_versions
                 print(f"{key}:")
                 for pkg_name, pkg_version in value.items():
                     print(f"  - {pkg_name}: {pkg_version}")
