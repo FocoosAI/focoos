@@ -1,6 +1,7 @@
 import logging
 import logging.config
 from functools import cache
+from typing import Optional
 
 from focoos.config import FOCOOS_CONFIG, LogLevel
 
@@ -65,7 +66,23 @@ LOGGING_CONFIG = {
 
 
 @cache
-def get_logger(name="focoos", level: LogLevel = FOCOOS_CONFIG.focoos_log_level):
+def get_logger(name="focoos", level: Optional[LogLevel] = None) -> logging.Logger:
+    """
+    Get a logger instance with the specified name and logging level.
+
+    Args:
+        name (str, optional): The name of the logger. Defaults to "focoos".
+        level (LogLevel, optional): The logging level to set. If None, uses the level from FOCOOS_CONFIG (default to DEBUG).
+            Must be one of the standard Python logging levels (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+
+    Returns:
+        logging.Logger: A configured logger instance with the specified name and level.
+
+    Example:
+        >>> logger = get_logger("my_module", logging.INFO)
+        >>> logger.info("This is an info message")
+    """
+    level = level or FOCOOS_CONFIG.focoos_log_level
     logger = logging.getLogger(name)
     logger.setLevel(level)
     return logger
