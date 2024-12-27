@@ -276,8 +276,8 @@ class ONNXRuntime:
         else:
             self.dtype = np.float32
         if self.opts.warmup_iter > 0:
-            self.logger.info(f"⏱️ [onnxruntime] Warming up model ..")
-            for i in range(0, self.opts.warmup_iter):
+            self.logger.info("⏱️ [onnxruntime] Warming up model ..")
+            for _ in range(self.opts.warmup_iter):
                 np_image = np.random.rand(1, 3, 640, 640).astype(self.dtype)
                 input_name = self.ort_sess.get_inputs()[0].name
                 out_name = [output.name for output in self.ort_sess.get_outputs()]
@@ -318,7 +318,7 @@ class ONNXRuntime:
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
         if self.binding is not None:
-            print(f"binding {self.binding}")
+            self.logger.info(f"binding {self.binding}")
             io_binding = self.ort_sess.io_binding()
 
             io_binding.bind_input(
@@ -353,7 +353,7 @@ class ONNXRuntime:
         Returns:
             LatencyMetrics: The latency metrics (e.g., FPS, mean, min, max, and standard deviation).
         """
-        self.logger.info(f"⏱️ [onnxruntime] Benchmarking latency..")
+        self.logger.info("⏱️ [onnxruntime] Benchmarking latency..")
         size = size if isinstance(size, (tuple, list)) else (size, size)
 
         durations = []
@@ -381,7 +381,6 @@ class ONNXRuntime:
             if self.binding:
                 start = perf_counter()
                 self.ort_sess.run_with_iobinding(io_binding)
-                # print(len(outputs))
                 end = perf_counter()
                 # out = io_binding.copy_outputs_to_cpu()
             else:
@@ -392,7 +391,6 @@ class ONNXRuntime:
             if step >= 5:
                 durations.append((end - start) * 1000)
         durations = np.array(durations)
-        # time.sleep(0.1)
         provider = self.active_providers[0]
         if provider in ["CUDAExecutionProvider", "TensorrtExecutionProvider"]:
             device = get_gpu_name()
