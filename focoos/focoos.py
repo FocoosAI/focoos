@@ -134,7 +134,7 @@ class Focoos:
         Raises:
             ValueError: If the API request fails.
         """
-        res = self.http_client.get(f"models/focoos-models")
+        res = self.http_client.get("models/focoos-models")
         if res.status_code == 200:
             return [ModelPreview.from_json(r) for r in res.json()]
         else:
@@ -193,7 +193,7 @@ class Focoos:
             ValueError: If the API request fails.
         """
         res = self.http_client.post(
-            f"models/",
+            "models/",
             data={
                 "name": name,
                 "focoos_model": focoos_model,
@@ -219,7 +219,7 @@ class Focoos:
         Raises:
             ValueError: If the API request fails.
         """
-        res = self.http_client.get(f"datasets/shared")
+        res = self.http_client.get("datasets/shared")
         if res.status_code == 200:
             return [DatasetMetadata.from_json(dataset) for dataset in res.json()]
         else:
@@ -243,7 +243,7 @@ class Focoos:
         model_path = os.path.join(model_dir, "model.onnx")
         metadata_path = os.path.join(model_dir, "focoos_metadata.json")
         if os.path.exists(model_path) and os.path.exists(metadata_path):
-            logger.info(f"📥 Model already downloaded")
+            logger.info("📥 Model already downloaded")
             return model_path
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
@@ -257,7 +257,7 @@ class Focoos:
             logger.debug(f"Dumped metadata to {metadata_path}")
             download_uri = download_data["download_uri"]
             logger.debug(f"Model URI: {download_uri}")
-            logger.info(f"📥 Downloading model from Focoos Cloud.. ")
+            logger.info("📥 Downloading model from Focoos Cloud.. ")
             response = self.http_client.get_external_url(download_uri, stream=True)
             if response.status_code == 200:
                 total_size = int(response.headers.get("content-length", 0))
