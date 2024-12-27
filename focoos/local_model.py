@@ -50,22 +50,42 @@ class LocalModel:
     def __init__(
         self,
         model_dir: Union[str, Path],
-        runtime_type: RuntimeTypes = FOCOOS_CONFIG.runtime_type,
+        runtime_type: Optional[RuntimeTypes] = None,
     ):
         """
-        Initialize the LocalModel instance.
+        Initialize a LocalModel instance.
+
+        This class sets up a local model for inference by initializing the runtime environment,
+        loading metadata, and preparing annotation utilities.
 
         Args:
-            model_dir (Union[str, Path]): Path to the model directory.
-            runtime_type (RuntimeTypes, optional): Type of runtime to use. Defaults to
-                                                FOCOOS_CONFIG.runtime_type.
+            model_dir (Union[str, Path]): The path to the directory containing the model files.
+            runtime_type (Optional[RuntimeTypes]): Specifies the runtime type to use for inference.
+                Defaults to the value of `FOCOOS_CONFIG.runtime_type` if not provided.
 
         Raises:
+            ValueError: If no runtime type is provided and `FOCOOS_CONFIG.runtime_type` is not set.
             FileNotFoundError: If the specified model directory does not exist.
 
-        Initializes the model, loads metadata, and prepares the runtime environment
-        for inference.
+        Attributes:
+            model_dir (Union[str, Path]): Path to the model directory.
+            metadata (ModelMetadata): Metadata information for the model.
+            model_ref: Reference identifier for the model obtained from metadata.
+            label_annotator (LabelAnnotator): Utility for adding labels to the output,
+                initialized with text padding and border radius.
+            box_annotator (BoxAnnotator): Utility for annotating bounding boxes.
+            mask_annotator (MaskAnnotator): Utility for annotating masks.
+            runtime (ONNXRuntime): Inference runtime initialized with the specified runtime type,
+                model path, metadata, and warmup iterations.
+
+        The method verifies the existence of the model directory, reads the model metadata,
+        and initializes the runtime for inference using the provided runtime type. Annotation
+        utilities are also prepared for visualizing model outputs.
         """
+        runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
+        if not runtime_type:
+            raise ValueError("Runtime type is required for local model")
+
         logger.debug(f"Runtime type: {runtime_type}, Loading model from {model_dir},")
         if not os.path.exists(model_dir):
             raise FileNotFoundError(f"Model directory not found: {model_dir}")
