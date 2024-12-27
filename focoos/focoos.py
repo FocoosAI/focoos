@@ -45,25 +45,47 @@ class Focoos:
 
     def __init__(
         self,
-        api_key: str = FOCOOS_CONFIG.focoos_api_key,  # type: ignore
-        host_url: str = FOCOOS_CONFIG.default_host_url,
+        api_key: Optional[str] = None,
+        host_url: Optional[str] = None,
     ):
         """
         Initializes the Focoos API client.
 
+        This client provides authenticated access to the Focoos API, enabling various operations
+        through the configured HTTP client. It retrieves user information upon initialization and
+        logs the environment details.
+
         Args:
-            api_key (str): API key for authentication. Defaults to value from configuration.
-            host_url (str): Base URL for Focoos API. Defaults to value from configuration.
+            api_key (Optional[str]): API key for authentication. Defaults to the `focoos_api_key`
+                specified in the FOCOOS_CONFIG.
+            host_url (Optional[str]): Base URL for the Focoos API. Defaults to the `default_host_url`
+                specified in the FOCOOS_CONFIG.
 
         Raises:
-            ValueError: If the API key is not provided or user info retrieval fails.
+            ValueError: If the API key is not provided, or if the host URL is not specified in the
+                arguments or the configuration.
+
+        Attributes:
+            api_key (str): The API key used for authentication.
+            http_client (HttpClient): An HTTP client instance configured with the API key and host URL.
+            user_info (dict): Information about the authenticated user retrieved from the API.
+            cache_dir (str): Path to the cache directory used by the client.
+
+        Logs:
+            - Error if the API key or host URL is missing.
+            - Info about the authenticated user and environment upon successful initialization.
         """
-        self.api_key = api_key
+        self.api_key = api_key or FOCOOS_CONFIG.focoos_api_key
         if not self.api_key:
             logger.error("API key is required 🤖")
             raise ValueError("API key is required 🤖")
 
-        self.http_client = HttpClient(api_key, host_url)
+        host_url = host_url or FOCOOS_CONFIG.default_host_url
+        if not host_url:
+            logger.error("Host URL is required 🤖")
+            raise ValueError("Host URL is required 🤖")
+
+        self.http_client = HttpClient(self.api_key, host_url)
         self.user_info = self._get_user_info()
         self.cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "focoos")
         logger.info(
@@ -117,7 +139,7 @@ class Focoos:
         Raises:
             ValueError: If the API request fails.
         """
-        res = self.http_client.get(f"models/")
+        res = self.http_client.get("models/")
         if res.status_code == 200:
             return [ModelPreview.from_json(r) for r in res.json()]
         else:
@@ -146,18 +168,31 @@ class Focoos:
     def get_local_model(
         self,
         model_ref: str,
-        runtime_type: RuntimeTypes = FOCOOS_CONFIG.runtime_type,
+        runtime_type: Optional[RuntimeTypes] = None,
     ) -> LocalModel:
         """
-        Retrieves a locally cached model or downloads it if not available.
+        Retrieves a local model for the specified reference.
+
+        Downloads the model if it does not already exist in the local cache.
 
         Args:
-            model_ref (str): Reference name of the model.
-            runtime_type (RuntimeTypes): Runtime type for the model. Defaults to configuration value.
+            model_ref (str): Reference identifier for the model.
+            runtime_type (Optional[RuntimeTypes]): Runtime type for the model. Defaults to the
+                `runtime_type` specified in FOCOOS_CONFIG.
 
         Returns:
-            LocalModel: The local model instance.
+            LocalModel: An instance of the local model.
+
+        Raises:
+            ValueError: If the runtime type is not specified.
+
+        Notes:
+            The model is cached in the directory specified by `self.cache_dir`.
         """
+        runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
+        if not runtime_type:
+            raise ValueError("Runtime type is required for local model")
+
         model_dir = os.path.join(self.cache_dir, model_ref)
         if not os.path.exists(os.path.join(model_dir, "model.onnx")):
             self._download_model(model_ref)
@@ -304,7 +339,7 @@ class Focoos:
                 return dataset
 
     def get_model_by_name(
-        self, name: str, remote=True
+        self, name: str, remote: bool = True
     ) -> Optional[Union[RemoteModel, LocalModel]]:
         """
         Retrieves a model by its name.
