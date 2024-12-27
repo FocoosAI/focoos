@@ -19,6 +19,7 @@ def index_to_class(class_ids: list[int], classes: list[str]) -> list[str]:
 
 
 def class_to_index(classes: list[str], class_names: list[str]) -> list[int]:
+    # TODO: improve time complexity from O(mn) to O(n)
     return [class_names.index(c) for c in classes]
 
 
