@@ -184,11 +184,10 @@ class RemoteModel:
             None: Returns an empty list if the request fails.
         """
         res = self.http_client.get(f"models/{self.model_ref}/train/logs")
-        if res.status_code == 200:
-            return res.json()
-        else:
+        if res.status_code != 200:
             logger.warning(f"Failed to get train logs: {res.status_code} {res.text}")
             return []
+        return res.json()
 
     def _annotate(self, im: np.ndarray, detections: Detections) -> np.ndarray:
         """
