@@ -65,14 +65,20 @@ def image_preprocess(
 
 def scale_mask(mask: np.ndarray, target_shape: tuple) -> np.ndarray:
     """
-    Resizes a boolean mask to the specified target resolution.
+    Scales a binary mask to a target shape using nearest-neighbor interpolation.
 
-    Parameters:
-        mask (np.ndarray): Binary mask as a boolean NumPy array.
-        target_shape (tuple): Tuple specifying the target resolution (height, width).
+    Args:
+        mask (np.ndarray): Input binary mask array to be scaled.
+        target_shape (tuple): Desired output shape as (height, width).
 
     Returns:
-        np.ndarray: Resized boolean mask with the target dimensions.
+        np.ndarray: Scaled binary mask with the target shape.
+
+    Example:
+        >>> input_mask = np.array([[1, 0], [0, 1]], dtype=bool)
+        >>> scaled = scale_mask(input_mask, (4, 4))
+        >>> scaled.shape
+        (4, 4)
     """
     # Calculate scale factors for height and width
     scale_factors = (target_shape[0] / mask.shape[0], target_shape[1] / mask.shape[1])
