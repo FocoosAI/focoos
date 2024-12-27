@@ -56,16 +56,11 @@ def image_preprocess(
 ) -> Tuple[np.ndarray, np.ndarray]:
     im0 = image_loader(im)
     if resize:
-        res_image = cv2.resize(im0, (resize, resize))
-        im1 = np.ascontiguousarray(
-            res_image.transpose(2, 0, 1)[np.newaxis, :]  # HWC->1CHW
-        ).astype(dtype)
-        return im1, im0
-    else:
-        im1 = np.ascontiguousarray(
-            im0.transpose(2, 0, 1)[np.newaxis, :]  # HWC->1CHW
-        ).astype(dtype)
-        return im1, im0
+        im0 = cv2.resize(im0, (resize, resize))
+    im1 = np.ascontiguousarray(im0.transpose(2, 0, 1)[np.newaxis, :]).astype(
+        dtype
+    )  # HWC->1CHW
+    return im1, im0
 
 
 def scale_mask(mask: np.ndarray, target_shape: tuple) -> np.ndarray:
