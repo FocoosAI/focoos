@@ -86,7 +86,7 @@ class HttpClient:
             Response: The response object from the requests library.
         """
         url = f"{self.host_url}/{path}"
-        headers = self.default_headers
+        headers = self.default_headers.copy()
         if extra_headers:
             headers.update(extra_headers)
         return requests.get(url, headers=headers, params=params, stream=stream)
@@ -111,7 +111,7 @@ class HttpClient:
             Response: The response object from the requests library.
         """
         url = f"{self.host_url}/{path}"
-        headers = self.default_headers
+        headers = self.default_headers.copy()
         if extra_headers:
             headers.update(extra_headers)
         return requests.post(url, headers=headers, json=data, files=files)
@@ -128,7 +128,7 @@ class HttpClient:
             Response: The response object from the requests library.
         """
         url = f"{self.host_url}/{path}"
-        headers = self.default_headers
+        headers = self.default_headers.copy()
         if extra_headers:
             headers.update(extra_headers)
         return requests.delete(url, headers=headers)
