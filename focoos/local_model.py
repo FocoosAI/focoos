@@ -165,14 +165,22 @@ class LocalModel:
 
         Args:
             image (Union[bytes, str, Path, np.ndarray, Image.Image]): The input image to infer on.
+                This can be a byte array, file path, or a PIL Image object, or a NumPy array representing the image.
             threshold (float, optional): The confidence threshold for detections. Defaults to 0.5.
+                Detections with confidence scores below this threshold will be discarded.
             annotate (bool, optional): Whether to annotate the image with detection results. Defaults to False.
+                If set to True, the method will return the image with bounding boxes or segmentation masks.
 
         Returns:
-            Tuple[FocoosDetections, Optional[np.ndarray]]: The detections from the inference and the annotated image (if applicable).
+            Tuple[FocoosDetections, Optional[np.ndarray]]: A tuple containing:
+                - `FocoosDetections`: The detections from the inference, represented as a custom object (`FocoosDetections`).
+                This includes the details of the detected objects such as class, confidence score, and bounding box (if applicable).
+                - `Optional[np.ndarray]`: The annotated image, if `annotate=True`.
+                This will be a NumPy array representation of the image with drawn bounding boxes or segmentation masks.
+                If `annotate=False`, this value will be `None`.
 
         Raises:
-            ValueError: If the model is not deployed locally.
+            ValueError: If the model is not deployed locally (i.e., `self.runtime` is `None`).
         """
         if self.runtime is None:
             raise ValueError("Model is not deployed (locally)")
