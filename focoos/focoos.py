@@ -283,45 +283,44 @@ class Focoos:
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
         res = self.http_client.get(f"models/{model_ref}/download?format=onnx")
-        if res.status_code == 200:
-            download_data = res.json()
-            metadata = ModelMetadata.from_json(download_data["model_metadata"])
-            with open(metadata_path, "w") as f:
-                f.write(metadata.model_dump_json())
-
-            logger.debug(f"Dumped metadata to {metadata_path}")
-            download_uri = download_data["download_uri"]
-            logger.debug(f"Model URI: {download_uri}")
-            logger.info("📥 Downloading model from Focoos Cloud.. ")
-            response = self.http_client.get_external_url(download_uri, stream=True)
-            if response.status_code == 200:
-                total_size = int(response.headers.get("content-length", 0))
-                logger.info(f"📥 Size: {total_size / (1024**2):.2f} MB")
-                with (
-                    open(model_path, "wb") as f,
-                    tqdm(
-                        desc=str(model_path).split("/")[-1],
-                        total=total_size,
-                        unit="B",
-                        unit_scale=True,
-                        unit_divisor=1024,
-                    ) as bar,
-                ):
-                    for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
-                        bar.update(len(chunk))
-                logger.info(f"📥 File downloaded: {model_path}")
-                return model_path
-            else:
-                logger.error(
-                    f"Failed to download model: {response.status_code} {response.text}"
-                )
-                raise ValueError(
-                    f"Failed to download model: {response.status_code} {response.text}"
-                )
-        else:
+        if res.status_code != 200:
             logger.error(f"Failed to download model: {res.status_code} {res.text}")
             raise ValueError(f"Failed to download model: {res.status_code} {res.text}")
+
+        download_data = res.json()
+        metadata = ModelMetadata.from_json(download_data["model_metadata"])
+        with open(metadata_path, "w") as f:
+            f.write(metadata.model_dump_json())
+
+        logger.debug(f"Dumped metadata to {metadata_path}")
+        download_uri = download_data["download_uri"]
+        logger.debug(f"Model URI: {download_uri}")
+        logger.info("📥 Downloading model from Focoos Cloud.. ")
+        response = self.http_client.get_external_url(download_uri, stream=True)
+        if response.status_code != 200:
+            logger.error(
+                f"Failed to download model: {response.status_code} {response.text}"
+            )
+            raise ValueError(
+                f"Failed to download model: {response.status_code} {response.text}"
+            )
+        total_size = int(response.headers.get("content-length", 0))
+        logger.info(f"📥 Size: {total_size / (1024**2):.2f} MB")
+        with (
+            open(model_path, "wb") as f,
+            tqdm(
+                desc=str(model_path).split("/")[-1],
+                total=total_size,
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+            ) as bar,
+        ):
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+                bar.update(len(chunk))
+        logger.info(f"📥 File downloaded: {model_path}")
+        return model_path
 
     def get_dataset_by_name(self, name: str) -> Optional[DatasetMetadata]:
         """
