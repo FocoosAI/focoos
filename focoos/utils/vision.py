@@ -42,15 +42,15 @@ def image_loader(im: Union[bytes, str, Path, np.ndarray, Image.Image]) -> np.nda
     Raises:
         ValueError: If the input type is not one of the accepted types.
     """
-    if isinstance(im, Buffer):
-        byte_array = np.frombuffer(im, dtype=np.uint8)
-        cv_image = cv2.imdecode(byte_array, cv2.IMREAD_COLOR)
+    if isinstance(im, np.ndarray):
+        cv_image = im
     elif isinstance(im, str) or isinstance(im, Path):
         cv_image = cv2.imread(str(im))
     elif isinstance(im, Image.Image):
         cv_image = cv2.cvtColor(np.array(im), cv2.COLOR_RGB2BGR)
-    elif isinstance(im, np.ndarray):
-        cv_image = im
+    elif isinstance(im, Buffer):
+        byte_array = np.frombuffer(im, dtype=np.uint8)
+        cv_image = cv2.imdecode(byte_array, cv2.IMREAD_COLOR)
 
     return cv_image
 
