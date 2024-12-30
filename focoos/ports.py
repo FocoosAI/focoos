@@ -87,9 +87,7 @@ class Hyperparameters(FocoosBaseModel):
         Field(gt=0.00001, lt=0.1, description="Learning rate"),
     ] = 5e-4
     decoder_multiplier: Annotated[float, Field(description="Backbone multiplier")] = 1
-    backbone_multiplier: Annotated[
-        float, Field(description="Backbone multiplier")
-    ] = 0.1
+    backbone_multiplier: float = 0.1
     amp_enabled: Annotated[
         bool, Field(description="Enable automatic mixed precision")
     ] = True
