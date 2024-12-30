@@ -81,9 +81,7 @@ class Hyperparameters(FocoosBaseModel):
         Optional[str],
         Field(description="Wandb project name must be like ORG_ID/PROJECT_NAME"),
     ] = None
-    wandb_apikey: Annotated[
-        Optional[str], Field(None, description="Wandb API key")
-    ] = None
+    wandb_apikey: Annotated[Optional[str], Field(description="Wandb API key")] = None
     learning_rate: Annotated[
         float,
         Field(gt=0.00001, lt=0.1, description="Learning rate"),
