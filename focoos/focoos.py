@@ -157,13 +157,12 @@ class Focoos:
             ValueError: If the API request fails.
         """
         res = self.http_client.get("models/focoos-models")
-        if res.status_code == 200:
-            return [ModelPreview.from_json(r) for r in res.json()]
-        else:
+        if res.status_code != 200:
             logger.error(f"Failed to list focoos models: {res.status_code} {res.text}")
             raise ValueError(
                 f"Failed to list focoos models: {res.status_code} {res.text}"
             )
+        return [ModelPreview.from_json(r) for r in res.json()]
 
     def get_local_model(
         self,
@@ -240,9 +239,8 @@ class Focoos:
         if res.status_code == 409:
             logger.warning(f"Model already exists: {name}")
             return self.get_model_by_name(name, remote=True)
-        else:
-            logger.warning(f"Failed to create new model: {res.status_code} {res.text}")
-            return None
+        logger.warning(f"Failed to create new model: {res.status_code} {res.text}")
+        return None
 
     def list_shared_datasets(self) -> list[DatasetMetadata]:
         """
@@ -255,11 +253,10 @@ class Focoos:
             ValueError: If the API request fails.
         """
         res = self.http_client.get("datasets/shared")
-        if res.status_code == 200:
-            return [DatasetMetadata.from_json(dataset) for dataset in res.json()]
-        else:
+        if res.status_code != 200:
             logger.error(f"Failed to list datasets: {res.status_code} {res.text}")
             raise ValueError(f"Failed to list datasets: {res.status_code} {res.text}")
+        return [DatasetMetadata.from_json(dataset) for dataset in res.json()]
 
     def _download_model(self, model_ref: str) -> str:
         """
