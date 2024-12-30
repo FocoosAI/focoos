@@ -103,11 +103,10 @@ class Focoos:
             ValueError: If the API request fails.
         """
         res = self.http_client.get("user/")
-        if res.status_code == 200:
-            return res.json()
-        else:
+        if res.status_code != 200:
             logger.error(f"Failed to get user info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get user info: {res.status_code} {res.text}")
+        return res.json()
 
     def get_model_info(self, model_name: str) -> ModelMetadata:
         """
@@ -123,11 +122,10 @@ class Focoos:
             ValueError: If the API request fails.
         """
         res = self.http_client.get(f"models/{model_name}")
-        if res.status_code == 200:
-            return ModelMetadata.from_json(res.json())
-        else:
+        if res.status_code != 200:
             logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
+        return ModelMetadata.from_json(res.json())
 
     def list_models(self) -> list[ModelPreview]:
         """
@@ -140,11 +138,10 @@ class Focoos:
             ValueError: If the API request fails.
         """
         res = self.http_client.get("models/")
-        if res.status_code == 200:
-            return [ModelPreview.from_json(r) for r in res.json()]
-        else:
+        if res.status_code != 200:
             logger.error(f"Failed to list models: {res.status_code} {res.text}")
             raise ValueError(f"Failed to list models: {res.status_code} {res.text}")
+        return [ModelPreview.from_json(r) for r in res.json()]
 
     def list_focoos_models(self) -> list[ModelPreview]:
         """
