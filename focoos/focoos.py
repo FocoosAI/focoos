@@ -81,9 +81,6 @@ class Focoos:
             raise ValueError("API key is required 🤖")
 
         host_url = host_url or FOCOOS_CONFIG.default_host_url
-        if not host_url:
-            logger.error("Host URL is required 🤖")
-            raise ValueError("Host URL is required 🤖")
 
         self.http_client = HttpClient(self.api_key, host_url)
         self.user_info = self._get_user_info()
