@@ -339,8 +339,9 @@ class Focoos:
             Optional[Union[RemoteModel, LocalModel]]: The model instance if found, or None otherwise.
         """
         models = self.list_models()
+        name_lower = name.lower()
         for model in models:
-            if name.lower() == model.name.lower():
+            if name_lower == model.name.lower():
                 if remote:
                     return self.get_remote_model(model.ref)
                 else:
