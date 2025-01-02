@@ -183,9 +183,6 @@ class Focoos:
             The model is cached in the directory specified by `self.cache_dir`.
         """
         runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
-        if not runtime_type:
-            raise ValueError("Runtime type is required for local model")
-
         model_dir = os.path.join(self.cache_dir, model_ref)
         if not os.path.exists(os.path.join(model_dir, "model.onnx")):
             self._download_model(model_ref)
