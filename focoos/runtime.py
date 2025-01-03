@@ -7,9 +7,6 @@ providers such as CUDA, TensorRT, OpenVINO, and CPU. It includes utility functio
 for image preprocessing, postprocessing, and interfacing with the ONNXRuntime library.
 
 Functions:
-    preprocess_image: Preprocesses an image for model input.
-    postprocess_image: Postprocesses the output image from the model.
-    image_to_byte_array: Converts a PIL image to a byte array.
     det_postprocess: Postprocesses detection model outputs into sv.Detections.
     semseg_postprocess: Postprocesses semantic segmentation model outputs into sv.Detections.
     get_runtime: Returns an ONNXRuntime instance configured for the given runtime type.
@@ -18,7 +15,6 @@ Classes:
     ONNXRuntime: A class that interfaces with ONNX Runtime for model inference.
 """
 
-import io
 from pathlib import Path
 from time import perf_counter
 from typing import Tuple
@@ -39,58 +35,6 @@ from focoos.utils.logger import get_logger
 from focoos.utils.system import get_cpu_name, get_gpu_name
 
 GPU_ID = 0
-
-
-def preprocess_image(bytes, dtype=np.float32) -> Tuple[np.ndarray, Image.Image]:
-    """
-    Preprocesses the input image (in bytes) for inference by converting it to a numpy array.
-
-    Args:
-        bytes (bytes): Image data in bytes format (e.g., JPEG, PNG).
-        dtype (np.dtype, optional): The data type to cast the image array to. Defaults to np.float32.
-
-    Returns:
-        Tuple[np.ndarray, Image.Image]: A tuple containing the processed image as a numpy array
-                                        and the original PIL image.
-    """
-    pil_img = Image.open(io.BytesIO(bytes))
-    img_numpy = np.ascontiguousarray(
-        np.array(pil_img).transpose(2, 0, 1)[np.newaxis, :]  # HWC->CHW
-    ).astype(dtype)
-    return img_numpy, pil_img
-
-
-def postprocess_image(
-    cmapped_image: np.ndarray, input_image: Image.Image
-) -> Image.Image:
-    """
-    Postprocesses the output of an inference to blend the results with the original image.
-
-    Args:
-        cmapped_image (np.ndarray): The processed image, typically with segmentation or detection results.
-        input_image (Image.Image): The original input image.
-
-    Returns:
-        Image.Image: The blended image showing the result of postprocessing.
-    """
-    out = Image.fromarray(cmapped_image)
-    return Image.blend(input_image, out, 0.6)
-
-
-def image_to_byte_array(image: Image.Image) -> bytes:
-    """
-    Converts a PIL Image into a byte array.
-
-    Args:
-        image (Image.Image): The input image to be converted.
-
-    Returns:
-        bytes: The byte array representing the image.
-    """
-    img_byte_arr = io.BytesIO()
-    image.save(img_byte_arr, format="JPEG")
-    img_byte_arr = img_byte_arr.getvalue()
-    return img_byte_arr
 
 
 def det_postprocess(
