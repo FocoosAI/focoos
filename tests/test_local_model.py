@@ -162,13 +162,15 @@ def test_annotate_semseg(
     mock_local_model.mask_annotator.annotate.assert_called_once()
 
 
-def test_infer(
+def mock_infer_setup(
     mocker: MockerFixture,
     mock_local_model: LocalModel,
     image_ndarray: np.ndarray,
-    mock_sv_detections,
-    mock_focoos_detections,
+    mock_sv_detections: sv.Detections,
+    mock_focoos_detections: FocoosDetections,
+    annotate: bool,
 ):
+    """Setup for mocking the infer method."""
     # Mock image_preprocess
     mock_image_preprocess = mocker.patch("focoos.local_model.image_preprocess")
     mock_image_preprocess.return_value = (image_ndarray, image_ndarray)
@@ -185,6 +187,10 @@ def test_infer(
 
     # Mock _annotate
     mock_annotate = mocker.patch.object(mock_local_model, "_annotate", autospec=True)
+    if annotate:
+        mock_annotate.return_value = image_ndarray
+    else:
+        mock_annotate.return_value = None  # No annotation if False
 
     # Mock runtime
     class MockRuntime(MagicMock):
@@ -196,59 +202,47 @@ def test_infer(
     )
     mock_local_model.runtime = MockRuntime(spec=ONNXRuntime)
 
-    # call infer
-    out, im = mock_local_model.infer(image=image_ndarray)
-
-    # assertions
-    assert out is not None
-    assert isinstance(out, FocoosDetections)
-    assert im is None
-    mock_runtime_call.assert_called_once()
-    mock_annotate.assert_not_called()
+    return (
+        mock_image_preprocess,
+        mock_runtime_call,
+        mock_scale_detections,
+        mock_sv_to_focoos_detections,
+        mock_annotate,
+    )
 
 
-def test_infer_with_annotation(
-    mocker: MockerFixture,
-    mock_local_model: LocalModel,
-    image_ndarray: np.ndarray,
+@pytest.mark.parametrize("annotate", [(False, None)])
+def test_infer_(
+    mocker,
+    mock_local_model,
+    image_ndarray,
     mock_sv_detections,
     mock_focoos_detections,
+    annotate,
 ):
-    # Mock image_preprocess
-    mock_image_preprocess = mocker.patch("focoos.local_model.image_preprocess")
-    mock_image_preprocess.return_value = (image_ndarray, image_ndarray)
-
-    # Mock scale_detections
-    mock_scale_detections = mocker.patch("focoos.local_model.scale_detections")
-    mock_scale_detections.return_value = mock_sv_detections
-
-    # Mock sv_to_focoos_detections
-    mock_sv_to_focoos_detections = mocker.patch(
-        "focoos.local_model.sv_to_focoos_detections"
+    # Arrange
+    *mock_to_call_once, mock_annotate = mock_infer_setup(
+        mocker,
+        mock_local_model,
+        image_ndarray,
+        mock_sv_detections,
+        mock_focoos_detections,
+        annotate,
     )
-    mock_sv_to_focoos_detections.return_value = mock_focoos_detections
 
-    # Mock _annotate
-    mock_annotate = mocker.patch.object(mock_local_model, "_annotate", autospec=True)
-    mock_annotate.return_value = image_ndarray
+    # Act
+    out, im = mock_local_model.infer(image=image_ndarray, annotate=annotate)
 
-    # Mock runtime
-    class MockRuntime(MagicMock):
-        def __call__(self, *args, **kwargs):
-            return mock_sv_detections
-
-    mock_runtime_call = mocker.patch.object(
-        MockRuntime, "__call__", return_value=mock_sv_detections
-    )
-    mock_local_model.runtime = MockRuntime(spec=ONNXRuntime)
-
-    # call infer
-    out, im = mock_local_model.infer(image=image_ndarray, annotate=True)
-
-    # assertions
+    # Assertions
     assert out is not None
     assert isinstance(out, FocoosDetections)
-    assert im is not None
-    assert isinstance(im, np.ndarray)
-    mock_runtime_call.assert_called_once()
-    mock_annotate.assert_called_once()
+
+    for mock_obj in mock_to_call_once:
+        mock_obj.assert_called_once()
+    if annotate:
+        mock_annotate.assert_called_once()
+        assert im is not None
+        assert isinstance(im, np.ndarray)
+    else:
+        mock_annotate.assert_not_called()
+        assert im is None
