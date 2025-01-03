@@ -268,8 +268,8 @@ class Focoos:
         if os.path.exists(model_path) and os.path.exists(metadata_path):
             logger.info("📥 Model already downloaded")
             return model_path
-        if not os.path.exists(model_dir):
-            os.makedirs(model_dir)
+
+        ## download model metadata
         res = self.http_client.get(f"models/{model_ref}/download?format=onnx")
         if res.status_code != 200:
             logger.error(f"Failed to download model: {res.status_code} {res.text}")
@@ -277,11 +277,9 @@ class Focoos:
 
         download_data = res.json()
         metadata = ModelMetadata.from_json(download_data["model_metadata"])
-        with open(metadata_path, "w") as f:
-            f.write(metadata.model_dump_json())
-
-        logger.debug(f"Dumped metadata to {metadata_path}")
         download_uri = download_data["download_uri"]
+
+        ## download model from Focoos Cloud
         logger.debug(f"Model URI: {download_uri}")
         logger.info("📥 Downloading model from Focoos Cloud.. ")
         response = self.http_client.get_external_url(download_uri, stream=True)
@@ -294,6 +292,14 @@ class Focoos:
             )
         total_size = int(response.headers.get("content-length", 0))
         logger.info(f"📥 Size: {total_size / (1024**2):.2f} MB")
+
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
+
+        with open(metadata_path, "w") as f:
+            f.write(metadata.model_dump_json())
+        logger.debug(f"Dumped metadata to {metadata_path}")
+
         with (
             open(model_path, "wb") as f,
             tqdm(
