@@ -125,16 +125,10 @@ class LocalModel:
             np.ndarray: The annotated image with bounding boxes or masks.
         """
         classes = self.metadata.classes
-        if classes is not None:
-            labels = [
-                f"{classes[int(class_id)]}: {confid*100:.0f}%"
-                for class_id, confid in zip(detections.class_id, detections.confidence)  # type: ignore
-            ]
-        else:
-            labels = [
-                f"{str(class_id)}: {confid*100:.0f}%"
-                for class_id, confid in zip(detections.class_id, detections.confidence)  # type: ignore
-            ]
+        labels = [
+            f"{classes[int(class_id)] if classes is not None else str(class_id)}: {confid*100:.0f}%"
+            for class_id, confid in zip(detections.class_id, detections.confidence)  # type: ignore
+        ]
         if self.metadata.task == FocoosTask.DETECTION:
             annotated_im = self.box_annotator.annotate(
                 scene=im.copy(), detections=detections
