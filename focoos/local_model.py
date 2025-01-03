@@ -83,8 +83,6 @@ class LocalModel:
         utilities are also prepared for visualizing model outputs.
         """
         runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
-        if not runtime_type:
-            raise ValueError("Runtime type is required for local model")
 
         logger.debug(f"Runtime type: {runtime_type}, Loading model from {model_dir},")
         if not os.path.exists(model_dir):
