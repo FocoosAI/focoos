@@ -180,8 +180,7 @@ class LocalModel:
         Raises:
             ValueError: If the model is not deployed locally (i.e., `self.runtime` is `None`).
         """
-        if self.runtime is None:
-            raise ValueError("Model is not deployed (locally)")
+        assert self.runtime is not None, "Model is not deployed (locally)"
         resize = None  #!TODO  check for segmentation
         if self.metadata.task == FocoosTask.DETECTION:
             resize = 640 if not self.metadata.im_size else self.metadata.im_size
