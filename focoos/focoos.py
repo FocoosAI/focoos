@@ -321,8 +321,9 @@ class Focoos:
             Optional[DatasetMetadata]: The dataset metadata if found, or None otherwise.
         """
         datasets = self.list_shared_datasets()
+        name_lower = name.lower()
         for dataset in datasets:
-            if name.lower() == dataset.name.lower():
+            if name_lower == dataset.name.lower():
                 return dataset
 
     def get_model_by_name(
