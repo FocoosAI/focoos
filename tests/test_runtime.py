@@ -1,11 +1,31 @@
 import pathlib
 from unittest.mock import MagicMock
 
+import numpy as np
 import pytest
 from pytest_mock import MockerFixture
 
 from focoos.ports import ModelMetadata, OnnxEngineOpts, RuntimeTypes
-from focoos.runtime import ONNXRuntime, get_runtime
+from focoos.runtime import ONNXRuntime, det_postprocess, get_runtime
+
+
+def test_det_post_process():
+    cls_ids = np.array([1, 2, 3])
+    boxes = np.array([[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8], [0.9, 1.0, 1.1, 1.2]])
+    confs = np.array([0.8, 0.9, 0.7])
+    out = [cls_ids, boxes, confs]
+
+    im0_shape = (640, 480)
+    conf_threshold = 0.75
+    sv_detections = det_postprocess(out, im0_shape, conf_threshold)
+
+    np.testing.assert_array_equal(
+        sv_detections.xyxy, np.array([[48, 128, 144, 256], [240, 384, 336, 512]])
+    )
+    assert sv_detections.class_id is not None
+    np.testing.assert_array_equal(sv_detections.class_id, np.array([1, 2]))
+    assert sv_detections.confidence is not None
+    np.testing.assert_array_equal(sv_detections.confidence, np.array([0.8, 0.9]))
 
 
 @pytest.mark.parametrize(
