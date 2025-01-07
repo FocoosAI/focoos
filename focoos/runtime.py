@@ -54,7 +54,7 @@ def det_postprocess(
     cls_ids, boxes, confs = out
     boxes[:, 0::2] *= im0_shape[1]
     boxes[:, 1::2] *= im0_shape[0]
-    high_conf_indices = np.where(confs > conf_threshold)
+    high_conf_indices = (confs > conf_threshold).nonzero()
 
     return sv.Detections(
         xyxy=boxes[high_conf_indices].astype(int),
@@ -79,16 +79,14 @@ def semseg_postprocess(
         sv.Detections: A sv.Detections object containing the masks, class ids, and confidences.
     """
     cls_ids, mask, confs = out[0][0], out[1][0], out[2][0]
-    masks = np.zeros((len(cls_ids), *mask.shape), dtype=bool)
-    for i, cls_id in enumerate(cls_ids):
-        masks[i, mask == i] = True
+    masks = np.equal(mask, np.arange(len(cls_ids))[:, None, None])
     high_conf_indices = np.where(confs > conf_threshold)[0]
     masks = masks[high_conf_indices].astype(bool)
     cls_ids = cls_ids[high_conf_indices].astype(int)
     confs = confs[high_conf_indices].astype(float)
     return sv.Detections(
         mask=masks,
-        # xyxy is required from supervisio
+        # xyxy is required from supervision
         xyxy=np.zeros(shape=(len(high_conf_indices), 4), dtype=np.uint8),
         class_id=cls_ids,
         confidence=confs,
