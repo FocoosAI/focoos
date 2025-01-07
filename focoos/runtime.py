@@ -17,7 +17,7 @@ Classes:
 
 from pathlib import Path
 from time import perf_counter
-from typing import Tuple
+from typing import List, Tuple
 
 import numpy as np
 import onnxruntime as ort
@@ -37,14 +37,14 @@ GPU_ID = 0
 
 
 def det_postprocess(
-    out: np.ndarray, im0_shape: Tuple[int, int], conf_threshold: float
+    out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float
 ) -> sv.Detections:
     """
     Postprocesses the output of an object detection model and filters detections
     based on a confidence threshold.
 
     Args:
-        out (np.ndarray): The output of the detection model.
+        out (List[np.ndarray]): The output of the detection model.
         im0_shape (Tuple[int, int]): The original shape of the input image (height, width).
         conf_threshold (float): The confidence threshold for filtering detections.
 
@@ -64,14 +64,14 @@ def det_postprocess(
 
 
 def semseg_postprocess(
-    out: np.ndarray, im0_shape: Tuple[int, int], conf_threshold: float
+    out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float
 ) -> sv.Detections:
     """
     Postprocesses the output of a semantic segmentation model and filters based
     on a confidence threshold.
 
     Args:
-        out (np.ndarray): The output of the semantic segmentation model.
+        out (List[np.ndarray]): The output of the semantic segmentation model.
         im0_shape (Tuple[int, int]): The original shape of the input image (height, width).
         conf_threshold (float): The confidence threshold for filtering detections.
 
