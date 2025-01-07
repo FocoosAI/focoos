@@ -22,7 +22,6 @@ from typing import Tuple
 import numpy as np
 import onnxruntime as ort
 import supervision as sv
-from PIL import Image
 
 from focoos.ports import (
     FocoosTask,
@@ -373,22 +372,12 @@ def get_runtime(
     Returns:
         ONNXRuntime: A fully configured ONNXRuntime instance.
     """
-    if runtime_type == RuntimeTypes.ONNX_CUDA32:
-        opts = OnnxEngineOpts(
-            cuda=True, verbose=False, fp16=False, warmup_iter=warmup_iter
-        )
-    elif runtime_type == RuntimeTypes.ONNX_TRT32:
-        opts = OnnxEngineOpts(
-            cuda=False, verbose=False, trt=True, fp16=False, warmup_iter=warmup_iter
-        )
-    elif runtime_type == RuntimeTypes.ONNX_TRT16:
-        opts = OnnxEngineOpts(
-            cuda=False, verbose=False, trt=True, fp16=True, warmup_iter=warmup_iter
-        )
-    elif runtime_type == RuntimeTypes.ONNX_CPU:
-        opts = OnnxEngineOpts(cuda=False, verbose=False, warmup_iter=warmup_iter)
-    elif runtime_type == RuntimeTypes.ONNX_COREML:
-        opts = OnnxEngineOpts(
-            cuda=False, verbose=False, coreml=True, warmup_iter=warmup_iter
-        )
+    opts = OnnxEngineOpts(
+        cuda=runtime_type == RuntimeTypes.ONNX_CUDA32,
+        trt=runtime_type in [RuntimeTypes.ONNX_TRT32, RuntimeTypes.ONNX_TRT16],
+        fp16=runtime_type == RuntimeTypes.ONNX_TRT16,
+        warmup_iter=warmup_iter,
+        coreml=runtime_type == RuntimeTypes.ONNX_COREML,
+        verbose=False,
+    )
     return ONNXRuntime(model_path, opts, model_metadata)
