@@ -6,7 +6,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from focoos.ports import ModelMetadata, OnnxEngineOpts, RuntimeTypes
-from focoos.runtime import ONNXRuntime, det_postprocess, get_runtime
+from focoos.runtime import ONNXRuntime, det_postprocess, get_runtime, semseg_postprocess
 
 
 def test_det_post_process():
@@ -26,6 +26,53 @@ def test_det_post_process():
     np.testing.assert_array_equal(sv_detections.class_id, np.array([1, 2]))
     assert sv_detections.confidence is not None
     np.testing.assert_array_equal(sv_detections.confidence, np.array([0.8, 0.9]))
+
+
+def test_semseg_postprocess():
+    cls_ids = np.array([1, 2, 3])
+    mask = np.array(
+        [
+            [0, 1, 1, 2],
+            [0, 1, 2, 2],
+            [0, 0, 1, 2],
+        ]
+    )
+    confs = np.array([0.7, 0.9, 0.8])
+    out = [
+        np.expand_dims(cls_ids, axis=0),
+        np.expand_dims(mask, axis=0),
+        np.expand_dims(confs, axis=0),
+    ]
+
+    im0_shape = (3, 4)
+    conf_threshold = 0.75
+
+    sv_detections = semseg_postprocess(out, im0_shape, conf_threshold)
+
+    # Expected masks
+    expected_masks = np.array(
+        [
+            [
+                [False, True, True, False],
+                [False, True, False, False],
+                [False, False, True, False],
+            ],  # Class 1
+            [
+                [False, False, False, True],
+                [False, False, True, True],
+                [False, False, False, True],
+            ],  # Class 2
+        ]
+    )
+
+    # Assertions
+    assert sv_detections.mask is not None
+    np.testing.assert_array_equal(sv_detections.mask, expected_masks)
+    assert sv_detections.class_id is not None
+    np.testing.assert_array_equal(sv_detections.class_id, np.array([2, 3]))
+    assert sv_detections.confidence is not None
+    np.testing.assert_array_equal(sv_detections.confidence, np.array([0.9, 0.8]))
+    assert sv_detections.xyxy.shape == (2, 4)
 
 
 @pytest.mark.parametrize(
