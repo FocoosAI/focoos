@@ -1,22 +1,19 @@
-.PHONY: test install install-dev install-pre-commit run-pre-commit
+.PHONY: test install install-dev install-pre-commit run-pre-commit .uv .pre-commit
 
-.PHONY: .uv
 .uv: ## Check that uv is installed
 	@uv --version || echo 'Please install uv: https://docs.astral.sh/uv/getting-started/installation/'
 
-.PHONY: .pre-commit
 .pre-commit: ## Check that pre-commit is installed
 	@pre-commit -V || echo 'Please install pre-commit: https://pre-commit.com/'
 
 install: .uv .pre-commit
 	@uv venv
 	@uv pip install -e ".[cpu,dev]" --no-cache-dir
+	@pre-commit install
 
 install-gpu: .uv .pre-commit
 	@uv venv
 	@uv pip install -e ".[dev,gpu]" --no-cache-dir
-
-install-pre-commit:
 	@pre-commit install
 
 lint:
