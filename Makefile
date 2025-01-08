@@ -8,12 +8,12 @@
 
 install: .uv .pre-commit
 	@uv venv
-	@uv pip install -e ".[cpu,dev]" --no-cache-dir
+	@uv pip install -e ".[cpu,dev]"
 	@pre-commit install
 
 install-gpu: .uv .pre-commit
 	@uv venv
-	@uv pip install -e ".[dev,gpu]" --no-cache-dir
+	@uv pip install -e ".[dev,gpu]"
 	@pre-commit install
 
 lint:
