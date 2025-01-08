@@ -1,4 +1,3 @@
-import datetime
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -13,33 +12,9 @@ from focoos.ports import (
     FocoosTask,
     LatencyMetrics,
     ModelMetadata,
-    ModelStatus,
     RuntimeTypes,
 )
 from focoos.runtime import ONNXRuntime
-
-
-@pytest.fixture
-def mock_metadata():
-    return ModelMetadata(
-        ref="test_model_ref",
-        name="Test Model",
-        description="A test model for unit tests",
-        owner_ref="test_owner",
-        focoos_model="test_focoos_model",
-        task=FocoosTask.DETECTION,
-        created_at=datetime.datetime.now(),
-        updated_at=datetime.datetime.now(),
-        status=ModelStatus.DEPLOYED,
-        metrics={"accuracy": 0.95},
-        latencies=[{"inference": 0.1}],
-        classes=["class_0", "class_1"],
-        im_size=640,
-        hyperparameters=None,
-        training_info=None,
-        location=None,
-        dataset=None,
-    )
 
 
 @pytest.fixture
