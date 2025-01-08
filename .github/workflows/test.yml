@@ -38,6 +38,7 @@ jobs:
         run: |
           uv venv
           uv pip install .[cpu,dev]
+          VIRTUAL_ENV=./.venv
           tox
       # - name: Run test with tox
       #   run: tox
