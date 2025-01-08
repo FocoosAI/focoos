@@ -38,8 +38,9 @@ jobs:
         run: |
           uv venv
           uv pip install .[cpu,dev]
-      - name: Run test with tox
-        run: tox
+          tox
+      # - name: Run test with tox
+      #   run: tox
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
         with:
