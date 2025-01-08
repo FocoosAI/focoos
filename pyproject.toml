@@ -51,7 +51,6 @@ dev = [
     "ipykernel~=6.29.5",
     "tox",
     "tox-uv",
-    "tox-gh-actions",
 ]
 docs = [
     "mkdocs>=1.6.0,<2.0.0",
