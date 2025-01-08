@@ -1064,9 +1064,9 @@
 <span class="normal">5</span>
 <span class="normal">6</span>
 <span class="normal">7</span>
-<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">focoos</span> <span class="kn">import</span> <span class="n">Focoos</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pprint</span><span class="w"> </span><span class="kn">import</span> <span class="n">pprint</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">Focoos</span>
 
 <span class="n">focoos</span> <span class="o">=</span> <span class="n">Focoos</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;FOCOOS_API_KEY&quot;</span><span class="p">))</span>
 
@@ -1093,7 +1093,7 @@
 <span class="normal">16</span>
 <span class="normal">17</span>
 <span class="normal">18</span>
-<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span> <span class="nn">focoos.ports</span> <span class="kn">import</span> <span class="n">Hyperparameters</span><span class="p">,</span> <span class="n">TrainInstance</span>
+<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.ports</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hyperparameters</span><span class="p">,</span> <span class="n">TrainInstance</span>
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">focoos</span><span class="o">.</span><span class="n">get_remote_model</span><span class="p">(</span><span class="s2">&quot;&lt;YOUR-MODEL-ID&gt;&quot;</span><span class="p">)</span>
 
@@ -1129,9 +1129,9 @@
 <span class="normal">12</span>
 <span class="normal">13</span>
 <span class="normal">14</span>
-<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
-<span class="kn">from</span> <span class="nn">focoos.utils.logger</span> <span class="kn">import</span> <span class="n">get_logger</span>
+<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pprint</span><span class="w"> </span><span class="kn">import</span> <span class="n">pprint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">focoos.utils.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
 
 <span class="n">completed_status</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Completed&quot;</span><span class="p">,</span> <span class="s2">&quot;Failed&quot;</span><span class="p">]</span>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
