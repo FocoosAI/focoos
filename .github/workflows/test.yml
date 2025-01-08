@@ -40,9 +40,10 @@ jobs:
           uv venv
           VIRTUAL_ENV=./.venv
           uv pip install .[cpu,dev]
-          tox
-      # - name: Run test with tox
-      #   run: tox
+      - name: Run test with tox
+        run: python -m tox
+        env:
+          VIRTUAL_ENV: ./.venv
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
         with:
