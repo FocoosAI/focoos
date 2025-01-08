@@ -14,7 +14,7 @@ requires-python = ">=3.10"
 dependencies = [
     "requests",
     "Pillow~=10.4.0",
-    "supervision~=0.25.0",
+    "supervision~=0.26.0rc2",
     "pydantic~=2.8.2",
     "pydantic-settings~=2.5.0",
     "tqdm~=4.67.1",
@@ -22,7 +22,7 @@ dependencies = [
     "scipy~=1.14.1",
     "gputil~=1.4.0",
     "psutil~=6.1.1",
-    "setuptools~=75.6.0",
+    "setuptools~=75.7.0",
 ]
 
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]
