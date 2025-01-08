@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 env:
   DOCKER_BUILDKIT: 1
-  UV_SYSTEM_PYTHON: 1
+  # UV_SYSTEM_PYTHON: 1
 jobs:
   Run-test:
     runs-on: ubuntu-22.04
@@ -21,22 +21,26 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-      - name: install make
-        run: sudo apt-get update && sudo apt-get install ffmpeg libsm6 libxext6 make  -y
+      # - name: install make
+      #   run: sudo apt-get update && sudo apt-get install ffmpeg libsm6 libxext6 make  -y
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version:  ${{ matrix.python-version }}
-      - name: Install the latest version of uv and set the python version
-        uses: astral-sh/setup-uv@v4
-        with:
-          python-version:  ${{ matrix.python-version }}
+      # - name: Install the latest version of uv and set the python version
+      #   uses: astral-sh/setup-uv@v4
+      #   with:
+      #     python-version:  ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          uv pip install setuptools
-          uv pip install .[cpu,dev]
+          python -m pip install --upgrade pip
+          pip install .[cpu,dev]
+          pip install tox tox-gh-actions
+        # run: |
+        #   uv pip install setuptools
+        #   uv pip install .[cpu,dev]
       - name: Run test with tox
-        run: make tox
+        run: tox
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
         with:
