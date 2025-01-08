@@ -5,6 +5,7 @@ on:
 env:
   DOCKER_BUILDKIT: 1
   # UV_SYSTEM_PYTHON: 1
+  UV_PYTHON_PREFERENCE: only-managed
 jobs:
   Run-test:
     runs-on: ubuntu-22.04
