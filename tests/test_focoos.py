@@ -70,7 +70,7 @@ def mock_list_models_as_base_models(mock_list_models):
 
 
 @pytest.fixture
-def mock_remote_model() -> RemoteModel:
+def mock_remote_model():
     return MagicMock(spec=RemoteModel, model_ref="ref1")
 
 
@@ -85,6 +85,7 @@ def test_focoos_initialization_no_api_key(focoos_instance: Focoos):
             status_code=200, json=lambda: {"email": "test@example.com"}
         )
     )
+    FOCOOS_CONFIG.focoos_api_key = ""
     with pytest.raises(ValueError):
         Focoos(host_url="http://mock-host-url.com")
 
