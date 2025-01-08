@@ -18,18 +18,20 @@ def _get_mock_remote_model(
     model = RemoteModel(model_ref="test_model_ref", http_client=mock_http_client)
 
     # Mock BoxAnnotator
-    mock_box_annotator = mocker.patch("focoos.remote_model.BoxAnnotator", autospec=True)
+    mock_box_annotator = mocker.patch(
+        "focoos.remote_model.sv.BoxAnnotator", autospec=True
+    )
     mock_box_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
 
     # Mock LabelAnnotator
     mock_label_annotator = mocker.patch(
-        "focoos.remote_model.LabelAnnotator", autospec=True
+        "focoos.remote_model.sv.LabelAnnotator", autospec=True
     )
     mock_label_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
 
     # Mock MaskAnnotator
     mock_mask_annotator = mocker.patch(
-        "focoos.remote_model.MaskAnnotator", autospec=True
+        "focoos.remote_model.sv.MaskAnnotator", autospec=True
     )
     mock_mask_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
 

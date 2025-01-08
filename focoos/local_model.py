@@ -24,8 +24,8 @@ from time import perf_counter
 from typing import Optional, Tuple, Union
 
 import numpy as np
+import supervision as sv
 from PIL import Image
-from supervision import BoxAnnotator, Detections, LabelAnnotator, MaskAnnotator
 
 from focoos.config import FOCOOS_CONFIG
 from focoos.ports import (
@@ -71,10 +71,10 @@ class LocalModel:
             model_dir (Union[str, Path]): Path to the model directory.
             metadata (ModelMetadata): Metadata information for the model.
             model_ref: Reference identifier for the model obtained from metadata.
-            label_annotator (LabelAnnotator): Utility for adding labels to the output,
+            label_annotator (sv.LabelAnnotator): Utility for adding labels to the output,
                 initialized with text padding and border radius.
-            box_annotator (BoxAnnotator): Utility for annotating bounding boxes.
-            mask_annotator (MaskAnnotator): Utility for annotating masks.
+            box_annotator (sv.BoxAnnotator): Utility for annotating bounding boxes.
+            mask_annotator (sv.MaskAnnotator): Utility for annotating masks.
             runtime (ONNXRuntime): Inference runtime initialized with the specified runtime type,
                 model path, metadata, and warmup iterations.
 
@@ -90,9 +90,9 @@ class LocalModel:
         self.model_dir: Union[str, Path] = model_dir
         self.metadata: ModelMetadata = self._read_metadata()
         self.model_ref = self.metadata.ref
-        self.label_annotator = LabelAnnotator(text_padding=10, border_radius=10)
-        self.box_annotator = BoxAnnotator()
-        self.mask_annotator = MaskAnnotator()
+        self.label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
+        self.box_annotator = sv.BoxAnnotator()
+        self.mask_annotator = sv.MaskAnnotator()
         self.runtime: ONNXRuntime = get_runtime(
             runtime_type,
             str(os.path.join(model_dir, "model.onnx")),
@@ -113,13 +113,13 @@ class LocalModel:
         metadata_path = os.path.join(self.model_dir, "focoos_metadata.json")
         return ModelMetadata.from_json(metadata_path)
 
-    def _annotate(self, im: np.ndarray, detections: Detections) -> np.ndarray:
+    def _annotate(self, im: np.ndarray, detections: sv.Detections) -> np.ndarray:
         """
         Annotates the input image with detection or segmentation results.
 
         Args:
             im (np.ndarray): The input image to annotate.
-            detections (Detections): Detected objects or segmented regions.
+            detections (sv.Detections): Detected objects or segmented regions.
 
         Returns:
             np.ndarray: The annotated image with bounding boxes or masks.

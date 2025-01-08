@@ -36,18 +36,20 @@ def mock_local_model(mocker: MockerFixture, mock_model_dir, image_ndarray):
     model = LocalModel(model_dir=mock_model_dir, runtime_type=RuntimeTypes.ONNX_CPU)
 
     # Mock BoxAnnotator
-    mock_box_annotator = mocker.patch("focoos.local_model.BoxAnnotator", autospec=True)
+    mock_box_annotator = mocker.patch(
+        "focoos.local_model.sv.BoxAnnotator", autospec=True
+    )
     mock_box_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
 
     # Mock LabelAnnotator
     mock_label_annotator = mocker.patch(
-        "focoos.local_model.LabelAnnotator", autospec=True
+        "focoos.local_model.sv.LabelAnnotator", autospec=True
     )
     mock_label_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
 
     # Mock MaskAnnotator
     mock_mask_annotator = mocker.patch(
-        "focoos.local_model.MaskAnnotator", autospec=True
+        "focoos.local_model.sv.MaskAnnotator", autospec=True
     )
     mock_mask_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
 
