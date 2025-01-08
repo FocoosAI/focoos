@@ -146,7 +146,7 @@ class RemoteModel:
         )
         if res.status_code != 200:
             logger.warning(f"Failed to train model: {res.status_code} {res.text}")
-            return None
+            raise ValueError(f"Failed to train model: {res.status_code} {res.text}")
         return res.json()
 
     def train_status(self) -> dict | None:
