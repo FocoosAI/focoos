@@ -10,6 +10,9 @@ import requests
 
 from focoos.config import FOCOOS_CONFIG
 from focoos.ports import GPUInfo, SystemInfo
+from focoos.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class HttpClient:
@@ -83,7 +86,7 @@ class HttpClient:
             Response: The response object from the requests library.
         """
         url = f"{self.host_url}/{path}"
-        headers = self.default_headers
+        headers = self.default_headers.copy()
         if extra_headers:
             headers.update(extra_headers)
         return requests.get(url, headers=headers, params=params, stream=stream)
@@ -108,7 +111,7 @@ class HttpClient:
             Response: The response object from the requests library.
         """
         url = f"{self.host_url}/{path}"
-        headers = self.default_headers
+        headers = self.default_headers.copy()
         if extra_headers:
             headers.update(extra_headers)
         return requests.post(url, headers=headers, json=data, files=files)
@@ -125,7 +128,7 @@ class HttpClient:
             Response: The response object from the requests library.
         """
         url = f"{self.host_url}/{path}"
-        headers = self.default_headers
+        headers = self.default_headers.copy()
         if extra_headers:
             headers.update(extra_headers)
         return requests.delete(url, headers=headers)
@@ -155,11 +158,8 @@ def get_cuda_version() -> Optional[str]:
                     cuda_version = line.split(":")[-1].strip()
                     cuda_version = cuda_version.split()[0]
                     return cuda_version
-            return None
-        else:
-            return None
-    except FileNotFoundError:
-        return None
+    except FileNotFoundError as err:
+        logger.warning("nvidia-smi command not found: %s", err)
 
 
 def get_gpu_name() -> Optional[str]:

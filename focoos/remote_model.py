@@ -32,7 +32,7 @@ from typing import Optional, Tuple, Union
 
 import cv2
 import numpy as np
-from supervision import BoxAnnotator, Detections, LabelAnnotator, MaskAnnotator
+import supervision as sv
 
 from focoos.ports import (
     FocoosDet,
@@ -59,8 +59,8 @@ class RemoteModel:
         max_deploy_wait (int): Maximum wait time for model deployment.
         metadata (ModelMetadata): Metadata of the model.
         label_annotator (LabelAnnotator): Annotator for adding labels to images.
-        box_annotator (BoxAnnotator): Annotator for drawing bounding boxes.
-        mask_annotator (MaskAnnotator): Annotator for drawing masks on images.
+        box_annotator (sv.BoxAnnotator): Annotator for drawing bounding boxes.
+        mask_annotator (sv.MaskAnnotator): Annotator for drawing masks on images.
     """
 
     def __init__(self, model_ref: str, http_client: HttpClient):
@@ -79,9 +79,9 @@ class RemoteModel:
         self.max_deploy_wait = 10
         self.metadata: ModelMetadata = self.get_info()
 
-        self.label_annotator = LabelAnnotator(text_padding=10, border_radius=10)
-        self.box_annotator = BoxAnnotator()
-        self.mask_annotator = MaskAnnotator()
+        self.label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
+        self.box_annotator = sv.BoxAnnotator()
+        self.mask_annotator = sv.MaskAnnotator()
         logger.info(
             f"[RemoteModel]: ref: {self.model_ref} name: {self.metadata.name} description: {self.metadata.description} status: {self.metadata.status}"
         )
@@ -146,7 +146,7 @@ class RemoteModel:
         )
         if res.status_code != 200:
             logger.warning(f"Failed to train model: {res.status_code} {res.text}")
-            return None
+            raise ValueError(f"Failed to train model: {res.status_code} {res.text}")
         return res.json()
 
     def train_status(self) -> dict | None:
@@ -184,13 +184,12 @@ class RemoteModel:
             None: Returns an empty list if the request fails.
         """
         res = self.http_client.get(f"models/{self.model_ref}/train/logs")
-        if res.status_code == 200:
-            return res.json()
-        else:
+        if res.status_code != 200:
             logger.warning(f"Failed to get train logs: {res.status_code} {res.text}")
             return []
+        return res.json()
 
-    def _annotate(self, im: np.ndarray, detections: Detections) -> np.ndarray:
+    def _annotate(self, im: np.ndarray, detections: sv.Detections) -> np.ndarray:
         """
         Annotate an image with detection results.
 
@@ -200,7 +199,7 @@ class RemoteModel:
 
         Args:
             im (np.ndarray): The image to be annotated, represented as a NumPy array.
-            detections (Detections): The detection results to be annotated, including class IDs and confidence scores.
+            detections (sv.Detections): The detection results to be annotated, including class IDs and confidence scores.
 
         Returns:
             np.ndarray: The annotated image as a NumPy array.

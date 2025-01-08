@@ -45,25 +45,44 @@ class Focoos:
 
     def __init__(
         self,
-        api_key: str = FOCOOS_CONFIG.focoos_api_key,  # type: ignore
-        host_url: str = FOCOOS_CONFIG.default_host_url,
+        api_key: Optional[str] = None,
+        host_url: Optional[str] = None,
     ):
         """
         Initializes the Focoos API client.
 
+        This client provides authenticated access to the Focoos API, enabling various operations
+        through the configured HTTP client. It retrieves user information upon initialization and
+        logs the environment details.
+
         Args:
-            api_key (str): API key for authentication. Defaults to value from configuration.
-            host_url (str): Base URL for Focoos API. Defaults to value from configuration.
+            api_key (Optional[str]): API key for authentication. Defaults to the `focoos_api_key`
+                specified in the FOCOOS_CONFIG.
+            host_url (Optional[str]): Base URL for the Focoos API. Defaults to the `default_host_url`
+                specified in the FOCOOS_CONFIG.
 
         Raises:
-            ValueError: If the API key is not provided or user info retrieval fails.
+            ValueError: If the API key is not provided, or if the host URL is not specified in the
+                arguments or the configuration.
+
+        Attributes:
+            api_key (str): The API key used for authentication.
+            http_client (HttpClient): An HTTP client instance configured with the API key and host URL.
+            user_info (dict): Information about the authenticated user retrieved from the API.
+            cache_dir (str): Path to the cache directory used by the client.
+
+        Logs:
+            - Error if the API key or host URL is missing.
+            - Info about the authenticated user and environment upon successful initialization.
         """
-        self.api_key = api_key
+        self.api_key = api_key or FOCOOS_CONFIG.focoos_api_key
         if not self.api_key:
             logger.error("API key is required 🤖")
             raise ValueError("API key is required 🤖")
 
-        self.http_client = HttpClient(api_key, host_url)
+        host_url = host_url or FOCOOS_CONFIG.default_host_url
+
+        self.http_client = HttpClient(self.api_key, host_url)
         self.user_info = self._get_user_info()
         self.cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "focoos")
         logger.info(
@@ -81,11 +100,10 @@ class Focoos:
             ValueError: If the API request fails.
         """
         res = self.http_client.get("user/")
-        if res.status_code == 200:
-            return res.json()
-        else:
+        if res.status_code != 200:
             logger.error(f"Failed to get user info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get user info: {res.status_code} {res.text}")
+        return res.json()
 
     def get_model_info(self, model_name: str) -> ModelMetadata:
         """
@@ -101,11 +119,10 @@ class Focoos:
             ValueError: If the API request fails.
         """
         res = self.http_client.get(f"models/{model_name}")
-        if res.status_code == 200:
-            return ModelMetadata.from_json(res.json())
-        else:
+        if res.status_code != 200:
             logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
+        return ModelMetadata.from_json(res.json())
 
     def list_models(self) -> list[ModelPreview]:
         """
@@ -117,12 +134,11 @@ class Focoos:
         Raises:
             ValueError: If the API request fails.
         """
-        res = self.http_client.get(f"models/")
-        if res.status_code == 200:
-            return [ModelPreview.from_json(r) for r in res.json()]
-        else:
+        res = self.http_client.get("models/")
+        if res.status_code != 200:
             logger.error(f"Failed to list models: {res.status_code} {res.text}")
             raise ValueError(f"Failed to list models: {res.status_code} {res.text}")
+        return [ModelPreview.from_json(r) for r in res.json()]
 
     def list_focoos_models(self) -> list[ModelPreview]:
         """
@@ -134,30 +150,39 @@ class Focoos:
         Raises:
             ValueError: If the API request fails.
         """
-        res = self.http_client.get(f"models/focoos-models")
-        if res.status_code == 200:
-            return [ModelPreview.from_json(r) for r in res.json()]
-        else:
+        res = self.http_client.get("models/focoos-models")
+        if res.status_code != 200:
             logger.error(f"Failed to list focoos models: {res.status_code} {res.text}")
             raise ValueError(
                 f"Failed to list focoos models: {res.status_code} {res.text}"
             )
+        return [ModelPreview.from_json(r) for r in res.json()]
 
     def get_local_model(
         self,
         model_ref: str,
-        runtime_type: RuntimeTypes = FOCOOS_CONFIG.runtime_type,
+        runtime_type: Optional[RuntimeTypes] = None,
     ) -> LocalModel:
         """
-        Retrieves a locally cached model or downloads it if not available.
+        Retrieves a local model for the specified reference.
+
+        Downloads the model if it does not already exist in the local cache.
 
         Args:
-            model_ref (str): Reference name of the model.
-            runtime_type (RuntimeTypes): Runtime type for the model. Defaults to configuration value.
+            model_ref (str): Reference identifier for the model.
+            runtime_type (Optional[RuntimeTypes]): Runtime type for the model. Defaults to the
+                `runtime_type` specified in FOCOOS_CONFIG.
 
         Returns:
-            LocalModel: The local model instance.
+            LocalModel: An instance of the local model.
+
+        Raises:
+            ValueError: If the runtime type is not specified.
+
+        Notes:
+            The model is cached in the directory specified by `self.cache_dir`.
         """
+        runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
         model_dir = os.path.join(self.cache_dir, model_ref)
         if not os.path.exists(os.path.join(model_dir, "model.onnx")):
             self._download_model(model_ref)
@@ -193,7 +218,7 @@ class Focoos:
             ValueError: If the API request fails.
         """
         res = self.http_client.post(
-            f"models/",
+            "models/",
             data={
                 "name": name,
                 "focoos_model": focoos_model,
@@ -205,9 +230,8 @@ class Focoos:
         if res.status_code == 409:
             logger.warning(f"Model already exists: {name}")
             return self.get_model_by_name(name, remote=True)
-        else:
-            logger.warning(f"Failed to create new model: {res.status_code} {res.text}")
-            return None
+        logger.warning(f"Failed to create new model: {res.status_code} {res.text}")
+        return None
 
     def list_shared_datasets(self) -> list[DatasetMetadata]:
         """
@@ -219,12 +243,11 @@ class Focoos:
         Raises:
             ValueError: If the API request fails.
         """
-        res = self.http_client.get(f"datasets/shared")
-        if res.status_code == 200:
-            return [DatasetMetadata.from_json(dataset) for dataset in res.json()]
-        else:
+        res = self.http_client.get("datasets/shared")
+        if res.status_code != 200:
             logger.error(f"Failed to list datasets: {res.status_code} {res.text}")
             raise ValueError(f"Failed to list datasets: {res.status_code} {res.text}")
+        return [DatasetMetadata.from_json(dataset) for dataset in res.json()]
 
     def _download_model(self, model_ref: str) -> str:
         """
@@ -243,50 +266,55 @@ class Focoos:
         model_path = os.path.join(model_dir, "model.onnx")
         metadata_path = os.path.join(model_dir, "focoos_metadata.json")
         if os.path.exists(model_path) and os.path.exists(metadata_path):
-            logger.info(f"📥 Model already downloaded")
+            logger.info("📥 Model already downloaded")
             return model_path
-        if not os.path.exists(model_dir):
-            os.makedirs(model_dir)
-        res = self.http_client.get(f"models/{model_ref}/download?format=onnx")
-        if res.status_code == 200:
-            download_data = res.json()
-            metadata = ModelMetadata.from_json(download_data["model_metadata"])
-            with open(metadata_path, "w") as f:
-                f.write(metadata.model_dump_json())
 
-            logger.debug(f"Dumped metadata to {metadata_path}")
-            download_uri = download_data["download_uri"]
-            logger.debug(f"Model URI: {download_uri}")
-            logger.info(f"📥 Downloading model from Focoos Cloud.. ")
-            response = self.http_client.get_external_url(download_uri, stream=True)
-            if response.status_code == 200:
-                total_size = int(response.headers.get("content-length", 0))
-                logger.info(f"📥 Size: {total_size / (1024**2):.2f} MB")
-                with (
-                    open(model_path, "wb") as f,
-                    tqdm(
-                        desc=str(model_path).split("/")[-1],
-                        total=total_size,
-                        unit="B",
-                        unit_scale=True,
-                        unit_divisor=1024,
-                    ) as bar,
-                ):
-                    for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
-                        bar.update(len(chunk))
-                logger.info(f"📥 File downloaded: {model_path}")
-                return model_path
-            else:
-                logger.error(
-                    f"Failed to download model: {response.status_code} {response.text}"
-                )
-                raise ValueError(
-                    f"Failed to download model: {response.status_code} {response.text}"
-                )
-        else:
+        ## download model metadata
+        res = self.http_client.get(f"models/{model_ref}/download?format=onnx")
+        if res.status_code != 200:
             logger.error(f"Failed to download model: {res.status_code} {res.text}")
             raise ValueError(f"Failed to download model: {res.status_code} {res.text}")
+
+        download_data = res.json()
+        metadata = ModelMetadata.from_json(download_data["model_metadata"])
+        download_uri = download_data["download_uri"]
+
+        ## download model from Focoos Cloud
+        logger.debug(f"Model URI: {download_uri}")
+        logger.info("📥 Downloading model from Focoos Cloud.. ")
+        response = self.http_client.get_external_url(download_uri, stream=True)
+        if response.status_code != 200:
+            logger.error(
+                f"Failed to download model: {response.status_code} {response.text}"
+            )
+            raise ValueError(
+                f"Failed to download model: {response.status_code} {response.text}"
+            )
+        total_size = int(response.headers.get("content-length", 0))
+        logger.info(f"📥 Size: {total_size / (1024**2):.2f} MB")
+
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
+
+        with open(metadata_path, "w") as f:
+            f.write(metadata.model_dump_json())
+        logger.debug(f"Dumped metadata to {metadata_path}")
+
+        with (
+            open(model_path, "wb") as f,
+            tqdm(
+                desc=str(model_path).split("/")[-1],
+                total=total_size,
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+            ) as bar,
+        ):
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+                bar.update(len(chunk))
+        logger.info(f"📥 File downloaded: {model_path}")
+        return model_path
 
     def get_dataset_by_name(self, name: str) -> Optional[DatasetMetadata]:
         """
@@ -299,12 +327,13 @@ class Focoos:
             Optional[DatasetMetadata]: The dataset metadata if found, or None otherwise.
         """
         datasets = self.list_shared_datasets()
+        name_lower = name.lower()
         for dataset in datasets:
-            if name.lower() == dataset.name.lower():
+            if name_lower == dataset.name.lower():
                 return dataset
 
     def get_model_by_name(
-        self, name: str, remote=True
+        self, name: str, remote: bool = True
     ) -> Optional[Union[RemoteModel, LocalModel]]:
         """
         Retrieves a model by its name.
@@ -317,8 +346,9 @@ class Focoos:
             Optional[Union[RemoteModel, LocalModel]]: The model instance if found, or None otherwise.
         """
         models = self.list_models()
+        name_lower = name.lower()
         for model in models:
-            if name.lower() == model.name.lower():
+            if name_lower == model.name.lower():
                 if remote:
                     return self.get_remote_model(model.ref)
                 else:

@@ -16,6 +16,8 @@
 
 # Focoos SDK
 
+![Tests](https://github.com/FocoosAI/focoos/actions/workflows/test.yml/badge.svg??event=push&branch=main)
+
 ## Requirements
 
 ### CUDA 12

@@ -12,6 +12,11 @@ from focoos.utils.system import (
 )
 
 
+@pytest.fixture
+def extra_headers():
+    return {"X-Dummy-Header": "DummyValue"}
+
+
 def test_get_cuda_version():
     with patch("subprocess.run") as mock_run:
         # Simulate successful nvidia-smi command
@@ -63,40 +68,43 @@ def test_http_client_get_external_url():
         mock_get.assert_called_with("test/path", params={}, stream=False)
 
 
-def test_http_client_get():
+def test_http_client_get(extra_headers):
     client = HttpClient(api_key="test_key", host_url="http://example.com")
     with patch("requests.get") as mock_get:
         mock_get.return_value.status_code = 200
-        response = client.get("test/path")
+        response = client.get("test/path", extra_headers=extra_headers)
         assert response.status_code == 200
         mock_get.assert_called_with(
             "http://example.com/test/path",
-            headers=client.default_headers,
+            headers={**client.default_headers, **extra_headers},
             params=None,
             stream=False,
         )
 
 
-def test_http_client_post():
+def test_http_client_post(extra_headers):
     client = HttpClient(api_key="test_key", host_url="http://example.com")
     with patch("requests.post") as mock_post:
         mock_post.return_value.status_code = 201
-        response = client.post("test/path", data={"key": "value"})
+        response = client.post(
+            "test/path", data={"key": "value"}, extra_headers=extra_headers
+        )
         assert response.status_code == 201
         mock_post.assert_called_with(
             "http://example.com/test/path",
-            headers=client.default_headers,
+            headers={**client.default_headers, **extra_headers},
             json={"key": "value"},
             files=None,
         )
 
 
-def test_http_client_delete():
+def test_http_client_delete(extra_headers):
     client = HttpClient(api_key="test_key", host_url="http://example.com")
     with patch("requests.delete") as mock_delete:
         mock_delete.return_value.status_code = 204
-        response = client.delete("test/path")
+        response = client.delete("test/path", extra_headers=extra_headers)
         assert response.status_code == 204
         mock_delete.assert_called_with(
-            "http://example.com/test/path", headers=client.default_headers
+            "http://example.com/test/path",
+            headers={**client.default_headers, **extra_headers},
         )

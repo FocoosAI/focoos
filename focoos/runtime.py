@@ -7,26 +7,21 @@ providers such as CUDA, TensorRT, OpenVINO, and CPU. It includes utility functio
 for image preprocessing, postprocessing, and interfacing with the ONNXRuntime library.
 
 Functions:
-    preprocess_image: Preprocesses an image for model input.
-    postprocess_image: Postprocesses the output image from the model.
-    image_to_byte_array: Converts a PIL image to a byte array.
-    det_postprocess: Postprocesses detection model outputs into Detections.
-    semseg_postprocess: Postprocesses semantic segmentation model outputs into Detections.
+    det_postprocess: Postprocesses detection model outputs into sv.Detections.
+    semseg_postprocess: Postprocesses semantic segmentation model outputs into sv.Detections.
     get_runtime: Returns an ONNXRuntime instance configured for the given runtime type.
 
 Classes:
     ONNXRuntime: A class that interfaces with ONNX Runtime for model inference.
 """
 
-import io
 from pathlib import Path
 from time import perf_counter
-from typing import Tuple
+from typing import List, Tuple
 
 import numpy as np
 import onnxruntime as ort
-from PIL import Image
-from supervision import Detections
+import supervision as sv
 
 from focoos.ports import (
     FocoosTask,
@@ -41,79 +36,27 @@ from focoos.utils.system import get_cpu_name, get_gpu_name
 GPU_ID = 0
 
 
-def preprocess_image(bytes, dtype=np.float32) -> Tuple[np.ndarray, Image.Image]:
-    """
-    Preprocesses the input image (in bytes) for inference by converting it to a numpy array.
-
-    Args:
-        bytes (bytes): Image data in bytes format (e.g., JPEG, PNG).
-        dtype (np.dtype, optional): The data type to cast the image array to. Defaults to np.float32.
-
-    Returns:
-        Tuple[np.ndarray, Image.Image]: A tuple containing the processed image as a numpy array
-                                        and the original PIL image.
-    """
-    pil_img = Image.open(io.BytesIO(bytes))
-    img_numpy = np.ascontiguousarray(
-        np.array(pil_img).transpose(2, 0, 1)[np.newaxis, :]  # HWC->CHW
-    ).astype(dtype)
-    return img_numpy, pil_img
-
-
-def postprocess_image(
-    cmapped_image: np.ndarray, input_image: Image.Image
-) -> Image.Image:
-    """
-    Postprocesses the output of an inference to blend the results with the original image.
-
-    Args:
-        cmapped_image (np.ndarray): The processed image, typically with segmentation or detection results.
-        input_image (Image.Image): The original input image.
-
-    Returns:
-        Image.Image: The blended image showing the result of postprocessing.
-    """
-    out = Image.fromarray(cmapped_image)
-    return Image.blend(input_image, out, 0.6)
-
-
-def image_to_byte_array(image: Image.Image) -> bytes:
-    """
-    Converts a PIL Image into a byte array.
-
-    Args:
-        image (Image.Image): The input image to be converted.
-
-    Returns:
-        bytes: The byte array representing the image.
-    """
-    img_byte_arr = io.BytesIO()
-    image.save(img_byte_arr, format="JPEG")
-    img_byte_arr = img_byte_arr.getvalue()
-    return img_byte_arr
-
-
 def det_postprocess(
-    out: np.ndarray, im0_shape: Tuple[int, int], conf_threshold: float
-) -> Detections:
+    out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float
+) -> sv.Detections:
     """
     Postprocesses the output of an object detection model and filters detections
     based on a confidence threshold.
 
     Args:
-        out (np.ndarray): The output of the detection model.
+        out (List[np.ndarray]): The output of the detection model.
         im0_shape (Tuple[int, int]): The original shape of the input image (height, width).
         conf_threshold (float): The confidence threshold for filtering detections.
 
     Returns:
-        Detections: A Detections object containing the filtered bounding boxes, class ids, and confidences.
+        sv.Detections: A sv.Detections object containing the filtered bounding boxes, class ids, and confidences.
     """
     cls_ids, boxes, confs = out
     boxes[:, 0::2] *= im0_shape[1]
     boxes[:, 1::2] *= im0_shape[0]
-    high_conf_indices = np.where(confs > conf_threshold)
+    high_conf_indices = (confs > conf_threshold).nonzero()
 
-    return Detections(
+    return sv.Detections(
         xyxy=boxes[high_conf_indices].astype(int),
         class_id=cls_ids[high_conf_indices].astype(int),
         confidence=confs[high_conf_indices].astype(float),
@@ -121,31 +64,29 @@ def det_postprocess(
 
 
 def semseg_postprocess(
-    out: np.ndarray, im0_shape: Tuple[int, int], conf_threshold: float
-) -> Detections:
+    out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float
+) -> sv.Detections:
     """
     Postprocesses the output of a semantic segmentation model and filters based
     on a confidence threshold.
 
     Args:
-        out (np.ndarray): The output of the semantic segmentation model.
+        out (List[np.ndarray]): The output of the semantic segmentation model.
         im0_shape (Tuple[int, int]): The original shape of the input image (height, width).
         conf_threshold (float): The confidence threshold for filtering detections.
 
     Returns:
-        Detections: A Detections object containing the masks, class ids, and confidences.
+        sv.Detections: A sv.Detections object containing the masks, class ids, and confidences.
     """
     cls_ids, mask, confs = out[0][0], out[1][0], out[2][0]
-    masks = np.zeros((len(cls_ids), *mask.shape), dtype=bool)
-    for i, cls_id in enumerate(cls_ids):
-        masks[i, mask == i] = True
+    masks = np.equal(mask, np.arange(len(cls_ids))[:, None, None])
     high_conf_indices = np.where(confs > conf_threshold)[0]
     masks = masks[high_conf_indices].astype(bool)
     cls_ids = cls_ids[high_conf_indices].astype(int)
     confs = confs[high_conf_indices].astype(float)
-    return Detections(
+    return sv.Detections(
         mask=masks,
-        # xyxy is required from supervisio
+        # xyxy is required from supervision
         xyxy=np.zeros(shape=(len(high_conf_indices), 4), dtype=np.uint8),
         class_id=cls_ids,
         confidence=confs,
@@ -276,8 +217,8 @@ class ONNXRuntime:
         else:
             self.dtype = np.float32
         if self.opts.warmup_iter > 0:
-            self.logger.info(f"⏱️ [onnxruntime] Warming up model ..")
-            for i in range(0, self.opts.warmup_iter):
+            self.logger.info("⏱️ [onnxruntime] Warming up model ..")
+            for _ in range(self.opts.warmup_iter):
                 np_image = np.random.rand(1, 3, 640, 640).astype(self.dtype)
                 input_name = self.ort_sess.get_inputs()[0].name
                 out_name = [output.name for output in self.ort_sess.get_outputs()]
@@ -303,7 +244,7 @@ class ONNXRuntime:
 
             self.logger.info(f"⏱️ [onnxruntime] {self.name} WARMUP DONE")
 
-    def __call__(self, im: np.ndarray, conf_threshold: float) -> Detections:
+    def __call__(self, im: np.ndarray, conf_threshold: float) -> sv.Detections:
         """
         Runs inference on the provided input image and returns the model's detections.
 
@@ -312,13 +253,13 @@ class ONNXRuntime:
             conf_threshold (float): The confidence threshold for filtering results.
 
         Returns:
-            Detections: A Detections object containing the model's output detections.
+            sv.Detections: A sv.Detections object containing the model's output detections.
         """
         out_name = None
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
         if self.binding is not None:
-            print(f"binding {self.binding}")
+            self.logger.info(f"binding {self.binding}")
             io_binding = self.ort_sess.io_binding()
 
             io_binding.bind_input(
@@ -353,7 +294,7 @@ class ONNXRuntime:
         Returns:
             LatencyMetrics: The latency metrics (e.g., FPS, mean, min, max, and standard deviation).
         """
-        self.logger.info(f"⏱️ [onnxruntime] Benchmarking latency..")
+        self.logger.info("⏱️ [onnxruntime] Benchmarking latency..")
         size = size if isinstance(size, (tuple, list)) else (size, size)
 
         durations = []
@@ -381,7 +322,6 @@ class ONNXRuntime:
             if self.binding:
                 start = perf_counter()
                 self.ort_sess.run_with_iobinding(io_binding)
-                # print(len(outputs))
                 end = perf_counter()
                 # out = io_binding.copy_outputs_to_cpu()
             else:
@@ -392,7 +332,6 @@ class ONNXRuntime:
             if step >= 5:
                 durations.append((end - start) * 1000)
         durations = np.array(durations)
-        # time.sleep(0.1)
         provider = self.active_providers[0]
         if provider in ["CUDAExecutionProvider", "TensorrtExecutionProvider"]:
             device = get_gpu_name()
@@ -431,22 +370,12 @@ def get_runtime(
     Returns:
         ONNXRuntime: A fully configured ONNXRuntime instance.
     """
-    if runtime_type == RuntimeTypes.ONNX_CUDA32:
-        opts = OnnxEngineOpts(
-            cuda=True, verbose=False, fp16=False, warmup_iter=warmup_iter
-        )
-    elif runtime_type == RuntimeTypes.ONNX_TRT32:
-        opts = OnnxEngineOpts(
-            cuda=False, verbose=False, trt=True, fp16=False, warmup_iter=warmup_iter
-        )
-    elif runtime_type == RuntimeTypes.ONNX_TRT16:
-        opts = OnnxEngineOpts(
-            cuda=False, verbose=False, trt=True, fp16=True, warmup_iter=warmup_iter
-        )
-    elif runtime_type == RuntimeTypes.ONNX_CPU:
-        opts = OnnxEngineOpts(cuda=False, verbose=False, warmup_iter=warmup_iter)
-    elif runtime_type == RuntimeTypes.ONNX_COREML:
-        opts = OnnxEngineOpts(
-            cuda=False, verbose=False, coreml=True, warmup_iter=warmup_iter
-        )
+    opts = OnnxEngineOpts(
+        cuda=runtime_type == RuntimeTypes.ONNX_CUDA32,
+        trt=runtime_type in [RuntimeTypes.ONNX_TRT32, RuntimeTypes.ONNX_TRT16],
+        fp16=runtime_type == RuntimeTypes.ONNX_TRT16,
+        warmup_iter=warmup_iter,
+        coreml=runtime_type == RuntimeTypes.ONNX_COREML,
+        verbose=False,
+    )
     return ONNXRuntime(model_path, opts, model_metadata)

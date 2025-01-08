@@ -56,46 +56,63 @@ class FocoosTask(str, Enum):
 
 
 class Hyperparameters(FocoosBaseModel):
-    batch_size: int = Field(
-        16,
-        ge=1,
-        le=32,
-        description="Batch size, how many images are processed at every iteration",
-    )
-    eval_period: int = Field(
-        500, ge=50, le=2000, description="How often iterations to evaluate the model"
-    )
-    max_iters: int = Field(
-        1500, ge=100, le=100000, description="Maximum number of training iterations"
-    )
-    resolution: int = Field(
-        640, description="Model expected resolution", ge=128, le=6400
-    )
-    wandb_project: Optional[str] = Field(
-        None, description="Wandb project name must be like ORG_ID/PROJECT_NAME"
-    )
-    wandb_apikey: Optional[str] = Field(None, description="Wandb API key")
-    learning_rate: float = Field(5e-4, gt=0.00001, lt=0.1, description="Learning rate")
-    decoder_multiplier: float = Field(1, description="Backbone multiplier")
-    backbone_multiplier: float = Field(0.1, description="Backbone multiplier")
-    amp_enabled: bool = Field(True, description="Enable automatic mixed precision")
-    weight_decay: float = Field(0.02, description="Weight decay")
-    ema_enabled: bool = Field(
-        False, description="Enable EMA (exponential moving average)"
-    )
-    ema_decay: float = Field(0.999, description="EMA decay rate")
-    ema_warmup: int = Field(100, description="EMA warmup")
-    freeze_bn: bool = Field(False, description="Freeze batch normalization layers")
-    freeze_bn_bkb: bool = Field(
-        True, description="Freeze backbone batch normalization layers"
-    )
-    optimizer: Literal["ADAMW", "SGD", "RMSPROP"] = Field("ADAMW")
-    scheduler: Literal["POLY", "FIXED", "COSINE", "MULTISTEP"] = Field("MULTISTEP")
-    early_stop: bool = Field(True, description="Enable early stopping")
-    patience: int = Field(
-        5,
-        description="(Only with early_stop=True) Validation cycles after which the train is stopped if there's not improvement in accuracy.",
-    )
+    batch_size: Annotated[
+        int,
+        Field(
+            ge=1,
+            le=32,
+            description="Batch size, how many images are processed at every iteration",
+        ),
+    ] = 16
+    eval_period: Annotated[
+        int,
+        Field(ge=50, le=2000, description="How often iterations to evaluate the model"),
+    ] = 500
+    max_iters: Annotated[
+        int,
+        Field(
+            1500, ge=100, le=100000, description="Maximum number of training iterations"
+        ),
+    ] = 1500
+    resolution: Annotated[
+        int, Field(640, description="Model expected resolution", ge=128, le=6400)
+    ] = 640
+    wandb_project: Annotated[
+        Optional[str],
+        Field(description="Wandb project name must be like ORG_ID/PROJECT_NAME"),
+    ] = None
+    wandb_apikey: Annotated[Optional[str], Field(description="Wandb API key")] = None
+    learning_rate: Annotated[
+        float,
+        Field(gt=0.00001, lt=0.1, description="Learning rate"),
+    ] = 5e-4
+    decoder_multiplier: Annotated[float, Field(description="Backbone multiplier")] = 1
+    backbone_multiplier: float = 0.1
+    amp_enabled: Annotated[
+        bool, Field(description="Enable automatic mixed precision")
+    ] = True
+    weight_decay: Annotated[float, Field(description="Weight decay")] = 0.02
+    ema_enabled: Annotated[
+        bool, Field(description="Enable EMA (exponential moving average)")
+    ] = False
+    ema_decay: Annotated[float, Field(description="EMA decay rate")] = 0.999
+    ema_warmup: Annotated[int, Field(description="EMA warmup")] = 100
+    freeze_bn: Annotated[
+        bool, Field(description="Freeze batch normalization layers")
+    ] = False
+    freeze_bn_bkb: Annotated[
+        bool, Field(description="Freeze backbone batch normalization layers")
+    ] = True
+    optimizer: Literal["ADAMW", "SGD", "RMSPROP"] = "ADAMW"
+    scheduler: Literal["POLY", "FIXED", "COSINE", "MULTISTEP"] = "MULTISTEP"
+
+    early_stop: Annotated[bool, Field(description="Enable early stopping")] = True
+    patience: Annotated[
+        int,
+        Field(
+            description="(Only with early_stop=True) Validation cycles after which the train is stopped if there's no improvement in accuracy."
+        ),
+    ] = 5
 
     @field_validator("wandb_project")
     def validate_wandb_project(cls, value):
@@ -271,7 +288,7 @@ class SystemInfo(FocoosBaseModel):
         for key, value in self.model_dump().items():
             if isinstance(value, list):
                 print(f"{key}:")
-                if key == "gpus_info":  # Formattazione speciale per gpus_info
+                if key == "gpus_info":  # Special formatting for gpus_info.
                     for item in value:
                         print(f"- id: {item['gpu_id']}")
                         for sub_key, sub_value in item.items():
@@ -283,7 +300,7 @@ class SystemInfo(FocoosBaseModel):
                         print(f"  - {item}")
             elif (
                 isinstance(value, dict) and key == "packages_versions"
-            ):  # Formattazione speciale per packages_versions
+            ):  # Special formatting for packages_versions
                 print(f"{key}:")
                 for pkg_name, pkg_version in value.items():
                     print(f"  - {pkg_name}: {pkg_version}")
