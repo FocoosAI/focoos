@@ -135,7 +135,12 @@ def base64mask_to_mask(base64mask: str) -> np.ndarray:
 def focoos_detections_to_supervision(
     inference_output: FocoosDetections,
 ) -> sv.Detections:
-    xyxy = np.array([d.bbox for d in inference_output.detections])
+    xyxy = np.array(
+        [
+            d.bbox if d.bbox is not None else np.empty(4)
+            for d in inference_output.detections
+        ]
+    )
     class_id = np.array([d.cls_id for d in inference_output.detections])
     confidence = np.array([d.conf for d in inference_output.detections])
     if xyxy.shape[0] == 0:
