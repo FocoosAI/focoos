@@ -1,4 +1,4 @@
-.PHONY: test install install-dev install-pre-commit run-pre-commit .uv .pre-commit
+.PHONY: test install install-dev install-pre-commit run-pre-commit .uv .pre-commit tox
 
 .uv: ## Check that uv is installed
 	@uv --version || echo 'Please install uv: https://docs.astral.sh/uv/getting-started/installation/'
@@ -25,6 +25,9 @@ run-pre-commit: .pre-commit
 
 test:
 	@pytest -s --cov=focoos --cov-report="xml:tests/coverage.xml" --cov-report=html --junitxml=./tests/junit.xml   && rm -f .coverage
+
+tox:
+	tox
 
 clean:
 	@rm -rf build dist *.egg-info .tox .nox .coverage .coverage.* .cache .pytest_cache htmlcov */coverage.xml */junit.xml .venv
