@@ -3,7 +3,6 @@ on:
   pull_request:
   workflow_dispatch:
 env:
-  DOCKER_BUILDKIT: 1
   UV_SYSTEM_PYTHON: 1
 jobs:
   Run-test:
@@ -36,6 +35,7 @@ jobs:
       - name: Run test
         run: make test
       - name: Pytest coverage comment
+        if: ${{ github.ref_name != 'main' }}
         uses: MishaKav/pytest-coverage-comment@main
         with:
           pytest-xml-coverage-path: ./tests/coverage.xml
