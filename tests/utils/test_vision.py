@@ -34,25 +34,25 @@ def test_class_to_index():
 def test_image_loader_pil_image(pil_image):
     image = image_loader(pil_image)
     assert isinstance(image, np.ndarray)
-    assert image.shape == (100, 100, 3)
+    assert image.shape == (640, 640, 3)
 
 
 def test_image_loader_image_bytes(image_bytes):
     image = image_loader(image_bytes)
     assert isinstance(image, np.ndarray)
-    assert image.shape == (100, 100, 3)
+    assert image.shape == (640, 640, 3)
 
 
 def test_image_loader_image_path(image_path):
     image = image_loader(image_path)
     assert isinstance(image, np.ndarray)
-    assert image.shape == (100, 100, 3)
+    assert image.shape == (640, 640, 3)
 
 
 def test_image_loader_image_ndarray(image_ndarray):
     image = image_loader(image_ndarray)
     assert isinstance(image, np.ndarray)
-    assert image.shape == (100, 100, 3)
+    assert image.shape == (640, 640, 3)
 
 
 def test_image_preprocess_resize(pil_image):
@@ -63,10 +63,10 @@ def test_image_preprocess_resize(pil_image):
 
     # Ensure the resized image shape matches (100, 100, 3)
     assert im0.shape == (
-        resize_dim,
-        resize_dim,
+        pil_image.height,
+        pil_image.width,
         3,
-    ), f"Expected shape {(resize_dim, resize_dim, 3)}, but got {im0.shape}"
+    ), f"Expected shape {(pil_image.height, pil_image.width, 3)}, but got {im0.shape}"
 
     # Ensure that im1 has shape (1, 3, 100, 100) after processing
     assert im1.shape == (
@@ -106,7 +106,7 @@ def test_base64mask_to_mask(image_bytes):
     # Verify the result is a NumPy array
     assert isinstance(result, np.ndarray), "Result should be a NumPy array"
     # Verify the shape matches the original image
-    assert result.shape == (100, 100, 3), "Decoded image shape is incorrect"
+    assert result.shape == (640, 640, 3), "Decoded image shape is incorrect"
 
 
 def test_focoos_detections_to_supervision_bbox(focoos_detections_bbox):
