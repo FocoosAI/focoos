@@ -1,5 +1,6 @@
 import pathlib
 import tempfile
+from datetime import datetime
 from unittest.mock import MagicMock
 
 import pytest
@@ -115,6 +116,17 @@ def test_focoos_initialization_fail_to_fetch_user_info(focoos_instance: Focoos):
 def test_focoos_initialization(focoos_instance: Focoos):
     assert focoos_instance.api_key == "test_api_key"
     assert focoos_instance.user_info.email == "test@example.com"
+    assert focoos_instance.user_info.company == "test_company"
+    assert focoos_instance.user_info.created_at == datetime(2024, 1, 1)
+    assert focoos_instance.user_info.updated_at == datetime(2025, 1, 1)
+    assert focoos_instance.user_info.quotas.total_inferences == 10
+    assert focoos_instance.user_info.quotas.max_inferences == 1000
+    assert focoos_instance.user_info.quotas.used_storage_gb == 10
+    assert focoos_instance.user_info.quotas.max_storage_gb == 1000
+    assert focoos_instance.user_info.quotas.active_training_jobs == ["job1"]
+    assert focoos_instance.user_info.quotas.max_active_training_jobs == 1
+    assert focoos_instance.user_info.quotas.used_mlg4dnxlarge_training_jobs_hours == 10
+    assert focoos_instance.user_info.quotas.max_mlg4dnxlarge_training_jobs_hours == 1000
 
 
 def test_get_model_info(focoos_instance: Focoos):
