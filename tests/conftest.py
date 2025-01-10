@@ -21,7 +21,7 @@ def mock_http_client():
 @pytest.fixture
 def pil_image() -> Image.Image:
     """Create a simple RGB image using PIL."""
-    image = Image.new("RGB", (100, 100), color="red")
+    image = Image.new("RGB", (640, 640), color="red")
     return image
 
 

@@ -80,9 +80,11 @@ def image_preprocess(
         im1, im0 = image_preprocess("image.jpg", resize=256)
     """
     im0 = image_loader(im)
+    _im1 = im0
     if resize:
-        im0 = cv2.resize(im0, (resize, resize))
-    im1 = np.ascontiguousarray(im0.transpose(2, 0, 1)[np.newaxis, :]).astype(
+        _im1 = cv2.resize(im0, (resize, resize))
+
+    im1 = np.ascontiguousarray(_im1.transpose(2, 0, 1)[np.newaxis, :]).astype(
         dtype
     )  # HWC->1CHW
     return im1, im0
