@@ -23,23 +23,23 @@ repos:
   #     - id: mypy
   #       args: [--ignore-missing-imports, --pretty, --show-error-codes]
   - repo: https://github.com/nbQA-dev/nbQA # run lint on notebook
-    rev: 1.5.3
+    rev: 1.9.1
     hooks:
       - id: nbqa-black
       - id: nbqa-pyupgrade
     #  - id: nbqa-isort
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.7.0
+    rev: v3.19.1
     hooks:
       - id: pyupgrade
   - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
+    rev: 5.13.2
     hooks:
       - id: isort
         name: isort (python)
         args: [--profile, black]
   - repo: https://github.com/psf/black
-    rev: 23.3.0
+    rev: 24.10.0
     hooks:
       - id: black
   - repo: https://github.com/kynan/nbstripout
@@ -47,6 +47,6 @@ repos:
     hooks:
       - id: nbstripout
   - repo: https://github.com/hadialqattan/pycln # remove unused import
-    rev: v2.4.0
+    rev: v2.5.0
     hooks:
       - id: pycln

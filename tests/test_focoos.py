@@ -16,7 +16,23 @@ from focoos.remote_model import RemoteModel
 def focoos_instance(mock_http_client) -> Focoos:
     """Fixture to provide a Focoos instance with a mocked HttpClient."""
     mock_http_client.get.return_value.status_code = 200
-    mock_http_client.get.return_value.json.return_value = {"email": "test@example.com"}
+    mock_http_client.get.return_value.json.return_value = {
+        "email": "test@example.com",
+        "created_at": "2024-01-01",
+        "updated_at": "2025-01-01",
+        "company": "test_company",
+        "api_key": {"key": "test_api_key"},
+        "quotas": {
+            "total_inferences": 10,
+            "max_inferences": 1000,
+            "used_storage_gb": 10,
+            "max_storage_gb": 1000,
+            "active_training_jobs": ["job1"],
+            "max_active_training_jobs": 1,
+            "used_mlg4dnxlarge_training_jobs_hours": 10,
+            "max_mlg4dnxlarge_training_jobs_hours": 1000,
+        },
+    }
     return Focoos(api_key="test_api_key", host_url="http://mock-host-url.com")
 
 
@@ -98,7 +114,7 @@ def test_focoos_initialization_fail_to_fetch_user_info(focoos_instance: Focoos):
 
 def test_focoos_initialization(focoos_instance: Focoos):
     assert focoos_instance.api_key == "test_api_key"
-    assert focoos_instance.user_info["email"] == "test@example.com"
+    assert focoos_instance.user_info.email == "test@example.com"
 
 
 def test_get_model_info(focoos_instance: Focoos):

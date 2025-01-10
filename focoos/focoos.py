@@ -20,7 +20,14 @@ from tqdm import tqdm
 
 from focoos.config import FOCOOS_CONFIG
 from focoos.local_model import LocalModel
-from focoos.ports import DatasetMetadata, ModelMetadata, ModelPreview, RuntimeTypes
+from focoos.ports import (
+    DatasetMetadata,
+    ModelMetadata,
+    ModelPreview,
+    Quotas,
+    RuntimeTypes,
+    User,
+)
 from focoos.remote_model import RemoteModel
 from focoos.utils.logger import setup_logging
 from focoos.utils.system import HttpClient
@@ -83,13 +90,13 @@ class Focoos:
         host_url = host_url or FOCOOS_CONFIG.default_host_url
 
         self.http_client = HttpClient(self.api_key, host_url)
-        self.user_info = self._get_user_info()
+        self.user_info = self.get_user_info()
         self.cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "focoos")
         logger.info(
-            f"Currently logged as: {self.user_info['email']} environment: {host_url}"
+            f"Currently logged as: {self.user_info.email} environment: {host_url}"
         )
 
-    def _get_user_info(self):
+    def get_user_info(self) -> User:
         """
         Retrieves information about the authenticated user.
 
@@ -103,7 +110,7 @@ class Focoos:
         if res.status_code != 200:
             logger.error(f"Failed to get user info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get user info: {res.status_code} {res.text}")
-        return res.json()
+        return User.from_json(res.json())
 
     def get_model_info(self, model_name: str) -> ModelMetadata:
         """
