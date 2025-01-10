@@ -307,3 +307,32 @@ class SystemInfo(FocoosBaseModel):
             else:
                 print(f"{key}: {value}")
         print("================================================")
+
+
+class ApiKey(FocoosBaseModel):
+    key: str  # type: ignore
+
+
+class Quotas(FocoosBaseModel):
+    # INFERENCE
+    total_inferences: int
+    max_inferences: int
+    # STORAGE
+    used_storage_gb: float
+    max_storage_gb: float
+    # TRAINING
+    active_training_jobs: list[str]
+    max_active_training_jobs: int
+
+    # ML_G4DN_XLARGE TRAINING HOURS
+    used_mlg4dnxlarge_training_jobs_hours: float
+    max_mlg4dnxlarge_training_jobs_hours: float
+
+
+class User(FocoosBaseModel):
+    email: str
+    created_at: datetime
+    updated_at: datetime
+    company: Optional[str] = None
+    api_key: ApiKey
+    quotas: Quotas
