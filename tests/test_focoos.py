@@ -9,7 +9,7 @@ from pytest_mock import MockerFixture
 from focoos import Focoos
 from focoos.config import FOCOOS_CONFIG
 from focoos.local_model import LocalModel
-from focoos.ports import ModelPreview
+from focoos.ports import ModelNotFound, ModelPreview
 from focoos.remote_model import RemoteModel
 
 
@@ -270,8 +270,8 @@ def test_get_model_by_name_local(
 
 def test_get_model_by_name_model_not_found(focoos_instance: Focoos, mock_list_models):
     focoos_instance.http_client.get = MagicMock(return_value=MagicMock(status_code=200, json=lambda: mock_list_models))
-    model = focoos_instance.get_model_by_name(name="model3")
-    assert model is None
+    with pytest.raises(ModelNotFound):
+        focoos_instance.get_model_by_name(name="model3")
 
 
 def test_get_remote_model(mocker: MockerFixture, focoos_instance: Focoos, mock_remote_model, mock_http_client):
