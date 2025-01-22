@@ -2,6 +2,24 @@
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
+
+
+[tool.ruff]
+line-length = 120
+lint.select = ["E", "F"]
+lint.extend-select = ["I"]
+lint.ignore = ["E501"]
+fix = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+docstring-code-line-length = 160
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
 [tool.setuptools.packages.find]
 include = ["focoos**"]
 
@@ -14,7 +32,8 @@ requires-python = ">=3.10"
 dependencies = [
     "requests",
     "Pillow~=10.4.0",
-    "supervision~=0.26.0rc2",
+    "supervision~=0.25.1",
+    "opencv-python~=4.11.0",
     "pydantic~=2.10.5",
     "pydantic-settings~=2.7.1",
     "tqdm~=4.67.1",
@@ -41,9 +60,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "pytest-mock",
-    "isort",
-    "black",
-    "flake8",
+    "ruff",
     "python-dotenv",
     "gradio~=5.10.0",
     "pre-commit~=4.0.1",
