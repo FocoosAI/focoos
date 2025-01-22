@@ -12,7 +12,7 @@ class ColoredFormatter(logging.Formatter):
     green = "\x1b[1;32m"
     yellow = "\x1b[1;33m"
     red = "\x1b[31;20m"
-    blue = "\x1B[1;34m"
+    blue = "\x1b[1;34m"
     light_blue = "\x1b[1;36m"
     purple = "\x1b[1;35m"
     bold_red = "\x1b[31;1m"

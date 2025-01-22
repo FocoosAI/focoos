@@ -18,9 +18,8 @@ install-gpu: .uv .pre-commit
 	@pre-commit install
 
 lint:
-	@ruff check ./corpus ./tests ./ops ./ray_apps --fix
-	@ruff format ./corpus ./tests ./ops ./ray_apps
-
+	@ruff check ./focoos ./tests ./notebooks  --fix
+	@ruff format ./focoos ./tests ./notebooks
 
 run-pre-commit: .pre-commit
 	@pre-commit run --all-files

@@ -48,9 +48,7 @@ class HttpClient:
             "user_agent": "focoos/0.0.1",
         }
 
-    def get_external_url(
-        self, path: str, params: Optional[dict] = None, stream: bool = False
-    ):
+    def get_external_url(self, path: str, params: Optional[dict] = None, stream: bool = False):
         """
         Perform a GET request to an external URL.
 
@@ -147,9 +145,7 @@ def get_cuda_version() -> Optional[str]:
         Optional[str]: The CUDA version if available, otherwise None.
     """
     try:
-        result = subprocess.run(
-            ["nvidia-smi"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-        )
+        result = subprocess.run(["nvidia-smi"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
         if result.returncode == 0:
             output = result.stdout

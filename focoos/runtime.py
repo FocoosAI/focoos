@@ -36,9 +36,7 @@ from focoos.utils.system import get_cpu_name, get_gpu_name
 GPU_ID = 0
 
 
-def det_postprocess(
-    out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float
-) -> sv.Detections:
+def det_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float) -> sv.Detections:
     """
     Postprocesses the output of an object detection model and filters detections
     based on a confidence threshold.
@@ -63,9 +61,7 @@ def det_postprocess(
     )
 
 
-def semseg_postprocess(
-    out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float
-) -> sv.Detections:
+def semseg_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float) -> sv.Detections:
     """
     Postprocesses the output of a semantic segmentation model and filters based
     on a confidence threshold.
@@ -110,9 +106,7 @@ class ONNXRuntime:
         binding (Optional[str]): The binding type for the runtime (e.g., CUDA, CPU).
     """
 
-    def __init__(
-        self, model_path: str, opts: OnnxEngineOpts, model_metadata: ModelMetadata
-    ):
+    def __init__(self, model_path: str, opts: OnnxEngineOpts, model_metadata: ModelMetadata):
         """
         Initializes the ONNXRuntime instance with the specified model and configuration options.
 
@@ -123,17 +117,11 @@ class ONNXRuntime:
         """
         self.logger = get_logger()
         self.logger.debug(f"[onnxruntime device] {ort.get_device()}")
-        self.logger.debug(
-            f"[onnxruntime available providers] {ort.get_available_providers()}"
-        )
+        self.logger.debug(f"[onnxruntime available providers] {ort.get_available_providers()}")
         self.name = Path(model_path).stem
         self.opts = opts
         self.model_metadata = model_metadata
-        self.postprocess_fn = (
-            det_postprocess
-            if model_metadata.task == FocoosTask.DETECTION
-            else semseg_postprocess
-        )
+        self.postprocess_fn = det_postprocess if model_metadata.task == FocoosTask.DETECTION else semseg_postprocess
         options = ort.SessionOptions()
         if opts.verbose:
             options.log_severity_level = 0
@@ -177,9 +165,7 @@ class ONNXRuntime:
                     # 'use_compiled_network': False}
                 )
             )
-            options.graph_optimization_level = (
-                ort.GraphOptimizationLevel.ORT_DISABLE_ALL
-            )
+            options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL
             dtype = np.float32
             binding = None
         elif opts.cuda and "CUDAExecutionProvider" in available_providers:
@@ -209,9 +195,7 @@ class ONNXRuntime:
         self.binding = binding
         self.ort_sess = ort.InferenceSession(model_path, options, providers=providers)
         self.active_providers = self.ort_sess.get_providers()
-        self.logger.info(
-            f"[onnxruntime] Active providers:{self.ort_sess.get_providers()}"
-        )
+        self.logger.info(f"[onnxruntime] Active providers:{self.ort_sess.get_providers()}")
         if self.ort_sess.get_inputs()[0].type == "tensor(uint8)":
             self.dtype = np.uint8
         else:
@@ -222,7 +206,6 @@ class ONNXRuntime:
                 np_image = np.random.rand(1, 3, 640, 640).astype(self.dtype)
                 input_name = self.ort_sess.get_inputs()[0].name
                 out_name = [output.name for output in self.ort_sess.get_outputs()]
-                t0 = perf_counter()
                 if self.binding is not None:
                     io_binding = self.ort_sess.io_binding()
                     io_binding.bind_input(
@@ -235,9 +218,7 @@ class ONNXRuntime:
                     )
                     io_binding.bind_cpu_input(input_name, np_image)
                     io_binding.bind_output(out_name[0], self.binding)
-                    t0 = perf_counter()
                     self.ort_sess.run_with_iobinding(io_binding)
-                    t1 = perf_counter()
                     io_binding.copy_outputs_to_cpu()
                 else:
                     self.ort_sess.run(out_name, {input_name: np_image})
@@ -278,9 +259,7 @@ class ONNXRuntime:
         else:
             out = self.ort_sess.run(out_name, {input_name: im})
 
-        detections = self.postprocess_fn(
-            out, (im.shape[2], im.shape[3]), conf_threshold
-        )
+        detections = self.postprocess_fn(out, (im.shape[2], im.shape[3]), conf_threshold)
         return detections
 
     def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
@@ -323,10 +302,9 @@ class ONNXRuntime:
                 start = perf_counter()
                 self.ort_sess.run_with_iobinding(io_binding)
                 end = perf_counter()
-                # out = io_binding.copy_outputs_to_cpu()
             else:
                 start = perf_counter()
-                out = self.ort_sess.run(out_name, {input_name: np_input})
+                self.ort_sess.run(out_name, {input_name: np_input})
                 end = perf_counter()
 
             if step >= 5:

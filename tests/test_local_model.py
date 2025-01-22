@@ -36,21 +36,15 @@ def mock_local_model(mocker: MockerFixture, mock_model_dir, image_ndarray):
     model = LocalModel(model_dir=mock_model_dir, runtime_type=RuntimeTypes.ONNX_CPU)
 
     # Mock BoxAnnotator
-    mock_box_annotator = mocker.patch(
-        "focoos.local_model.sv.BoxAnnotator", autospec=True
-    )
+    mock_box_annotator = mocker.patch("focoos.local_model.sv.BoxAnnotator", autospec=True)
     mock_box_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
 
     # Mock LabelAnnotator
-    mock_label_annotator = mocker.patch(
-        "focoos.local_model.sv.LabelAnnotator", autospec=True
-    )
+    mock_label_annotator = mocker.patch("focoos.local_model.sv.LabelAnnotator", autospec=True)
     mock_label_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
 
     # Mock MaskAnnotator
-    mock_mask_annotator = mocker.patch(
-        "focoos.local_model.sv.MaskAnnotator", autospec=True
-    )
+    mock_mask_annotator = mocker.patch("focoos.local_model.sv.MaskAnnotator", autospec=True)
     mock_mask_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
 
     # Inject mock annotators into the local model
@@ -116,9 +110,7 @@ def test_annotate_detection_metadata_classes_none(
     mock_local_model.mask_annotator.annotate.assert_not_called()
 
 
-def test_annotate_detection(
-    image_ndarray: np.ndarray, mock_local_model: LocalModel, mock_sv_detections
-):
+def test_annotate_detection(image_ndarray: np.ndarray, mock_local_model: LocalModel, mock_sv_detections):
     annotated_im = mock_local_model._annotate(image_ndarray, mock_sv_detections)
     assert annotated_im is not None
     assert isinstance(annotated_im, np.ndarray)
@@ -127,9 +119,7 @@ def test_annotate_detection(
     mock_local_model.mask_annotator.annotate.assert_not_called()
 
 
-def test_annotate_semseg(
-    image_ndarray: np.ndarray, mock_local_model: LocalModel, mock_sv_detections
-):
+def test_annotate_semseg(image_ndarray: np.ndarray, mock_local_model: LocalModel, mock_sv_detections):
     mock_local_model.metadata.task = FocoosTask.SEMSEG
     annotated_im = mock_local_model._annotate(image_ndarray, mock_sv_detections)
     assert annotated_im is not None
@@ -157,9 +147,7 @@ def mock_infer_setup(
     mock_scale_detections.return_value = mock_sv_detections
 
     # Mock sv_to_focoos_detections
-    mock_sv_to_focoos_detections = mocker.patch(
-        "focoos.local_model.sv_to_focoos_detections"
-    )
+    mock_sv_to_focoos_detections = mocker.patch("focoos.local_model.sv_to_focoos_detections")
     mock_sv_to_focoos_detections.return_value = mock_focoos_detections
 
     # Mock _annotate
@@ -174,9 +162,7 @@ def mock_infer_setup(
         def __call__(self, *args, **kwargs):
             return mock_sv_detections
 
-    mock_runtime_call = mocker.patch.object(
-        MockRuntime, "__call__", return_value=mock_sv_detections
-    )
+    mock_runtime_call = mocker.patch.object(MockRuntime, "__call__", return_value=mock_sv_detections)
     mock_local_model.runtime = MockRuntime(spec=ONNXRuntime)
 
     return (

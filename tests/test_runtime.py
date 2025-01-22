@@ -19,9 +19,7 @@ def test_det_post_process():
     conf_threshold = 0.75
     sv_detections = det_postprocess(out, im0_shape, conf_threshold)
 
-    np.testing.assert_array_equal(
-        sv_detections.xyxy, np.array([[48, 128, 144, 256], [240, 384, 336, 512]])
-    )
+    np.testing.assert_array_equal(sv_detections.xyxy, np.array([[48, 128, 144, 256], [240, 384, 336, 512]]))
     assert sv_detections.class_id is not None
     np.testing.assert_array_equal(sv_detections.class_id, np.array([1, 2]))
     assert sv_detections.confidence is not None
@@ -147,9 +145,7 @@ def test_get_run_time(mocker: MockerFixture, tmp_path, runtime_type, expected_op
 
     # mock opts
     mock_onnxruntime_class = mocker.patch("focoos.runtime.ONNXRuntime", autospec=True)
-    mock_onnxruntime_class.return_value = MagicMock(
-        spec=ONNXRuntime, opts=expected_opts
-    )
+    mock_onnxruntime_class.return_value = MagicMock(spec=ONNXRuntime, opts=expected_opts)
 
     # warmup_iter
     warmup_iter = 2

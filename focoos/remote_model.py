@@ -164,9 +164,7 @@ class RemoteModel:
         res = self.http_client.get(f"models/{self.model_ref}/train/status")
         if res.status_code != 200:
             logger.error(f"Failed to get train status: {res.status_code} {res.text}")
-            raise ValueError(
-                f"Failed to get train status: {res.status_code} {res.text}"
-            )
+            raise ValueError(f"Failed to get train status: {res.status_code} {res.text}")
         return res.json()
 
     def train_logs(self) -> list[str]:
@@ -207,29 +205,23 @@ class RemoteModel:
         classes = self.metadata.classes
         if classes is not None:
             labels = [
-                f"{classes[int(class_id)]}: {confid*100:.0f}%"
+                f"{classes[int(class_id)]}: {confid * 100:.0f}%"
                 for class_id, confid in zip(detections.class_id, detections.confidence)
             ]
         else:
             labels = [
-                f"{str(class_id)}: {confid*100:.0f}%"
+                f"{str(class_id)}: {confid * 100:.0f}%"
                 for class_id, confid in zip(detections.class_id, detections.confidence)
             ]
         if self.metadata.task == FocoosTask.DETECTION:
-            annotated_im = self.box_annotator.annotate(
-                scene=im.copy(), detections=detections
-            )
+            annotated_im = self.box_annotator.annotate(scene=im.copy(), detections=detections)
 
-            annotated_im = self.label_annotator.annotate(
-                scene=annotated_im, detections=detections, labels=labels
-            )
+            annotated_im = self.label_annotator.annotate(scene=annotated_im, detections=detections, labels=labels)
         elif self.metadata.task in [
             FocoosTask.SEMSEG,
             FocoosTask.INSTANCE_SEGMENTATION,
         ]:
-            annotated_im = self.mask_annotator.annotate(
-                scene=im.copy(), detections=detections
-            )
+            annotated_im = self.mask_annotator.annotate(scene=im.copy(), detections=detections)
         return annotated_im
 
     def infer(
@@ -277,11 +269,9 @@ class RemoteModel:
         )
         t1 = time.time()
         if res.status_code == 200:
-            logger.debug(f"Inference time: {t1-t0:.3f} seconds")
+            logger.debug(f"Inference time: {t1 - t0:.3f} seconds")
             detections = FocoosDetections(
-                detections=[
-                    FocoosDet.from_json(d) for d in res.json().get("detections", [])
-                ],
+                detections=[FocoosDet.from_json(d) for d in res.json().get("detections", [])],
                 latency=res.json().get("latency", None),
             )
             preview = None
@@ -338,33 +328,15 @@ class RemoteModel:
         """
         metrics = self.train_metrics()
         if metrics:
-            iter = (
-                metrics["iter"][-1]
-                if "iter" in metrics and len(metrics["iter"]) > 0
-                else -1
-            )
-            total_loss = (
-                metrics["total_loss"][-1]
-                if "total_loss" in metrics and len(metrics["total_loss"]) > 0
-                else -1
-            )
+            iter = metrics["iter"][-1] if "iter" in metrics and len(metrics["iter"]) > 0 else -1
+            total_loss = metrics["total_loss"][-1] if "total_loss" in metrics and len(metrics["total_loss"]) > 0 else -1
             if self.metadata.task == FocoosTask.SEMSEG:
-                accuracy = (
-                    metrics["mIoU"][-1]
-                    if "mIoU" in metrics and len(metrics["mIoU"]) > 0
-                    else "-"
-                )
+                accuracy = metrics["mIoU"][-1] if "mIoU" in metrics and len(metrics["mIoU"]) > 0 else "-"
                 eval_metric = "mIoU"
             else:
-                accuracy = (
-                    metrics["AP50"][-1]
-                    if "AP50" in metrics and len(metrics["AP50"]) > 0
-                    else "-"
-                )
+                accuracy = metrics["AP50"][-1] if "AP50" in metrics and len(metrics["AP50"]) > 0 else "-"
                 eval_metric = "AP50"
-            logger.info(
-                f"Iter {iter:.0f}: Loss {total_loss:.2f}, {eval_metric} {accuracy}"
-            )
+            logger.info(f"Iter {iter:.0f}: Loss {total_loss:.2f}, {eval_metric} {accuracy}")
 
     def monitor_train(self, update_period=30) -> None:
         """
@@ -405,12 +377,10 @@ class RemoteModel:
             if status["main_status"] in ["InProgress"]:
                 if prev_status["secondary_status"] != status["secondary_status"]:
                     if status["secondary_status"] in ["Starting", "Pending"]:
-                        logger.info(
-                            f"[0s] {status['main_status']}: {status['secondary_status']}"
-                        )
+                        logger.info(f"[0s] {status['main_status']}: {status['secondary_status']}")
                     else:
                         logger.info(
-                            f"[{elapsed//60}m:{elapsed%60}s] {status['main_status']}: {status['secondary_status']}"
+                            f"[{elapsed // 60}m:{elapsed % 60}s] {status['main_status']}: {status['secondary_status']}"
                         )
                 if status["secondary_status"] in ["Training"]:
                     self._log_metrics()
@@ -442,9 +412,7 @@ class RemoteModel:
         res = self.http_client.delete(f"models/{self.model_ref}/train")
         if res.status_code != 200:
             logger.error(f"Failed to get stop training: {res.status_code} {res.text}")
-            raise ValueError(
-                f"Failed to get stop training: {res.status_code} {res.text}"
-            )
+            raise ValueError(f"Failed to get stop training: {res.status_code} {res.text}")
 
     def delete_model(self) -> None:
         """

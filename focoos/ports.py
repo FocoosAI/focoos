@@ -7,9 +7,7 @@ from typing import Annotated, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, field_validator
 
-S3_URL_REGEX = re.compile(
-    r"^s3://" r"(?P<bucket>[a-zA-Z0-9.-]+)/" r"(?P<path>.+(\.tar\.gz|\.zip)?)$"
-)
+S3_URL_REGEX = re.compile(r"^s3://" r"(?P<bucket>[a-zA-Z0-9.-]+)/" r"(?P<path>.+(\.tar\.gz|\.zip)?)$")
 
 DEV_API_URL = "https://api.dev.focoos.ai/v0"
 PROD_API_URL = "https://api.focoos.ai/v0"
@@ -70,13 +68,9 @@ class Hyperparameters(FocoosBaseModel):
     ] = 500
     max_iters: Annotated[
         int,
-        Field(
-            1500, ge=100, le=100000, description="Maximum number of training iterations"
-        ),
+        Field(1500, ge=100, le=100000, description="Maximum number of training iterations"),
     ] = 1500
-    resolution: Annotated[
-        int, Field(640, description="Model expected resolution", ge=128, le=6400)
-    ] = 640
+    resolution: Annotated[int, Field(640, description="Model expected resolution", ge=128, le=6400)] = 640
     wandb_project: Annotated[
         Optional[str],
         Field(description="Wandb project name must be like ORG_ID/PROJECT_NAME"),
@@ -88,21 +82,13 @@ class Hyperparameters(FocoosBaseModel):
     ] = 5e-4
     decoder_multiplier: Annotated[float, Field(description="Backbone multiplier")] = 1
     backbone_multiplier: float = 0.1
-    amp_enabled: Annotated[
-        bool, Field(description="Enable automatic mixed precision")
-    ] = True
+    amp_enabled: Annotated[bool, Field(description="Enable automatic mixed precision")] = True
     weight_decay: Annotated[float, Field(description="Weight decay")] = 0.02
-    ema_enabled: Annotated[
-        bool, Field(description="Enable EMA (exponential moving average)")
-    ] = False
+    ema_enabled: Annotated[bool, Field(description="Enable EMA (exponential moving average)")] = False
     ema_decay: Annotated[float, Field(description="EMA decay rate")] = 0.999
     ema_warmup: Annotated[int, Field(description="EMA warmup")] = 100
-    freeze_bn: Annotated[
-        bool, Field(description="Freeze batch normalization layers")
-    ] = False
-    freeze_bn_bkb: Annotated[
-        bool, Field(description="Freeze backbone batch normalization layers")
-    ] = True
+    freeze_bn: Annotated[bool, Field(description="Freeze batch normalization layers")] = False
+    freeze_bn_bkb: Annotated[bool, Field(description="Freeze backbone batch normalization layers")] = True
     optimizer: Literal["ADAMW", "SGD", "RMSPROP"] = "ADAMW"
     scheduler: Literal["POLY", "FIXED", "COSINE", "MULTISTEP"] = "MULTISTEP"
 
@@ -119,9 +105,7 @@ class Hyperparameters(FocoosBaseModel):
         if value is not None:
             # Define a regex pattern to match valid characters
             if not re.match(r"^[\w.-/]+$", value):
-                raise ValueError(
-                    "Wandb project name must only contain characters, dashes, underscores, and dots."
-                )
+                raise ValueError("Wandb project name must only contain characters, dashes, underscores, and dots.")
         return value
 
 
@@ -298,9 +282,7 @@ class SystemInfo(FocoosBaseModel):
                 else:
                     for item in value:
                         print(f"  - {item}")
-            elif (
-                isinstance(value, dict) and key == "packages_versions"
-            ):  # Special formatting for packages_versions
+            elif isinstance(value, dict) and key == "packages_versions":  # Special formatting for packages_versions
                 print(f"{key}:")
                 for pkg_name, pkg_version in value.items():
                     print(f"  - {pkg_name}: {pkg_version}")
@@ -336,3 +318,9 @@ class User(FocoosBaseModel):
     company: Optional[str] = None
     api_key: ApiKey
     quotas: Quotas
+
+
+class ModelNotFound(Exception):
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(self.message)

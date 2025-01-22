@@ -19,10 +19,6 @@ def not_raises(expected_exception: ExceptionType):
     try:
         yield
     except expected_exception as err:
-        raise AssertionError(
-            f"Expected no exception of type {repr(expected_exception)} to be raised, but got: {err}"
-        )
+        raise AssertionError(f"Expected no exception of type {repr(expected_exception)} to be raised, but got: {err}")
     except Exception as err:
-        raise AssertionError(
-            f"An unexpected exception of type {type(err).__name__} was raised: {err}"
-        )
+        raise AssertionError(f"An unexpected exception of type {type(err).__name__} was raised: {err}")

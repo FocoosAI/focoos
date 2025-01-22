@@ -126,24 +126,18 @@ class LocalModel:
         """
         classes = self.metadata.classes
         labels = [
-            f"{classes[int(class_id)] if classes is not None else str(class_id)}: {confid*100:.0f}%"
+            f"{classes[int(class_id)] if classes is not None else str(class_id)}: {confid * 100:.0f}%"
             for class_id, confid in zip(detections.class_id, detections.confidence)  # type: ignore
         ]
         if self.metadata.task == FocoosTask.DETECTION:
-            annotated_im = self.box_annotator.annotate(
-                scene=im.copy(), detections=detections
-            )
+            annotated_im = self.box_annotator.annotate(scene=im.copy(), detections=detections)
 
-            annotated_im = self.label_annotator.annotate(
-                scene=annotated_im, detections=detections, labels=labels
-            )
+            annotated_im = self.label_annotator.annotate(scene=annotated_im, detections=detections, labels=labels)
         elif self.metadata.task in [
             FocoosTask.SEMSEG,
             FocoosTask.INSTANCE_SEGMENTATION,
         ]:
-            annotated_im = self.mask_annotator.annotate(
-                scene=im.copy(), detections=detections
-            )
+            annotated_im = self.mask_annotator.annotate(scene=im.copy(), detections=detections)
         return annotated_im
 
     def infer(
@@ -185,10 +179,8 @@ class LocalModel:
         detections = self.runtime(im1.astype(np.float32), threshold)
         t2 = perf_counter()
         if resize:
-            detections = scale_detections(
-                detections, (resize, resize), (im0.shape[1], im0.shape[0])
-            )
-        logger.debug(f"Inference time: {t2-t1:.3f} seconds")
+            detections = scale_detections(detections, (resize, resize), (im0.shape[1], im0.shape[0]))
+        logger.debug(f"Inference time: {t2 - t1:.3f} seconds")
         im = None
         if annotate:
             im = self._annotate(im0, detections)

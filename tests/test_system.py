@@ -45,9 +45,7 @@ def test_get_gpu_name():
 
 
 def test_get_cpu_name():
-    with patch(
-        "platform.processor", return_value="Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz"
-    ):
+    with patch("platform.processor", return_value="Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz"):
         assert get_cpu_name() == "Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz"
 
 
@@ -86,9 +84,7 @@ def test_http_client_post(extra_headers):
     client = HttpClient(api_key="test_key", host_url="http://example.com")
     with patch("requests.post") as mock_post:
         mock_post.return_value.status_code = 201
-        response = client.post(
-            "test/path", data={"key": "value"}, extra_headers=extra_headers
-        )
+        response = client.post("test/path", data={"key": "value"}, extra_headers=extra_headers)
         assert response.status_code == 201
         mock_post.assert_called_with(
             "http://example.com/test/path",
