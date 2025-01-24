@@ -42,6 +42,9 @@ dependencies = [
     "gputil~=1.4.0",
     "psutil~=6.1.1",
     "setuptools~=75.7.0",
+    "matplotlib~=3.10.0",
+    "colorama~=0.4.6",
+    "ipython~=8.31.0",
 ]
 
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]

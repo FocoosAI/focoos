@@ -39,10 +39,14 @@ from focoos.ports import (
     FocoosDetections,
     FocoosTask,
     Hyperparameters,
+    Metrics,
     ModelMetadata,
+    ModelStatus,
+    TrainingInfo,
     TrainInstance,
 )
 from focoos.utils.logger import get_logger
+from focoos.utils.metrics import MetricsVisualizer
 from focoos.utils.system import HttpClient
 from focoos.utils.vision import focoos_detections_to_supervision, image_loader
 
@@ -107,7 +111,6 @@ class RemoteModel:
         self,
         dataset_ref: str,
         hyperparameters: Hyperparameters,
-        anyma_version: str = "anyma-sagemaker-cu12-torch22-0111",
         instance_type: TrainInstance = TrainInstance.ML_G4DN_XLARGE,
         volume_size: int = 50,
         max_runtime_in_seconds: int = 36000,
@@ -137,7 +140,6 @@ class RemoteModel:
             f"models/{self.model_ref}/train",
             data={
                 "dataset_ref": dataset_ref,
-                "anyma_version": anyma_version,
                 "instance_type": instance_type,
                 "volume_size": volume_size,
                 "max_runtime_in_seconds": max_runtime_in_seconds,
@@ -149,7 +151,7 @@ class RemoteModel:
             raise ValueError(f"Failed to train model: {res.status_code} {res.text}")
         return res.json()
 
-    def train_status(self) -> dict | None:
+    def train_info(self) -> Optional[TrainingInfo]:
         """
         Retrieve the current status of the model training.
 
@@ -165,7 +167,7 @@ class RemoteModel:
         if res.status_code != 200:
             logger.error(f"Failed to get train status: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get train status: {res.status_code} {res.text}")
-        return res.json()
+        return TrainingInfo(**res.json())
 
     def train_logs(self) -> list[str]:
         """
@@ -186,6 +188,26 @@ class RemoteModel:
             logger.warning(f"Failed to get train logs: {res.status_code} {res.text}")
             return []
         return res.json()
+
+    def metrics(self) -> Metrics:  # noqa: F821
+        """
+        Retrieve the metrics of the model.
+
+        This method sends a request to fetch the metrics of the model identified by `model_ref`.
+        If the request is successful (status code 200), it returns the metrics as a `Metrics` object.
+        If the request fails, it logs a warning and returns an empty `Metrics` object.
+
+        Returns:
+            Metrics: An object containing the metrics of the model.
+
+        Raises:
+            None: Returns an empty `Metrics` object if the request fails.
+        """
+        res = self.http_client.get(f"models/{self.model_ref}/metrics")
+        if res.status_code != 200:
+            logger.warning(f"Failed to get metrics: {res.status_code} {res.text}")
+            return Metrics()  # noqa: F821
+        return Metrics(**res.json())
 
     def _annotate(self, im: np.ndarray, detections: sv.Detections) -> np.ndarray:
         """
@@ -284,114 +306,72 @@ class RemoteModel:
             logger.error(f"Failed to infer: {res.status_code} {res.text}")
             raise ValueError(f"Failed to infer: {res.status_code} {res.text}")
 
-    def train_metrics(self, period=60) -> dict | None:
+    def notebook_monitor_train(self, interval: int = 30, plot_metrics: bool = False, max_runtime: int = 36000) -> None:
         """
-        Retrieve training metrics for the model over a specified period.
+        Monitor the training process in a Jupyter notebook and display metrics.
 
-        This method fetches the training metrics for the remote model, including aggregated values,
-        such as average performance metrics over the given period.
+        Periodically checks the training status and displays metrics in a notebook cell.
+        Clears previous output to maintain a clean view.
 
         Args:
-            period (int, optional): The period (in seconds) for which to fetch the metrics. Defaults to 60.
+            interval (int): Time between status checks in seconds. Must be 30-240. Default: 30
+            plot_metrics (bool): Whether to plot metrics graphs. Default: False
+            max_runtime (int): Maximum monitoring time in seconds. Default: 36000 (10 hours)
 
         Returns:
-            Optional[dict]: A dictionary containing the training metrics if the request is successful,
-                            or None if the request fails.
+            None
         """
-        res = self.http_client.get(
-            f"models/{self.model_ref}/train/all-metrics?period={period}&aggregation_type=Average"
-        )
-        if res.status_code != 200:
-            logger.warning(f"Failed to get train logs: {res.status_code} {res.text}")
-            return None
-        return res.json()
+        from IPython.display import clear_output
 
-    def _log_metrics(self):
-        """
-        Log the latest training metrics for the model.
+        if not 30 <= interval <= 240:
+            raise ValueError("Interval must be between 30 and 240 seconds")
 
-        This method retrieves the current training metrics, such as iteration, total loss, and evaluation
-        metrics (like mIoU for segmentation tasks or AP50 for detection tasks). It logs the most recent values
-        for these metrics, helping monitor the model's training progress.
+        last_update = self.get_info().updated_at
+        start_time = time.time()
+        status_history = []
 
-        The logged metrics depend on the model's task:
-            - For segmentation tasks (SEMSEG), the mean Intersection over Union (mIoU) is logged.
-            - For detection tasks, the Average Precision at 50% IoU (AP50) is logged.
+        while True:
+            # Get current status
+            model_info = self.get_info()
+            status = model_info.status
 
-        Returns:
-            None: The method only logs the metrics without returning any value.
+            # Clear and display status
+            clear_output(wait=True)
+            status_msg = f"[Live Monitor {self.metadata.name}] {status.value}"
+            status_history.append(status_msg)
+            for msg in status_history:
+                logger.info(msg)
 
-        Logs:
-            - Iteration number.
-            - Total loss value.
-            - Relevant evaluation metric (mIoU or AP50).
-        """
-        metrics = self.train_metrics()
-        if metrics:
-            iter = metrics["iter"][-1] if "iter" in metrics and len(metrics["iter"]) > 0 else -1
-            total_loss = metrics["total_loss"][-1] if "total_loss" in metrics and len(metrics["total_loss"]) > 0 else -1
-            if self.metadata.task == FocoosTask.SEMSEG:
-                accuracy = metrics["mIoU"][-1] if "mIoU" in metrics and len(metrics["mIoU"]) > 0 else "-"
-                eval_metric = "mIoU"
-            else:
-                accuracy = metrics["AP50"][-1] if "AP50" in metrics and len(metrics["AP50"]) > 0 else "-"
-                eval_metric = "AP50"
-            logger.info(f"Iter {iter:.0f}: Loss {total_loss:.2f}, {eval_metric} {accuracy}")
+            # Show metrics if training completed
+            if status == ModelStatus.TRAINING_COMPLETED:
+                metrics = self.metrics()
+                if metrics.best_valid_metric:
+                    logger.info(f"Best Checkpoint (iter: {metrics.best_valid_metric.get('iteration', 'N/A')}):")
+                    for k, v in metrics.best_valid_metric.items():
+                        logger.info(f"  {k}: {v}")
+                    visualizer = MetricsVisualizer(metrics)
+                    visualizer.log_metrics()
+                    if plot_metrics:
+                        visualizer.notebook_plot_training_metrics()
 
-    def monitor_train(self, update_period=30) -> None:
-        """
-        Monitor the training process of the model and log its status periodically.
+            # Update metrics during training
+            if status == ModelStatus.TRAINING_RUNNING and model_info.updated_at > last_update:
+                last_update = model_info.updated_at
+                metrics = self.metrics()
+                visualizer = MetricsVisualizer(metrics)
+                visualizer.log_metrics()
+                if plot_metrics:
+                    visualizer.notebook_plot_training_metrics()
 
-        This method continuously checks the model's training status and logs updates based on the current state.
-        It monitors the primary and secondary statuses of the model, and performs the following actions:
-        - If the status is "Pending", it logs a waiting message and waits for resources.
-        - If the status is "InProgress", it logs the current status and elapsed time, and logs the training metrics if the model is actively training.
-        - If the status is "Completed", it logs the final metrics and exits.
-        - If the training fails, is stopped, or any unexpected status occurs, it logs the status and exits.
-
-        Args:
-            update_period (int, optional): The time (in seconds) to wait between status checks. Default is 30 seconds.
-
-        Returns:
-            None: This method does not return any value but logs information about the training process.
-
-        Logs:
-            - The current training status, including elapsed time.
-            - Training metrics at regular intervals while the model is training.
-        """
-        completed_status = ["Completed", "Failed", "Stopped"]
-        # init to make do-while
-        status = {"main_status": "Flag", "secondary_status": "Flag"}
-        prev_status = status
-        while status["main_status"] not in completed_status:
-            prev_status = status
-            status = self.train_status()
-            elapsed = status.get("elapsed_time", 0)
-            # Model at the startup
-            if not status["main_status"] or status["main_status"] in ["Pending"]:
-                if prev_status["main_status"] != status["main_status"]:
-                    logger.info("[0s] Waiting for resources...")
-                sleep(update_period)
-                continue
-            # Training in progress
-            if status["main_status"] in ["InProgress"]:
-                if prev_status["secondary_status"] != status["secondary_status"]:
-                    if status["secondary_status"] in ["Starting", "Pending"]:
-                        logger.info(f"[0s] {status['main_status']}: {status['secondary_status']}")
-                    else:
-                        logger.info(
-                            f"[{elapsed // 60}m:{elapsed % 60}s] {status['main_status']}: {status['secondary_status']}"
-                        )
-                if status["secondary_status"] in ["Training"]:
-                    self._log_metrics()
-                sleep(update_period)
-                continue
-            if status["main_status"] == "Completed":
-                self._log_metrics()
+            # Check exit conditions
+            if status not in [ModelStatus.CREATED, ModelStatus.TRAINING_RUNNING, ModelStatus.TRAINING_STARTING]:
                 return
-            else:
-                logger.info(f"Model is not training, status: {status['main_status']}")
+
+            if time.time() - start_time > max_runtime:
+                logger.warning(f"Monitoring exceeded {max_runtime} seconds limit")
                 return
+
+            sleep(interval)
 
     def stop_training(self) -> None:
         """

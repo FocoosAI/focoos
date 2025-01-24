@@ -32,12 +32,13 @@ class DeploymentMode(str, Enum):
 
 class ModelStatus(str, Enum):
     CREATED = "CREATED"
+    TRAINING_STARTING = "TRAINING_STARTING"
     TRAINING_RUNNING = "TRAINING_RUNNING"
     TRAINING_ERROR = "TRAINING_ERROR"
     TRAINING_COMPLETED = "TRAINING_COMPLETED"
     TRAINING_STOPPED = "TRAINING_STOPPED"
-    DEPLOY_ERROR = "DEPLOY_ERROR"
     DEPLOYED = "DEPLOYED"
+    DEPLOY_ERROR = "DEPLOY_ERROR"
 
 
 class DatasetLayout(str, Enum):
@@ -109,7 +110,7 @@ class Hyperparameters(FocoosBaseModel):
         return value
 
 
-class TraininingInfo(FocoosBaseModel):
+class TrainingInfo(FocoosBaseModel):
     algorithm_name: str
     instance_type: Optional[str] = None
     volume_size: Optional[int] = 100
@@ -118,7 +119,6 @@ class TraininingInfo(FocoosBaseModel):
     secondary_status: Optional[str] = None
     failure_reason: Optional[str] = None
     elapsed_time: Optional[int] = None
-    final_metrics: Optional[list[dict]] = None
     status_transitions: list[dict] = []
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
@@ -178,7 +178,7 @@ class ModelMetadata(FocoosBaseModel):
     classes: Optional[list[str]] = None
     im_size: Optional[int] = None
     hyperparameters: Optional[Hyperparameters] = None
-    training_info: Optional[TraininingInfo] = None
+    training_info: Optional[TrainingInfo] = None
     location: Optional[str] = None
     dataset: Optional[DatasetInfo] = None
 
@@ -324,3 +324,12 @@ class ModelNotFound(Exception):
     def __init__(self, message: str):
         self.message = message
         super().__init__(self.message)
+
+
+class Metrics(FocoosBaseModel):
+    infer_metrics: list[dict] = []
+    valid_metrics: list[dict] = []
+    train_metrics: list[dict] = []
+    iterations: Optional[int] = None
+    best_valid_metric: Optional[dict] = None
+    updated_at: Optional[datetime] = None
