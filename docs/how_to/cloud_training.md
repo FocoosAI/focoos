@@ -20,7 +20,6 @@ pprint(datasets)
 ```
 
 ##  Initiating a Cloud Training Job
-
 To start training, configure the model, dataset, and training parameters as shown below:
 
 ```python
@@ -29,7 +28,6 @@ from focoos.ports import Hyperparameters, TrainInstance
 model = focoos.get_remote_model("<YOUR-MODEL-ID>")
 
 res = model.train(
-    anyma_version="0.11.1",
     dataset_ref="<YOUR-DATASET-ID>",
     instance_type=TrainInstance.ML_G4DN_XLARGE,
     volume_size=50,
@@ -42,29 +40,19 @@ res = model.train(
         resolution=640,
     ),  # type: ignore
 )
-pprint(res)
 ```
 
-##  Monitoring Training Progress
+##  Monitoring Training Progress on jupyter notebook
 
 Once the training job is initiated, monitor its progress by polling the training status. Use the following code:
 
 ```python
-import time
-from pprint import pprint
-from focoos.utils.logger import get_logger
+from focoos import  Focoos
 
-completed_status = ["Completed", "Failed"]
-logger = get_logger(__name__)
+focoos = Focoos(api_key=os.getenv("FOCOOS_API_KEY"))
 
 model = focoos.get_remote_model("<YOUR-MODEL-ID>")
-status = model.train_status()
-
-while status["main_status"] not in completed_status:
-    status = model.train_status()
-    logger.info(f"Training status: {status['main_status']}")
-    pprint(f"Training progress: {status['status_transitions']}")
-    time.sleep(30)
+model.notebook_monitor_train(interval=30, plot_metrics=True)
 ```
 
 ##  Retrieving Training Logs
@@ -74,4 +62,14 @@ After the training process is complete, retrieve the logs for detailed insights:
 ```python
 logs = model.train_logs()
 pprint(logs)
+```
+
+## Retrieve and Visualize Training Metrics
+
+```python
+from focoos.utils.metrics import MetricsVisualizer
+
+metrics = model.metrics()
+visualizer = MetricsVisualizer(metrics)
+visualizer.log_metrics()
 ```

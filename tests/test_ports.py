@@ -27,10 +27,7 @@ def test_validate_wandb_project_invalid():
     for value in invalid_values:
         with pytest.raises(ValidationError) as exc_info:
             Hyperparameters(wandb_project=value)
-        assert (
-            "Wandb project name must only contain characters, dashes, underscores, and dots."
-            in str(exc_info.value)
-        )
+        assert "Wandb project name must only contain characters, dashes, underscores, and dots." in str(exc_info.value)
 
 
 def test_validate_s3_url_valid():

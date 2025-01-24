@@ -23,8 +23,8 @@ from focoos.local_model import LocalModel
 from focoos.ports import (
     DatasetMetadata,
     ModelMetadata,
+    ModelNotFound,
     ModelPreview,
-    Quotas,
     RuntimeTypes,
     User,
 )
@@ -92,9 +92,7 @@ class Focoos:
         self.http_client = HttpClient(self.api_key, host_url)
         self.user_info = self.get_user_info()
         self.cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "focoos")
-        logger.info(
-            f"Currently logged as: {self.user_info.email} environment: {host_url}"
-        )
+        logger.info(f"Currently logged as: {self.user_info.email} environment: {host_url}")
 
     def get_user_info(self) -> User:
         """
@@ -160,9 +158,7 @@ class Focoos:
         res = self.http_client.get("models/focoos-models")
         if res.status_code != 200:
             logger.error(f"Failed to list focoos models: {res.status_code} {res.text}")
-            raise ValueError(
-                f"Failed to list focoos models: {res.status_code} {res.text}"
-            )
+            raise ValueError(f"Failed to list focoos models: {res.status_code} {res.text}")
         return [ModelPreview.from_json(r) for r in res.json()]
 
     def get_local_model(
@@ -207,9 +203,7 @@ class Focoos:
         """
         return RemoteModel(model_ref, self.http_client)
 
-    def new_model(
-        self, name: str, focoos_model: str, description: str
-    ) -> Optional[RemoteModel]:
+    def new_model(self, name: str, focoos_model: str, description: str) -> RemoteModel:
         """
         Creates a new model in the Focoos system.
 
@@ -238,7 +232,6 @@ class Focoos:
             logger.warning(f"Model already exists: {name}")
             return self.get_model_by_name(name, remote=True)
         logger.warning(f"Failed to create new model: {res.status_code} {res.text}")
-        return None
 
     def list_shared_datasets(self) -> list[DatasetMetadata]:
         """
@@ -291,12 +284,8 @@ class Focoos:
         logger.info("📥 Downloading model from Focoos Cloud.. ")
         response = self.http_client.get_external_url(download_uri, stream=True)
         if response.status_code != 200:
-            logger.error(
-                f"Failed to download model: {response.status_code} {response.text}"
-            )
-            raise ValueError(
-                f"Failed to download model: {response.status_code} {response.text}"
-            )
+            logger.error(f"Failed to download model: {response.status_code} {response.text}")
+            raise ValueError(f"Failed to download model: {response.status_code} {response.text}")
         total_size = int(response.headers.get("content-length", 0))
         logger.info(f"📥 Size: {total_size / (1024**2):.2f} MB")
 
@@ -339,9 +328,7 @@ class Focoos:
             if name_lower == dataset.name.lower():
                 return dataset
 
-    def get_model_by_name(
-        self, name: str, remote: bool = True
-    ) -> Optional[Union[RemoteModel, LocalModel]]:
+    def get_model_by_name(self, name: str, remote: bool = True) -> Union[RemoteModel, LocalModel]:
         """
         Retrieves a model by its name.
 
@@ -360,3 +347,4 @@ class Focoos:
                     return self.get_remote_model(model.ref)
                 else:
                     return self.get_local_model(model.ref)
+        raise ModelNotFound(f"Model not found: {name}")

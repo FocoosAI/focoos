@@ -4,12 +4,10 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
-      - id: check-ast
       - id: check-toml
       - id: check-yaml
         args:
         -   --unsafe
-      #- id: check-json
       - id: check-case-conflict
       - id: check-merge-conflict
       - id: end-of-file-fixer
@@ -17,36 +15,17 @@ repos:
       - id: detect-private-key
       - id: requirements-txt-fixer
 
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v0.991
-  #   hooks:
-  #     - id: mypy
-  #       args: [--ignore-missing-imports, --pretty, --show-error-codes]
-  - repo: https://github.com/nbQA-dev/nbQA # run lint on notebook
-    rev: 1.9.1
-    hooks:
-      - id: nbqa-black
-      - id: nbqa-pyupgrade
-    #  - id: nbqa-isort
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.1
-    hooks:
-      - id: pyupgrade
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        name: isort (python)
-        args: [--profile, black]
-  - repo: https://github.com/psf/black
-    rev: 24.10.0
-    hooks:
-      - id: black
   - repo: https://github.com/kynan/nbstripout
     rev: 0.6.0
     hooks:
       - id: nbstripout
-  - repo: https://github.com/hadialqattan/pycln # remove unused import
-    rev: v2.5.0
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.9.2
     hooks:
-      - id: pycln
+      # Run the linter.
+      - id: ruff
+        args: [ --fix ]
+      # Run the formatter.
+      - id: ruff-format

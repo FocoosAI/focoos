@@ -1,4 +1,4 @@
-.PHONY: test install install-dev install-pre-commit run-pre-commit .uv .pre-commit tox
+.PHONY: venv test install install-dev install-pre-commit run-pre-commit .uv .pre-commit tox
 
 .uv: ## Check that uv is installed
 	@uv --version || echo 'Please install uv: https://docs.astral.sh/uv/getting-started/installation/'
@@ -6,19 +6,20 @@
 .pre-commit: ## Check that pre-commit is installed
 	@pre-commit -V || echo 'Please install pre-commit: https://pre-commit.com/'
 
+venv:
+	@uv venv --python=python3.12
+
 install: .uv .pre-commit
-	@uv venv
 	@uv pip install -e ".[cpu,dev]"
 	@pre-commit install
 
 install-gpu: .uv .pre-commit
-	@uv venv
 	@uv pip install -e ".[dev,gpu]"
 	@pre-commit install
 
 lint:
-	@isort ./focoos ./tests  --profile=black
-	@black ./focoos ./tests
+	@ruff check ./focoos ./tests ./notebooks  --fix
+	@ruff format ./focoos ./tests ./notebooks
 
 run-pre-commit: .pre-commit
 	@pre-commit run --all-files

@@ -84,9 +84,7 @@ def image_preprocess(
     if resize:
         _im1 = cv2.resize(im0, (resize, resize))
 
-    im1 = np.ascontiguousarray(_im1.transpose(2, 0, 1)[np.newaxis, :]).astype(
-        dtype
-    )  # HWC->1CHW
+    im1 = np.ascontiguousarray(_im1.transpose(2, 0, 1)[np.newaxis, :]).astype(dtype)  # HWC->1CHW
     return im1, im0
 
 
@@ -116,17 +114,13 @@ def scale_mask(mask: np.ndarray, target_shape: tuple) -> np.ndarray:
     return scaled_mask.astype(bool)
 
 
-def scale_detections(
-    detections: sv.Detections, in_shape: tuple, out_shape: tuple
-) -> sv.Detections:
+def scale_detections(detections: sv.Detections, in_shape: tuple, out_shape: tuple) -> sv.Detections:
     if in_shape[0] == out_shape[0] and in_shape[1] == out_shape[1]:
         return detections
     if detections.xyxy is not None:
         x_ratio = out_shape[0] / in_shape[0]
         y_ratio = out_shape[1] / in_shape[1]
-        detections.xyxy = detections.xyxy * np.array(
-            [x_ratio, y_ratio, x_ratio, y_ratio]
-        )
+        detections.xyxy = detections.xyxy * np.array([x_ratio, y_ratio, x_ratio, y_ratio])
     return detections
 
 
@@ -137,12 +131,7 @@ def base64mask_to_mask(base64mask: str) -> np.ndarray:
 def focoos_detections_to_supervision(
     inference_output: FocoosDetections,
 ) -> sv.Detections:
-    xyxy = np.array(
-        [
-            d.bbox if d.bbox is not None else np.empty(4)
-            for d in inference_output.detections
-        ]
-    )
+    xyxy = np.array([d.bbox if d.bbox is not None else np.empty(4) for d in inference_output.detections])
     class_id = np.array([d.cls_id for d in inference_output.detections])
     confidence = np.array([d.conf for d in inference_output.detections])
     if xyxy.shape[0] == 0:
@@ -191,9 +180,7 @@ def binary_mask_to_base64(binary_mask: np.ndarray) -> str:
     return encoded_png
 
 
-def sv_to_focoos_detections(
-    detections: sv.Detections, classes: Optional[list[str]] = None
-) -> FocoosDetections:
+def sv_to_focoos_detections(detections: sv.Detections, classes: Optional[list[str]] = None) -> FocoosDetections:
     """
     Convert a list of detections from the supervision format to Focoos detection format.
 
@@ -227,9 +214,7 @@ def sv_to_focoos_detections(
             bbox=[round(float(x), 2) for x in xyxy],
             mask=binary_mask_to_base64(mask) if mask is not None else None,
             conf=round(float(conf), 2) if conf is not None else None,
-            label=(
-                classes[cls_id] if classes is not None and cls_id is not None else None
-            ),
+            label=(classes[cls_id] if classes is not None and cls_id is not None else None),
         )
         res.append(det)
     return FocoosDetections(detections=res)

@@ -21,11 +21,12 @@ from .ports import (
     OnnxEngineOpts,
     RuntimeTypes,
     SystemInfo,
-    TraininingInfo,
+    TrainingInfo,
     TrainInstance,
 )
 from .remote_model import RemoteModel
 from .runtime import ONNXRuntime, get_runtime
+from .utils.logger import get_logger
 from .utils.system import get_system_info
 from .utils.vision import (
     base64mask_to_mask,
@@ -59,7 +60,7 @@ __all__ = [
     "OnnxEngineOpts",
     "RuntimeTypes",
     "SystemInfo",
-    "TraininingInfo",
+    "TrainingInfo",
     "TrainInstance",
     "get_system_info",
     "ONNXRuntime",
@@ -75,4 +76,5 @@ __all__ = [
     "image_preprocess",
     "index_to_class",
     "sv_to_focoos_detections",
+    "get_logger",
 ]

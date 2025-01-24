@@ -85,9 +85,7 @@ def display_instseg(path, num_images=9, annotate=True):
                 if ann["image_id"] == img_info["id"]:
                     category_id = ann["category_id"]
                     if category_id not in masks:
-                        masks[category_id] = np.zeros(
-                            (img_info["height"], img_info["width"])
-                        )
+                        masks[category_id] = np.zeros((img_info["height"], img_info["width"]))
                     for seg in ann["segmentation"]:
                         poly = np.array(seg).reshape(-1, 2).astype(np.int32)
                         cv2.fillPoly(masks[category_id], [poly], 1)
@@ -115,9 +113,7 @@ def start_gradio(model, paths, allowed_paths=["/Users/fcdl94/Develop/focoos/data
         # Load and resize the image
         resized, _ = image_preprocess(image, resize=640)  # Using standard 640 size
         # Save to temporary file
-        tmp_path = (
-            f"/Users/fcdl94/Develop/focoos/data/{os.path.basename(image)}_resized.jpg"
-        )
+        tmp_path = f"/Users/fcdl94/Develop/focoos/data/{os.path.basename(image)}_resized.jpg"
         # resized is in CHW format, need to convert to HWC and uint8 for saving
         img_to_save = resized[0].transpose(1, 2, 0).astype(np.uint8)
         cv2.imwrite(tmp_path, img_to_save)
@@ -135,13 +131,11 @@ def start_gradio(model, paths, allowed_paths=["/Users/fcdl94/Develop/focoos/data
             with gr.Column():
                 output_image = gr.Image(type="pil")
                 output_detections = gr.JSON()
-        examples = gr.Examples(
+        gr.Examples(
             fn=run_inference,
             inputs=[image],
             outputs=[output_image],
-            examples=[
-                paths[i] for i in random.sample(range(len(paths)), min(5, len(paths)))
-            ],
+            examples=[paths[i] for i in random.sample(range(len(paths)), min(5, len(paths)))],
         )
         start_btn.click(
             fn=run_inference,

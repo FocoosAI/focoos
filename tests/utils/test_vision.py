@@ -113,9 +113,7 @@ def test_focoos_detections_to_supervision_bbox(focoos_detections_bbox):
     result = focoos_detections_to_supervision(focoos_detections_bbox)
 
     # Verify the result is an instance of Supervision Detections
-    assert isinstance(
-        result[0], sv.Detections
-    ), "Result should be an instance of Supervision Detections"
+    assert isinstance(result[0], sv.Detections), "Result should be an instance of Supervision Detections"
     # Verify the number of detections
     assert len(result.xyxy) == 1, "Expected 1 detection"
     # Verify the bounding box coordinates
@@ -130,9 +128,7 @@ def test_focoos_detections_to_supervision_mask(focoos_detections_mask):
     result = focoos_detections_to_supervision(focoos_detections_mask)
 
     # Verify the result is an instance of Supervision Detections
-    assert isinstance(
-        result[0], sv.Detections
-    ), "Result should be an instance of Supervision Detections"
+    assert isinstance(result[0], sv.Detections), "Result should be an instance of Supervision Detections"
     # # Verify the number of detections
     # FIXME: https://github.com/FocoosAI/focoos/issues/38
     # assert len(result.xyxy) == 0, "Expected 0 detection"
@@ -145,9 +141,7 @@ def test_focoos_detections_no_detections(focoos_detections_no_detections):
     result = focoos_detections_to_supervision(focoos_detections_no_detections)
 
     # Verify the result is an instance of Supervision Detections
-    assert isinstance(
-        result, sv.Detections
-    ), "Result should be an instance of sv.Detections"
+    assert isinstance(result, sv.Detections), "Result should be an instance of sv.Detections"
     # Verify the number of detections
     assert len(result.xyxy) == 0, "Expected 0 detection"
     # Verify the mask is None
@@ -166,24 +160,16 @@ def test_sv_to_focoos_detections(sv_detections: sv.Detections):
     result = sv_to_focoos_detections(sv_detections)
 
     # Verify the result is an instance of FocoosDetections
-    assert isinstance(
-        result, FocoosDetections
-    ), "Result should be an instance of FocoosDetections"
+    assert isinstance(result, FocoosDetections), "Result should be an instance of FocoosDetections"
     assert len(result.detections) == 1, "Expected 1 detection"
     result_focoos_detection = result.detections[0]
     # Verify the result is an instance of FocoosDet
-    assert isinstance(
-        result_focoos_detection, FocoosDet
-    ), "Result should be an instance of FocoosDet"
+    assert isinstance(result_focoos_detection, FocoosDet), "Result should be an instance of FocoosDet"
 
     assert result_focoos_detection.cls_id == 1, "Expected class ID 1"
     assert result_focoos_detection.label is None, "Label should be None"
-    assert (
-        result_focoos_detection.conf is not None
-    ), "Confidence score should not be None"
-    assert math.isclose(
-        result_focoos_detection.conf, 0.9
-    ), "Expected confidence score 0.9"
+    assert result_focoos_detection.conf is not None, "Confidence score should not be None"
+    assert math.isclose(result_focoos_detection.conf, 0.9), "Expected confidence score 0.9"
     assert result_focoos_detection.bbox == [
         10,
         20,
