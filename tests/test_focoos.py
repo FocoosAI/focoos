@@ -335,7 +335,7 @@ def test_get_local_model_with_download(mocker: MockerFixture, focoos_instance: F
         # Assertions
         assert model is not None
         assert model.model_ref == model_ref
-        mock_local_model_class.assert_called_once_with(model_path.parent.as_posix(), FOCOOS_CONFIG.runtime_type)
+        mock_local_model_class.assert_called_once_with(str(model_path.parent), FOCOOS_CONFIG.runtime_type)
         assert isinstance(model, LocalModel)
 
         # Assert _download_model was not called
@@ -396,7 +396,7 @@ def test_download_model_already_exists(focoos_instance: Focoos):
         (model_dir_tmp / "focoos_metadata.json").touch()
         model_path = focoos_instance._download_model(model_ref)
         assert model_path is not None
-        assert model_path == (model_dir_tmp / "model.onnx").as_posix()
+        assert model_path == str(model_dir_tmp / "model.onnx")
 
 
 def test_download_model_onnx_fail(focoos_instance: Focoos):
@@ -462,4 +462,4 @@ def test_download_model_onnx(mocker: MockerFixture, focoos_instance: Focoos):
         focoos_instance.cache_dir = model_dir_tmp
         model_path = focoos_instance._download_model(model_ref)
         assert model_path is not None
-        assert model_path == (pathlib.Path(model_dir_tmp) / model_ref / "model.onnx").as_posix()
+        assert model_path == str(pathlib.Path(model_dir_tmp) / model_ref / "model.onnx")
