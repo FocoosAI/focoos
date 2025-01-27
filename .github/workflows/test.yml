@@ -19,16 +19,13 @@ jobs:
         python-version: ["3.8","3.9", "3.10", "3.11","3.12"]
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout Repository
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-      - name: install make
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install ffmpeg libsm6 libxext6 make  -y
-      - name: Setup Python
+      - name: 🐍 Setup Python
         uses: actions/setup-python@v4
         with:
           python-version:  ${{ matrix.python-version }}
-      - name: 🐍 Setup Python and uv
+      - name: 🐍 Setup uv
         uses: astral-sh/setup-uv@v4
         with:
           python-version:  ${{ matrix.python-version }}
@@ -36,7 +33,7 @@ jobs:
         run: uv pip install .[cpu,dev]
       - name: 🧪 Run test
         run: make test
-      - name: Pytest coverage comment
+      - name: 📊 Generate test coverage report
         if: ${{ github.ref_name != 'main' }}
         uses: MishaKav/pytest-coverage-comment@main
         with:

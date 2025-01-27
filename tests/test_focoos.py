@@ -306,7 +306,7 @@ def test_get_local_model(mocker: MockerFixture, focoos_instance: Focoos, mock_lo
         # Assertions
         assert model is not None
         assert model.model_ref == model_ref
-        mock_local_model_class.assert_called_once_with(model_path.parent.as_posix(), FOCOOS_CONFIG.runtime_type)
+        mock_local_model_class.assert_called_once_with(str(model_path.parent), FOCOOS_CONFIG.runtime_type)
         assert isinstance(model, LocalModel)
 
         # Assert _download_model was not called
