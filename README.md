@@ -46,7 +46,7 @@ You can install the required optional dependencies using the following syntax:
 ## CPU only or Remote Usage
 
 ```bash
-uv pip install focoos git+https://github.com/FocoosAI/focoos.git
+uv pip install focoos[cpu] git+https://github.com/FocoosAI/focoos.git
 ```
 
 ## GPU Runtimes
