@@ -1,3 +1,5 @@
+![Tests](https://github.com/FocoosAI/focoos/actions/workflows/test.yml/badge.svg??event=push&branch=main)
+
 # Focoos pre-trained models
 
 | Model Name          | Task                  | Metrics | Domain                          |
@@ -21,13 +23,12 @@ Focoos supports both cloud and local inference, and enables training on the clou
 ### Key Features
 
 - **Pre-trained Models**: A wide range of pre-trained models for different tasks and domains.
-- **Multiple Inference Runtimes**: Support for various inference runtimes including CPU, GPU, Torchscript CUDA, OnnxRuntime CUDA, and OnnxRuntime TensorRT.
 - **Cloud Inference**: API to Focoos cloud inference.
-- **Local Inference**: local inference, making it easy to deploy models on the local machine.
-- **Cloud Training**: Train user models on the focoos cloud.
+- **Cloud Training**: Train custom models with the Focoos cloud.
+- **Multiple Local Inference Runtimes**: Support for various inference runtimes including CPU, GPU, Torchscript CUDA, OnnxRuntime CUDA, and OnnxRuntime TensorRT.
 - **Model Monitoring**: Monitor model performance and metrics.
 
-![Tests](https://github.com/FocoosAI/focoos/actions/workflows/test.yml/badge.svg??event=push&branch=main)
+
 
 # 🐍 Setup
 We recommend using [UV](https://docs.astral.sh/uv/) as a package manager and environment manager for a streamlined dependency management experience.
@@ -111,3 +112,13 @@ model = focoos.get_local_model("focoos_object365")
 
 detections = model.infer("./image.jpg", threshold=0.4)
 ```
+
+
+## Docker and devcontainers
+For container support, Focoos offers four different Docker images:
+- `focoos-cpu`: only CPU
+- `focoos-onnx`: Includes ONNX support
+- `focoos-torch`: Includes ONNX and Torchscript support
+- `focoos-tensorrt`: Includes ONNX, Torchscript, and TensorRT support
+
+This repository also includes a devcontainer configuration for each of the above images. You can launch these devcontainers in Visual Studio Code for a seamless development experience.
