@@ -22,6 +22,7 @@ from focoos.config import FOCOOS_CONFIG
 from focoos.local_model import LocalModel
 from focoos.ports import (
     DatasetMetadata,
+    ModelFormat,
     ModelMetadata,
     ModelNotFound,
     ModelPreview,
@@ -164,7 +165,7 @@ class Focoos:
     def get_local_model(
         self,
         model_ref: str,
-        runtime_type: Optional[RuntimeTypes] = None,
+        runtime_type: Optional[RuntimeTypes] = RuntimeTypes.ONNX_CUDA32,
     ) -> LocalModel:
         """
         Retrieves a local model for the specified reference.
@@ -187,8 +188,12 @@ class Focoos:
         """
         runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
         model_dir = os.path.join(self.cache_dir, model_ref)
-        if not os.path.exists(os.path.join(model_dir, "model.onnx")):
-            self._download_model(model_ref)
+        format = ModelFormat.TORCHSCRIPT if runtime_type == RuntimeTypes.TORCHSCRIPT_32 else ModelFormat.ONNX
+        if not os.path.exists(os.path.join(model_dir, f"model.{format.value}")):
+            self._download_model(
+                model_ref,
+                format=format,
+            )
         return LocalModel(model_dir, runtime_type)
 
     def get_remote_model(self, model_ref: str) -> RemoteModel:
@@ -249,7 +254,7 @@ class Focoos:
             raise ValueError(f"Failed to list datasets: {res.status_code} {res.text}")
         return [DatasetMetadata.from_json(dataset) for dataset in res.json()]
 
-    def _download_model(self, model_ref: str) -> str:
+    def _download_model(self, model_ref: str, format: ModelFormat = ModelFormat.ONNX) -> str:
         """
         Downloads a model from the Focoos API.
 
@@ -263,14 +268,14 @@ class Focoos:
             ValueError: If the API request fails or the download fails.
         """
         model_dir = os.path.join(self.cache_dir, model_ref)
-        model_path = os.path.join(model_dir, "model.onnx")
+        model_path = os.path.join(model_dir, f"model.{format.value}")
         metadata_path = os.path.join(model_dir, "focoos_metadata.json")
         if os.path.exists(model_path) and os.path.exists(metadata_path):
             logger.info("📥 Model already downloaded")
             return model_path
 
         ## download model metadata
-        res = self.http_client.get(f"models/{model_ref}/download?format=onnx")
+        res = self.http_client.get(f"models/{model_ref}/download?format={format.value}")
         if res.status_code != 200:
             logger.error(f"Failed to download model: {res.status_code} {res.text}")
             raise ValueError(f"Failed to download model: {res.status_code} {res.text}")

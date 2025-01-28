@@ -1,4 +1,5 @@
 import importlib.metadata as metadata
+import os
 import platform
 import subprocess
 from typing import Optional
@@ -189,22 +190,23 @@ def get_cpu_name() -> Optional[str]:
 
 def get_system_info() -> SystemInfo:
     """
-    Gather and return comprehensive system information.
+    Collect and return detailed system information.
 
-    This function collects various system metrics including CPU, memory, disk,
-    and GPU details, as well as installed package versions. It returns this
-    information encapsulated in a SystemInfo object.
+    This function gathers a wide range of system metrics, including CPU, memory,
+    disk, and GPU details, as well as versions of installed packages. The collected
+    information is encapsulated in a SystemInfo object.
 
     Returns:
-        SystemInfo: An object containing detailed information about the system's
-        hardware and software configuration, including:
+        SystemInfo: An object containing comprehensive details about the system's
+        hardware and software configuration, such as:
             - System and node name
-            - CPU type and core count
+            - CPU type and number of cores
             - Available ONNXRuntime providers
             - Memory and disk usage statistics
-            - GPU count, driver, and CUDA version
-            - Detailed GPU information if available
+            - Number of GPUs, driver, and CUDA version
+            - Detailed information for each GPU, if available
             - Versions of key installed packages
+            - Environment variables related to the system
     """
     system_info = platform.uname()
     memory_info = psutil.virtual_memory()
@@ -239,6 +241,10 @@ def get_system_info() -> SystemInfo:
         "pillow",
         "supervision",
         "pydantic",
+        "torch",
+        "torchvision",
+        "nvidia-cuda-runtime-cu12",
+        "tensorrt",
     ]
     versions = {}
     for package in packages:
@@ -246,6 +252,18 @@ def get_system_info() -> SystemInfo:
             versions[package] = metadata.version(package)
         except metadata.PackageNotFoundError:
             versions[package] = "unknown"
+
+    environments_var = [
+        "LD_LIBRARY_PATH",
+        "LD_PRELOAD",
+        "CUDA_HOME",
+        "CUDA_VISIBLE_DEVICES",
+        "FOCOOS_LOG_LEVEL",
+        "DEFAULT_HOST_URL",
+    ]
+    environments = {}
+    for var in environments_var:
+        environments[var] = os.getenv(var, "")
 
     return SystemInfo(
         focoos_host=FOCOOS_CONFIG.default_host_url,
@@ -263,4 +281,5 @@ def get_system_info() -> SystemInfo:
         gpu_cuda_version=get_cuda_version(),
         gpus_info=gpus_info,
         packages_versions=versions,
+        environment=environments,
     )

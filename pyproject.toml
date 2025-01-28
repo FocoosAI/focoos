@@ -23,6 +23,7 @@ convention = "google"
 [tool.setuptools.packages.find]
 include = ["focoos**"]
 
+
 [project]
 name = "focoos"
 version = "0.8.0"
@@ -31,7 +32,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "requests",
-    "Pillow~=10.4.0",
+    "Pillow~=10.2.0",
     "supervision~=0.25.1",
     "opencv-python~=4.11.0",
     "pydantic~=2.10.5",
@@ -56,9 +57,10 @@ keywords = [
 ]
 
 [project.optional-dependencies]
-cpu = ["onnxruntime==1.20.1"]
-gpu = ["onnxruntime-gpu==1.20.1","nvidia-cuda-runtime-cu12==12.4.127"]
-tensorrt = ["tensorrt==10.5.0"]
+default = ["onnxruntime==1.20.1"]
+onnx = ["onnxruntime-gpu==1.20.1"]
+tensorrt = ["onnxruntime-gpu==1.20.1","tensorrt==10.5.0"]
+torch = ["torch==2.3.0","torchvision"]
 dev = [
     "pytest",
     "pytest-cov",

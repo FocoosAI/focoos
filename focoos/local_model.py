@@ -32,10 +32,11 @@ from focoos.ports import (
     FocoosDetections,
     FocoosTask,
     LatencyMetrics,
+    ModelFormat,
     ModelMetadata,
     RuntimeTypes,
 )
-from focoos.runtime import ONNXRuntime, get_runtime
+from focoos.runtime import BaseRuntime, load_runtime
 from focoos.utils.logger import get_logger
 from focoos.utils.vision import (
     image_preprocess,
@@ -82,20 +83,32 @@ class LocalModel:
         and initializes the runtime for inference using the provided runtime type. Annotation
         utilities are also prepared for visualizing model outputs.
         """
+        # Determine runtime type and model format
         runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
+        model_format = ModelFormat.TORCHSCRIPT if runtime_type == RuntimeTypes.TORCHSCRIPT_32 else ModelFormat.ONNX
 
-        logger.debug(f"Runtime type: {runtime_type}, Loading model from {model_dir},")
-        if not os.path.exists(model_dir):
-            raise FileNotFoundError(f"Model directory not found: {model_dir}")
+        # Set model directory and path
         self.model_dir: Union[str, Path] = model_dir
+        self.model_path = os.path.join(model_dir, f"model.{model_format.value}")
+        logger.debug(f"Runtime type: {runtime_type}, Loading model from {self.model_path}..")
+
+        # Check if model path exists
+        if not os.path.exists(self.model_path):
+            raise FileNotFoundError(f"Model path not found: {self.model_path}")
+
+        # Load metadata and set model reference
         self.metadata: ModelMetadata = self._read_metadata()
         self.model_ref = self.metadata.ref
+
+        # Initialize annotation utilities
         self.label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
         self.box_annotator = sv.BoxAnnotator()
         self.mask_annotator = sv.MaskAnnotator()
-        self.runtime: ONNXRuntime = get_runtime(
+
+        # Load runtime for inference
+        self.runtime: BaseRuntime = load_runtime(
             runtime_type,
-            str(os.path.join(model_dir, "model.onnx")),
+            str(self.model_path),
             self.metadata,
             FOCOOS_CONFIG.warmup_iter,
         )

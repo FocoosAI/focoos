@@ -18,14 +18,14 @@ from .ports import (
     ModelMetadata,
     ModelPreview,
     ModelStatus,
-    OnnxEngineOpts,
+    OnnxRuntimeOpts,
     RuntimeTypes,
     SystemInfo,
     TrainingInfo,
     TrainInstance,
 )
 from .remote_model import RemoteModel
-from .runtime import ONNXRuntime, get_runtime
+from .runtime import ONNXRuntime, load_runtime
 from .utils.logger import get_logger
 from .utils.system import get_system_info
 from .utils.vision import (
@@ -57,14 +57,14 @@ __all__ = [
     "Hyperparameters",
     "LatencyMetrics",
     "ModelPreview",
-    "OnnxEngineOpts",
+    "OnnxRuntimeOpts",
     "RuntimeTypes",
     "SystemInfo",
     "TrainingInfo",
     "TrainInstance",
     "get_system_info",
     "ONNXRuntime",
-    "get_runtime",
+    "load_runtime",
     "DEV_API_URL",
     "LOCAL_API_URL",
     "PROD_API_URL",

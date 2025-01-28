@@ -15,25 +15,44 @@ Classes:
     ONNXRuntime: A class that interfaces with ONNX Runtime for model inference.
 """
 
+from abc import abstractmethod
 from pathlib import Path
 from time import perf_counter
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import numpy as np
-import onnxruntime as ort
+
+try:
+    import torch
+
+    TORCH_AVAILABLE = True
+except ImportError as e:
+    print(e)
+    TORCH_AVAILABLE = False
+
+try:
+    import onnxruntime as ort
+
+    ORT_AVAILABLE = True
+except ImportError:
+    ORT_AVAILABLE = False
+
 import supervision as sv
 
 from focoos.ports import (
     FocoosTask,
     LatencyMetrics,
     ModelMetadata,
-    OnnxEngineOpts,
+    OnnxRuntimeOpts,
     RuntimeTypes,
+    TorchscriptRuntimeOpts,
 )
 from focoos.utils.logger import get_logger
 from focoos.utils.system import get_cpu_name, get_gpu_name
 
 GPU_ID = 0
+
+logger = get_logger()
 
 
 def det_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float) -> sv.Detections:
@@ -68,7 +87,6 @@ def semseg_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_t
 
     Args:
         out (List[np.ndarray]): The output of the semantic segmentation model.
-        im0_shape (Tuple[int, int]): The original shape of the input image (height, width).
         conf_threshold (float): The confidence threshold for filtering detections.
 
     Returns:
@@ -89,239 +107,144 @@ def semseg_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_t
     )
 
 
-class ONNXRuntime:
+class BaseRuntime:
+    def __init__(self, model_path: str, opts: Any, model_metadata: ModelMetadata):
+        pass
+
+    @abstractmethod
+    def __call__(self, im: np.ndarray, conf_threshold: float) -> sv.Detections:
+        pass
+
+    @abstractmethod
+    def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
+        pass
+
+
+class ONNXRuntime(BaseRuntime):
     """
-    A class that interfaces with ONNX Runtime for model inference using different execution providers
-    (CUDA, TensorRT, OpenVINO, CoreML, etc.). It manages preprocessing, inference, and postprocessing
-    of data, as well as benchmarking the performance of the model.
-
-    Attributes:
-        logger (Logger): Logger for the ONNXRuntime instance.
-        name (str): The name of the model (derived from its path).
-        opts (OnnxEngineOpts): Options used for configuring the ONNX Runtime.
-        model_metadata (ModelMetadata): Metadata related to the model.
-        postprocess_fn (Callable): The function used to postprocess the model's output.
-        ort_sess (InferenceSession): The ONNXRuntime inference session.
-        dtype (np.dtype): The data type for the model input.
-        binding (Optional[str]): The binding type for the runtime (e.g., CUDA, CPU).
+    ONNX Runtime wrapper for model inference with different execution providers.
+    Handles preprocessing, inference, postprocessing and benchmarking.
     """
 
-    def __init__(self, model_path: str, opts: OnnxEngineOpts, model_metadata: ModelMetadata):
-        """
-        Initializes the ONNXRuntime instance with the specified model and configuration options.
-
-        Args:
-            model_path (str): Path to the ONNX model file.
-            opts (OnnxEngineOpts): The configuration options for ONNX Runtime.
-            model_metadata (ModelMetadata): Metadata for the model (e.g., task type).
-        """
+    def __init__(self, model_path: str, opts: OnnxRuntimeOpts, model_metadata: ModelMetadata):
         self.logger = get_logger()
-        self.logger.debug(f"[onnxruntime device] {ort.get_device()}")
-        self.logger.debug(f"[onnxruntime available providers] {ort.get_available_providers()}")
+
+        self.logger.debug(f"🔧 [onnxruntime device] {ort.get_device()}")
+        self.logger.debug(f"🔧 [onnxruntime available providers] {ort.get_available_providers()}")
+
         self.name = Path(model_path).stem
         self.opts = opts
         self.model_metadata = model_metadata
         self.postprocess_fn = det_postprocess if model_metadata.task == FocoosTask.DETECTION else semseg_postprocess
-        options = ort.SessionOptions()
-        if opts.verbose:
-            options.log_severity_level = 0
-        options.enable_profiling = opts.verbose
-        # options.intra_op_num_threads = 1
-        available_providers = ort.get_available_providers()
-        if opts.cuda and "CUDAExecutionProvider" not in available_providers:
-            self.logger.warning("CUDA ExecutionProvider not found.")
-        if opts.trt and "TensorrtExecutionProvider" not in available_providers:
-            self.logger.warning("Tensorrt ExecutionProvider not found.")
-        if opts.vino and "OpenVINOExecutionProvider" not in available_providers:
-            self.logger.warning("OpenVINO ExecutionProvider not found.")
-        if opts.coreml and "CoreMLExecutionProvider" not in available_providers:
-            self.logger.warning("CoreML ExecutionProvider not found.")
-        # Set providers
-        providers = []
-        dtype = np.float32
-        binding = None
-        if opts.trt and "TensorrtExecutionProvider" in available_providers:
-            providers.append(
-                (
-                    "TensorrtExecutionProvider",
-                    {
-                        "device_id": 0,
-                        # 'trt_max_workspace_size': 1073741824,  # 1 GB
-                        "trt_fp16_enable": opts.fp16,
-                        "trt_force_sequential_engine_build": False,
-                    },
-                )
-            )
-            dtype = np.float32
-        elif opts.vino and "OpenVINOExecutionProvider" in available_providers:
-            providers.append(
-                (
-                    "OpenVINOExecutionProvider",
-                    {
-                        "device_type": "MYRIAD_FP16",
-                        "enable_vpu_fast_compile": True,
-                        "num_of_threads": 1,
-                    },
-                    # 'use_compiled_network': False}
-                )
-            )
-            options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL
-            dtype = np.float32
-            binding = None
-        elif opts.cuda and "CUDAExecutionProvider" in available_providers:
-            binding = "cuda"
-            options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-            providers.append(
-                (
-                    "CUDAExecutionProvider",
-                    {
-                        "device_id": GPU_ID,
-                        "arena_extend_strategy": "kSameAsRequested",
-                        "gpu_mem_limit": 16 * 1024 * 1024 * 1024,
-                        "cudnn_conv_algo_search": "EXHAUSTIVE",
-                        "do_copy_in_default_stream": True,
-                    },
-                )
-            )
-        elif opts.coreml and "CoreMLExecutionProvider" in available_providers:
-            #     # options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-            providers.append("CoreMLExecutionProvider")
-        else:
-            binding = None
 
-        binding = None  # TODO: remove this
-        providers.append("CPUExecutionProvider")
-        self.dtype = dtype
-        self.binding = binding
+        # Setup session options
+        options = ort.SessionOptions()
+        options.log_severity_level = 0 if opts.verbose else 2
+        options.enable_profiling = opts.verbose
+
+        # Setup providers
+        providers = self._setup_providers()
+
+        # Create session
         self.ort_sess = ort.InferenceSession(model_path, options, providers=providers)
         self.active_providers = self.ort_sess.get_providers()
-        self.logger.info(f"[onnxruntime] Active providers:{self.ort_sess.get_providers()}")
-        if self.ort_sess.get_inputs()[0].type == "tensor(uint8)":
-            self.dtype = np.uint8
-        else:
-            self.dtype = np.float32
+        self.logger.info(f"[onnxruntime] Active providers:{self.active_providers}")
+
+        # Set input type
+        self.dtype = np.uint8 if self.ort_sess.get_inputs()[0].type == "tensor(uint8)" else np.float32
+
+        # Warmup
         if self.opts.warmup_iter > 0:
-            self.logger.info("⏱️ [onnxruntime] Warming up model ..")
-            for _ in range(self.opts.warmup_iter):
-                np_image = np.random.rand(1, 3, 640, 640).astype(self.dtype)
-                input_name = self.ort_sess.get_inputs()[0].name
-                out_name = [output.name for output in self.ort_sess.get_outputs()]
-                if self.binding is not None:
-                    io_binding = self.ort_sess.io_binding()
-                    io_binding.bind_input(
-                        input_name,
-                        self.binding,
-                        device_id=GPU_ID,
-                        element_type=self.dtype,
-                        shape=np_image.shape,
-                        buffer_ptr=np_image.ctypes.data,
-                    )
-                    io_binding.bind_cpu_input(input_name, np_image)
-                    io_binding.bind_output(out_name[0], self.binding)
-                    self.ort_sess.run_with_iobinding(io_binding)
-                    io_binding.copy_outputs_to_cpu()
-                else:
-                    self.ort_sess.run(out_name, {input_name: np_image})
+            self._warmup()
 
-            self.logger.info(f"⏱️ [onnxruntime] {self.name} WARMUP DONE")
+    def _setup_providers(self):
+        providers = []
+        available = ort.get_available_providers()
 
-    def __call__(self, im: np.ndarray, conf_threshold: float) -> sv.Detections:
-        """
-        Runs inference on the provided input image and returns the model's detections.
+        # Check and add providers in order of preference
+        provider_configs = [
+            (
+                "TensorrtExecutionProvider",
+                self.opts.trt,
+                {"device_id": 0, "trt_fp16_enable": self.opts.fp16, "trt_force_sequential_engine_build": False},
+            ),
+            (
+                "OpenVINOExecutionProvider",
+                self.opts.vino,
+                {"device_type": "MYRIAD_FP16", "enable_vpu_fast_compile": True, "num_of_threads": 1},
+            ),
+            (
+                "CUDAExecutionProvider",
+                self.opts.cuda,
+                {
+                    "device_id": GPU_ID,
+                    "arena_extend_strategy": "kSameAsRequested",
+                    "gpu_mem_limit": 16 * 1024 * 1024 * 1024,
+                    "cudnn_conv_algo_search": "EXHAUSTIVE",
+                    "do_copy_in_default_stream": True,
+                },
+            ),
+            ("CoreMLExecutionProvider", self.opts.coreml, {}),
+        ]
 
-        Args:
-            im (np.ndarray): The preprocessed input image.
-            conf_threshold (float): The confidence threshold for filtering results.
+        for provider, enabled, config in provider_configs:
+            if enabled and provider in available:
+                providers.append((provider, config))
+            elif enabled:
+                self.logger.warning(f"{provider} not found.")
 
-        Returns:
-            sv.Detections: A sv.Detections object containing the model's output detections.
-        """
-        out_name = None
+        providers.append("CPUExecutionProvider")
+        return providers
+
+    def _warmup(self):
+        self.logger.info("⏱️ [onnxruntime] Warming up model ..")
+        np_image = np.random.rand(1, 3, 640, 640).astype(self.dtype)
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
-        if self.binding is not None:
-            self.logger.info(f"binding {self.binding}")
-            io_binding = self.ort_sess.io_binding()
 
-            io_binding.bind_input(
-                input_name,
-                self.binding,
-                device_id=GPU_ID,
-                element_type=self.dtype,
-                shape=im.shape,
-                buffer_ptr=im.ctypes.data,
-            )
+        for _ in range(self.opts.warmup_iter):
+            self.ort_sess.run(out_name, {input_name: np_image})
 
-            io_binding.bind_cpu_input(input_name, im)
-            io_binding.bind_output(out_name[0], self.binding)
-            self.ort_sess.run_with_iobinding(io_binding)
-            out = io_binding.copy_outputs_to_cpu()
-        else:
-            out = self.ort_sess.run(out_name, {input_name: im})
+        self.logger.info("⏱️ [onnxruntime] Warmup done")
 
-        detections = self.postprocess_fn(out, (im.shape[2], im.shape[3]), conf_threshold)
-        return detections
+    def __call__(self, im: np.ndarray, conf_threshold: float) -> sv.Detections:
+        """Run inference and return detections."""
+        input_name = self.ort_sess.get_inputs()[0].name
+        out_name = [output.name for output in self.ort_sess.get_outputs()]
+        out = self.ort_sess.run(out_name, {input_name: im})
+        return self.postprocess_fn(out=out, im0_shape=(im.shape[2], im.shape[3]), conf_threshold=conf_threshold)
 
     def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
-        """
-        Benchmarks the model by running multiple inference iterations and measuring the latency.
-
-        Args:
-            iterations (int, optional): Number of iterations to run for benchmarking. Defaults to 20.
-            size (int, optional): The input image size for benchmarking. Defaults to 640.
-
-        Returns:
-            LatencyMetrics: The latency metrics (e.g., FPS, mean, min, max, and standard deviation).
-        """
+        """Benchmark model latency."""
         self.logger.info("⏱️ [onnxruntime] Benchmarking latency..")
         size = size if isinstance(size, (tuple, list)) else (size, size)
 
-        durations = []
         np_input = (255 * np.random.random((1, 3, size[0], size[1]))).astype(self.dtype)
         input_name = self.ort_sess.get_inputs()[0].name
-        out_name = self.ort_sess.get_outputs()[0].name
-        if self.binding:
-            io_binding = self.ort_sess.io_binding()
+        out_name = [output.name for output in self.ort_sess.get_outputs()]
 
-            io_binding.bind_input(
-                input_name,
-                "cuda",
-                device_id=0,
-                element_type=self.dtype,
-                shape=np_input.shape,
-                buffer_ptr=np_input.ctypes.data,
-            )
-
-            io_binding.bind_cpu_input(input_name, np_input)
-            io_binding.bind_output(out_name, "cuda")
-        else:
-            out_name = [output.name for output in self.ort_sess.get_outputs()]
-
+        durations = []
         for step in range(iterations + 5):
-            if self.binding:
-                start = perf_counter()
-                self.ort_sess.run_with_iobinding(io_binding)
-                end = perf_counter()
-            else:
-                start = perf_counter()
-                self.ort_sess.run(out_name, {input_name: np_input})
-                end = perf_counter()
+            start = perf_counter()
+            self.ort_sess.run(out_name, {input_name: np_input})
+            end = perf_counter()
 
-            if step >= 5:
+            if step >= 5:  # Skip first 5 iterations
                 durations.append((end - start) * 1000)
+
         durations = np.array(durations)
         provider = self.active_providers[0]
-        if provider in ["CUDAExecutionProvider", "TensorrtExecutionProvider"]:
-            device = get_gpu_name()
-        else:
-            device = get_cpu_name()
+        device = (
+            get_gpu_name() if provider in ["CUDAExecutionProvider", "TensorrtExecutionProvider"] else get_cpu_name()
+        )
+
         metrics = LatencyMetrics(
             fps=int(1000 / durations.mean()),
             engine=f"onnx.{provider}",
-            mean=round(durations.mean(), 3),
-            max=round(durations.max(), 3),
-            min=round(durations.min(), 3),
-            std=round(durations.std(), 3),
+            mean=round(durations.mean().astype(float), 3),
+            max=round(durations.max().astype(float), 3),
+            min=round(durations.min().astype(float), 3),
+            std=round(durations.std().astype(float), 3),
             im_size=size[0],
             device=str(device),
         )
@@ -329,31 +252,117 @@ class ONNXRuntime:
         return metrics
 
 
-def get_runtime(
+class TorchscriptRuntime(BaseRuntime):
+    def __init__(
+        self,
+        model_path: str,
+        opts: TorchscriptRuntimeOpts,
+        model_metadata: ModelMetadata,
+    ):
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.logger = get_logger(name="TorchscriptEngine")
+        self.logger.info(f"🔧 [torchscript] Device: {self.device}")
+        self.opts = opts
+        self.postprocess_fn = det_postprocess if model_metadata.task == FocoosTask.DETECTION else semseg_postprocess
+
+        map_location = None if torch.cuda.is_available() else "cpu"
+
+        self.model = torch.jit.load(model_path, map_location=map_location)
+        self.model = self.model.to(self.device)
+
+        if self.opts.warmup_iter > 0:
+            self.logger.info("⏱️ [torchscript] Warming up model..")
+            with torch.no_grad():
+                np_image = torch.rand(1, 3, 640, 640, device=self.device)
+                for _ in range(self.opts.warmup_iter):
+                    self.model(np_image)
+            self.logger.info("⏱️ [torchscript] WARMUP DONE")
+
+    def __call__(self, im: np.ndarray, conf_threshold: float) -> sv.Detections:
+        """Run inference and return detections."""
+        with torch.no_grad():
+            torch_image = torch.from_numpy(im).to(self.device, dtype=torch.float32)
+            res = self.model(torch_image)
+            return self.postprocess_fn([r.cpu().numpy() for r in res], (im.shape[2], im.shape[3]), conf_threshold)
+
+    def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
+        """Benchmark model latency."""
+        self.logger.info("⏱️ [torchscript] Benchmarking latency..")
+        size = size if isinstance(size, (tuple, list)) else (size, size)
+
+        torch_input = torch.rand(1, 3, size[0], size[1], device=self.device)
+        durations = []
+
+        with torch.no_grad():
+            for step in range(iterations + 5):
+                start = perf_counter()
+                self.model(torch_input)
+                end = perf_counter()
+
+                if step >= 5:  # Skip first 5 iterations
+                    durations.append((end - start) * 1000)
+
+        durations = np.array(durations)
+        device = get_gpu_name() if torch.cuda.is_available() else get_cpu_name()
+
+        metrics = LatencyMetrics(
+            fps=int(1000 / durations.mean().astype(float)),
+            engine="torchscript",
+            mean=round(durations.mean().astype(float), 3),
+            max=round(durations.max().astype(float), 3),
+            min=round(durations.min().astype(float), 3),
+            std=round(durations.std().astype(float), 3),
+            im_size=size[0],
+            device=str(device),
+        )
+        self.logger.info(f"🔥 FPS: {metrics.fps}")
+        return metrics
+
+
+def load_runtime(
     runtime_type: RuntimeTypes,
     model_path: str,
     model_metadata: ModelMetadata,
     warmup_iter: int = 0,
-) -> ONNXRuntime:
+) -> BaseRuntime:
     """
-    Creates and returns an ONNXRuntime instance based on the specified runtime type
-    and model path, with options for various execution providers (CUDA, TensorRT, CPU, etc.).
+    Creates and returns a runtime instance based on the specified runtime type.
+    Supports both ONNX and TorchScript runtimes with various execution providers.
 
     Args:
-        runtime_type (RuntimeTypes): The type of runtime to use (e.g., ONNX_CUDA32, ONNX_TRT32).
-        model_path (str): The path to the ONNX model.
-        model_metadata (ModelMetadata): Metadata describing the model.
-        warmup_iter (int, optional): Number of warmup iterations before benchmarking. Defaults to 0.
+        runtime_type (RuntimeTypes): The type of runtime to use. Can be one of:
+            - ONNX_CUDA32: ONNX runtime with CUDA FP32
+            - ONNX_TRT32: ONNX runtime with TensorRT FP32
+            - ONNX_TRT16: ONNX runtime with TensorRT FP16
+            - ONNX_CPU: ONNX runtime with CPU
+            - ONNX_COREML: ONNX runtime with CoreML
+            - TORCHSCRIPT_32: TorchScript runtime with FP32
+        model_path (str): Path to the model file (.onnx or .pt)
+        model_metadata (ModelMetadata): Model metadata containing task type, classes etc.
+        warmup_iter (int, optional): Number of warmup iterations before inference. Defaults to 0.
 
     Returns:
-        ONNXRuntime: A fully configured ONNXRuntime instance.
+        BaseRuntime: A configured runtime instance (ONNXRuntime or TorchscriptRuntime)
+
+    Raises:
+        ImportError: If required dependencies (torch/onnxruntime) are not installed
     """
-    opts = OnnxEngineOpts(
-        cuda=runtime_type == RuntimeTypes.ONNX_CUDA32,
-        trt=runtime_type in [RuntimeTypes.ONNX_TRT32, RuntimeTypes.ONNX_TRT16],
-        fp16=runtime_type == RuntimeTypes.ONNX_TRT16,
-        warmup_iter=warmup_iter,
-        coreml=runtime_type == RuntimeTypes.ONNX_COREML,
-        verbose=False,
-    )
+    if runtime_type == RuntimeTypes.TORCHSCRIPT_32:
+        if not TORCH_AVAILABLE:
+            logger.error("⚠️ Pytorch not found =(  please install focoos with ['torch'] extra")
+            raise ImportError("Pytorch not found")
+        opts = TorchscriptRuntimeOpts(warmup_iter=warmup_iter)
+        return TorchscriptRuntime(model_path, opts, model_metadata)
+    else:
+        if not ORT_AVAILABLE:
+            logger.error("⚠️ onnxruntime not found =(  please install focoos with ['onnx'] extra")
+            raise ImportError("onnxruntime not found")
+        opts = OnnxRuntimeOpts(
+            cuda=runtime_type == RuntimeTypes.ONNX_CUDA32,
+            trt=runtime_type in [RuntimeTypes.ONNX_TRT32, RuntimeTypes.ONNX_TRT16],
+            fp16=runtime_type == RuntimeTypes.ONNX_TRT16,
+            warmup_iter=warmup_iter,
+            coreml=runtime_type == RuntimeTypes.ONNX_COREML,
+            verbose=False,
+        )
     return ONNXRuntime(model_path, opts, model_metadata)

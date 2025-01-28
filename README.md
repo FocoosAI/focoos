@@ -1,4 +1,4 @@
-# Focoos Foundational Models
+# Focoos pre-trained models
 
 | Model Name          | Task                  | Metrics | Domain                          |
 | ------------------- | --------------------- | ------- | ------------------------------- |
@@ -14,49 +14,68 @@
 | focoos_isaid_nano   | Semantic Segmentation | -       | Satellite Imagery, 15 classes   |
 | focoos_isaid_medium | Semantic Segmentation | -       | Satellite Imagery, 15 classes   |
 
-# Focoos SDK
+# Focoos
+Focoos is a comprehensive SDK designed for computer vision tasks such as object detection, semantic segmentation, instance segmentation, and more. It provides pre-trained models that can be easily integrated and customized by users for various applications.
+Focoos supports both cloud and local inference, and enables training on the cloud, making it a versatile tool for developers working in different domains, including autonomous driving, common scenes, drone aerial scenes, and satellite imagery.
+
+### Key Features
+
+- **Pre-trained Models**: A wide range of pre-trained models for different tasks and domains.
+- **Multiple Inference Runtimes**: Support for various inference runtimes including CPU, GPU, Torchscript CUDA, OnnxRuntime CUDA, and OnnxRuntime TensorRT.
+- **Cloud Inference**: API to Focoos cloud inference.
+- **Local Inference**: local inference, making it easy to deploy models on the local machine.
+- **Cloud Training**: Train user models on the focoos cloud.
+- **Model Monitoring**: Monitor model performance and metrics.
 
 ![Tests](https://github.com/FocoosAI/focoos/actions/workflows/test.yml/badge.svg??event=push&branch=main)
 
-## Requirements
+# 🐍 Setup
+We recommend using [UV](https://docs.astral.sh/uv/) as a package manager and environment manager for a streamlined dependency management experience.
+Here’s how to create a new virtual environment with UV:
+```bash
+pip install uv
+uv venv --python 3.12
+source .venv/bin/activate
+```
 
-### CUDA 12
+Focoos models support multiple inference runtimes.
+To keep the library lightweight, optional dependencies (e.g., torch, onnxruntime, tensorrt) are not installed by default.
+You can install the required optional dependencies using the following syntax:
 
-For **local inference**, ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
+## CPU only or Remote Usage
 
-To install cuDNN 9:
+```bash
+uv pip install focoos git+https://github.com/FocoosAI/focoos.git
+```
+
+## GPU Runtimes
+### Torchscript CUDA
+```bash
+uv pip install focoos[torch] git+https://github.com/FocoosAI/focoos.git
+```
+
+### OnnxRuntime CUDA
+ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
 
 ```bash
 apt-get -y install cudnn9-cuda-12
 ```
 
-### (Optional) TensorRT
+```bash
+uv pip install focoos[onnx] git+https://github.com/FocoosAI/focoos.gi
+```
+
+### OnnxRuntime TensorRT
 
 To perform inference using TensorRT, ensure you have TensorRT version 10.5 installed.
-
 ```bash
 sudo apt-get install tensorrt
 ```
 
-# Install
-
-Nvidia GPU:
-
 ```bash
-pip install '.[gpu]'
+uv pip install focoos[tensorrt] git+https://github.com/FocoosAI/focoos.git
 ```
 
-Nvidia GPU,TensorRT:
-
-```bash
-pip install '.[gpu,tensorrt]'
-```
-
-CPU,COREML:
-
-```bash
-pip install '.[cpu]'
-```
 
 ## 🤖 Cloud Inference
 
@@ -74,7 +93,7 @@ detections = model.infer("./image.jpg", threshold=0.4)
 setup FOCOOS_API_KEY_GRADIO environment variable with your Focoos API key
 
 ```bash
-pip install '.[gradio]'
+uv pip install focoos[gradio] git+https://github.com/FocoosAI/focoos.git
 ```
 
 ```bash
