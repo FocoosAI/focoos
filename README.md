@@ -40,8 +40,13 @@ source .venv/bin/activate
 ```
 
 Focoos models support multiple inference runtimes.
-To keep the library lightweight, optional dependencies (e.g., torch, onnxruntime, tensorrt) are not installed by default.
-You can install the required optional dependencies using the following syntax:
+To keep the library lightweight and to allow users to use their environment, optional dependencies (e.g., torch, onnxruntime, tensorrt) are not installed by default.
+Foocoos is shipped with the following extras dependencies:
+
+- `[cpu]`: CPU only
+- `[torch]`: torchscript CUDA
+- `[onnx]`: onnxruntime CUDA
+- `[tensorrt]`: onnxruntime TensorRT
 
 ## CPU only or Remote Usage
 

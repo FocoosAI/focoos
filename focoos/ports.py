@@ -253,6 +253,21 @@ class ModelFormat(str, Enum):
     ONNX = "onnx"
     TORCHSCRIPT = "pt"
 
+    @classmethod
+    def from_runtime_type(cls, runtime_type: RuntimeTypes):
+        if runtime_type in [
+            RuntimeTypes.ONNX_CUDA32,
+            RuntimeTypes.ONNX_TRT32,
+            RuntimeTypes.ONNX_TRT16,
+            RuntimeTypes.ONNX_CPU,
+            RuntimeTypes.ONNX_COREML,
+        ]:
+            return cls.ONNX
+        elif runtime_type == RuntimeTypes.TORCHSCRIPT_32:
+            return cls.TORCHSCRIPT
+        else:
+            raise ValueError(f"Invalid runtime type: {runtime_type}")
+
 
 class GPUInfo(FocoosBaseModel):
     gpu_id: Optional[int] = None

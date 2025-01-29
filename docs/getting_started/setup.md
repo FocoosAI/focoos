@@ -1,6 +1,16 @@
-# Setup
+# 🐍 Setup
 
-The focoos SDK provides flexibility for installation based on the execution environment you plan to use. The package supports `CPU`, `NVIDIA GPU`, and `NVIDIA GPU with TensorRT` environments. Please note that only one execution environment should be selected during installation.
+Focoos models support multiple inference runtimes.
+To keep the library lightweight and to allow users to use their environment, optional dependencies (e.g., torch, onnxruntime, tensorrt) are not installed by default.
+Foocoos is shipped with the following extras dependencies:
+
+- `[cpu]`: CPU only
+- `[torch]`: torchscript CUDA
+- `[onnx]`: onnxruntime CUDA
+- `[tensorrt]`: onnxruntime TensorRT
+
+!!! note
+    🤖 **Multiple Runtimes:** You can install multiple extras by running `uv pip install .[torch,onnx,tensorrt]`. However, please be aware that GPU extras are not compatible with CPU extras.
 
 ## Requirements
 
@@ -13,6 +23,16 @@ apt-get -y install cudnn9-cuda-12
 ```
 
 To perform inference using TensorRT, ensure you have TensorRT version 10.5 installed.
+
+### UV
+
+We recommend using [UV](https://docs.astral.sh/uv/) as a package manager and environment manager for a streamlined dependency management experience.
+Here’s how to create a new virtual environment with UV:
+```bash
+pip install uv
+uv venv --python 3.12
+source .venv/bin/activate
+```
 
 ## Inference environments
 

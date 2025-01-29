@@ -85,7 +85,7 @@ class LocalModel:
         """
         # Determine runtime type and model format
         runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
-        model_format = ModelFormat.TORCHSCRIPT if runtime_type == RuntimeTypes.TORCHSCRIPT_32 else ModelFormat.ONNX
+        model_format = ModelFormat.from_runtime_type(runtime_type)
 
         # Set model directory and path
         self.model_dir: Union[str, Path] = model_dir

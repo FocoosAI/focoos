@@ -188,7 +188,7 @@ class Focoos:
         """
         runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
         model_dir = os.path.join(self.cache_dir, model_ref)
-        format = ModelFormat.TORCHSCRIPT if runtime_type == RuntimeTypes.TORCHSCRIPT_32 else ModelFormat.ONNX
+        format = ModelFormat.from_runtime_type(runtime_type)
         if not os.path.exists(os.path.join(model_dir, f"model.{format.value}")):
             self._download_model(
                 model_ref,
