@@ -4,13 +4,12 @@ Focoos models support multiple inference runtimes.
 To keep the library lightweight and to allow users to use their environment, optional dependencies (e.g., torch, onnxruntime, tensorrt) are not installed by default.
 Foocoos is shipped with the following extras dependencies:
 
-- `[cpu]`: CPU only
 - `[torch]`: torchscript CUDA
-- `[onnx]`: onnxruntime CUDA
+- `[cuda]`: onnxruntime CUDA
 - `[tensorrt]`: onnxruntime TensorRT
 
 !!! note
-    🤖 **Multiple Runtimes:** You can install multiple extras by running `uv pip install .[torch,onnx,tensorrt]`. However, please be aware that GPU extras are not compatible with CPU extras.
+    🤖 **Multiple Runtimes:** You can install multiple extras by running `uv pip install .[torch,cuda,tensorrt]`.
 
 ## Requirements
 
@@ -41,7 +40,7 @@ source .venv/bin/activate
 If you plan to run the SDK on a CPU-only environment:
 
 ```bash linenums="0"
-pip install 'focoos[cpu] @ git+https://github.com/FocoosAI/focoos.git'
+pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
 ```
 
 * NVIDIA GPU Environment (torchscript)
@@ -54,7 +53,7 @@ pip install 'focoos[torch] @ git+https://github.com/FocoosAI/focoos.git'
 For execution using NVIDIA GPUs (with ONNX Runtime GPU support):
 
 ```bash linenums="0"
-pip install 'focoos[onnx] @ git+https://github.com/FocoosAI/focoos.git'
+pip install 'focoos[cuda] @ git+https://github.com/FocoosAI/focoos.git'
 ```
 
 * NVIDIA GPU with TensorRT (onnxruntime)
@@ -72,12 +71,12 @@ pip install 'focoos[tensorrt] @ git+https://github.com/FocoosAI/focoos.git'
     ```
     📋 **Check Versions:** Visit [https://github.com/FocoosAI/focoos/tags](https://github.com/FocoosAI/focoos/tags) for available versions.
 
-## Docker and devcontainers
+## Docker and Devcontainers
 For container support, Focoos offers four different Docker images:
 - `focoos-cpu`: only CPU
-- `focoos-onnx`: Includes ONNX support
-- `focoos-torch`: Includes ONNX and Torchscript support
-- `focoos-tensorrt`: Includes ONNX, Torchscript, and TensorRT support
+- `focoos-cuda`: Includes ONNX (CUDA) support
+- `focoos-torch`: Includes ONNX and Torchscript (CUDA) support
+- `focoos-tensorrt`: Includes ONNX, Torchscript, and TensorRT  support
 
 to use the docker images, you can run the following command:
 

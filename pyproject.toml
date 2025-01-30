@@ -46,6 +46,7 @@ dependencies = [
     "matplotlib~=3.10.0",
     "colorama~=0.4.6",
     "ipython~=8.31.0",
+    "onnxruntime==1.20.1"
 ]
 
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]
@@ -57,8 +58,7 @@ keywords = [
 ]
 
 [project.optional-dependencies]
-cpu = ["onnxruntime==1.20.1"]
-onnx = ["onnxruntime-gpu==1.20.1"]
+cuda = ["onnxruntime-gpu==1.20.1"]
 tensorrt = ["onnxruntime-gpu==1.20.1","tensorrt==10.5.0"]
 torch = ["torch==2.3.0","torchvision"]
 dev = [

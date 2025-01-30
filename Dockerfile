@@ -10,14 +10,14 @@ COPY pyproject.toml ./pyproject.toml
 RUN uv pip install --system -e .
 
 
-FROM ghcr.io/focoosai/deeplearning:base-cu12-cudnn9-py312-uv AS focoos-onnx
+FROM ghcr.io/focoosai/deeplearning:base-cu12-cudnn9-py312-uv AS focoos-cuda
 LABEL authors="focoos.ai"
 
 WORKDIR /app
 
 COPY focoos ./focoos
 COPY pyproject.toml ./pyproject.toml
-RUN uv pip install --system -e .[onnx]
+RUN uv pip install --system -e .[cuda]
 
 
 FROM focoos-onnx AS focoos-torch

@@ -1,7 +1,7 @@
 {
-    "name": "Focoos GPU (OnnxRuntime)",
+    "name": "Focoos GPU (OnnxRuntime, CUDA)",
     "build": {
-        "target": "focoos-onnx",
+        "target": "focoos-cuda",
         "context": "../..",
         "dockerfile": "../../Dockerfile",
     },
@@ -12,7 +12,7 @@
     },
     "workspaceFolder": "${localWorkspaceFolder}",
     "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
-    "postCreateCommand": "uv pip install -e .[onnx,dev]",
+    "postCreateCommand": "uv pip install -e .[cuda,dev]",
     "remoteEnv": {
         "UV_SYSTEM_PYTHON": "true"
     },

@@ -43,15 +43,14 @@ Focoos models support multiple inference runtimes.
 To keep the library lightweight and to allow users to use their environment, optional dependencies (e.g., torch, onnxruntime, tensorrt) are not installed by default.
 Foocoos is shipped with the following extras dependencies:
 
-- `[cpu]`: CPU only
 - `[torch]`: torchscript CUDA
-- `[onnx]`: onnxruntime CUDA
+- `[cuda]`: onnxruntime CUDA
 - `[tensorrt]`: onnxruntime TensorRT
 
 ## CPU only or Remote Usage
 
 ```bash
-uv pip install focoos[cpu] git+https://github.com/FocoosAI/focoos.git
+uv pip install focoos git+https://github.com/FocoosAI/focoos.git
 ```
 
 ## GPU Runtimes
@@ -68,7 +67,7 @@ apt-get -y install cudnn9-cuda-12
 ```
 
 ```bash
-uv pip install focoos[onnx] git+https://github.com/FocoosAI/focoos.gi
+uv pip install focoos[cuda] git+https://github.com/FocoosAI/focoos.gi
 ```
 
 ### OnnxRuntime TensorRT
@@ -99,11 +98,11 @@ detections = model.infer("./image.jpg", threshold=0.4)
 setup FOCOOS_API_KEY_GRADIO environment variable with your Focoos API key
 
 ```bash
-uv pip install focoos[gradio] git+https://github.com/FocoosAI/focoos.git
+uv pip install focoos[dev] git+https://github.com/FocoosAI/focoos.git
 ```
 
 ```bash
-python gradio/app.py
+gradio gradio/app.py
 ```
 
 ## Local Inference
