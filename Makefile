@@ -14,7 +14,7 @@ install: .uv .pre-commit
 	@pre-commit install
 
 install-gpu: .uv .pre-commit
-	@uv pip install -e ".[dev,onnx,tensorrt,torch]" --no-cache-dir
+	@uv pip install -e ".[dev,cuda,tensorrt,torch]" --no-cache-dir
 	@pre-commit install
 
 lint:
