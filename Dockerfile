@@ -20,7 +20,7 @@ COPY pyproject.toml ./pyproject.toml
 RUN uv pip install --system -e .[cuda]
 
 
-FROM focoos-onnx AS focoos-torch
+FROM focoos-cuda AS focoos-torch
 RUN uv pip install --system -e .[torch]
 
 FROM focoos-torch AS focoos-tensorrt
