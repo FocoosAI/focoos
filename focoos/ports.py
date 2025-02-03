@@ -134,33 +134,12 @@ class ModelPreview(FocoosBaseModel):
     focoos_model: str
 
 
-class DatasetInfo(FocoosBaseModel):
-    url: Annotated[
-        str,
-        Field(
-            description="🗂️ Dataset url to use for the project, must be a valid S3 URL",
-        ),
-    ]
-    name: Annotated[
-        str,
-        Field(
-            description="🗂️ Dataset name",
-        ),
-    ]
-    layout: Annotated[
-        DatasetLayout,
-        Field(
-            default=None,
-            description="🗂️ Dataset layout, can be any of the following: "
-            + ", ".join([layout.value for layout in DatasetLayout]),
-        ),
-    ]
-
-    @field_validator("url")
-    def validate_s3_url(cls, v: str):
-        if not S3_URL_REGEX.match(v):
-            raise ValueError("Invalid S3 URL format, must be s3://BUCKET_NAME/path")
-        return v
+class DatasetPreview(FocoosBaseModel):
+    ref: str
+    name: str
+    layout: DatasetLayout
+    description: Optional[str] = None
+    task: FocoosTask
 
 
 class ModelMetadata(FocoosBaseModel):
@@ -180,7 +159,7 @@ class ModelMetadata(FocoosBaseModel):
     hyperparameters: Optional[Hyperparameters] = None
     training_info: Optional[TrainingInfo] = None
     location: Optional[str] = None
-    dataset: Optional[DatasetInfo] = None
+    dataset: Optional[DatasetPreview] = None
 
 
 class DatasetMetadata(FocoosBaseModel):
