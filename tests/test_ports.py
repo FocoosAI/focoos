@@ -3,8 +3,8 @@ from pydantic import ValidationError
 from pytest_mock import MockerFixture
 
 from focoos.ports import (
-    DatasetInfo,
     DatasetLayout,
+    DatasetPreview,
     GPUInfo,
     Hyperparameters,
     SystemInfo,
@@ -32,14 +32,14 @@ def test_validate_wandb_project_invalid():
 
 def test_validate_s3_url_valid():
     url = "s3://bucketname/path"
-    dataset = DatasetInfo(url=url, name="test", layout=DatasetLayout.CATALOG)
+    dataset = DatasetPreview(url=url, name="test", layout=DatasetLayout.CATALOG)
     assert dataset.url == url
 
 
 def test_validate_s3_url_invalid():
     url = "invalid_url"
     with pytest.raises(ValidationError) as exc_info:
-        DatasetInfo(url=url, name="test", layout=DatasetLayout.CATALOG)
+        DatasetPreview(url=url, name="test", layout=DatasetLayout.CATALOG)
     assert "Invalid S3 URL format, must be s3://BUCKET_NAME/path" in str(exc_info.value)
 
 
