@@ -9,10 +9,6 @@
       
       
       
-        <link rel="prev" href="../introduction/">
-      
-      
-        <link rel="next" href="../quickstart/">
       
       
       <link rel="icon" href="../../assets/favicon.svg">
@@ -20,7 +16,7 @@
     
     
       
-        <title>Installation - Focoos AI SDK</title>
+        <title>🐍 Setup - Focoos AI SDK</title>
       
     
     
@@ -88,7 +84,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#installation" class="md-skip">
+        <a href="#setup" class="md-skip">
           Skip to content
         </a>
       
@@ -127,7 +123,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Installation
+              🐍 Setup
             
           </span>
         </div>
@@ -230,12 +226,10 @@
         
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
+      <li class="md-tabs__item">
         <a href="../introduction/" class="md-tabs__link">
           
   
@@ -467,28 +461,23 @@
       
   
   
-    
   
   
-  
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   <span class="md-ellipsis">
@@ -500,7 +489,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Getting Started
@@ -533,31 +522,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Installation
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../installation.md" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -567,44 +535,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      Requirements
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#installation-options" class="md-nav__link">
-    <span class="md-ellipsis">
-      Installation Options
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1008,12 +938,36 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#uv" class="md-nav__link">
+    <span class="md-ellipsis">
+      UV
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
-  <a href="#installation-options" class="md-nav__link">
+  <a href="#inference-environments" class="md-nav__link">
     <span class="md-ellipsis">
-      Installation Options
+      Inference environments
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker-and-devcontainers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Docker and Devcontainers
     </span>
   </a>
   
@@ -1038,15 +992,36 @@
   
 
 
-<h1 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">#</a></h1>
-<p>The focoos SDK provides flexibility for installation based on the execution environment you plan to use. The package supports <code>CPU</code>, <code>NVIDIA GPU</code>, and <code>NVIDIA GPU with TensorRT</code> environments. Please note that only one execution environment should be selected during installation.</p>
+<h1 id="setup">🐍 Setup<a class="headerlink" href="#setup" title="Permanent link">#</a></h1>
+<p>Focoos models support multiple inference runtimes.
+To keep the library lightweight and to allow users to use their environment, optional dependencies (e.g., torch, onnxruntime, tensorrt) are not installed by default.
+Foocoos is shipped with the following extras dependencies:</p>
+<ul>
+<li><code>[cpu]</code>: onnxruntime CPU</li>
+<li><code>[cuda]</code>: onnxruntime CUDA</li>
+<li><code>[torch]</code>: torchscript CUDA</li>
+<li><code>[tensorrt]</code>: onnxruntime TensorRT</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>🤖 <strong>Multiple Runtimes:</strong> You can install multiple extras by running <code>uv pip install .[torch,cuda,tensorrt]</code>.</p>
+</div>
 <h2 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">#</a></h2>
 <p>For <strong>local inference</strong>, ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.</p>
 <p>To install cuDNN 9:</p>
 <div class="highlight"><pre><span></span><code>apt-get<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>cudnn9-cuda-12
 </code></pre></div>
 <p>To perform inference using TensorRT, ensure you have TensorRT version 10.5 installed.</p>
-<h2 id="installation-options">Installation Options<a class="headerlink" href="#installation-options" title="Permanent link">#</a></h2>
+<h3 id="uv">UV<a class="headerlink" href="#uv" title="Permanent link">#</a></h3>
+<p>We recommend using <a href="https://docs.astral.sh/uv/">UV</a> as a package manager and environment manager for a streamlined dependency management experience.
+Here’s how to create a new virtual environment with UV:
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>uv
+uv<span class="w"> </span>venv<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.12
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+</code></pre></div></td></tr></table></div></p>
+<h2 id="inference-environments">Inference environments<a class="headerlink" href="#inference-environments" title="Permanent link">#</a></h2>
 <ul>
 <li>CPU Environment</li>
 </ul>
@@ -1054,13 +1029,20 @@
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[cpu] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
 </code></pre></div>
 <ul>
-<li>NVIDIA GPU Environment</li>
+<li>
+<p>NVIDIA GPU Environment (torchscript)
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[torch] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p>NVIDIA GPU Environment (onnxruntime)</p>
+</li>
 </ul>
 <p>For execution using NVIDIA GPUs (with ONNX Runtime GPU support):</p>
-<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[gpu] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[cuda] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
 </code></pre></div>
 <ul>
-<li>NVIDIA GPU with TensorRT</li>
+<li>NVIDIA GPU with TensorRT (onnxruntime)</li>
 </ul>
 <p>For optimized execution using NVIDIA GPUs with TensorRT:</p>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[tensorrt] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
@@ -1072,6 +1054,16 @@
 </code></pre></div></td></tr></table></div>
 📋 <strong>Check Versions:</strong> Visit <a href="https://github.com/FocoosAI/focoos/tags">https://github.com/FocoosAI/focoos/tags</a> for available versions.</p>
 </div>
+<h2 id="docker-and-devcontainers">Docker and Devcontainers<a class="headerlink" href="#docker-and-devcontainers" title="Permanent link">#</a></h2>
+<p>For container support, Focoos offers four different Docker images:
+- <code>focoos-cpu</code>: only CPU
+- <code>focoos-cuda</code>: Includes ONNX (CUDA) support
+- <code>focoos-torch</code>: Includes ONNX and Torchscript (CUDA) support
+- <code>focoos-tensorrt</code>: Includes ONNX, Torchscript, and TensorRT  support</p>
+<p>to use the docker images, you can run the following command:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-it<span class="w"> </span>.<span class="w"> </span>--target<span class="o">=</span>focoos-cpu
+</code></pre></div>
+<p>This repository also includes a devcontainer configuration for each of the above images. You can launch these devcontainers in Visual Studio Code for a seamless development experience.</p>
 
 
 

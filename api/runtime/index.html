@@ -531,7 +531,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting_started/installation/" class="md-nav__link">
+      <a href="../../getting_started/installation.md" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -854,16 +854,40 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#focoos.runtime.ONNXRuntime.__init__" class="md-nav__link">
+  <a href="#focoos.runtime.ONNXRuntime.benchmark" class="md-nav__link">
     <span class="md-ellipsis">
-      __init__
+      benchmark
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#focoos.runtime.TorchscriptRuntime" class="md-nav__link">
+    <span class="md-ellipsis">
+      TorchscriptRuntime
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TorchscriptRuntime">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#focoos.runtime.TorchscriptRuntime.__call__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __call__
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#focoos.runtime.ONNXRuntime.benchmark" class="md-nav__link">
+  <a href="#focoos.runtime.TorchscriptRuntime.benchmark" class="md-nav__link">
     <span class="md-ellipsis">
       benchmark
     </span>
@@ -886,9 +910,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#focoos.runtime.get_runtime" class="md-nav__link">
+  <a href="#focoos.runtime.load_runtime" class="md-nav__link">
     <span class="md-ellipsis">
-      get_runtime
+      load_runtime
     </span>
   </a>
   
@@ -1084,16 +1108,40 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#focoos.runtime.ONNXRuntime.__init__" class="md-nav__link">
+  <a href="#focoos.runtime.ONNXRuntime.benchmark" class="md-nav__link">
     <span class="md-ellipsis">
-      __init__
+      benchmark
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#focoos.runtime.TorchscriptRuntime" class="md-nav__link">
+    <span class="md-ellipsis">
+      TorchscriptRuntime
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TorchscriptRuntime">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#focoos.runtime.TorchscriptRuntime.__call__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __call__
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#focoos.runtime.ONNXRuntime.benchmark" class="md-nav__link">
+  <a href="#focoos.runtime.TorchscriptRuntime.benchmark" class="md-nav__link">
     <span class="md-ellipsis">
       benchmark
     </span>
@@ -1116,9 +1164,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#focoos.runtime.get_runtime" class="md-nav__link">
+  <a href="#focoos.runtime.load_runtime" class="md-nav__link">
     <span class="md-ellipsis">
-      get_runtime
+      load_runtime
     </span>
   </a>
   
@@ -1194,7 +1242,7 @@ for image preprocessing, postprocessing, and interfacing with the ONNXRuntime li
               </td>
             </tr>
             <tr class="doc-section-item">
-              <td><code><a class="autorefs autorefs-internal" title="focoos.runtime.get_runtime" href="#focoos.runtime.get_runtime">get_runtime</a></code></td>
+              <td><code><span title="focoos.runtime.get_runtime">get_runtime</span></code></td>
               <td>
                 <div class="doc-md-description">
                   <p>Returns an ONNXRuntime instance configured for the given runtime type.</p>
@@ -1248,148 +1296,16 @@ for image preprocessing, postprocessing, and interfacing with the ONNXRuntime li
 
 
     <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="focoos.runtime.BaseRuntime">BaseRuntime</span></code></p>
 
 
-      <p>A class that interfaces with ONNX Runtime for model inference using different execution providers
-(CUDA, TensorRT, OpenVINO, CoreML, etc.). It manages preprocessing, inference, and postprocessing
-of data, as well as benchmarking the performance of the model.</p>
-
-
-<p><span class="doc-section-title">Attributes:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td><code><span title="focoos.runtime.ONNXRuntime.logger">logger</span></code></td>
-            <td>
-                  <code>Logger</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Logger for the ONNXRuntime instance.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code><span title="focoos.runtime.ONNXRuntime.name">name</span></code></td>
-            <td>
-                  <code>str</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The name of the model (derived from its path).</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code><span title="focoos.runtime.ONNXRuntime.opts">opts</span></code></td>
-            <td>
-                  <code><span title="focoos.ports.OnnxEngineOpts">OnnxEngineOpts</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Options used for configuring the ONNX Runtime.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code><span title="focoos.runtime.ONNXRuntime.model_metadata">model_metadata</span></code></td>
-            <td>
-                  <code><span title="focoos.ports.ModelMetadata">ModelMetadata</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Metadata related to the model.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code><span title="focoos.runtime.ONNXRuntime.postprocess_fn">postprocess_fn</span></code></td>
-            <td>
-                  <code>Callable</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The function used to postprocess the model's output.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code><span title="focoos.runtime.ONNXRuntime.ort_sess">ort_sess</span></code></td>
-            <td>
-                  <code>InferenceSession</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The ONNXRuntime inference session.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code><span title="focoos.runtime.ONNXRuntime.dtype">dtype</span></code></td>
-            <td>
-                  <code><span title="numpy.dtype">dtype</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The data type for the model input.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code><span title="focoos.runtime.ONNXRuntime.binding">binding</span></code></td>
-            <td>
-                  <code>Optional[str]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The binding type for the runtime (e.g., CUDA, CPU).</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
+      <p>ONNX Runtime wrapper for model inference with different execution providers.
+Handles preprocessing, inference, postprocessing and benchmarking.</p>
 
               <details class="quote">
                 <summary>Source code in <code>focoos/runtime.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 92</span>
-<span class="normal"> 93</span>
-<span class="normal"> 94</span>
-<span class="normal"> 95</span>
-<span class="normal"> 96</span>
-<span class="normal"> 97</span>
-<span class="normal"> 98</span>
-<span class="normal"> 99</span>
-<span class="normal">100</span>
-<span class="normal">101</span>
-<span class="normal">102</span>
-<span class="normal">103</span>
-<span class="normal">104</span>
-<span class="normal">105</span>
-<span class="normal">106</span>
-<span class="normal">107</span>
-<span class="normal">108</span>
-<span class="normal">109</span>
-<span class="normal">110</span>
-<span class="normal">111</span>
-<span class="normal">112</span>
-<span class="normal">113</span>
-<span class="normal">114</span>
-<span class="normal">115</span>
-<span class="normal">116</span>
-<span class="normal">117</span>
-<span class="normal">118</span>
-<span class="normal">119</span>
-<span class="normal">120</span>
-<span class="normal">121</span>
-<span class="normal">122</span>
-<span class="normal">123</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">123</span>
 <span class="normal">124</span>
 <span class="normal">125</span>
 <span class="normal">126</span>
@@ -1518,10 +1434,302 @@ of data, as well as benchmarking the performance of the model.</p>
 <span class="normal">249</span>
 <span class="normal">250</span>
 <span class="normal">251</span>
-<span class="normal">252</span>
-<span class="normal">253</span>
-<span class="normal">254</span>
-<span class="normal">255</span>
+<span class="normal">252</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ONNXRuntime</span><span class="p">(</span><span class="n">BaseRuntime</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ONNX Runtime wrapper for model inference with different execution providers.</span>
+<span class="sd">    Handles preprocessing, inference, postprocessing and benchmarking.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">opts</span><span class="p">:</span> <span class="n">OnnxRuntimeOpts</span><span class="p">,</span> <span class="n">model_metadata</span><span class="p">:</span> <span class="n">ModelMetadata</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔧 [onnxruntime device] </span><span class="si">{</span><span class="n">ort</span><span class="o">.</span><span class="n">get_device</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔧 [onnxruntime available providers] </span><span class="si">{</span><span class="n">ort</span><span class="o">.</span><span class="n">get_available_providers</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opts</span> <span class="o">=</span> <span class="n">opts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_metadata</span> <span class="o">=</span> <span class="n">model_metadata</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">postprocess_fn</span> <span class="o">=</span> <span class="n">det_postprocess</span> <span class="k">if</span> <span class="n">model_metadata</span><span class="o">.</span><span class="n">task</span> <span class="o">==</span> <span class="n">FocoosTask</span><span class="o">.</span><span class="n">DETECTION</span> <span class="k">else</span> <span class="n">semseg_postprocess</span>
+
+        <span class="c1"># Setup session options</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">ort</span><span class="o">.</span><span class="n">SessionOptions</span><span class="p">()</span>
+        <span class="n">options</span><span class="o">.</span><span class="n">log_severity_level</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">verbose</span> <span class="k">else</span> <span class="mi">2</span>
+        <span class="n">options</span><span class="o">.</span><span class="n">enable_profiling</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">verbose</span>
+
+        <span class="c1"># Setup providers</span>
+        <span class="n">providers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_setup_providers</span><span class="p">()</span>
+
+        <span class="c1"># Create session</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span> <span class="o">=</span> <span class="n">ort</span><span class="o">.</span><span class="n">InferenceSession</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">providers</span><span class="o">=</span><span class="n">providers</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active_providers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_providers</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[onnxruntime] Active providers:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">active_providers</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Set input type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;tensor(uint8)&quot;</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span>
+
+        <span class="c1"># Warmup</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">warmup_iter</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_warmup</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_setup_providers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">providers</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">available</span> <span class="o">=</span> <span class="n">ort</span><span class="o">.</span><span class="n">get_available_providers</span><span class="p">()</span>
+
+        <span class="c1"># Check and add providers in order of preference</span>
+        <span class="n">provider_configs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span>
+                <span class="s2">&quot;TensorrtExecutionProvider&quot;</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">trt</span><span class="p">,</span>
+                <span class="p">{</span><span class="s2">&quot;device_id&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;trt_fp16_enable&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">fp16</span><span class="p">,</span> <span class="s2">&quot;trt_force_sequential_engine_build&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+            <span class="p">),</span>
+            <span class="p">(</span>
+                <span class="s2">&quot;OpenVINOExecutionProvider&quot;</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">vino</span><span class="p">,</span>
+                <span class="p">{</span><span class="s2">&quot;device_type&quot;</span><span class="p">:</span> <span class="s2">&quot;MYRIAD_FP16&quot;</span><span class="p">,</span> <span class="s2">&quot;enable_vpu_fast_compile&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;num_of_threads&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+            <span class="p">),</span>
+            <span class="p">(</span>
+                <span class="s2">&quot;CUDAExecutionProvider&quot;</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">cuda</span><span class="p">,</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;device_id&quot;</span><span class="p">:</span> <span class="n">GPU_ID</span><span class="p">,</span>
+                    <span class="s2">&quot;arena_extend_strategy&quot;</span><span class="p">:</span> <span class="s2">&quot;kSameAsRequested&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;gpu_mem_limit&quot;</span><span class="p">:</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">,</span>
+                    <span class="s2">&quot;cudnn_conv_algo_search&quot;</span><span class="p">:</span> <span class="s2">&quot;EXHAUSTIVE&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;do_copy_in_default_stream&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;CoreMLExecutionProvider&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">coreml</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">provider</span><span class="p">,</span> <span class="n">enabled</span><span class="p">,</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">provider_configs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">enabled</span> <span class="ow">and</span> <span class="n">provider</span> <span class="ow">in</span> <span class="n">available</span><span class="p">:</span>
+                <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">provider</span><span class="p">,</span> <span class="n">config</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">enabled</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">provider</span><span class="si">}</span><span class="s2"> not found.&quot;</span><span class="p">)</span>
+
+        <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;CPUExecutionProvider&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">providers</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_warmup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;⏱️ [onnxruntime] Warming up model ..&quot;</span><span class="p">)</span>
+        <span class="n">np_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">640</span><span class="p">,</span> <span class="mi">640</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">input_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">out_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()]</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">warmup_iter</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">out_name</span><span class="p">,</span> <span class="p">{</span><span class="n">input_name</span><span class="p">:</span> <span class="n">np_image</span><span class="p">})</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;⏱️ [onnxruntime] Warmup done&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">im</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">conf_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sv</span><span class="o">.</span><span class="n">Detections</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run inference and return detections.&quot;&quot;&quot;</span>
+        <span class="n">input_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">out_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()]</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">out_name</span><span class="p">,</span> <span class="p">{</span><span class="n">input_name</span><span class="p">:</span> <span class="n">im</span><span class="p">})</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">postprocess_fn</span><span class="p">(</span><span class="n">out</span><span class="o">=</span><span class="n">out</span><span class="p">,</span> <span class="n">im0_shape</span><span class="o">=</span><span class="p">(</span><span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span> <span class="n">conf_threshold</span><span class="o">=</span><span class="n">conf_threshold</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Benchmark model latency.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;⏱️ [onnxruntime] Benchmarking latency..&quot;</span><span class="p">)</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">size</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">))</span> <span class="k">else</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+
+        <span class="n">np_input</span> <span class="o">=</span> <span class="p">(</span><span class="mi">255</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">input_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">out_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()]</span>
+
+        <span class="n">durations</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span> <span class="o">+</span> <span class="mi">5</span><span class="p">):</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">out_name</span><span class="p">,</span> <span class="p">{</span><span class="n">input_name</span><span class="p">:</span> <span class="n">np_input</span><span class="p">})</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">step</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>  <span class="c1"># Skip first 5 iterations</span>
+                <span class="n">durations</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+
+        <span class="n">durations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span>
+        <span class="n">provider</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_providers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">get_gpu_name</span><span class="p">()</span> <span class="k">if</span> <span class="n">provider</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;CUDAExecutionProvider&quot;</span><span class="p">,</span> <span class="s2">&quot;TensorrtExecutionProvider&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="n">get_cpu_name</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="n">metrics</span> <span class="o">=</span> <span class="n">LatencyMetrics</span><span class="p">(</span>
+            <span class="n">fps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mi">1000</span> <span class="o">/</span> <span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+            <span class="n">engine</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;onnx.</span><span class="si">{</span><span class="n">provider</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">mean</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="nb">max</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="nb">min</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="n">std</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="n">im_size</span><span class="o">=</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">device</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">device</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔥 FPS: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">metrics</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="focoos.runtime.ONNXRuntime.__call__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">conf_threshold</span><span class="p">)</span></code>
+
+<a href="#focoos.runtime.ONNXRuntime.__call__" class="headerlink" title="Permanent link">#</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+      <p>Run inference and return detections.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>focoos/runtime.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">im</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">conf_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sv</span><span class="o">.</span><span class="n">Detections</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run inference and return detections.&quot;&quot;&quot;</span>
+    <span class="n">input_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">out_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()]</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">out_name</span><span class="p">,</span> <span class="p">{</span><span class="n">input_name</span><span class="p">:</span> <span class="n">im</span><span class="p">})</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">postprocess_fn</span><span class="p">(</span><span class="n">out</span><span class="o">=</span><span class="n">out</span><span class="p">,</span> <span class="n">im0_shape</span><span class="o">=</span><span class="p">(</span><span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span> <span class="n">conf_threshold</span><span class="o">=</span><span class="n">conf_threshold</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="focoos.runtime.ONNXRuntime.benchmark" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">benchmark</span><span class="p">(</span><span class="n">iterations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">640</span><span class="p">)</span></code>
+
+<a href="#focoos.runtime.ONNXRuntime.benchmark" class="headerlink" title="Permanent link">#</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+      <p>Benchmark model latency.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>focoos/runtime.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Benchmark model latency.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;⏱️ [onnxruntime] Benchmarking latency..&quot;</span><span class="p">)</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="n">size</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">))</span> <span class="k">else</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+
+    <span class="n">np_input</span> <span class="o">=</span> <span class="p">(</span><span class="mi">255</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">input_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">out_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()]</span>
+
+    <span class="n">durations</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span> <span class="o">+</span> <span class="mi">5</span><span class="p">):</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">out_name</span><span class="p">,</span> <span class="p">{</span><span class="n">input_name</span><span class="p">:</span> <span class="n">np_input</span><span class="p">})</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">step</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>  <span class="c1"># Skip first 5 iterations</span>
+            <span class="n">durations</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+
+    <span class="n">durations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span>
+    <span class="n">provider</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_providers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">get_gpu_name</span><span class="p">()</span> <span class="k">if</span> <span class="n">provider</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;CUDAExecutionProvider&quot;</span><span class="p">,</span> <span class="s2">&quot;TensorrtExecutionProvider&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="n">get_cpu_name</span><span class="p">()</span>
+    <span class="p">)</span>
+
+    <span class="n">metrics</span> <span class="o">=</span> <span class="n">LatencyMetrics</span><span class="p">(</span>
+        <span class="n">fps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mi">1000</span> <span class="o">/</span> <span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
+        <span class="n">engine</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;onnx.</span><span class="si">{</span><span class="n">provider</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">mean</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="nb">max</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="nb">min</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">std</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">im_size</span><span class="o">=</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">device</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">device</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔥 FPS: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">metrics</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="focoos.runtime.TorchscriptRuntime" class="doc doc-heading">
+            <code>TorchscriptRuntime</code>
+
+
+<a href="#focoos.runtime.TorchscriptRuntime" class="headerlink" title="Permanent link">#</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="focoos.runtime.BaseRuntime">BaseRuntime</span></code></p>
+
+
+              <details class="quote">
+                <summary>Source code in <code>focoos/runtime.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">255</span>
 <span class="normal">256</span>
 <span class="normal">257</span>
 <span class="normal">258</span>
@@ -1585,249 +1793,66 @@ of data, as well as benchmarking the performance of the model.</p>
 <span class="normal">316</span>
 <span class="normal">317</span>
 <span class="normal">318</span>
-<span class="normal">319</span>
-<span class="normal">320</span>
-<span class="normal">321</span>
-<span class="normal">322</span>
-<span class="normal">323</span>
-<span class="normal">324</span>
-<span class="normal">325</span>
-<span class="normal">326</span>
-<span class="normal">327</span>
-<span class="normal">328</span>
-<span class="normal">329</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ONNXRuntime</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A class that interfaces with ONNX Runtime for model inference using different execution providers</span>
-<span class="sd">    (CUDA, TensorRT, OpenVINO, CoreML, etc.). It manages preprocessing, inference, and postprocessing</span>
-<span class="sd">    of data, as well as benchmarking the performance of the model.</span>
-
-<span class="sd">    Attributes:</span>
-<span class="sd">        logger (Logger): Logger for the ONNXRuntime instance.</span>
-<span class="sd">        name (str): The name of the model (derived from its path).</span>
-<span class="sd">        opts (OnnxEngineOpts): Options used for configuring the ONNX Runtime.</span>
-<span class="sd">        model_metadata (ModelMetadata): Metadata related to the model.</span>
-<span class="sd">        postprocess_fn (Callable): The function used to postprocess the model&#39;s output.</span>
-<span class="sd">        ort_sess (InferenceSession): The ONNXRuntime inference session.</span>
-<span class="sd">        dtype (np.dtype): The data type for the model input.</span>
-<span class="sd">        binding (Optional[str]): The binding type for the runtime (e.g., CUDA, CPU).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">opts</span><span class="p">:</span> <span class="n">OnnxEngineOpts</span><span class="p">,</span> <span class="n">model_metadata</span><span class="p">:</span> <span class="n">ModelMetadata</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initializes the ONNXRuntime instance with the specified model and configuration options.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            model_path (str): Path to the ONNX model file.</span>
-<span class="sd">            opts (OnnxEngineOpts): The configuration options for ONNX Runtime.</span>
-<span class="sd">            model_metadata (ModelMetadata): Metadata for the model (e.g., task type).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[onnxruntime device] </span><span class="si">{</span><span class="n">ort</span><span class="o">.</span><span class="n">get_device</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[onnxruntime available providers] </span><span class="si">{</span><span class="n">ort</span><span class="o">.</span><span class="n">get_available_providers</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span>
+<span class="normal">319</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TorchscriptRuntime</span><span class="p">(</span><span class="n">BaseRuntime</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">opts</span><span class="p">:</span> <span class="n">TorchscriptRuntimeOpts</span><span class="p">,</span>
+        <span class="n">model_metadata</span><span class="p">:</span> <span class="n">ModelMetadata</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;TorchscriptEngine&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔧 [torchscript] Device: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">opts</span> <span class="o">=</span> <span class="n">opts</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model_metadata</span> <span class="o">=</span> <span class="n">model_metadata</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">postprocess_fn</span> <span class="o">=</span> <span class="n">det_postprocess</span> <span class="k">if</span> <span class="n">model_metadata</span><span class="o">.</span><span class="n">task</span> <span class="o">==</span> <span class="n">FocoosTask</span><span class="o">.</span><span class="n">DETECTION</span> <span class="k">else</span> <span class="n">semseg_postprocess</span>
-        <span class="n">options</span> <span class="o">=</span> <span class="n">ort</span><span class="o">.</span><span class="n">SessionOptions</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
-            <span class="n">options</span><span class="o">.</span><span class="n">log_severity_level</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">options</span><span class="o">.</span><span class="n">enable_profiling</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">verbose</span>
-        <span class="c1"># options.intra_op_num_threads = 1</span>
-        <span class="n">available_providers</span> <span class="o">=</span> <span class="n">ort</span><span class="o">.</span><span class="n">get_available_providers</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">cuda</span> <span class="ow">and</span> <span class="s2">&quot;CUDAExecutionProvider&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;CUDA ExecutionProvider not found.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">trt</span> <span class="ow">and</span> <span class="s2">&quot;TensorrtExecutionProvider&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Tensorrt ExecutionProvider not found.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">vino</span> <span class="ow">and</span> <span class="s2">&quot;OpenVINOExecutionProvider&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;OpenVINO ExecutionProvider not found.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">coreml</span> <span class="ow">and</span> <span class="s2">&quot;CoreMLExecutionProvider&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;CoreML ExecutionProvider not found.&quot;</span><span class="p">)</span>
-        <span class="c1"># Set providers</span>
-        <span class="n">providers</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span>
-        <span class="n">binding</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">trt</span> <span class="ow">and</span> <span class="s2">&quot;TensorrtExecutionProvider&quot;</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-            <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">(</span>
-                    <span class="s2">&quot;TensorrtExecutionProvider&quot;</span><span class="p">,</span>
-                    <span class="p">{</span>
-                        <span class="s2">&quot;device_id&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-                        <span class="c1"># &#39;trt_max_workspace_size&#39;: 1073741824,  # 1 GB</span>
-                        <span class="s2">&quot;trt_fp16_enable&quot;</span><span class="p">:</span> <span class="n">opts</span><span class="o">.</span><span class="n">fp16</span><span class="p">,</span>
-                        <span class="s2">&quot;trt_force_sequential_engine_build&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-                    <span class="p">},</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-            <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span>
-        <span class="k">elif</span> <span class="n">opts</span><span class="o">.</span><span class="n">vino</span> <span class="ow">and</span> <span class="s2">&quot;OpenVINOExecutionProvider&quot;</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-            <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">(</span>
-                    <span class="s2">&quot;OpenVINOExecutionProvider&quot;</span><span class="p">,</span>
-                    <span class="p">{</span>
-                        <span class="s2">&quot;device_type&quot;</span><span class="p">:</span> <span class="s2">&quot;MYRIAD_FP16&quot;</span><span class="p">,</span>
-                        <span class="s2">&quot;enable_vpu_fast_compile&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-                        <span class="s2">&quot;num_of_threads&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-                    <span class="p">},</span>
-                    <span class="c1"># &#39;use_compiled_network&#39;: False}</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-            <span class="n">options</span><span class="o">.</span><span class="n">graph_optimization_level</span> <span class="o">=</span> <span class="n">ort</span><span class="o">.</span><span class="n">GraphOptimizationLevel</span><span class="o">.</span><span class="n">ORT_DISABLE_ALL</span>
-            <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span>
-            <span class="n">binding</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">elif</span> <span class="n">opts</span><span class="o">.</span><span class="n">cuda</span> <span class="ow">and</span> <span class="s2">&quot;CUDAExecutionProvider&quot;</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-            <span class="n">binding</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span>
-            <span class="n">options</span><span class="o">.</span><span class="n">graph_optimization_level</span> <span class="o">=</span> <span class="n">ort</span><span class="o">.</span><span class="n">GraphOptimizationLevel</span><span class="o">.</span><span class="n">ORT_ENABLE_ALL</span>
-            <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">(</span>
-                    <span class="s2">&quot;CUDAExecutionProvider&quot;</span><span class="p">,</span>
-                    <span class="p">{</span>
-                        <span class="s2">&quot;device_id&quot;</span><span class="p">:</span> <span class="n">GPU_ID</span><span class="p">,</span>
-                        <span class="s2">&quot;arena_extend_strategy&quot;</span><span class="p">:</span> <span class="s2">&quot;kSameAsRequested&quot;</span><span class="p">,</span>
-                        <span class="s2">&quot;gpu_mem_limit&quot;</span><span class="p">:</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">,</span>
-                        <span class="s2">&quot;cudnn_conv_algo_search&quot;</span><span class="p">:</span> <span class="s2">&quot;EXHAUSTIVE&quot;</span><span class="p">,</span>
-                        <span class="s2">&quot;do_copy_in_default_stream&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-                    <span class="p">},</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="n">opts</span><span class="o">.</span><span class="n">coreml</span> <span class="ow">and</span> <span class="s2">&quot;CoreMLExecutionProvider&quot;</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-            <span class="c1">#     # options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL</span>
-            <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;CoreMLExecutionProvider&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">binding</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="n">binding</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># TODO: remove this</span>
-        <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;CPUExecutionProvider&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">dtype</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">binding</span> <span class="o">=</span> <span class="n">binding</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span> <span class="o">=</span> <span class="n">ort</span><span class="o">.</span><span class="n">InferenceSession</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">providers</span><span class="o">=</span><span class="n">providers</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">active_providers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_providers</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[onnxruntime] Active providers:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_providers</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;tensor(uint8)&quot;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span>
+        <span class="n">map_location</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">map_location</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">warmup_iter</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;⏱️ [onnxruntime] Warming up model ..&quot;</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">warmup_iter</span><span class="p">):</span>
-                <span class="n">np_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">640</span><span class="p">,</span> <span class="mi">640</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-                <span class="n">input_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
-                <span class="n">out_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()]</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">binding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">io_binding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">io_binding</span><span class="p">()</span>
-                    <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_input</span><span class="p">(</span>
-                        <span class="n">input_name</span><span class="p">,</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">binding</span><span class="p">,</span>
-                        <span class="n">device_id</span><span class="o">=</span><span class="n">GPU_ID</span><span class="p">,</span>
-                        <span class="n">element_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                        <span class="n">shape</span><span class="o">=</span><span class="n">np_image</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
-                        <span class="n">buffer_ptr</span><span class="o">=</span><span class="n">np_image</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-                    <span class="p">)</span>
-                    <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_cpu_input</span><span class="p">(</span><span class="n">input_name</span><span class="p">,</span> <span class="n">np_image</span><span class="p">)</span>
-                    <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_output</span><span class="p">(</span><span class="n">out_name</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">binding</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run_with_iobinding</span><span class="p">(</span><span class="n">io_binding</span><span class="p">)</span>
-                    <span class="n">io_binding</span><span class="o">.</span><span class="n">copy_outputs_to_cpu</span><span class="p">()</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">out_name</span><span class="p">,</span> <span class="p">{</span><span class="n">input_name</span><span class="p">:</span> <span class="n">np_image</span><span class="p">})</span>
-
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ [onnxruntime] </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> WARMUP DONE&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;⏱️ [torchscript] Warming up model..&quot;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+                <span class="n">np_image</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">640</span><span class="p">,</span> <span class="mi">640</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">warmup_iter</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">np_image</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;⏱️ [torchscript] WARMUP DONE&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">im</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">conf_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sv</span><span class="o">.</span><span class="n">Detections</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Runs inference on the provided input image and returns the model&#39;s detections.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            im (np.ndarray): The preprocessed input image.</span>
-<span class="sd">            conf_threshold (float): The confidence threshold for filtering results.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            sv.Detections: A sv.Detections object containing the model&#39;s output detections.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">out_name</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">input_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
-        <span class="n">out_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()]</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">binding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;binding </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">binding</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">io_binding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">io_binding</span><span class="p">()</span>
-
-            <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_input</span><span class="p">(</span>
-                <span class="n">input_name</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">binding</span><span class="p">,</span>
-                <span class="n">device_id</span><span class="o">=</span><span class="n">GPU_ID</span><span class="p">,</span>
-                <span class="n">element_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                <span class="n">shape</span><span class="o">=</span><span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
-                <span class="n">buffer_ptr</span><span class="o">=</span><span class="n">im</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-            <span class="p">)</span>
-
-            <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_cpu_input</span><span class="p">(</span><span class="n">input_name</span><span class="p">,</span> <span class="n">im</span><span class="p">)</span>
-            <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_output</span><span class="p">(</span><span class="n">out_name</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">binding</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run_with_iobinding</span><span class="p">(</span><span class="n">io_binding</span><span class="p">)</span>
-            <span class="n">out</span> <span class="o">=</span> <span class="n">io_binding</span><span class="o">.</span><span class="n">copy_outputs_to_cpu</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">out_name</span><span class="p">,</span> <span class="p">{</span><span class="n">input_name</span><span class="p">:</span> <span class="n">im</span><span class="p">})</span>
-
-        <span class="n">detections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">postprocess_fn</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="p">(</span><span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span> <span class="n">conf_threshold</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">detections</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run inference and return detections.&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="n">torch_image</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">im</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">torch_image</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">postprocess_fn</span><span class="p">([</span><span class="n">r</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">res</span><span class="p">],</span> <span class="p">(</span><span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span> <span class="n">conf_threshold</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Benchmarks the model by running multiple inference iterations and measuring the latency.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            iterations (int, optional): Number of iterations to run for benchmarking. Defaults to 20.</span>
-<span class="sd">            size (int, optional): The input image size for benchmarking. Defaults to 640.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            LatencyMetrics: The latency metrics (e.g., FPS, mean, min, max, and standard deviation).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;⏱️ [onnxruntime] Benchmarking latency..&quot;</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Benchmark model latency.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;⏱️ [torchscript] Benchmarking latency..&quot;</span><span class="p">)</span>
         <span class="n">size</span> <span class="o">=</span> <span class="n">size</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">))</span> <span class="k">else</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
 
+        <span class="n">torch_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
         <span class="n">durations</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">np_input</span> <span class="o">=</span> <span class="p">(</span><span class="mi">255</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-        <span class="n">input_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
-        <span class="n">out_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">binding</span><span class="p">:</span>
-            <span class="n">io_binding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">io_binding</span><span class="p">()</span>
 
-            <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_input</span><span class="p">(</span>
-                <span class="n">input_name</span><span class="p">,</span>
-                <span class="s2">&quot;cuda&quot;</span><span class="p">,</span>
-                <span class="n">device_id</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-                <span class="n">element_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                <span class="n">shape</span><span class="o">=</span><span class="n">np_input</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
-                <span class="n">buffer_ptr</span><span class="o">=</span><span class="n">np_input</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-            <span class="p">)</span>
-
-            <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_cpu_input</span><span class="p">(</span><span class="n">input_name</span><span class="p">,</span> <span class="n">np_input</span><span class="p">)</span>
-            <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_output</span><span class="p">(</span><span class="n">out_name</span><span class="p">,</span> <span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">out_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()]</span>
-
-        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span> <span class="o">+</span> <span class="mi">5</span><span class="p">):</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">binding</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span> <span class="o">+</span> <span class="mi">5</span><span class="p">):</span>
                 <span class="n">start</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run_with_iobinding</span><span class="p">(</span><span class="n">io_binding</span><span class="p">)</span>
-                <span class="n">end</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">start</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">out_name</span><span class="p">,</span> <span class="p">{</span><span class="n">input_name</span><span class="p">:</span> <span class="n">np_input</span><span class="p">})</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">torch_input</span><span class="p">)</span>
                 <span class="n">end</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
 
-            <span class="k">if</span> <span class="n">step</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>
-                <span class="n">durations</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">step</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>  <span class="c1"># Skip first 5 iterations</span>
+                    <span class="n">durations</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+
         <span class="n">durations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span>
-        <span class="n">provider</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_providers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">provider</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;CUDAExecutionProvider&quot;</span><span class="p">,</span> <span class="s2">&quot;TensorrtExecutionProvider&quot;</span><span class="p">]:</span>
-            <span class="n">device</span> <span class="o">=</span> <span class="n">get_gpu_name</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">device</span> <span class="o">=</span> <span class="n">get_cpu_name</span><span class="p">()</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">get_gpu_name</span><span class="p">()</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="n">get_cpu_name</span><span class="p">()</span>
+
         <span class="n">metrics</span> <span class="o">=</span> <span class="n">LatencyMetrics</span><span class="p">(</span>
-            <span class="n">fps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mi">1000</span> <span class="o">/</span> <span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
-            <span class="n">engine</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;onnx.</span><span class="si">{</span><span class="n">provider</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">mean</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="mi">3</span><span class="p">),</span>
-            <span class="nb">max</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="mi">3</span><span class="p">),</span>
-            <span class="nb">min</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="mi">3</span><span class="p">),</span>
-            <span class="n">std</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">std</span><span class="p">(),</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="n">fps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mi">1000</span> <span class="o">/</span> <span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)),</span>
+            <span class="n">engine</span><span class="o">=</span><span class="s2">&quot;torchscript&quot;</span><span class="p">,</span>
+            <span class="n">mean</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="nb">max</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="nb">min</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="n">std</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
             <span class="n">im_size</span><span class="o">=</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
             <span class="n">device</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">device</span><span class="p">),</span>
         <span class="p">)</span>
@@ -1851,579 +1876,51 @@ of data, as well as benchmarking the performance of the model.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="focoos.runtime.ONNXRuntime.__call__" class="doc doc-heading">
+<h3 id="focoos.runtime.TorchscriptRuntime.__call__" class="doc doc-heading">
             <code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">conf_threshold</span><span class="p">)</span></code>
 
-<a href="#focoos.runtime.ONNXRuntime.__call__" class="headerlink" title="Permanent link">#</a></h3>
+<a href="#focoos.runtime.TorchscriptRuntime.__call__" class="headerlink" title="Permanent link">#</a></h3>
 
 
     <div class="doc doc-contents ">
 
-      <p>Runs inference on the provided input image and returns the model's detections.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td><code>im</code></td>
-            <td>
-                  <code><span title="numpy.ndarray">ndarray</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The preprocessed input image.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code>conf_threshold</code></td>
-            <td>
-                  <code>float</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The confidence threshold for filtering results.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="supervision.Detections">Detections</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>sv.Detections: A sv.Detections object containing the model's output detections.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
+      <p>Run inference and return detections.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/runtime.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">228</span>
-<span class="normal">229</span>
-<span class="normal">230</span>
-<span class="normal">231</span>
-<span class="normal">232</span>
-<span class="normal">233</span>
-<span class="normal">234</span>
-<span class="normal">235</span>
-<span class="normal">236</span>
-<span class="normal">237</span>
-<span class="normal">238</span>
-<span class="normal">239</span>
-<span class="normal">240</span>
-<span class="normal">241</span>
-<span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
-<span class="normal">247</span>
-<span class="normal">248</span>
-<span class="normal">249</span>
-<span class="normal">250</span>
-<span class="normal">251</span>
-<span class="normal">252</span>
-<span class="normal">253</span>
-<span class="normal">254</span>
-<span class="normal">255</span>
-<span class="normal">256</span>
-<span class="normal">257</span>
-<span class="normal">258</span>
-<span class="normal">259</span>
-<span class="normal">260</span>
-<span class="normal">261</span>
-<span class="normal">262</span>
-<span class="normal">263</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">im</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">conf_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sv</span><span class="o">.</span><span class="n">Detections</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Runs inference on the provided input image and returns the model&#39;s detections.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        im (np.ndarray): The preprocessed input image.</span>
-<span class="sd">        conf_threshold (float): The confidence threshold for filtering results.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        sv.Detections: A sv.Detections object containing the model&#39;s output detections.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">out_name</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">input_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
-    <span class="n">out_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()]</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">binding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;binding </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">binding</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">io_binding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">io_binding</span><span class="p">()</span>
-
-        <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_input</span><span class="p">(</span>
-            <span class="n">input_name</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">binding</span><span class="p">,</span>
-            <span class="n">device_id</span><span class="o">=</span><span class="n">GPU_ID</span><span class="p">,</span>
-            <span class="n">element_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-            <span class="n">shape</span><span class="o">=</span><span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
-            <span class="n">buffer_ptr</span><span class="o">=</span><span class="n">im</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_cpu_input</span><span class="p">(</span><span class="n">input_name</span><span class="p">,</span> <span class="n">im</span><span class="p">)</span>
-        <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_output</span><span class="p">(</span><span class="n">out_name</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">binding</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run_with_iobinding</span><span class="p">(</span><span class="n">io_binding</span><span class="p">)</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="n">io_binding</span><span class="o">.</span><span class="n">copy_outputs_to_cpu</span><span class="p">()</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">out_name</span><span class="p">,</span> <span class="p">{</span><span class="n">input_name</span><span class="p">:</span> <span class="n">im</span><span class="p">})</span>
-
-    <span class="n">detections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">postprocess_fn</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="p">(</span><span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span> <span class="n">conf_threshold</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">detections</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="focoos.runtime.ONNXRuntime.__init__" class="doc doc-heading">
-            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">opts</span><span class="p">,</span> <span class="n">model_metadata</span><span class="p">)</span></code>
-
-<a href="#focoos.runtime.ONNXRuntime.__init__" class="headerlink" title="Permanent link">#</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-      <p>Initializes the ONNXRuntime instance with the specified model and configuration options.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td><code>model_path</code></td>
-            <td>
-                  <code>str</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Path to the ONNX model file.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code>opts</code></td>
-            <td>
-                  <code><span title="focoos.ports.OnnxEngineOpts">OnnxEngineOpts</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The configuration options for ONNX Runtime.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code>model_metadata</code></td>
-            <td>
-                  <code><span title="focoos.ports.ModelMetadata">ModelMetadata</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Metadata for the model (e.g., task type).</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-            <details class="quote">
-              <summary>Source code in <code>focoos/runtime.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">109</span>
-<span class="normal">110</span>
-<span class="normal">111</span>
-<span class="normal">112</span>
-<span class="normal">113</span>
-<span class="normal">114</span>
-<span class="normal">115</span>
-<span class="normal">116</span>
-<span class="normal">117</span>
-<span class="normal">118</span>
-<span class="normal">119</span>
-<span class="normal">120</span>
-<span class="normal">121</span>
-<span class="normal">122</span>
-<span class="normal">123</span>
-<span class="normal">124</span>
-<span class="normal">125</span>
-<span class="normal">126</span>
-<span class="normal">127</span>
-<span class="normal">128</span>
-<span class="normal">129</span>
-<span class="normal">130</span>
-<span class="normal">131</span>
-<span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
-<span class="normal">135</span>
-<span class="normal">136</span>
-<span class="normal">137</span>
-<span class="normal">138</span>
-<span class="normal">139</span>
-<span class="normal">140</span>
-<span class="normal">141</span>
-<span class="normal">142</span>
-<span class="normal">143</span>
-<span class="normal">144</span>
-<span class="normal">145</span>
-<span class="normal">146</span>
-<span class="normal">147</span>
-<span class="normal">148</span>
-<span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span>
-<span class="normal">153</span>
-<span class="normal">154</span>
-<span class="normal">155</span>
-<span class="normal">156</span>
-<span class="normal">157</span>
-<span class="normal">158</span>
-<span class="normal">159</span>
-<span class="normal">160</span>
-<span class="normal">161</span>
-<span class="normal">162</span>
-<span class="normal">163</span>
-<span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span>
-<span class="normal">171</span>
-<span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span>
-<span class="normal">175</span>
-<span class="normal">176</span>
-<span class="normal">177</span>
-<span class="normal">178</span>
-<span class="normal">179</span>
-<span class="normal">180</span>
-<span class="normal">181</span>
-<span class="normal">182</span>
-<span class="normal">183</span>
-<span class="normal">184</span>
-<span class="normal">185</span>
-<span class="normal">186</span>
-<span class="normal">187</span>
-<span class="normal">188</span>
-<span class="normal">189</span>
-<span class="normal">190</span>
-<span class="normal">191</span>
-<span class="normal">192</span>
-<span class="normal">193</span>
-<span class="normal">194</span>
-<span class="normal">195</span>
-<span class="normal">196</span>
-<span class="normal">197</span>
-<span class="normal">198</span>
-<span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
-<span class="normal">206</span>
-<span class="normal">207</span>
-<span class="normal">208</span>
-<span class="normal">209</span>
-<span class="normal">210</span>
-<span class="normal">211</span>
-<span class="normal">212</span>
-<span class="normal">213</span>
-<span class="normal">214</span>
-<span class="normal">215</span>
-<span class="normal">216</span>
-<span class="normal">217</span>
-<span class="normal">218</span>
-<span class="normal">219</span>
-<span class="normal">220</span>
-<span class="normal">221</span>
-<span class="normal">222</span>
-<span class="normal">223</span>
-<span class="normal">224</span>
-<span class="normal">225</span>
-<span class="normal">226</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">opts</span><span class="p">:</span> <span class="n">OnnxEngineOpts</span><span class="p">,</span> <span class="n">model_metadata</span><span class="p">:</span> <span class="n">ModelMetadata</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Initializes the ONNXRuntime instance with the specified model and configuration options.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        model_path (str): Path to the ONNX model file.</span>
-<span class="sd">        opts (OnnxEngineOpts): The configuration options for ONNX Runtime.</span>
-<span class="sd">        model_metadata (ModelMetadata): Metadata for the model (e.g., task type).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[onnxruntime device] </span><span class="si">{</span><span class="n">ort</span><span class="o">.</span><span class="n">get_device</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[onnxruntime available providers] </span><span class="si">{</span><span class="n">ort</span><span class="o">.</span><span class="n">get_available_providers</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">opts</span> <span class="o">=</span> <span class="n">opts</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">model_metadata</span> <span class="o">=</span> <span class="n">model_metadata</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">postprocess_fn</span> <span class="o">=</span> <span class="n">det_postprocess</span> <span class="k">if</span> <span class="n">model_metadata</span><span class="o">.</span><span class="n">task</span> <span class="o">==</span> <span class="n">FocoosTask</span><span class="o">.</span><span class="n">DETECTION</span> <span class="k">else</span> <span class="n">semseg_postprocess</span>
-    <span class="n">options</span> <span class="o">=</span> <span class="n">ort</span><span class="o">.</span><span class="n">SessionOptions</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
-        <span class="n">options</span><span class="o">.</span><span class="n">log_severity_level</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">options</span><span class="o">.</span><span class="n">enable_profiling</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">verbose</span>
-    <span class="c1"># options.intra_op_num_threads = 1</span>
-    <span class="n">available_providers</span> <span class="o">=</span> <span class="n">ort</span><span class="o">.</span><span class="n">get_available_providers</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">cuda</span> <span class="ow">and</span> <span class="s2">&quot;CUDAExecutionProvider&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;CUDA ExecutionProvider not found.&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">trt</span> <span class="ow">and</span> <span class="s2">&quot;TensorrtExecutionProvider&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Tensorrt ExecutionProvider not found.&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">vino</span> <span class="ow">and</span> <span class="s2">&quot;OpenVINOExecutionProvider&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;OpenVINO ExecutionProvider not found.&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">coreml</span> <span class="ow">and</span> <span class="s2">&quot;CoreMLExecutionProvider&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;CoreML ExecutionProvider not found.&quot;</span><span class="p">)</span>
-    <span class="c1"># Set providers</span>
-    <span class="n">providers</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span>
-    <span class="n">binding</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">trt</span> <span class="ow">and</span> <span class="s2">&quot;TensorrtExecutionProvider&quot;</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-        <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="p">(</span>
-                <span class="s2">&quot;TensorrtExecutionProvider&quot;</span><span class="p">,</span>
-                <span class="p">{</span>
-                    <span class="s2">&quot;device_id&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
-                    <span class="c1"># &#39;trt_max_workspace_size&#39;: 1073741824,  # 1 GB</span>
-                    <span class="s2">&quot;trt_fp16_enable&quot;</span><span class="p">:</span> <span class="n">opts</span><span class="o">.</span><span class="n">fp16</span><span class="p">,</span>
-                    <span class="s2">&quot;trt_force_sequential_engine_build&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-                <span class="p">},</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span>
-    <span class="k">elif</span> <span class="n">opts</span><span class="o">.</span><span class="n">vino</span> <span class="ow">and</span> <span class="s2">&quot;OpenVINOExecutionProvider&quot;</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-        <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="p">(</span>
-                <span class="s2">&quot;OpenVINOExecutionProvider&quot;</span><span class="p">,</span>
-                <span class="p">{</span>
-                    <span class="s2">&quot;device_type&quot;</span><span class="p">:</span> <span class="s2">&quot;MYRIAD_FP16&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;enable_vpu_fast_compile&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-                    <span class="s2">&quot;num_of_threads&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-                <span class="p">},</span>
-                <span class="c1"># &#39;use_compiled_network&#39;: False}</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">options</span><span class="o">.</span><span class="n">graph_optimization_level</span> <span class="o">=</span> <span class="n">ort</span><span class="o">.</span><span class="n">GraphOptimizationLevel</span><span class="o">.</span><span class="n">ORT_DISABLE_ALL</span>
-        <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span>
-        <span class="n">binding</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">elif</span> <span class="n">opts</span><span class="o">.</span><span class="n">cuda</span> <span class="ow">and</span> <span class="s2">&quot;CUDAExecutionProvider&quot;</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-        <span class="n">binding</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span>
-        <span class="n">options</span><span class="o">.</span><span class="n">graph_optimization_level</span> <span class="o">=</span> <span class="n">ort</span><span class="o">.</span><span class="n">GraphOptimizationLevel</span><span class="o">.</span><span class="n">ORT_ENABLE_ALL</span>
-        <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="p">(</span>
-                <span class="s2">&quot;CUDAExecutionProvider&quot;</span><span class="p">,</span>
-                <span class="p">{</span>
-                    <span class="s2">&quot;device_id&quot;</span><span class="p">:</span> <span class="n">GPU_ID</span><span class="p">,</span>
-                    <span class="s2">&quot;arena_extend_strategy&quot;</span><span class="p">:</span> <span class="s2">&quot;kSameAsRequested&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;gpu_mem_limit&quot;</span><span class="p">:</span> <span class="mi">16</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">,</span>
-                    <span class="s2">&quot;cudnn_conv_algo_search&quot;</span><span class="p">:</span> <span class="s2">&quot;EXHAUSTIVE&quot;</span><span class="p">,</span>
-                    <span class="s2">&quot;do_copy_in_default_stream&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-                <span class="p">},</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-    <span class="k">elif</span> <span class="n">opts</span><span class="o">.</span><span class="n">coreml</span> <span class="ow">and</span> <span class="s2">&quot;CoreMLExecutionProvider&quot;</span> <span class="ow">in</span> <span class="n">available_providers</span><span class="p">:</span>
-        <span class="c1">#     # options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL</span>
-        <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;CoreMLExecutionProvider&quot;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">binding</span> <span class="o">=</span> <span class="kc">None</span>
-
-    <span class="n">binding</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># TODO: remove this</span>
-    <span class="n">providers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;CPUExecutionProvider&quot;</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">dtype</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">binding</span> <span class="o">=</span> <span class="n">binding</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span> <span class="o">=</span> <span class="n">ort</span><span class="o">.</span><span class="n">InferenceSession</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">providers</span><span class="o">=</span><span class="n">providers</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">active_providers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_providers</span><span class="p">()</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[onnxruntime] Active providers:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_providers</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;tensor(uint8)&quot;</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">warmup_iter</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;⏱️ [onnxruntime] Warming up model ..&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">warmup_iter</span><span class="p">):</span>
-            <span class="n">np_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">640</span><span class="p">,</span> <span class="mi">640</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-            <span class="n">input_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
-            <span class="n">out_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()]</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">binding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">io_binding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">io_binding</span><span class="p">()</span>
-                <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_input</span><span class="p">(</span>
-                    <span class="n">input_name</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">binding</span><span class="p">,</span>
-                    <span class="n">device_id</span><span class="o">=</span><span class="n">GPU_ID</span><span class="p">,</span>
-                    <span class="n">element_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                    <span class="n">shape</span><span class="o">=</span><span class="n">np_image</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
-                    <span class="n">buffer_ptr</span><span class="o">=</span><span class="n">np_image</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-                <span class="p">)</span>
-                <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_cpu_input</span><span class="p">(</span><span class="n">input_name</span><span class="p">,</span> <span class="n">np_image</span><span class="p">)</span>
-                <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_output</span><span class="p">(</span><span class="n">out_name</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">binding</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run_with_iobinding</span><span class="p">(</span><span class="n">io_binding</span><span class="p">)</span>
-                <span class="n">io_binding</span><span class="o">.</span><span class="n">copy_outputs_to_cpu</span><span class="p">()</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">out_name</span><span class="p">,</span> <span class="p">{</span><span class="n">input_name</span><span class="p">:</span> <span class="n">np_image</span><span class="p">})</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ [onnxruntime] </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> WARMUP DONE&quot;</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="focoos.runtime.ONNXRuntime.benchmark" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">benchmark</span><span class="p">(</span><span class="n">iterations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">640</span><span class="p">)</span></code>
-
-<a href="#focoos.runtime.ONNXRuntime.benchmark" class="headerlink" title="Permanent link">#</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-      <p>Benchmarks the model by running multiple inference iterations and measuring the latency.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td><code>iterations</code></td>
-            <td>
-                  <code>int</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Number of iterations to run for benchmarking. Defaults to 20.</p>
-              </div>
-            </td>
-            <td>
-                  <code>20</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td><code>size</code></td>
-            <td>
-                  <code>int</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The input image size for benchmarking. Defaults to 640.</p>
-              </div>
-            </td>
-            <td>
-                  <code>640</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-<th>Name</th>          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-<td><code>LatencyMetrics</code></td>            <td>
-                  <code><span title="focoos.ports.LatencyMetrics">LatencyMetrics</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The latency metrics (e.g., FPS, mean, min, max, and standard deviation).</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-            <details class="quote">
-              <summary>Source code in <code>focoos/runtime.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">265</span>
-<span class="normal">266</span>
-<span class="normal">267</span>
-<span class="normal">268</span>
-<span class="normal">269</span>
-<span class="normal">270</span>
-<span class="normal">271</span>
-<span class="normal">272</span>
-<span class="normal">273</span>
-<span class="normal">274</span>
-<span class="normal">275</span>
-<span class="normal">276</span>
-<span class="normal">277</span>
-<span class="normal">278</span>
-<span class="normal">279</span>
-<span class="normal">280</span>
-<span class="normal">281</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">281</span>
 <span class="normal">282</span>
 <span class="normal">283</span>
 <span class="normal">284</span>
 <span class="normal">285</span>
-<span class="normal">286</span>
-<span class="normal">287</span>
-<span class="normal">288</span>
+<span class="normal">286</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">im</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">conf_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sv</span><span class="o">.</span><span class="n">Detections</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run inference and return detections.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">torch_image</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">im</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">torch_image</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">postprocess_fn</span><span class="p">([</span><span class="n">r</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">res</span><span class="p">],</span> <span class="p">(</span><span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span> <span class="n">conf_threshold</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="focoos.runtime.TorchscriptRuntime.benchmark" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">benchmark</span><span class="p">(</span><span class="n">iterations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">640</span><span class="p">)</span></code>
+
+<a href="#focoos.runtime.TorchscriptRuntime.benchmark" class="headerlink" title="Permanent link">#</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+      <p>Benchmark model latency.</p>
+
+            <details class="quote">
+              <summary>Source code in <code>focoos/runtime.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">288</span>
 <span class="normal">289</span>
 <span class="normal">290</span>
 <span class="normal">291</span>
@@ -2454,76 +1951,33 @@ of data, as well as benchmarking the performance of the model.</p>
 <span class="normal">316</span>
 <span class="normal">317</span>
 <span class="normal">318</span>
-<span class="normal">319</span>
-<span class="normal">320</span>
-<span class="normal">321</span>
-<span class="normal">322</span>
-<span class="normal">323</span>
-<span class="normal">324</span>
-<span class="normal">325</span>
-<span class="normal">326</span>
-<span class="normal">327</span>
-<span class="normal">328</span>
-<span class="normal">329</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Benchmarks the model by running multiple inference iterations and measuring the latency.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        iterations (int, optional): Number of iterations to run for benchmarking. Defaults to 20.</span>
-<span class="sd">        size (int, optional): The input image size for benchmarking. Defaults to 640.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        LatencyMetrics: The latency metrics (e.g., FPS, mean, min, max, and standard deviation).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;⏱️ [onnxruntime] Benchmarking latency..&quot;</span><span class="p">)</span>
+<span class="normal">319</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Benchmark model latency.&quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;⏱️ [torchscript] Benchmarking latency..&quot;</span><span class="p">)</span>
     <span class="n">size</span> <span class="o">=</span> <span class="n">size</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">))</span> <span class="k">else</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
 
+    <span class="n">torch_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
     <span class="n">durations</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">np_input</span> <span class="o">=</span> <span class="p">(</span><span class="mi">255</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="n">input_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
-    <span class="n">out_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">binding</span><span class="p">:</span>
-        <span class="n">io_binding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">io_binding</span><span class="p">()</span>
 
-        <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_input</span><span class="p">(</span>
-            <span class="n">input_name</span><span class="p">,</span>
-            <span class="s2">&quot;cuda&quot;</span><span class="p">,</span>
-            <span class="n">device_id</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-            <span class="n">element_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-            <span class="n">shape</span><span class="o">=</span><span class="n">np_input</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
-            <span class="n">buffer_ptr</span><span class="o">=</span><span class="n">np_input</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_cpu_input</span><span class="p">(</span><span class="n">input_name</span><span class="p">,</span> <span class="n">np_input</span><span class="p">)</span>
-        <span class="n">io_binding</span><span class="o">.</span><span class="n">bind_output</span><span class="p">(</span><span class="n">out_name</span><span class="p">,</span> <span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">out_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()]</span>
-
-    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span> <span class="o">+</span> <span class="mi">5</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">binding</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span> <span class="o">+</span> <span class="mi">5</span><span class="p">):</span>
             <span class="n">start</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run_with_iobinding</span><span class="p">(</span><span class="n">io_binding</span><span class="p">)</span>
-            <span class="n">end</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">start</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">out_name</span><span class="p">,</span> <span class="p">{</span><span class="n">input_name</span><span class="p">:</span> <span class="n">np_input</span><span class="p">})</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">torch_input</span><span class="p">)</span>
             <span class="n">end</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="n">step</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>
-            <span class="n">durations</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">step</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>  <span class="c1"># Skip first 5 iterations</span>
+                <span class="n">durations</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+
     <span class="n">durations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span>
-    <span class="n">provider</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_providers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">provider</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;CUDAExecutionProvider&quot;</span><span class="p">,</span> <span class="s2">&quot;TensorrtExecutionProvider&quot;</span><span class="p">]:</span>
-        <span class="n">device</span> <span class="o">=</span> <span class="n">get_gpu_name</span><span class="p">()</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">device</span> <span class="o">=</span> <span class="n">get_cpu_name</span><span class="p">()</span>
+    <span class="n">device</span> <span class="o">=</span> <span class="n">get_gpu_name</span><span class="p">()</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="n">get_cpu_name</span><span class="p">()</span>
+
     <span class="n">metrics</span> <span class="o">=</span> <span class="n">LatencyMetrics</span><span class="p">(</span>
-        <span class="n">fps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mi">1000</span> <span class="o">/</span> <span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
-        <span class="n">engine</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;onnx.</span><span class="si">{</span><span class="n">provider</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="n">mean</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="nb">max</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="nb">min</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="n">std</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">std</span><span class="p">(),</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">fps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mi">1000</span> <span class="o">/</span> <span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)),</span>
+        <span class="n">engine</span><span class="o">=</span><span class="s2">&quot;torchscript&quot;</span><span class="p">,</span>
+        <span class="n">mean</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="nb">max</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="nb">min</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">std</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
         <span class="n">im_size</span><span class="o">=</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
         <span class="n">device</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">device</span><span class="p">),</span>
     <span class="p">)</span>
@@ -2640,29 +2094,29 @@ based on a confidence threshold.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/runtime.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">39</span>
-<span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span>
-<span class="normal">52</span>
-<span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">58</span>
 <span class="normal">59</span>
 <span class="normal">60</span>
-<span class="normal">61</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">det_postprocess</span><span class="p">(</span><span class="n">out</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">im0_shape</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">conf_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sv</span><span class="o">.</span><span class="n">Detections</span><span class="p">:</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">det_postprocess</span><span class="p">(</span><span class="n">out</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">im0_shape</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">conf_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sv</span><span class="o">.</span><span class="n">Detections</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Postprocesses the output of an object detection model and filters detections</span>
 <span class="sd">    based on a confidence threshold.</span>
@@ -2694,16 +2148,16 @@ based on a confidence threshold.</p>
 <div class="doc doc-object doc-function">
 
 
-<h2 id="focoos.runtime.get_runtime" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_runtime</span><span class="p">(</span><span class="n">runtime_type</span><span class="p">,</span> <span class="n">model_path</span><span class="p">,</span> <span class="n">model_metadata</span><span class="p">,</span> <span class="n">warmup_iter</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
+<h2 id="focoos.runtime.load_runtime" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">load_runtime</span><span class="p">(</span><span class="n">runtime_type</span><span class="p">,</span> <span class="n">model_path</span><span class="p">,</span> <span class="n">model_metadata</span><span class="p">,</span> <span class="n">warmup_iter</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></code>
 
-<a href="#focoos.runtime.get_runtime" class="headerlink" title="Permanent link">#</a></h2>
+<a href="#focoos.runtime.load_runtime" class="headerlink" title="Permanent link">#</a></h2>
 
 
     <div class="doc doc-contents ">
 
-      <p>Creates and returns an ONNXRuntime instance based on the specified runtime type
-and model path, with options for various execution providers (CUDA, TensorRT, CPU, etc.).</p>
+      <p>Creates and returns a runtime instance based on the specified runtime type.
+Supports both ONNX and TorchScript runtimes with various execution providers.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2724,7 +2178,13 @@ and model path, with options for various execution providers (CUDA, TensorRT, CP
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The type of runtime to use (e.g., ONNX_CUDA32, ONNX_TRT32).</p>
+                <p>The type of runtime to use. Can be one of:
+- ONNX_CUDA32: ONNX runtime with CUDA FP32
+- ONNX_TRT32: ONNX runtime with TensorRT FP32
+- ONNX_TRT16: ONNX runtime with TensorRT FP16
+- ONNX_CPU: ONNX runtime with CPU
+- ONNX_COREML: ONNX runtime with CoreML
+- TORCHSCRIPT_32: TorchScript runtime with FP32</p>
               </div>
             </td>
             <td>
@@ -2738,7 +2198,7 @@ and model path, with options for various execution providers (CUDA, TensorRT, CP
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The path to the ONNX model.</p>
+                <p>Path to the model file (.onnx or .pt)</p>
               </div>
             </td>
             <td>
@@ -2752,7 +2212,7 @@ and model path, with options for various execution providers (CUDA, TensorRT, CP
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Metadata describing the model.</p>
+                <p>Model metadata containing task type, classes etc.</p>
               </div>
             </td>
             <td>
@@ -2766,7 +2226,7 @@ and model path, with options for various execution providers (CUDA, TensorRT, CP
             </td>
             <td>
               <div class="doc-md-description">
-                <p>Number of warmup iterations before benchmarking. Defaults to 0.</p>
+                <p>Number of warmup iterations before inference. Defaults to 0.</p>
               </div>
             </td>
             <td>
@@ -2787,12 +2247,35 @@ and model path, with options for various execution providers (CUDA, TensorRT, CP
       </thead>
       <tbody>
           <tr class="doc-section-item">
-<td><code>ONNXRuntime</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="focoos.runtime.ONNXRuntime" href="#focoos.runtime.ONNXRuntime">ONNXRuntime</a></code>
+<td><code>BaseRuntime</code></td>            <td>
+                  <code><span title="focoos.runtime.BaseRuntime">BaseRuntime</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>A fully configured ONNXRuntime instance.</p>
+                <p>A configured runtime instance (ONNXRuntime or TorchscriptRuntime)</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>ImportError</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If required dependencies (torch/onnxruntime) are not installed</p>
               </div>
             </td>
           </tr>
@@ -2801,7 +2284,17 @@ and model path, with options for various execution providers (CUDA, TensorRT, CP
 
             <details class="quote">
               <summary>Source code in <code>focoos/runtime.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">332</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
 <span class="normal">333</span>
 <span class="normal">334</span>
 <span class="normal">335</span>
@@ -2828,33 +2321,61 @@ and model path, with options for various execution providers (CUDA, TensorRT, CP
 <span class="normal">356</span>
 <span class="normal">357</span>
 <span class="normal">358</span>
-<span class="normal">359</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_runtime</span><span class="p">(</span>
+<span class="normal">359</span>
+<span class="normal">360</span>
+<span class="normal">361</span>
+<span class="normal">362</span>
+<span class="normal">363</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_runtime</span><span class="p">(</span>
     <span class="n">runtime_type</span><span class="p">:</span> <span class="n">RuntimeTypes</span><span class="p">,</span>
     <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">model_metadata</span><span class="p">:</span> <span class="n">ModelMetadata</span><span class="p">,</span>
     <span class="n">warmup_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ONNXRuntime</span><span class="p">:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseRuntime</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Creates and returns an ONNXRuntime instance based on the specified runtime type</span>
-<span class="sd">    and model path, with options for various execution providers (CUDA, TensorRT, CPU, etc.).</span>
+<span class="sd">    Creates and returns a runtime instance based on the specified runtime type.</span>
+<span class="sd">    Supports both ONNX and TorchScript runtimes with various execution providers.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        runtime_type (RuntimeTypes): The type of runtime to use (e.g., ONNX_CUDA32, ONNX_TRT32).</span>
-<span class="sd">        model_path (str): The path to the ONNX model.</span>
-<span class="sd">        model_metadata (ModelMetadata): Metadata describing the model.</span>
-<span class="sd">        warmup_iter (int, optional): Number of warmup iterations before benchmarking. Defaults to 0.</span>
+<span class="sd">        runtime_type (RuntimeTypes): The type of runtime to use. Can be one of:</span>
+<span class="sd">            - ONNX_CUDA32: ONNX runtime with CUDA FP32</span>
+<span class="sd">            - ONNX_TRT32: ONNX runtime with TensorRT FP32</span>
+<span class="sd">            - ONNX_TRT16: ONNX runtime with TensorRT FP16</span>
+<span class="sd">            - ONNX_CPU: ONNX runtime with CPU</span>
+<span class="sd">            - ONNX_COREML: ONNX runtime with CoreML</span>
+<span class="sd">            - TORCHSCRIPT_32: TorchScript runtime with FP32</span>
+<span class="sd">        model_path (str): Path to the model file (.onnx or .pt)</span>
+<span class="sd">        model_metadata (ModelMetadata): Model metadata containing task type, classes etc.</span>
+<span class="sd">        warmup_iter (int, optional): Number of warmup iterations before inference. Defaults to 0.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        ONNXRuntime: A fully configured ONNXRuntime instance.</span>
+<span class="sd">        BaseRuntime: A configured runtime instance (ONNXRuntime or TorchscriptRuntime)</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ImportError: If required dependencies (torch/onnxruntime) are not installed</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">opts</span> <span class="o">=</span> <span class="n">OnnxEngineOpts</span><span class="p">(</span>
-        <span class="n">cuda</span><span class="o">=</span><span class="n">runtime_type</span> <span class="o">==</span> <span class="n">RuntimeTypes</span><span class="o">.</span><span class="n">ONNX_CUDA32</span><span class="p">,</span>
-        <span class="n">trt</span><span class="o">=</span><span class="n">runtime_type</span> <span class="ow">in</span> <span class="p">[</span><span class="n">RuntimeTypes</span><span class="o">.</span><span class="n">ONNX_TRT32</span><span class="p">,</span> <span class="n">RuntimeTypes</span><span class="o">.</span><span class="n">ONNX_TRT16</span><span class="p">],</span>
-        <span class="n">fp16</span><span class="o">=</span><span class="n">runtime_type</span> <span class="o">==</span> <span class="n">RuntimeTypes</span><span class="o">.</span><span class="n">ONNX_TRT16</span><span class="p">,</span>
-        <span class="n">warmup_iter</span><span class="o">=</span><span class="n">warmup_iter</span><span class="p">,</span>
-        <span class="n">coreml</span><span class="o">=</span><span class="n">runtime_type</span> <span class="o">==</span> <span class="n">RuntimeTypes</span><span class="o">.</span><span class="n">ONNX_COREML</span><span class="p">,</span>
-        <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">runtime_type</span> <span class="o">==</span> <span class="n">RuntimeTypes</span><span class="o">.</span><span class="n">TORCHSCRIPT_32</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">TORCH_AVAILABLE</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;⚠️ Pytorch not found =(  please install focoos with [&#39;torch&#39;] extra&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;Pytorch not found&quot;</span><span class="p">)</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="n">TorchscriptRuntimeOpts</span><span class="p">(</span><span class="n">warmup_iter</span><span class="o">=</span><span class="n">warmup_iter</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">TorchscriptRuntime</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">opts</span><span class="p">,</span> <span class="n">model_metadata</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ORT_AVAILABLE</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;⚠️ onnxruntime not found =(  please install focoos with [&#39;onnx&#39;] extra&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;onnxruntime not found&quot;</span><span class="p">)</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="n">OnnxRuntimeOpts</span><span class="p">(</span>
+            <span class="n">cuda</span><span class="o">=</span><span class="n">runtime_type</span> <span class="o">==</span> <span class="n">RuntimeTypes</span><span class="o">.</span><span class="n">ONNX_CUDA32</span><span class="p">,</span>
+            <span class="n">trt</span><span class="o">=</span><span class="n">runtime_type</span> <span class="ow">in</span> <span class="p">[</span><span class="n">RuntimeTypes</span><span class="o">.</span><span class="n">ONNX_TRT32</span><span class="p">,</span> <span class="n">RuntimeTypes</span><span class="o">.</span><span class="n">ONNX_TRT16</span><span class="p">],</span>
+            <span class="n">fp16</span><span class="o">=</span><span class="n">runtime_type</span> <span class="o">==</span> <span class="n">RuntimeTypes</span><span class="o">.</span><span class="n">ONNX_TRT16</span><span class="p">,</span>
+            <span class="n">warmup_iter</span><span class="o">=</span><span class="n">warmup_iter</span><span class="p">,</span>
+            <span class="n">coreml</span><span class="o">=</span><span class="n">runtime_type</span> <span class="o">==</span> <span class="n">RuntimeTypes</span><span class="o">.</span><span class="n">ONNX_COREML</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="k">return</span> <span class="n">ONNXRuntime</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">opts</span><span class="p">,</span> <span class="n">model_metadata</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -2903,20 +2424,6 @@ on a confidence threshold.</p>
             </td>
           </tr>
           <tr class="doc-section-item">
-            <td><code>im0_shape</code></td>
-            <td>
-                  <code><span title="typing.Tuple">Tuple</span>[int, int]</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The original shape of the input image (height, width).</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
             <td><code>conf_threshold</code></td>
             <td>
                   <code>float</code>
@@ -2958,39 +2465,37 @@ on a confidence threshold.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/runtime.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">64</span>
-<span class="normal">65</span>
-<span class="normal">66</span>
-<span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span>
-<span class="normal">73</span>
-<span class="normal">74</span>
-<span class="normal">75</span>
-<span class="normal">76</span>
-<span class="normal">77</span>
-<span class="normal">78</span>
-<span class="normal">79</span>
-<span class="normal">80</span>
-<span class="normal">81</span>
-<span class="normal">82</span>
-<span class="normal">83</span>
-<span class="normal">84</span>
-<span class="normal">85</span>
-<span class="normal">86</span>
-<span class="normal">87</span>
-<span class="normal">88</span>
-<span class="normal">89</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">semseg_postprocess</span><span class="p">(</span><span class="n">out</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">im0_shape</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">conf_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sv</span><span class="o">.</span><span class="n">Detections</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">semseg_postprocess</span><span class="p">(</span><span class="n">out</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">im0_shape</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">conf_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sv</span><span class="o">.</span><span class="n">Detections</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Postprocesses the output of a semantic segmentation model and filters based</span>
 <span class="sd">    on a confidence threshold.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        out (List[np.ndarray]): The output of the semantic segmentation model.</span>
-<span class="sd">        im0_shape (Tuple[int, int]): The original shape of the input image (height, width).</span>
 <span class="sd">        conf_threshold (float): The confidence threshold for filtering detections.</span>
 
 <span class="sd">    Returns:</span>
