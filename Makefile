@@ -10,7 +10,7 @@ venv:
 	@uv venv --python=python3.12
 
 install: .uv .pre-commit
-	@uv pip install -e ".[dev]" --no-cache-dir
+	@uv pip install -e ".[cuda,dev]" --no-cache-dir
 	@pre-commit install
 
 install-gpu: .uv .pre-commit

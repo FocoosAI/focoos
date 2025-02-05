@@ -7,7 +7,7 @@ RUN apt-get update && \
 WORKDIR /app
 COPY focoos ./focoos
 COPY pyproject.toml ./pyproject.toml
-RUN uv pip install --system -e .
+RUN uv pip install --system -e .[cpu]
 
 
 FROM ghcr.io/focoosai/deeplearning:base-cu12-cudnn9-py312-uv AS focoos-cuda

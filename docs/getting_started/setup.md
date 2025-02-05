@@ -4,8 +4,9 @@ Focoos models support multiple inference runtimes.
 To keep the library lightweight and to allow users to use their environment, optional dependencies (e.g., torch, onnxruntime, tensorrt) are not installed by default.
 Foocoos is shipped with the following extras dependencies:
 
-- `[torch]`: torchscript CUDA
+- `[cpu]`: onnxruntime CPU
 - `[cuda]`: onnxruntime CUDA
+- `[torch]`: torchscript CUDA
 - `[tensorrt]`: onnxruntime TensorRT
 
 !!! note
@@ -40,7 +41,7 @@ source .venv/bin/activate
 If you plan to run the SDK on a CPU-only environment:
 
 ```bash linenums="0"
-pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
+pip install 'focoos[cpu] @ git+https://github.com/FocoosAI/focoos.git'
 ```
 
 * NVIDIA GPU Environment (torchscript)

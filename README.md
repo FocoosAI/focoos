@@ -50,7 +50,7 @@ Foocoos is shipped with the following extras dependencies:
 ## CPU only or Remote Usage
 
 ```bash
-uv pip install focoos git+https://github.com/FocoosAI/focoos.git
+uv pip install focoos[cpu] git+https://github.com/FocoosAI/focoos.git
 ```
 
 ## GPU Runtimes
@@ -60,11 +60,7 @@ uv pip install focoos[torch] git+https://github.com/FocoosAI/focoos.git
 ```
 
 ### OnnxRuntime CUDA
-ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
-
-```bash
-apt-get -y install cudnn9-cuda-12
-```
+-
 
 ```bash
 uv pip install focoos[cuda] git+https://github.com/FocoosAI/focoos.gi
