@@ -42,6 +42,20 @@ nav:
   - How to:
       - Cloud Training: how_to/cloud_training.md
       - Inference: how_to/inference.md
+  - Focoos Models:
+      - Overview: models.md
+      - Semantic segmentation:
+        - fai-m2f-l-ade: models/fai-m2f-l-ade.md
+        - fai-m2f-m-ade: models/fai-m2f-m-ade.md
+        - fai-m2f-s-ade: models/fai-m2f-s-ade.md
+      - Object detection:
+        - fai-rtdetr-l-coco: models/fai-rtdetr-l-coco.md
+        - fai-rtdetr-m-coco: models/fai-rtdetr-m-coco.md
+        - fai-rtdetr-s-coco: models/fai-rtdetr-s-coco.md
+        - fai-rtdetr-n-coco: models/fai-rtdetr-n-coco.md
+        - fai-rtdetr-m-obj365: models/fai-rtdetr-m-obj365.md
+      - Instance_segmentation:
+        - fai-m2f-l-coco-ins: models/fai-m2f-l-coco-ins.md
   - API Reference:
       - focoos: api/focoos.md
       - remote model: api/remote_model.md
