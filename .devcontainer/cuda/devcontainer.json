@@ -1,0 +1,79 @@
+{
+    "name": "Focoos GPU (OnnxRuntime, CUDA)",
+    "build": {
+        "target": "focoos-cuda",
+        "context": "../..",
+        "dockerfile": "../../Dockerfile",
+    },
+    "shutdownAction": "none",
+    "remoteUser": "root",
+    "hostRequirements": {
+        "gpu": "optional"
+    },
+    "workspaceFolder": "${localWorkspaceFolder}",
+    "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
+    "postCreateCommand": "uv pip install -e .[cuda,dev]",
+    "remoteEnv": {
+        "UV_SYSTEM_PYTHON": "true"
+    },
+    "runArgs": [
+        "--gpus=all",
+        "--ipc=host",
+        "--runtime=nvidia",
+        "--ulimit=memlock=-1",
+        "--ulimit=stack=67108864",
+        "--privileged"
+    ],
+    "postStartCommand": [
+        "nvidia-smi"
+    ],
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": "true",
+            "configureZshAsDefaultShell": "true",
+            "username": "vscode",
+            "userUid": "1000",
+            "userGid": "1000",
+            "upgradePackages": "true"
+        },
+        // git
+        "ghcr.io/devcontainers/features/git:1": {
+            "version": "os-provided",
+            "ppa": "false"
+        },
+        "ghcr.io/iterative/features/nvtop:1": {},
+    },
+    "customizations": {
+        "devpod": {
+            "podManifestTemplate": ".devcontainer/pod_manifest.yaml"
+        },
+        "vscode": {
+            "settings": {
+                "terminal.integrated.shell.linux": "/bin/bash",
+                "python.terminal.activateEnvInCurrentTerminal": true,
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-azuretools.vscode-docker",
+                "ms-toolsai.jupyter",
+                "ms-python.python",
+                "vscode.git",
+                "ms-azuretools.vscode-docker",
+                "vscode.ipynb",
+                "waderyan.gitblame",
+                "michelemelluso.gitignore",
+                "amazonwebservices.aws-toolkit-vscode",
+                "naumovs.color-highlight",
+                "mindaro-dev.file-downloader",
+                "donjayamanne.githistory",
+                "github.vscode-github-actions",
+                "seatonjiang.gitmoji-vscode",
+                "ms-vscode.remote-repositories",
+                "donjayamanne.python-environment-manager",
+                "ninoseki.vscode-pylens",
+                "ninoseki.vscode-mogami",
+                "charliermarsh.ruff"
+            ]
+        }
+    }
+}

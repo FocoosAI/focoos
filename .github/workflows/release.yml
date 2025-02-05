@@ -41,7 +41,7 @@ jobs:
           name: Release ${{ steps.get_next_version.outputs.new_tag }}
           body: ${{ steps.get_next_version.outputs.changelog }}
           generateReleaseNotes: true
-          commit: ${{ steps.commit_step.outputs.commit_sha }}
+          commit: ${{ steps.commit_step.outputs.commit_hash }}
 
   mkdocs:
     runs-on: ubuntu-22.04

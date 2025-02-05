@@ -5,6 +5,8 @@ from pytest_mock import MockerFixture
 from focoos.ports import (
     GPUInfo,
     Hyperparameters,
+    ModelFormat,
+    RuntimeTypes,
     SystemInfo,
 )
 
@@ -54,6 +56,7 @@ def test_pretty_print_with_gpus_info(mocker: MockerFixture):
         gpu_cuda_version="11.2",
         packages_versions={"pytest": "6.2.4", "pydantic": "1.8.2"},
         gpus_info=[gpu_info],
+        environment={"FOCOOS_LOG_LEVEL": "DEBUG", "LD_LIBRARY_PATH": "/usr/local/cuda/lib64"},
     )
 
     mock_print = mocker.patch("builtins.print")
@@ -84,6 +87,9 @@ def test_pretty_print_with_gpus_info(mocker: MockerFixture):
         "    - gpu-memory-used-percentage: 70.0",
         "    - gpu-temperature: 65.0",
         "    - gpu-load-percentage: 80.0",
+        "environment:",
+        "  - LD_LIBRARY_PATH: /usr/local/cuda/lib64",
+        "  - FOCOOS_LOG_LEVEL: DEBUG",
         "================================================",
     ]
 
@@ -92,3 +98,25 @@ def test_pretty_print_with_gpus_info(mocker: MockerFixture):
     # Validate that all expected calls were made
     for call in expected_calls:
         mock_print.assert_any_call(call)
+
+
+@pytest.mark.parametrize(
+    "runtime_type,expected_format",
+    [
+        (RuntimeTypes.ONNX_CUDA32, ModelFormat.ONNX),
+        (RuntimeTypes.ONNX_TRT32, ModelFormat.ONNX),
+        (RuntimeTypes.ONNX_TRT16, ModelFormat.ONNX),
+        (RuntimeTypes.ONNX_CPU, ModelFormat.ONNX),
+        (RuntimeTypes.ONNX_COREML, ModelFormat.ONNX),
+        (RuntimeTypes.TORCHSCRIPT_32, ModelFormat.TORCHSCRIPT),
+    ],
+)
+def test_model_format_from_runtime_type(runtime_type, expected_format):
+    """Test that from_runtime_type returns correct ModelFormat for each RuntimeType"""
+    assert ModelFormat.from_runtime_type(runtime_type) == expected_format
+
+
+def test_model_format_from_runtime_type_invalid():
+    """Test that from_runtime_type raises ValueError for invalid runtime type"""
+    with pytest.raises(ValueError, match="Invalid runtime type:.*"):
+        ModelFormat.from_runtime_type("invalid_runtime")

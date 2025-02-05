@@ -190,7 +190,7 @@ class FocoosDetections(FocoosBaseModel):
 
 
 @dataclass
-class OnnxEngineOpts:
+class OnnxRuntimeOpts:
     fp16: Optional[bool] = False
     cuda: Optional[bool] = False
     vino: Optional[bool] = False
@@ -198,6 +198,13 @@ class OnnxEngineOpts:
     trt: Optional[bool] = False
     coreml: Optional[bool] = False
     warmup_iter: int = 0
+
+
+@dataclass
+class TorchscriptRuntimeOpts:
+    warmup_iter: int = 0
+    optimize_for_inference: bool = True
+    set_fusion_strategy: bool = True
 
 
 @dataclass
@@ -218,6 +225,27 @@ class RuntimeTypes(str, Enum):
     ONNX_TRT16 = "onnx_trt16"
     ONNX_CPU = "onnx_cpu"
     ONNX_COREML = "onnx_coreml"
+    TORCHSCRIPT_32 = "torchscript_32"
+
+
+class ModelFormat(str, Enum):
+    ONNX = "onnx"
+    TORCHSCRIPT = "pt"
+
+    @classmethod
+    def from_runtime_type(cls, runtime_type: RuntimeTypes):
+        if runtime_type in [
+            RuntimeTypes.ONNX_CUDA32,
+            RuntimeTypes.ONNX_TRT32,
+            RuntimeTypes.ONNX_TRT16,
+            RuntimeTypes.ONNX_CPU,
+            RuntimeTypes.ONNX_COREML,
+        ]:
+            return cls.ONNX
+        elif runtime_type == RuntimeTypes.TORCHSCRIPT_32:
+            return cls.TORCHSCRIPT
+        else:
+            raise ValueError(f"Invalid runtime type: {runtime_type}")
 
 
 class GPUInfo(FocoosBaseModel):
@@ -245,6 +273,7 @@ class SystemInfo(FocoosBaseModel):
     gpu_cuda_version: Optional[str] = None
     gpus_info: Optional[list[GPUInfo]] = None
     packages_versions: Optional[dict[str, str]] = None
+    environment: Optional[dict[str, str]] = None
 
     def pretty_print(self):
         print("================ SYSTEM INFO ====================")
@@ -265,6 +294,10 @@ class SystemInfo(FocoosBaseModel):
                 print(f"{key}:")
                 for pkg_name, pkg_version in value.items():
                     print(f"  - {pkg_name}: {pkg_version}")
+            elif isinstance(value, dict) and key == "environment":  # Special formatting for environment
+                print(f"{key}:")
+                for env_key, env_value in value.items():
+                    print(f"  - {env_key}: {env_value}")
             else:
                 print(f"{key}: {value}")
         print("================================================")

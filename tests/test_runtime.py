@@ -5,8 +5,8 @@ import numpy as np
 import pytest
 from pytest_mock import MockerFixture
 
-from focoos.ports import ModelMetadata, OnnxEngineOpts, RuntimeTypes
-from focoos.runtime import ONNXRuntime, det_postprocess, get_runtime, semseg_postprocess
+from focoos.ports import ModelMetadata, OnnxRuntimeOpts, RuntimeTypes, TorchscriptRuntimeOpts
+from focoos.runtime import ONNXRuntime, TorchscriptRuntime, det_postprocess, load_runtime, semseg_postprocess
 
 
 def test_det_post_process():
@@ -78,7 +78,7 @@ def test_semseg_postprocess():
     [
         (
             RuntimeTypes.ONNX_CUDA32,
-            OnnxEngineOpts(
+            OnnxRuntimeOpts(
                 cuda=True,
                 trt=False,
                 fp16=False,
@@ -89,7 +89,7 @@ def test_semseg_postprocess():
         ),
         (
             RuntimeTypes.ONNX_TRT32,
-            OnnxEngineOpts(
+            OnnxRuntimeOpts(
                 cuda=False,
                 trt=True,
                 fp16=False,
@@ -100,7 +100,7 @@ def test_semseg_postprocess():
         ),
         (
             RuntimeTypes.ONNX_TRT16,
-            OnnxEngineOpts(
+            OnnxRuntimeOpts(
                 cuda=False,
                 trt=True,
                 fp16=True,
@@ -111,7 +111,7 @@ def test_semseg_postprocess():
         ),
         (
             RuntimeTypes.ONNX_CPU,
-            OnnxEngineOpts(
+            OnnxRuntimeOpts(
                 cuda=False,
                 trt=False,
                 fp16=False,
@@ -122,7 +122,7 @@ def test_semseg_postprocess():
         ),
         (
             RuntimeTypes.ONNX_COREML,
-            OnnxEngineOpts(
+            OnnxRuntimeOpts(
                 cuda=False,
                 trt=False,
                 fp16=False,
@@ -131,9 +131,17 @@ def test_semseg_postprocess():
                 warmup_iter=2,
             ),
         ),
+        (
+            RuntimeTypes.TORCHSCRIPT_32,
+            TorchscriptRuntimeOpts(
+                warmup_iter=2,
+                optimize_for_inference=True,
+                set_fusion_strategy=True,
+            ),
+        ),
     ],
 )
-def test_get_run_time(mocker: MockerFixture, tmp_path, runtime_type, expected_opts):
+def test_load_runtime(mocker: MockerFixture, tmp_path, runtime_type, expected_opts):
     # mock model path
     model_path = pathlib.Path(tmp_path) / "fakeref" / "model.onnx"
     model_path.parent.mkdir(parents=True, exist_ok=True)
@@ -144,14 +152,20 @@ def test_get_run_time(mocker: MockerFixture, tmp_path, runtime_type, expected_op
     mock_model_metadata = MagicMock(spec=ModelMetadata)
 
     # mock opts
-    mock_onnxruntime_class = mocker.patch("focoos.runtime.ONNXRuntime", autospec=True)
-    mock_onnxruntime_class.return_value = MagicMock(spec=ONNXRuntime, opts=expected_opts)
+    if runtime_type == RuntimeTypes.TORCHSCRIPT_32:
+        mocker.patch("focoos.runtime.TORCH_AVAILABLE", True)
+        mock_runtime_class = mocker.patch("focoos.runtime.TorchscriptRuntime", autospec=True)
+        mock_runtime_class.return_value = MagicMock(spec=TorchscriptRuntime, opts=expected_opts)
+    else:
+        mocker.patch("focoos.runtime.ORT_AVAILABLE", True)
+        mock_runtime_class = mocker.patch("focoos.runtime.ONNXRuntime", autospec=True)
+        mock_runtime_class.return_value = MagicMock(spec=ONNXRuntime, opts=expected_opts)
 
     # warmup_iter
     warmup_iter = 2
 
     # call the function to test
-    onnx_runtime = get_runtime(
+    runtime = load_runtime(
         runtime_type=runtime_type,
         model_path=model_path,
         model_metadata=mock_model_metadata,
@@ -159,9 +173,18 @@ def test_get_run_time(mocker: MockerFixture, tmp_path, runtime_type, expected_op
     )
 
     # assertions
-    assert onnx_runtime is not None
-    mock_onnxruntime_class.assert_called_once_with(
+    assert runtime is not None
+    mock_runtime_class.assert_called_once_with(
         model_path,
         expected_opts,
         mock_model_metadata,
     )
+
+
+def test_load_unavailable_runtime(mocker: MockerFixture):
+    mocker.patch("focoos.runtime.ORT_AVAILABLE", False)
+    mocker.patch("focoos.runtime.TORCH_AVAILABLE", False)
+    with pytest.raises(ImportError):
+        load_runtime(RuntimeTypes.TORCHSCRIPT_32, "fake_model_path", MagicMock(spec=ModelMetadata), 2)
+    with pytest.raises(ImportError):
+        load_runtime(RuntimeTypes.ONNX_CUDA32, "fake_model_path", MagicMock(spec=ModelMetadata), 2)
