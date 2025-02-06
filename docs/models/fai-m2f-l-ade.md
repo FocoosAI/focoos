@@ -30,6 +30,7 @@ Differently from traditional segmentation models (such as [DeepLab](https://arxi
 The [Mask2Former](https://arxiv.org/abs/2112.01527) FocoosAI implementation optimize the original neural network architecture for improving the model's efficiency and performance. The original model is fully described in this [paper](https://arxiv.org/abs/2112.01527).
 
 Mask2Former is a hybrid model that uses three main components: a *backbone* for extracting features, a *pixel decoder* for upscaling the features, and a *transformer-based decoder* for generating the segmentation output.
+
 ![alt text](./mask2former.png)
 
 In this implementation:

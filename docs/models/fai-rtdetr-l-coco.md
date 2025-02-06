@@ -15,6 +15,7 @@ The model is based on the [RT-DETR](https://github.com/lyuwenyu/RT-DETR) archite
 This implementation is a reimplementation of the [RT-DETR](https://github.com/lyuwenyu/RT-DETR) model by [FocoosAI](https://focoos.ai). The original model is fully described in this [paper](https://arxiv.org/abs/2304.08069).
 
 RT-DETR is a hybrid model that uses three main components: a *backbone* for extracting features, an *encoder* for upscaling the features, and a *transformer-based decoder* for generating the detection output.
+
 ![alt text](./rt-detr.png)
 
 In this implementation:

@@ -15,6 +15,7 @@ The model is based on the [RT-DETR](https://github.com/lyuwenyu/RT-DETR) archite
 The [RT-DETR](https://github.com/lyuwenyu/RT-DETR) FocoosAI implementation optimize the original neural network architecture for improving the model's efficiency and performance. The original model is fully described in this [paper](https://arxiv.org/abs/2304.08069).
 
 RT-DETR is a hybrid model that uses three main components: a *backbone* for extracting features, an *encoder* for upscaling the features, and a *transformer-based decoder* for generating the detection output.
+
 ![alt text](./rt-detr.png)
 
 In this implementation:

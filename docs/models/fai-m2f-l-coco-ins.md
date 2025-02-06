@@ -1,24 +1,23 @@
 # fai-m2f-l-coco-ins
 
 ## Overview
-<!-- The models is a [Mask2Former](https://github.com/facebookresearch/Mask2Former) model otimized by [FocoosAI](https://focoos.ai) for the [ADE20K dataset](https://groups.csail.mit.edu/vision/datasets/ADE20K/). It is a semantic segmentation model able to segment 150 classes, comprising both stuff (sky, road, etc.) and thing (dog, cat, car, etc.). -->
-
+The models is a [Mask2Former](https://github.com/facebookresearch/Mask2Former) model otimized by [FocoosAI](https://focoos.ai) for the [COCO dataset](https://cocodataset.org/#home). It is an instance segmentation model able to segment 80 thing (dog, cat, car, etc.) classes.
 
 ## Model Details
-The model is based on the [Mask2Former](https://github.com/facebookresearch/Mask2Former) architecture. It is a segmentation model that uses a transformer-based encoder-decoder architecture.
-Differently from traditional segmentation models (such as [DeepLab](https://arxiv.org/abs/1802.02611)), Mask2Former uses a mask-classification approach, where the prediction is made by a set of segmentation mask with associated class probabilities.
+The model is based on the [Mask2Former](https://github.com/facebookresearch/Mask2Former) architecture. It is a segmentation model that uses a mask-classification approach and a transformer-based encoder-decoder architecture.
 
 ### Neural Network Architecture
 The [Mask2Former](https://arxiv.org/abs/2112.01527) FocoosAI implementation optimize the original neural network architecture for improving the model's efficiency and performance. The original model is fully described in this [paper](https://arxiv.org/abs/2112.01527).
 
 Mask2Former is a hybrid model that uses three main components: a *backbone* for extracting features, a *pixel decoder* for upscaling the features, and a *transformer-based decoder* for generating the segmentation output.
+
 ![alt text](./mask2former.png)
 
 In this implementation:
 
-- the backbone is [STDC-2](https://github.com/MichaelFan01/STDC-Seg) that show an amazing trade-off between performance and efficiency.
-- the pixel decoder is a [FPN](https://arxiv.org/abs/1612.03144) getting the features from the stage 2 (1/4 resolution), 3 (1/8 resolution), 4 (1/16 resolution) and 5 (1/32 resolution) of the backbone. Differently from the original paper, for the sake of portability, we removed the deformable attention modules in the pixel decoder, speeding up the inference while only marginally affecting the accuracy.
-- the transformer decoder is a lighter version of the original, having only 3 decoder layers (instead of 9) and 100 learnable queries.
+- the backbone is [Resnet-50](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py) that show an amazing trade-off between performance and efficiency.
+- the pixel decoder is a transformer-augmented [FPN](https://arxiv.org/abs/1612.03144). It gets the features from the stage 2 (1/4 resolution), 3 (1/8 resolution), 4 (1/16 resolution) and 5 (1/32 resolution) of the backbone. It first uses a transformer encoder to process the features at the lowest resolution (stage 5) and then uses a feature pyramid network to upsample the features. This part is different from the original implementation using deformable attention modules.
+- the transformer decoder is implemented as in the original paper, having 9 decoder layers and 100 learnable queries.
 
 ### Losses
 We use the same losses as the original paper:
@@ -43,7 +42,7 @@ After the post-processing, the output is a [Focoos Detections](https://github.co
 
 
 ## Classes
-The model is pretrained on the [ADE20K dataset](https://groups.csail.mit.edu/vision/datasets/ADE20K/) with 150 classes.
+The model is pretrained on the [COCO dataset](https://cocodataset.org/#home) with 80 classes.
 
 <div class="class-table" markdown>
   <style>
@@ -74,7 +73,7 @@ The model is pretrained on the [ADE20K dataset](https://groups.csail.mit.edu/vis
     <tr style="text-align: right;">
       <th></th>
       <th>Class</th>
-      <th>mIoU</th>
+      <th>Segmentation AP</th>
     </tr>
   </thead>
   <tbody>
