@@ -10,7 +10,7 @@ Classes:
 
 
 Modules:
-    HttpClient: Handles HTTP requests.
+    ApiClient: Handles HTTP requests.
     logger: Logging utility.
     BoxAnnotator, LabelAnnotator, MaskAnnotator: Annotation tools for visualizing
                  detections and segmentation tasks.
@@ -45,9 +45,9 @@ from focoos.ports import (
     TrainingInfo,
     TrainInstance,
 )
+from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
 from focoos.utils.metrics import MetricsVisualizer
-from focoos.utils.system import HttpClient
 from focoos.utils.vision import focoos_detections_to_supervision, image_loader
 
 logger = get_logger()
@@ -59,7 +59,7 @@ class RemoteModel:
 
     Attributes:
         model_ref (str): Reference ID for the model.
-        http_client (HttpClient): Client for making HTTP requests.
+        api_client (ApiClient): Client for making HTTP requests.
         max_deploy_wait (int): Maximum wait time for model deployment.
         metadata (ModelMetadata): Metadata of the model.
         label_annotator (LabelAnnotator): Annotator for adding labels to images.
@@ -67,20 +67,23 @@ class RemoteModel:
         mask_annotator (sv.MaskAnnotator): Annotator for drawing masks on images.
     """
 
-    def __init__(self, model_ref: str, http_client: HttpClient):
+    def __init__(
+        self,
+        model_ref: str,
+        api_client: ApiClient,
+    ):
         """
         Initialize the RemoteModel instance.
 
         Args:
             model_ref (str): Reference ID for the model.
-            http_client (HttpClient): HTTP client instance for communication.
+            api_client (ApiClient): HTTP client instance for communication.
 
         Raises:
             ValueError: If model metadata retrieval fails.
         """
         self.model_ref = model_ref
-        self.http_client = http_client
-        self.max_deploy_wait = 10
+        self.api_client = api_client
         self.metadata: ModelMetadata = self.get_info()
 
         self.label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
@@ -100,7 +103,7 @@ class RemoteModel:
         Raises:
             ValueError: If the request fails.
         """
-        res = self.http_client.get(f"models/{self.model_ref}")
+        res = self.api_client.get(f"models/{self.model_ref}")
         if res.status_code != 200:
             logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
@@ -136,7 +139,7 @@ class RemoteModel:
         Raises:
             ValueError: If the request to start training fails (e.g., due to incorrect parameters or server issues).
         """
-        res = self.http_client.post(
+        res = self.api_client.post(
             f"models/{self.model_ref}/train",
             data={
                 "dataset_ref": dataset_ref,
@@ -163,7 +166,7 @@ class RemoteModel:
         Raises:
             ValueError: If the request to get training status fails.
         """
-        res = self.http_client.get(f"models/{self.model_ref}/train/status")
+        res = self.api_client.get(f"models/{self.model_ref}/train/status")
         if res.status_code != 200:
             logger.error(f"Failed to get train status: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get train status: {res.status_code} {res.text}")
@@ -183,7 +186,7 @@ class RemoteModel:
         Raises:
             None: Returns an empty list if the request fails.
         """
-        res = self.http_client.get(f"models/{self.model_ref}/train/logs")
+        res = self.api_client.get(f"models/{self.model_ref}/train/logs")
         if res.status_code != 200:
             logger.warning(f"Failed to get train logs: {res.status_code} {res.text}")
             return []
@@ -203,7 +206,7 @@ class RemoteModel:
         Raises:
             None: Returns an empty `Metrics` object if the request fails.
         """
-        res = self.http_client.get(f"models/{self.model_ref}/metrics")
+        res = self.api_client.get(f"models/{self.model_ref}/metrics")
         if res.status_code != 200:
             logger.warning(f"Failed to get metrics: {res.status_code} {res.text}")
             return Metrics()  # noqa: F821
@@ -285,7 +288,7 @@ class RemoteModel:
             image_bytes = image
         files = {"file": image_bytes}
         t0 = time.time()
-        res = self.http_client.post(
+        res = self.api_client.post(
             f"models/{self.model_ref}/inference?confidence_threshold={threshold}",
             files=files,
         )
@@ -389,7 +392,7 @@ class RemoteModel:
         Returns:
             None: This method does not return any value.
         """
-        res = self.http_client.delete(f"models/{self.model_ref}/train")
+        res = self.api_client.delete(f"models/{self.model_ref}/train")
         if res.status_code != 200:
             logger.error(f"Failed to get stop training: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get stop training: {res.status_code} {res.text}")
@@ -411,7 +414,7 @@ class RemoteModel:
         Returns:
             None: This method does not return any value.
         """
-        res = self.http_client.delete(f"models/{self.model_ref}")
+        res = self.api_client.delete(f"models/{self.model_ref}")
         if res.status_code != 204:
             logger.error(f"Failed to delete model: {res.status_code} {res.text}")
             raise ValueError(f"Failed to delete model: {res.status_code} {res.text}")
