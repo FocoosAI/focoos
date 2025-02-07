@@ -112,7 +112,14 @@ class ApiClient:
             headers.update(extra_headers)
         return requests.post(url, headers=headers, json=data, files=files)
 
-    def external_post(self, path: str, data: Optional[dict] = None, extra_headers: Optional[dict] = None, files=None):
+    def external_post(
+        self,
+        path: str,
+        data: Optional[dict] = None,
+        extra_headers: Optional[dict] = None,
+        files=None,
+        stream: bool = False,
+    ):
         """
         Perform a POST request to an external URL without using the default host URL.
 
@@ -131,7 +138,7 @@ class ApiClient:
         headers = {}
         if extra_headers:
             headers.update(extra_headers)
-        return requests.post(path, headers=headers, json=data, files=files)
+        return requests.post(path, headers=headers, json=data, files=files, stream=stream)
 
     def delete(self, path: str, extra_headers: Optional[dict] = None):
         """

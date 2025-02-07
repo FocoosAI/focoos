@@ -134,12 +134,19 @@ class ModelPreview(FocoosBaseModel):
     focoos_model: str
 
 
+class DatasetSpec(FocoosBaseModel):
+    train_length: int
+    valid_length: int
+    size_mb: float
+
+
 class DatasetPreview(FocoosBaseModel):
     ref: str
     name: str
     layout: DatasetLayout
     description: Optional[str] = None
     task: FocoosTask
+    spec: Optional[DatasetSpec] = None
 
 
 class ModelMetadata(FocoosBaseModel):
