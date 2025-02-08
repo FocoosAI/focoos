@@ -2,6 +2,8 @@
 
 This section covers the steps to monitor the status of your models on the FocoosAI platform.
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/documentation%2Fnomenclature/notebooks/model_management.ipynb)
+
 ## How to list the Focoos Models
 To list all the models available on the FocoosAI platform, you can use the following code:
 ```python

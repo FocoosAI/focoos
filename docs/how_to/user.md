@@ -2,6 +2,8 @@
 
 This section covers the steps to manage your user information on the FocoosAI platform.
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/documentation%2Fnomenclature/notebooks/user_info.ipynb)
+
 ## How to list your user info
 To list your user info, the library provides a `get_user_info` function. This function will return a `User` object.
 

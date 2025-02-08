@@ -2,6 +2,8 @@
 
 This section covers the steps to create a model and train it in the cloud using the `focoos` library. The following example demonstrates how to interact with the Focoos API to manage models, datasets, and training jobs.
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/documentation%2Fnomenclature/notebooks/training.ipynb)
+
 In this guide, we will perform the following steps:
 
 1. [📦 Load or select a dataset](#1-load-or-select-a-dataset)

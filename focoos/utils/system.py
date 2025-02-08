@@ -5,7 +5,11 @@ import subprocess
 from typing import Optional
 
 import GPUtil
-import onnxruntime as ort
+
+try:
+    import onnxruntime as ort
+except ImportError:
+    ort = None
 import psutil
 import requests
 
@@ -271,7 +275,7 @@ def get_system_info() -> SystemInfo:
         system_name=system_info.node,
         cpu_type=system_info.machine,
         cpu_cores=psutil.cpu_count(logical=True),
-        available_providers=ort.get_available_providers(),
+        available_providers=ort.get_available_providers() if ort else None,
         memory_gb=round(memory_info.total / (1024**3), 3),
         memory_used_percentage=round(memory_info.percent, 3),
         disk_space_total_gb=round(disk_info.total / (1024**3), 3),
