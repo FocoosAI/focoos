@@ -1,6 +1,6 @@
 # Model Management
 
-This section covers the steps to monitor the status of your user, models and datasets on the FocoosAI platform.
+This section covers the steps to monitor the status of your models on the FocoosAI platform.
 
 ## How to list the Focoos Models
 To list all the models available on the FocoosAI platform, you can use the following code:

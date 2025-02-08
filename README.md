@@ -30,21 +30,22 @@ Whether you're deploying in the cloud or on edge devices, the Focoos Python SDK 
 Ready to dive in? Get started with the setup in just a few simple steps!
 
 **Install** the Focoos Python SDK (for more options, see [setup](https://focoosai.github.io/focoos/setup))
-=== "uv"
-    ```bash linenums="0"
-    uv pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
-    ```
 
-=== "pip"
-    ```bash linenums="0"
-    pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
-    ```
+**uv**
+```bash linenums="0"
+uv pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
+```
 
-=== "conda"
-    ```bash linenums="0"
-    conda install pip # if you don't have it already
-    pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
-    ```
+**pip**
+```bash linenums="0"
+pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
+```
+
+**conda**
+```bash linenums="0"
+conda install pip # if you don't have it already
+pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
+```
 
 🚀 [Directly use](https://focoosai.github.io/focoos/how_to/inference/) our **Efficient Models**, optimized for different data, applications, and hardware.
 
@@ -99,12 +100,12 @@ Using Focoos AI helps you save both time and money while delivering high-perform
 These are not empty promises, but the result of years of research and development by our team 🔬:
 <div style="space-between; margin: 20px 0;">
     <div style="flex: 1; margin-right: 10px;">
-        <img src="./models/fai-ade.png" alt="ADE-20k Semantic Segmentation" style="width: 100%;">
-        <figcaption style="text-align: center;">ADE-20k <a href="models/#semantic-segmentation">Semantic Segmentation</a> Results</figcaption>
+        <img src="https://raw.githubusercontent.com/FocoosAI/focoos/refs/heads/main/docs/models/fai-ade.png" alt="ADE-20k Semantic Segmentation" style="width: 100%;">
+        <figcaption style="text-align: center;">ADE-20k <a href="https://focoosai.github.io/focoos/models/#semantic-segmentation">Semantic Segmentation</a> Results</figcaption>
     </div>
     <div style="flex: 1; margin-left: 10px;">
-        <img src="./models/fai-coco.png" alt="COCO Object Detection" style="width: 100%;">
-        <figcaption style="text-align: center;">COCO <a href="models/#object-detection">Object Detection</a> Results</figcaption>
+        <img src="https://raw.githubusercontent.com/FocoosAI/focoos/refs/heads/main/docs/models/fai-coco.png" alt="COCO Object Detection" style="width: 100%;">
+        <figcaption style="text-align: center;">COCO <a href="https://focoosai.github.io/focoos/models/#object-detection">Object Detection</a> Results</figcaption>
     </div>
 </div>
 

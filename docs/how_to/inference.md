@@ -28,7 +28,7 @@ image_path = "<PATH-TO-YOUR-IMAGE>"
 model = focoos.get_remote_model("fai-rtdetr-m-obj365")
 result, _ = model.infer(image_path, threshold=0.5, annotate=False)
 
-for det in results.detections:
+for det in result.detections:
     print(f"Found {det.label} with confidence {det.conf:.2f}")
     print(f"Bounding box: {det.bbox}")
     if det.mask:
@@ -63,7 +63,7 @@ model = focoos.get_local_model("fai-rtdetr-m-obj365")
 image_path = "<PATH-TO-YOUR-IMAGE>"
 result, _ = model.infer(image_path, threshold=0.5, annotate=False)
 
-for det in results.detections:
+for det in result.detections:
     print(f"Found {det.label} with confidence {det.conf:.2f}")
     print(f"Bounding box: {det.bbox}")
     if det.mask:

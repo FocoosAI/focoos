@@ -15,7 +15,7 @@ In this guide, we will perform the following steps:
 ## 1. Load or select a dataset
 !!! note
     Currently, we are not supporting dataset creation from the SDK (it's coming really soon) and you can only use a dataset already available on the platform.
-    To upload your own dataset, you can write us a mail to [info@focoos.com](mailto:info@focoos.com) and we will load your dataset on the platform on your private workspace (your data will not be shared with anyone and not used for any other purpose than training your model).
+    To upload your own dataset, you can write us a mail to [info@focoos.ai](mailto:info@focoos.ai) and we will load your dataset on the platform on your private workspace (your data will not be shared with anyone and not used for any other purpose than training your model).
 
 You can list all available datasets using the following code:
 ```python
@@ -102,7 +102,7 @@ The function will return an object of type [`Metrics`](../../api/ports/#focoos.p
 
 On notebooks, you can also plot the metrics by calling the [`notebook_plot_training_metrics`](../../api/remote_model/#focoos.remote_model.RemoteModel.notebook_plot_training_metrics) method:
 ```python
-metrics_visualizer.notebook_plot_training_metrics()
+visualizer.notebook_plot_training_metrics()
 ```
 
 ## 5. Test your model
@@ -114,7 +114,7 @@ Once the training is over, you can test your model using remote inference by cal
 image_path = "<PATH-TO-YOUR-IMAGE>"
 result, _ = model.infer(image_path, threshold=0.5, annotate=False)
 
-for det in results.detections:
+for det in result.detections:
     print(f"Found {det.label} with confidence {det.conf:.2f}")
     print(f"Bounding box: {det.bbox}")
     if det.mask:
@@ -139,12 +139,12 @@ preview = Image.fromarray(preview[:,:,[2,1,0]]) # invert to make it RGB
 You can perform inference locally by getting the [`LocalModel`](../../api/local_model) you already trained and calling the [`infer` method](../../api/local_model/#focoos.local_model.LocalModel.infer) on your image. If it's the first time you run the model locally, the model will be downloaded from the cloud and saved on your machine. Additionally, if you use CUDA or TensorRT, the model will be optimized for your GPU before running the inference (it can take few seconds, especially for TensorRT).
 
 ```python
-model = focoos.get_local_model(model.ref) # get the local model
+model = focoos.get_local_model(model.model_ref) # get the local model
 
 image_path = "<PATH-TO-YOUR-IMAGE>"
 result, _ = model.infer(image_path, threshold=0.5, annotate=False)
 
-for det in results.detections:
+for det in result.detections:
     print(f"Found {det.label} with confidence {det.conf:.2f}")
     print(f"Bounding box: {det.bbox}")
     if det.mask:

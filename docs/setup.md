@@ -3,14 +3,17 @@
 Focoos models support multiple inference runtimes.
 To keep the library lightweight and to allow users to use their environment, optional dependencies (e.g., torch, onnxruntime, tensorrt) are not installed by default.
 
-Focoos is shipped with the following extras dependencies for local inference:
+Focoos is shipped with the following local inference runtimes that requires to install additional dependencies. If you intend to use only Focoos AI servers for inference, you don't need to install any of the following dependencies.
 
-| Extra         | Runtime            | Compatible Devices                | Available ExecutionProvider |
-|---------------|-------------------|----------------------------------|-------------------|
-| `[torch]`     | torchscript       | CPU, NVIDIA GPUs                | -                 |
-| `[cpu]`       | onnxruntime CPU   | CPU (x86, ARM), M1, M2, M3 (Apple Silicon)  | CPUExecutionProvider, CoreMLExecutionProvider, AzureExecutionProvider |
-| `[cuda]`      | onnxruntime CUDA  | NVIDIA GPUs                     | CUDAExecutionProvider |
-| `[tensorrt]`  | onnxruntime TRT   | NVIDIA GPUs (Optimized)         | CUDAExecutionProvider, TensorrtExecutionProvider |
+| RuntimeType | Extra | Runtime | Compatible Devices | Available ExecutionProvider |
+|------------|-------|---------|-------------------|---------------------------|
+| ONNX_CUDA32 | `[cuda]` | onnxruntime CUDA | NVIDIA GPUs | CUDAExecutionProvider |
+| ONNX_TRT32 | `[tensorrt]` | onnxruntime TRT | NVIDIA GPUs (Optimized) | CUDAExecutionProvider, TensorrtExecutionProvider |
+| ONNX_TRT16 | `[tensorrt]` | onnxruntime TRT | NVIDIA GPUs (Optimized) | CUDAExecutionProvider, TensorrtExecutionProvider |
+| ONNX_CPU | `[cpu]` | onnxruntime CPU | CPU (x86, ARM), M1, M2, M3 (Apple Silicon) | CPUExecutionProvider, CoreMLExecutionProvider, AzureExecutionProvider |
+| ONNX_COREML | `[cpu]` | onnxruntime CPU | M1, M2, M3 (Apple Silicon) | CoreMLExecutionProvider, CPUExecutionProvider |
+| TORCHSCRIPT_32 | `[torch]` | torchscript | CPU, NVIDIA GPUs | - |
+
 
 ## Install the Focoos SDK
 The Focoos SDK can be installed with different package managers using python 3.10 and above.

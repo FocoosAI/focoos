@@ -23,10 +23,10 @@ def get_random_image_indices(coco, num_images):
 def create_category_colors(alpha=1.0):
     category_colors = {}
     for i in range(1, 256):
-        hue = (i * 137.5) % 360
+        hue = (i + 1 * 137.5) % 255
         hsv = np.array([[[hue, 255, 255]]], dtype=np.uint8)
         rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)[0][0]
-        category_colors[i] = np.array([rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, alpha])
+        category_colors[i] = np.array([rgb[0], rgb[1], rgb[2], alpha])
     return category_colors
 
 
@@ -56,6 +56,7 @@ def display_detection(path, num_images=9, annotate=True):
                     x, y, w, h = (int(v) for v in ann["bbox"])
                     category_id = ann["category_id"]
                     color = category_colors.get(category_id, (255, 255, 255))
+                    # print(f"Category ID: {category_id}, Color: {color}")
                     cv2.rectangle(img_array, (x, y), (x + w, y + h), color, 2)
 
         ax.imshow(img_array)
@@ -92,6 +93,7 @@ def display_instseg(path, num_images=9, annotate=True):
 
             for category_id, mask in masks.items():
                 color = category_colors.get(category_id, (0, 0, 0, 0.5))
+                color[:3] = color[:3] / 255
                 h, w = mask.shape[-2:]
                 mask = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
                 ax.imshow(mask)

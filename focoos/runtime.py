@@ -28,8 +28,7 @@ try:
     import torch
 
     TORCH_AVAILABLE = True
-except ImportError as e:
-    print(e)
+except ImportError:
     TORCH_AVAILABLE = False
 
 try:
@@ -351,13 +350,17 @@ def load_runtime(
     """
     if runtime_type == RuntimeTypes.TORCHSCRIPT_32:
         if not TORCH_AVAILABLE:
-            logger.error("⚠️ Pytorch not found =(  please install focoos with ['torch'] extra")
+            logger.error(
+                "⚠️ Pytorch not found =(  please install focoos with ['torch'] extra. See https://focoosai.github.io/focoos/setup/ for more details"
+            )
             raise ImportError("Pytorch not found")
         opts = TorchscriptRuntimeOpts(warmup_iter=warmup_iter)
         return TorchscriptRuntime(model_path, opts, model_metadata)
     else:
         if not ORT_AVAILABLE:
-            logger.error("⚠️ onnxruntime not found =(  please install focoos with ['onnx'] extra")
+            logger.error(
+                "⚠️ onnxruntime not found =(  please install focoos with one of 'cpu', 'cuda', 'tensorrt' extra. See https://focoosai.github.io/focoos/setup/ for more details"
+            )
             raise ImportError("onnxruntime not found")
         opts = OnnxRuntimeOpts(
             cuda=runtime_type == RuntimeTypes.ONNX_CUDA32,
