@@ -11,18 +11,14 @@ ASSETS_DIR = os.path.dirname(os.path.abspath(__file__)) + "/assets"
 
 focoos_models = []
 focoos = Focoos(api_key=os.getenv("FOCOOS_API_KEY"))
-focoos_models = [
-    model.ref for model in focoos.list_focoos_models() if model.status == "DEPLOYED"
-]
+focoos_models = [model.ref for model in focoos.list_focoos_models() if model.status == "DEPLOYED"]
 loaded_models = {}
 image_examples = [
-    ["focoos_rtdetr", f"{ASSETS_DIR}/pexels-abby-chung.jpg"],
-    ["focoos_object365", f"{ASSETS_DIR}/motogp.jpg"],
-    ["focoos_ade_medium", f"{ASSETS_DIR}/ADE_val_00000034.jpg"],
-    ["focoos_cts_medium", f"{ASSETS_DIR}/frankfurt_000001_059789_leftImg8bit.jpg"],
-    ["focoos_isaid_nano", f"{ASSETS_DIR}/P0053_0_896_512_1408.jpeg"],
-    ["focoos_isaid_medium", f"{ASSETS_DIR}/P0161_hires.jpeg"],
-    ["focoos_aeroscapes", f"{ASSETS_DIR}/aeroscapes.jpg"],
+    ["fai-rtdetr-l-coco", f"{ASSETS_DIR}/pexels-abby-chung.jpg"],
+    ["fai-rtdetr-m-obj365", f"{ASSETS_DIR}/motogp.jpg"],
+    ["fai-rtdetr-s-coco", f"{ASSETS_DIR}/ADE_val_00000821.jpg"],
+    ["fai-m2f-m-ade", f"{ASSETS_DIR}/ADE_val_00000461.jpg"],
+    ["fai-m2f-l-coco-ins", f"{ASSETS_DIR}/ADE_val_00000034.jpg"],
 ]
 
 
@@ -48,9 +44,7 @@ with gr.Blocks() as demo:
                 label="Model",
                 value=list(focoos_models)[0],
             )
-            conf = gr.Slider(
-                maximum=0.9, minimum=0, value=0.5, label="Confidencte threshold"
-            )
+            conf = gr.Slider(maximum=0.9, minimum=0, value=0.5, label="Confidencte threshold")
             start_btn = gr.Button("Run Inference")
         with gr.Column():
             output_image = gr.Image(type="pil")

@@ -37,8 +37,10 @@ nav:
       - Models: models.md
 
   - How to:
-      - Cloud Training: how_to/cloud_training.md
-      - Inference: how_to/inference.md
+      - Use Focoos Models: how_to/inference.md
+      - Personalize Your Model: how_to/cloud_training.md
+      - Managing your models: how_to/dashboard.md
+      - Managing your user: how_to/user.md
   - Focoos Models:
       - Overview: models.md
       - Semantic segmentation:
@@ -58,6 +60,7 @@ nav:
       - remote model: api/remote_model.md
       - local model: api/local_model.md
       - runtime: api/runtime.md
+      - ports: api/ports.md
   - Development:
       - Contributing: development/contributing.md
       - Code of Conduct: development/code_of_conduct.md

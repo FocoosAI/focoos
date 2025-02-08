@@ -5,137 +5,157 @@ To keep the library lightweight and to allow users to use their environment, opt
 
 Focoos is shipped with the following extras dependencies for local inference:
 
-- `[cpu]`: onnxruntime CPU
-- `[cuda]`: onnxruntime CUDA
-- `[torch]`: torchscript
-- `[tensorrt]`: onnxruntime TensorRT
-
+| Extra         | Runtime            | Compatible Devices                | Available ExecutionProvider |
+|---------------|-------------------|----------------------------------|-------------------|
+| `[torch]`     | torchscript       | CPU, NVIDIA GPUs                | -                 |
+| `[cpu]`       | onnxruntime CPU   | CPU (x86, ARM), M1, M2, M3 (Apple Silicon)  | CPUExecutionProvider, CoreMLExecutionProvider, AzureExecutionProvider |
+| `[cuda]`      | onnxruntime CUDA  | NVIDIA GPUs                     | CUDAExecutionProvider |
+| `[tensorrt]`  | onnxruntime TRT   | NVIDIA GPUs (Optimized)         | CUDAExecutionProvider, TensorrtExecutionProvider |
 
 ## Install the Focoos SDK
+The Focoos SDK can be installed with different package managers using python 3.10 and above.
 
-We recommend using [UV](https://docs.astral.sh/uv/) as a package manager and environment manager for a streamlined dependency management experience.
-Here’s how to create a new virtual environment with UV:
-```bash
-pip install uv
-uv venv --python 3.12
-source .venv/bin/activate
-```
+=== "uv"
+    We recommend using [UV](https://docs.astral.sh/uv/) as a package manager and environment manager for a streamlined dependency management experience.
+    Here’s how to create a new virtual environment with UV:
+    ```bash
+    pip install uv
+    uv venv --python 3.12
+    source .venv/bin/activate
+    ```
 
-=== "Remote Runtime"
-    If you plan to run the SDK on a remote machine, you can install the SDK without any extras.
-
-    === "uv"
+    === "Cloud Runtime"
         ```bash linenums="0"
         uv pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
         ```
 
-    === "pip"
-        ```bash linenums="0"
-        pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
-        ```
-
-    === "conda"
-        ```bash linenums="0"
-        conda install pip
-        pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
-        ```
-
-=== "CPU ONNX Runtime"
-    If you plan to run the SDK on a CPU-only environment.
-
-    === "uv"
+    === "CPU ONNX Runtime"
         ```bash linenums="0"
         uv pip install 'focoos[cpu] @ git+https://github.com/FocoosAI/focoos.git'
         ```
 
-    === "pip"
-        ```bash linenums="0"
-        pip install 'focoos[cpu] @ git+https://github.com/FocoosAI/focoos.git'
-        ```
-
-    === "conda"
-        ```bash linenums="0"
-        conda install pip
-        pip install 'focoos[cpu] @ git+https://github.com/FocoosAI/focoos.git'
-        ```
-
-=== "Torchscript Runtime"
-    To run the models using the torchscript runtime, you need to install the torch package.
-    The torch package is not installed by default, as it is not required for the CPU ONNX Runtime.
-
-    === "uv"
+    === "Torchscript Runtime"
+        To run the models using the torchscript runtime, you need to install the torch package.
         ```bash linenums="0"
         uv pip install 'focoos[torch] @ git+https://github.com/FocoosAI/focoos.git'
         ```
 
-    === "pip"
+    === "NVIDIA GPU ONNX Runtime"
+        **Additional requirements:**
+        Ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
+        To install cuDNN 9:
         ```bash linenums="0"
-        pip install 'focoos[torch] @ git+https://github.com/FocoosAI/focoos.git'
+        apt-get -y install cudnn9-cuda-12
         ```
 
-    === "conda"
-        ```bash linenums="0"
-        conda install pip
-        pip install 'focoos[torch] @ git+https://github.com/FocoosAI/focoos.git'
-        ```
-
-=== "NVIDIA GPU ONNX Runtime"
-    For execution using NVIDIA GPUs (with ONNX Runtime GPU support).
-
-    === "uv"
         ```bash linenums="0"
         uv pip install 'focoos[cuda] @ git+https://github.com/FocoosAI/focoos.git'
         ```
 
-    === "pip"
+    === "NVIDIA GPU ONNX Runtime with TensorRT"
+        **Additional requirements:**
+        Ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
+        To install cuDNN 9:
         ```bash linenums="0"
-        pip install 'focoos[cuda] @ git+https://github.com/FocoosAI/focoos.git'
+        apt-get -y install cudnn9-cuda-12
         ```
-
-    === "conda"
-        ```bash linenums="0"
-        conda install pip
-        pip install 'focoos[cuda] @ git+https://github.com/FocoosAI/focoos.git'
-        ```
-    **Additional requirements:**
-    Ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
-    To install cuDNN 9:
-
-    ```bash linenums="0"
-    apt-get -y install cudnn9-cuda-12
-    ```
-
-=== "NVIDIA GPU ONNX Runtime with TensorRT"
-    For optimized execution using NVIDIA GPUs with TensorRT.
-
-    === "uv"
+        To perform inference using TensorRT, ensure you have TensorRT version 10.5 installed.
         ```bash linenums="0"
         uv pip install 'focoos[tensorrt] @ git+https://github.com/FocoosAI/focoos.git'
         ```
 
-    === "pip"
+=== "pip"
+    Create and activate a new virtual environment using pip with the following commands:
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate
+    ```
+    === "Cloud Runtime"
+        ```bash linenums="0"
+        pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
+        ```
+
+    === "CPU ONNX Runtime"
+        ```bash linenums="0"
+        pip install 'focoos[cpu] @ git+https://github.com/FocoosAI/focoos.git'
+        ```
+
+    === "Torchscript Runtime"
+        ```bash linenums="0"
+        pip install 'focoos[torch] @ git+https://github.com/FocoosAI/focoos.git'
+        ```
+
+    === "NVIDIA GPU ONNX Runtime"
+        **Additional requirements:**
+        Ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
+        To install cuDNN 9:
+        ```bash linenums="0"
+        apt-get -y install cudnn9-cuda-12
+        ```
+        ```bash linenums="0"
+        pip install 'focoos[cuda] @ git+https://github.com/FocoosAI/focoos.git'
+        ```
+
+    === "NVIDIA GPU ONNX Runtime with TensorRT"
+        **Additional requirements:**
+        Ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
+        To install cuDNN 9:
+        ```bash linenums="0"
+        apt-get -y install cudnn9-cuda-12
+        ```
+        To perform inference using TensorRT, ensure you have TensorRT version 10.5 installed.
         ```bash linenums="0"
         pip install 'focoos[tensorrt] @ git+https://github.com/FocoosAI/focoos.git'
         ```
 
-    === "conda"
-        ```bash linenums="0"
-        conda install pip
-        pip install 'focoos[tensorrt] @ git+https://github.com/FocoosAI/focoos.git'
-        ```
-
-    **Additional requirements:**
-    Ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
-    To install cuDNN 9:
-
+=== "conda"
+    Create and activate a new [conda](https://docs.conda.io/en/latest/) environment with Python 3.10 or higher:
     ```bash linenums="0"
-    apt-get -y install cudnn9-cuda-12
+    conda create -n focoos python=3.12
+    conda activate focoos
+    conda install pip
     ```
 
-    To perform inference using TensorRT, ensure you have TensorRT version 10.5 installed.
+    === "Cloud Runtime"
+        ```bash linenums="0"
+        pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
+        ```
+
+    === "CPU ONNX Runtime"
+        ```bash linenums="0"
+        pip install 'focoos[cpu] @ git+https://github.com/FocoosAI/focoos.git'
+        ```
+
+    === "Torchscript Runtime"
+        ```bash linenums="0"
+        pip install 'focoos[torch] @ git+https://github.com/FocoosAI/focoos.git'
+        ```
+
+    === "NVIDIA GPU ONNX Runtime"
+        **Additional requirements:**
+        Ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
+        To install cuDNN 9:
+        ```bash linenums="0"
+        apt-get -y install cudnn9-cuda-12
+        ```
+        ```bash linenums="0"
+        pip install 'focoos[cuda] @ git+https://github.com/FocoosAI/focoos.git'
+        ```
+
+    === "NVIDIA GPU ONNX Runtime with TensorRT"
+        **Additional requirements:**
+        Ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
+        To install cuDNN 9:
+        ```bash linenums="0"
+        apt-get -y install cudnn9-cuda-12
+        ```
+        To perform inference using TensorRT, ensure you have TensorRT version 10.5 installed.
+        ```bash linenums="0"
+        pip install 'focoos[tensorrt] @ git+https://github.com/FocoosAI/focoos.git'
+        ```
 
 !!! note
-    🤖 **Multiple Runtimes:** You can install multiple extras by running `pip install .[torch,cuda,tensorrt]`.
+    🤖 **Multiple Runtimes:** You can install multiple extras by running `pip install .[torch,cuda,tensorrt]`. Anyway you can't use `cpu` and `cuda` or `tensorrt` at the same time.
 
 !!! note
     🛠️ **Installation Tip:** If you want to install a specific version, for example `v0.1.3`, use:

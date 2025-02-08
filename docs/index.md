@@ -9,7 +9,7 @@ This powerful SDK gives you seamless access to our cutting-edge computer vision 
 
 Whether you're deploying in the cloud or on edge devices, the Focoos Python SDK integrates smoothly into your workflow, speeding up your development process.
 
-### Key Features 🔑
+<!-- ### Key Features 🔑
 
 1. **Select Ready-to-use Models** 🧩
    Get started quickly by selecting one of our efficient, [pre-trained models](./models.md) that best suits your data and application needs.
@@ -24,7 +24,7 @@ Whether you're deploying in the cloud or on edge devices, the Focoos Python SDK 
    Deploy the model on your preferred cloud infrastructure, whether it's your own private cloud or a public cloud service. Your data stays private, as it remains within your servers.
 
 5. **Edge Deployment** 🖥️
-   Deploy the model on edge devices. Download the model to run it locally, without sending any data over the network, ensuring full privacy.
+   Deploy the model on edge devices. Download the model to run it locally, without sending any data over the network, ensuring full privacy. -->
 
 
 ### Quickstart 🚀
@@ -53,7 +53,7 @@ Ready to dive in? Get started with the setup in just a few simple steps!
 from focoos import Focoos
 
 # Initialize the Focoos client with your API key
-focoos = Focoos("<YOUR-API-KEY>")
+focoos = Focoos(api_key="<YOUR-API-KEY>")
 
 # Get the remote model (fai-rtdetr-l-obj365) from Focoos API
 model = focoos.get_remote_model("fai-rtdetr-l-obj365")
@@ -71,7 +71,7 @@ print(detections)
 from focoos import Focoos
 from focoos.ports import Hyperparameters
 
-focoos = Focoos("<YOUR-API-KEY>")
+focoos = Focoos(api_key="<YOUR-API-KEY>")
 model = focoos.new_model(name="awesome",
                          focoos_model="fai-rtdetr-l-obj365",
                          description="An awesome model")
