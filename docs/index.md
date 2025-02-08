@@ -55,11 +55,11 @@ from focoos import Focoos
 # Initialize the Focoos client with your API key
 focoos = Focoos(api_key="<YOUR-API-KEY>")
 
-# Get the remote model (fai-rtdetr-l-obj365) from Focoos API
-model = focoos.get_remote_model("fai-rtdetr-l-obj365")
+# Get the remote model (fai-rtdetr-m-obj365) from Focoos API
+model = focoos.get_remote_model("fai-rtdetr-m-obj365")
 
 # Run inference on an image
-detections = model.infer("./image.jpg", threshold=0.4)
+detections, _ = model.infer(image_path, threshold=0.4)
 
 # Output the detections
 print(detections)
@@ -73,7 +73,7 @@ from focoos.ports import Hyperparameters
 
 focoos = Focoos(api_key="<YOUR-API-KEY>")
 model = focoos.new_model(name="awesome",
-                         focoos_model="fai-rtdetr-l-obj365",
+                         focoos_model="fai-rtdetr-m-obj365",
                          description="An awesome model")
 
 res = model.train(
@@ -98,14 +98,14 @@ Using Focoos AI helps you save both time and money while delivering high-perform
 - **Tons of CO2 saved annually per model** 🌱: Our models are energy-efficient, helping you reduce your carbon footprint by using less powerful hardware with respect to mainstream models.
 
 These are not empty promises, but the result of years of research and development by our team 🔬:
-<div style="display: flex; justify-content: space-between; margin: 20px 0;">
+<div style="space-between; margin: 20px 0;">
     <div style="flex: 1; margin-right: 10px;">
         <img src="./models/fai-ade.png" alt="ADE-20k Semantic Segmentation" style="width: 100%;">
-        <figcaption>ADE-20k <a href="models/#semantic-segmentation">Semantic Segmentation</a> Results</figcaption>
+        <figcaption style="text-align: center;">ADE-20k <a href="models/#semantic-segmentation">Semantic Segmentation</a> Results</figcaption>
     </div>
     <div style="flex: 1; margin-left: 10px;">
         <img src="./models/fai-coco.png" alt="COCO Object Detection" style="width: 100%;">
-        <figcaption>COCO <a href="models/#object-detection">Object Detection</a> Results</figcaption>
+        <figcaption style="text-align: center;">COCO <a href="models/#object-detection">Object Detection</a> Results</figcaption>
     </div>
 </div>
 
