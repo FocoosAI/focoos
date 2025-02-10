@@ -19,10 +19,10 @@ Focoos is shipped with the following local inference runtimes that requires to i
 The Focoos SDK can be installed with different package managers using python 3.10 and above.
 
 === "uv"
-    We recommend using [UV](https://docs.astral.sh/uv/) as a package manager and environment manager for a streamlined dependency management experience.
-    Here’s how to create a new virtual environment with UV:
-    ```bash
-    pip install uv
+    We recommend using [UV](https://docs.astral.sh/uv/) (how to [install uv](https://docs.astral.sh/uv/getting-started/installation/)) as a package manager and environment manager for a streamlined dependency management experience.
+
+    You can easily create a new virtual environment with UV using the following command:
+    ```bash linenums="0"
     uv venv --python 3.12
     source .venv/bin/activate
     ```
@@ -69,7 +69,7 @@ The Focoos SDK can be installed with different package managers using python 3.1
 
 === "pip"
     Create and activate a new virtual environment using pip with the following commands:
-    ```bash
+    ```bash linenums="0"
     python -m venv .venv
     source .venv/bin/activate
     ```
@@ -112,7 +112,7 @@ The Focoos SDK can be installed with different package managers using python 3.1
         ```
 
 === "conda"
-    Create and activate a new [conda](https://docs.conda.io/en/latest/) environment with Python 3.10 or higher:
+    Create and activate a new [conda](https://docs.conda.io/en/latest/) (how to [install conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html)) environment with Python 3.10 or higher:
     ```bash linenums="0"
     conda create -n focoos python=3.12
     conda activate focoos
@@ -162,7 +162,7 @@ The Focoos SDK can be installed with different package managers using python 3.1
 
 !!! note
     🛠️ **Installation Tip:** If you want to install a specific version, for example `v0.1.3`, use:
-    ```bash
+    ```bash linenums="0"
     pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git@v0.1.3'
     ```
     📋 **Check Versions:** Visit [https://github.com/FocoosAI/focoos/tags](https://github.com/FocoosAI/focoos/tags) for available versions.

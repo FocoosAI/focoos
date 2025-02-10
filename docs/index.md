@@ -30,7 +30,7 @@ Whether you're deploying in the cloud or on edge devices, the Focoos Python SDK 
 ### Quickstart 🚀
 Ready to dive in? Get started with the setup in just a few simple steps!
 
-**Install** the Focoos Python SDK (for more options, see [setup](./setup.md))
+**Install** the Focoos Python SDK (for more options, see [setup](/setup))
 === "uv"
     ```bash linenums="0"
     uv pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
@@ -43,11 +43,10 @@ Ready to dive in? Get started with the setup in just a few simple steps!
 
 === "conda"
     ```bash linenums="0"
-    conda install pip # if you don't have it already
     pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
     ```
 
-🚀 [Directly use](./how_to/inference.md) our **Efficient Models**, optimized for different data, applications, and hardware.
+🚀 [Directly use](/how_to/inference) our **Efficient Models**, optimized for different data, applications, and hardware.
 
 ```python
 from focoos import Focoos
@@ -65,7 +64,7 @@ detections, _ = model.infer(image_path, threshold=0.4)
 print(detections)
 ```
 
-⚙️ **Customize** the models to your specific needs by [fine-tuning](./how_to/cloud_training.md) on your own dataset.
+⚙️ **Customize** the models to your specific needs by [fine-tuning](/how_to/cloud_training) on your own dataset.
 
 ```python
 from focoos import Focoos
@@ -86,7 +85,7 @@ res = model.train(
 )
 ```
 
-See more examples in the [how to](./how_to) section.
+See more examples in the [how to](/how_to/dashboard) section.
 
 ### Our Models 🧠
 Focoos AI offers the best models in object detection, semantic and instance segmentation, and more is coming soon.
@@ -109,7 +108,7 @@ These are not empty promises, but the result of years of research and developmen
     </div>
 </div>
 
-See the list of our models in the [models](./models.md) section.
+See the list of our models in the [models](/models/) section.
 
 ---
 ### Start now!

@@ -41,7 +41,7 @@ The User object contains the following fields:
 - `updated_at`: Timestamp of when the user account was last updated
 - `company`: The company affiliation of the user (optional)
 - `api_key`: The API key details used for authentication
-- `quotas`: The platform usage quotas (see [`Quotas`](../../api/ports/#focoos.ports.Quotas)) allocated to the user
+- `quotas`: The platform usage quotas (see [`Quotas`](/api/ports/#focoos.ports.Quotas)) allocated to the user
 
 !!! note
     If you want to increase your quotas, please contact us via [support](mailto:info@focoos.ai).
