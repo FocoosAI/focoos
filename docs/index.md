@@ -30,7 +30,7 @@ Whether you're deploying in the cloud or on edge devices, the Focoos Python SDK 
 ### Quickstart 🚀
 Ready to dive in? Get started with the setup in just a few simple steps!
 
-**Install** the Focoos Python SDK (for more options, see [setup](/setup))
+**Install** the Focoos Python SDK (for more options, see [setup](setup.md))
 === "uv"
     ```bash linenums="0"
     uv pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
@@ -46,7 +46,7 @@ Ready to dive in? Get started with the setup in just a few simple steps!
     pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
     ```
 
-🚀 [Directly use](/how_to/inference) our **Efficient Models**, optimized for different data, applications, and hardware.
+🚀 [Directly use](how_to/inference.md) our **Efficient Models**, optimized for different data, applications, and hardware.
 
 ```python
 from focoos import Focoos
@@ -64,7 +64,7 @@ detections, preview = model.infer(image_path, threshold=0.4, annotations=True)
 Image.fromarray(preview[:, :, [2, 1, 0]])
 ```
 
-⚙️ **Customize** the models to your specific needs by [fine-tuning](/how_to/cloud_training) on your own dataset.
+⚙️ **Customize** the models to your specific needs by [fine-tuning](how_to/cloud_training.md) on your own dataset.
 
 ```python
 from focoos import Focoos
@@ -85,7 +85,7 @@ res = model.train(
 )
 ```
 
-See more examples in the [how to](/how_to/dashboard) section.
+See more examples in the [how to](how_to/dashboard.md) section.
 
 ### Our Models 🧠
 Focoos AI offers the best models in object detection, semantic and instance segmentation, and more is coming soon.
@@ -108,9 +108,9 @@ These are not empty promises, but the result of years of research and developmen
     </div>
 </div>
 
-See the list of our models in the [models](/models/) section.
+See the list of our models in the [models](models.md) section.
 
 ---
 ### Start now!
 By choosing Focoos AI, you can save time, reduce costs, and achieve superior model performance, all while ensuring the privacy and efficiency of your deployments.
-[Reach out to us](mailto:info@focoos.ai) to ask for your API key for free and power your computer vision projects. 🚀
+[Reach out to us](mailto:support@focoos.ai) to ask for your API key for free and power your computer vision projects. 🚀

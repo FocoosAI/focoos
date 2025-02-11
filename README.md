@@ -28,6 +28,11 @@ Whether you're deploying in the cloud or on edge devices, the Focoos Python SDK 
 
 ### Quickstart 🚀
 Ready to dive in? Get started with the setup in just a few simple steps!
+[![Inference](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/main/notebooks/inference.ipynb)
+[![Cloud training](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/main/notebooks/training.ipynb)
+[![Model management](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/main/notebooks/model_management.ipynb)
+[![User management](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/main/notebooks/user_info.ipynb)
+
 
 **Install** the Focoos Python SDK (for more options, see [setup](https://focoosai.github.io/focoos/setup))
 
