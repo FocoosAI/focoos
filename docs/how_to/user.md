@@ -2,7 +2,7 @@
 
 This section covers the steps to manage your user information on the FocoosAI platform.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/documentation%2Fnomenclature/notebooks/user_info.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/main/notebooks/user_info.ipynb)
 
 ## How to list your user info
 To list your user info, the library provides a `get_user_info` function. This function will return a `User` object.
@@ -41,7 +41,7 @@ The User object contains the following fields:
 - `updated_at`: Timestamp of when the user account was last updated
 - `company`: The company affiliation of the user (optional)
 - `api_key`: The API key details used for authentication
-- `quotas`: The platform usage quotas (see [`Quotas`](/api/ports/#focoos.ports.Quotas)) allocated to the user
+- `quotas`: The platform usage quotas (see [`Quotas`](/focoos/api/ports/#focoos.ports.Quotas)) allocated to the user
 
 !!! note
-    If you want to increase your quotas, please contact us via [support](mailto:info@focoos.ai).
+    If you want to increase your quotas, please contact us via [support](mailto:support@focoos.ai).

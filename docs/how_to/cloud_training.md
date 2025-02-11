@@ -2,7 +2,7 @@
 
 This section covers the steps to create a model and train it in the cloud using the `focoos` library. The following example demonstrates how to interact with the Focoos API to manage models, datasets, and training jobs.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/documentation%2Fnomenclature/notebooks/training.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/main/notebooks/training.ipynb)
 
 In this guide, we will perform the following steps:
 
@@ -17,7 +17,7 @@ In this guide, we will perform the following steps:
 ## 1. Load or select a dataset
 !!! note
     Currently, we are not supporting dataset creation from the SDK (it's coming really soon) and you can only use a dataset already available on the platform.
-    To upload your own dataset, you can write us a mail to [info@focoos.ai](mailto:info@focoos.ai) and we will load your dataset on the platform on your private workspace (your data will not be shared with anyone and not used for any other purpose than training your model).
+    To upload your own dataset, you can write us a mail to [support@focoos.ai](mailto:support@focoos.ai) and we will load your dataset on the platform on your private workspace (your data will not be shared with anyone and not used for any other purpose than training your model).
 
 You can list all available datasets using the following code:
 ```python
@@ -36,7 +36,7 @@ dataset_ref = "<YOUR-DATASET-REFERENCE>"
 
 ## 2. Create a model
 The first step to personalize your model is to create a model.
-You can create a model by calling the [`new_model` method](/api/focoos/#focoos.Focoos.new_model) on the `Focoos` object. You can choose the model you want to personalize from the list of [Focoos Models](/models) available on the platform. Make sure to select the correct model for your task.
+You can create a model by calling the [`new_model` method](/focoos/api/focoos/#focoos.focoos.Focoos.new_model) on the `Focoos` object. You can choose the model you want to personalize from the list of [Focoos Models](../models.md) available on the platform. Make sure to select the correct model for your task.
 
 ```python
 from focoos import Focoos
@@ -57,10 +57,10 @@ model = focoos.new_model(
     focoos_model="fai-rtdetr-m-obj365",
 )
 ```
-This function will return a new [`RemoteModel`](/api/remote_model) object that you can use to train the model and to perform remote inference.
+This function will return a new [`RemoteModel`](/focoos/api/remote_model/#focoos.remote_model.RemoteModel) object that you can use to train the model and to perform remote inference.
 
 ## 3. Train the model
-Once the model is created, you can start the training process by calling the [`train` method](/api/remote_model/#focoos.remote_model.RemoteModel.train) on the model object.
+Once the model is created, you can start the training process by calling the [`train` method](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.train) on the model object.
 
 ```python
 from focoos.ports import Hyperparameters
@@ -75,34 +75,34 @@ res = model.train(
 )
 ```
 For selecting the `dataset_ref` see the [step 1](#1-load-or-select-a-dataset).
-You can further customize the training process by passing additional parameters to the [`train` method](/api/remote_model/#focoos.remote_model.RemoteModel.train) (such as the instance type, the volume size, the maximum runtime, etc.) or use additional hyperparameters (see the list [available hyperparameters](/api/ports/#focoos.ports.Hyperparameters)).
+You can further customize the training process by passing additional parameters to the [`train` method](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.train) (such as the instance type, the volume size, the maximum runtime, etc.) or use additional hyperparameters (see the list [available hyperparameters](/focoos/api/ports/#focoos.ports.Hyperparameters)).
 
-Futhermore, you can monitor the training progress by polling the training status. Use the [`notebook_monitor_train`](/api/remote_model/#focoos.remote_model.RemoteModel.notebook_monitor_train) method on a jupyter notebook:
+Futhermore, you can monitor the training progress by polling the training status. Use the [`notebook_monitor_train`](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.notebook_monitor_train) method on a jupyter notebook:
 ```python
 model.notebook_monitor_train(interval=30, plot_metrics=True)
 ```
 
-You can also get the training logs by calling the [`train_logs` method](/api/remote_model/#focoos.remote_model.RemoteModel.train_logs):
+You can also get the training logs by calling the [`train_logs` method](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.train_logs):
 ```python
 logs = model.train_logs()
 pprint(logs)
 ```
 
-Finally, if for some reason you need to cancel the training, you can do so by calling the [`stop_training` method](/api/remote_model/#focoos.remote_model.RemoteModel.stop_training):
+Finally, if for some reason you need to cancel the training, you can do so by calling the [`stop_training` method](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.stop_training):
 ```python
 model.stop_training()
 ```
 
 ## 4. Visualize training metrics
-You can visualize the training metrics by calling the [`metrics` method](/api/remote_model/#focoos.remote_model.RemoteModel.metrics):
+You can visualize the training metrics by calling the [`metrics` method](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.metrics):
 ```python
 metrics = model.metrics()
 visualizer = MetricsVisualizer(metrics)
 visualizer.log_metrics()
 ```
-The function will return an object of type [`Metrics`](/api/ports/#focoos.ports.Metrics) that you can use to visualize the training metrics using a `MetricsVisualizer` object.
+The function will return an object of type [`Metrics`](/focoos/api/ports/#focoos.ports.Metrics) that you can use to visualize the training metrics using a `MetricsVisualizer` object.
 
-On notebooks, you can also plot the metrics by calling the [`notebook_plot_training_metrics`](/api/remote_model/#focoos.remote_model.RemoteModel.notebook_plot_training_metrics) method:
+On notebooks, you can also plot the metrics by calling the [`notebook_plot_training_metrics`](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.notebook_plot_training_metrics) method:
 ```python
 visualizer.notebook_plot_training_metrics()
 ```
@@ -110,7 +110,7 @@ visualizer.notebook_plot_training_metrics()
 ## 5. Test your model
 
 ### Remote Inference
-Once the training is over, you can test your model using remote inference by calling the [`infer` method](/api/remote_model/#focoos.remote_model.RemoteModel.infer) on the model object.
+Once the training is over, you can test your model using remote inference by calling the [`infer` method](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.infer) on the model object.
 
 ```python
 image_path = "<PATH-TO-YOUR-IMAGE>"
@@ -122,7 +122,7 @@ for det in result.detections:
     if det.mask:
         print("Instance segmentation mask included")
 ```
-`result` is a [FocoosDetections](/api/ports/#focoos.ports.FocoosDetections) object, containing a list of [FocoosDet](/api/ports/#focoos.ports.FocoosDet) objects and optionally a dict of information about the latency of the inference.
+`result` is a [FocoosDetections](/focoos/api/ports/#focoos.ports.FocoosDetections) object, containing a list of [FocoosDet](/focoos/api/ports/#focoos.ports.FocoosDet) objects and optionally a dict of information about the latency of the inference.
 
 The `threshold` parameter is optional and defines the minimum confidence score for a detection to be considered valid (predictions with a confidence score lower than the threshold are discarded).
 
@@ -136,9 +136,9 @@ preview = Image.fromarray(preview[:,:,[2,1,0]]) # invert to make it RGB
 
 ### Local Inference
 !!! Note
-    To perform local inference, you need to install the package with one of the extra modules (`[cpu]`, `[torch]`, `[cuda]`, `[tensorrt]`). See the [installation](./setup.md) page for more details.
+    To perform local inference, you need to install the package with one of the extra modules (`[cpu]`, `[torch]`, `[cuda]`, `[tensorrt]`). See the [installation](../setup.md) page for more details.
 
-You can perform inference locally by getting the [`LocalModel`](/api/local_model) you already trained and calling the [`infer` method](/api/local_model/#focoos.local_model.LocalModel.infer) on your image. If it's the first time you run the model locally, the model will be downloaded from the cloud and saved on your machine. Additionally, if you use CUDA or TensorRT, the model will be optimized for your GPU before running the inference (it can take few seconds, especially for TensorRT).
+You can perform inference locally by getting the [`LocalModel`](/focoos/api/local_model) you already trained and calling the [`infer` method](/focoos/api/local_model/#focoos.local_model.LocalModel.infer) on your image. If it's the first time you run the model locally, the model will be downloaded from the cloud and saved on your machine. Additionally, if you use CUDA or TensorRT, the model will be optimized for your GPU before running the inference (it can take few seconds, especially for TensorRT).
 
 ```python
 model = focoos.get_local_model(model.model_ref) # get the local model
