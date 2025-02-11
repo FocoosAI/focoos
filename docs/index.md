@@ -1,24 +1,21 @@
-# Welcome to Focoos AI 🔥
+# Welcome to Focoos AI
 
 Focoos AI provides an advanced development platform designed to empower developers and businesses with efficient, customizable computer vision solutions. Whether you're working with data from cloud infrastructures or deploying on edge devices, Focoos AI enables you to select, fine-tune, and deploy state-of-the-art models optimized for your unique needs.
 
-## What We Offer 🎯
+## SDK Overview
 
-### AI-Ready Models Platform for Computer Vision Applications 🤖
+<!-- Unlock the full potential of Focoos AI with the Focoos Python SDK! 🚀  -->
+This powerful SDK gives you seamless access to our cutting-edge computer vision models and tools, allowing you to effortlessly interact with the Focoos API. With just a few lines of code, you can easily **select, customize, test, and deploy** pre-trained models tailored to your specific needs.
 
-Focoos AI offers a versatile platform for developing computer vision solutions. Our platform includes a suite of services to support the end-to-end development process:
+Whether you're deploying in the cloud or on edge devices, the Focoos Python SDK integrates smoothly into your workflow, speeding up your development process.
 
-- **Ready-to-use models**: Choose from a variety of pre-trained models, optimized for different data, applications, and hardware.
-- **Customization**: Tailor models to your specific needs by selecting relevant classes and fine-tuning them on your own dataset.
-- **Testing and Validation**: Verify model accuracy and efficiency using your own data samples, ensuring the model meets your requirements before deployment.
-
-### Key Features 🔑
+<!-- ### Key Features 🔑
 
 1. **Select Ready-to-use Models** 🧩
-   Get started quickly by selecting one of our efficient, pre-trained models that best suits your data and application needs.
+   Get started quickly by selecting one of our efficient, [pre-trained models](./models.md) that best suits your data and application needs.
 
 2. **Personalize Your Model** ✨
-   Customize the selected model for higher accuracy through fine-tuning. Adapt the model to your specific use case by training it on your own dataset and selecting useful classes.
+   Customize the selected model for higher accuracy through [fine-tuning](./how_to/cloud_training.md). Adapt the model to your specific use case by training it on your own dataset.
 
 3. **Test and Validate** 🧪
    Upload your data sample to test the model’s accuracy and efficiency. Iterate the process to ensure the model performs to your expectations.
@@ -27,37 +24,93 @@ Focoos AI offers a versatile platform for developing computer vision solutions. 
    Deploy the model on your preferred cloud infrastructure, whether it's your own private cloud or a public cloud service. Your data stays private, as it remains within your servers.
 
 5. **Edge Deployment** 🖥️
-   Deploy the model on edge devices. Download the Focoos Engine to run the model locally, without sending any data over the network, ensuring full privacy.
+   Deploy the model on edge devices. Download the model to run it locally, without sending any data over the network, ensuring full privacy. -->
 
-### Why Choose Focoos AI? 🤩
 
-Using Focoos AI helps you save both time and money while delivering high-performance AI models:
+### Quickstart 🚀
+Ready to dive in? Get started with the setup in just a few simple steps!
 
-- **80% Faster Development** ⏳: Save significant development time compared to traditional methods.
-- **+5% Model Accuracy** 🎯: Achieve some of the most accurate models in the market, as demonstrated by our scientific benchmarks.
-- **Up to 20x Faster Models** ⚡: Run real-time data analysis with some of the fastest models available today.
+**Install** the Focoos Python SDK (for more options, see [setup](/setup))
+=== "uv"
+    ```bash linenums="0"
+    uv pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
+    ```
 
-### Pre-Trained Models with Minimum Training Data 📊
+=== "pip"
+    ```bash linenums="0"
+    pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
+    ```
 
-Our pre-trained models reduce the need for large datasets, making it easier to deploy computer vision solutions. Here's how Focoos AI helps you minimize your resources:
+=== "conda"
+    ```bash linenums="0"
+    pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
+    ```
 
-- **80% Less Training Data** 📉: Leverage pre-trained models that are ready to tackle a variety of use cases.
-- **50% Lower Infrastructure Costs** 💡: Use less expensive hardware and reduce energy consumption.
-- **75% Reduction in CO2 Emissions** 🌱: Deploy energy-efficient models that help you reduce your carbon footprint.
+🚀 [Directly use](/how_to/inference) our **Efficient Models**, optimized for different data, applications, and hardware.
 
-### Proven Efficiency and Accuracy 🔍
+```python
+from focoos import Focoos
+from PIL import Image
+# Initialize the Focoos client with your API key
+focoos = Focoos(api_key="<YOUR-API-KEY>")
 
-Focoos AI models outperform other solutions in terms of both accuracy and efficiency. Our technical report highlights how our models lead in academic benchmarks across multiple domains. Contact us to learn more about the scientific benchmarks that set Focoos AI apart.
+# Get the remote model (fai-rtdetr-m-obj365) from Focoos API
+model = focoos.get_remote_model("fai-rtdetr-m-obj365")
 
-### Pricing Model 💵
+# Run inference on an image
+detections, preview = model.infer(image_path, threshold=0.4, annotations=True)
 
-We offer a flexible pricing model based on your deployment preferences:
+# Output the detections
+Image.fromarray(preview[:, :, [2, 1, 0]])
+```
 
-- **Public Cloud** 🌐: Pay for model usage when deployed on public cloud providers.
-- **Private Infrastructure** 🏢: Pay for usage when deploying on your own infrastructure.
+⚙️ **Customize** the models to your specific needs by [fine-tuning](/how_to/cloud_training) on your own dataset.
 
-Contact us for a tailored quote based on your specific use case.
+```python
+from focoos import Focoos
+from focoos.ports import Hyperparameters
+
+focoos = Focoos(api_key="<YOUR-API-KEY>")
+model = focoos.new_model(name="awesome",
+                         focoos_model="fai-rtdetr-m-obj365",
+                         description="An awesome model")
+
+res = model.train(
+    dataset_ref="<YOUR-DATASET-ID>",
+    hyperparameters=Hyperparameters(
+        learning_rate=0.0001,
+        batch_size=16,
+        max_iters=1500,
+    )
+)
+```
+
+See more examples in the [how to](/how_to/dashboard) section.
+
+### Our Models 🧠
+Focoos AI offers the best models in object detection, semantic and instance segmentation, and more is coming soon.
+
+Using Focoos AI helps you save both time and money while delivering high-performance AI models 💪:
+
+- **10x Faster** ⏳: Our models are able to process images up to ten times faster than traditional methods.
+- **4x Cheaper** 💰: Our models require up to 4x less computational power, letting you save on hardware or cloud bill while ensuring high-quality results.
+- **Tons of CO2 saved annually per model** 🌱: Our models are energy-efficient, helping you reduce your carbon footprint by using less powerful hardware with respect to mainstream models.
+
+These are not empty promises, but the result of years of research and development by our team 🔬:
+<div style="space-between; margin: 20px 0;">
+    <div style="flex: 1; margin-right: 10px;">
+        <img src="./models/fai-ade.png" alt="ADE-20k Semantic Segmentation" style="width: 100%;">
+        <figcaption style="text-align: center;">ADE-20k <a href="models/#semantic-segmentation">Semantic Segmentation</a> Results</figcaption>
+    </div>
+    <div style="flex: 1; margin-left: 10px;">
+        <img src="./models/fai-coco.png" alt="COCO Object Detection" style="width: 100%;">
+        <figcaption style="text-align: center;">COCO <a href="models/#object-detection">Object Detection</a> Results</figcaption>
+    </div>
+</div>
+
+See the list of our models in the [models](/models/) section.
 
 ---
-
-By choosing Focoos AI, you can save time, reduce costs, and achieve superior model performance, all while ensuring the privacy and efficiency of your deployments. Ready to get started? Reach out to us today to explore how Focoos AI can power your computer vision projects. 🚀
+### Start now!
+By choosing Focoos AI, you can save time, reduce costs, and achieve superior model performance, all while ensuring the privacy and efficiency of your deployments.
+[Reach out to us](mailto:info@focoos.ai) to ask for your API key for free and power your computer vision projects. 🚀
