@@ -1,6 +1,9 @@
+import os
 from typing import Optional
+from urllib.parse import urlparse
 
 import requests
+from tqdm import tqdm
 
 from focoos.config import FOCOOS_CONFIG
 from focoos.utils.logger import get_logger
@@ -158,4 +161,63 @@ class ApiClient:
         return requests.delete(url, headers=headers)
 
     def upload_file(self, path: str, file_path: str, file_size: int):
+        """
+        Upload a file to the specified path.
+
+        Args:
+            path (str): The API endpoint path to upload to
+            file_path (str): Path to the file to upload
+            file_size (int): Size of the file in bytes
+
+        Returns:
+            Response: The response from the upload request
+        """
         return self.post(path, data={"path": file_path, "file_size_bytes": file_size})
+
+    def download_file(self, uri: str, file_dir: str):
+        """
+        Download a file from a URI to a local directory.
+
+        Args:
+            uri (str): The URI to download the file from
+            file_dir (str): Local directory to save the downloaded file
+
+        Returns:
+            str: Path to the downloaded file
+
+        Raises:
+            ValueError: If the download fails or filename cannot be determined
+        """
+        if os.path.exists(file_dir) and not os.path.isdir(file_dir):
+            raise ValueError(f"Path is not a directory: {file_dir}")
+        if not os.path.exists(file_dir):
+            logger.info(f"📥 Creating directory: {file_dir}")
+            os.makedirs(file_dir)
+        parsed_url = urlparse(uri)
+        file_name = os.path.basename(parsed_url.path)
+        res = self.external_get(uri, stream=True)
+        if res.status_code != 200:
+            logger.error(f"Failed to download file {file_name}: {res.status_code} {res.text}")
+            raise ValueError(f"Failed to download file {file_name}: {res.status_code} {res.text}")
+        total_size = int(res.headers.get("content-length", 0))
+        logger.info(f"📥 Size: {total_size / (1024**2):.2f} MB")
+
+        if not os.path.exists(file_dir):
+            os.makedirs(file_dir)
+        file_path = os.path.join(file_dir, file_name)
+
+        with (
+            open(file_path, "wb") as f,
+            tqdm(
+                desc=file_name,
+                total=total_size,
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+            ) as bar,
+        ):
+            for chunk in res.iter_content(chunk_size=8192):
+                f.write(chunk)
+                bar.update(len(chunk))
+        logger.info(f"📥 File downloaded: {file_path}")
+        return file_path

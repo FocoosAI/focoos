@@ -16,8 +16,6 @@ Exceptions:
 import os
 from typing import Optional, Union
 
-from tqdm import tqdm
-
 from focoos.config import FOCOOS_CONFIG
 from focoos.local_model import LocalModel
 from focoos.ports import (
@@ -277,7 +275,8 @@ class Focoos:
         if os.path.exists(model_path) and os.path.exists(metadata_path):
             logger.info("📥 Model already downloaded")
             return model_path
-
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
         ## download model metadata
         res = self.api_client.get(f"models/{model_ref}/download?format={format.value}")
         if res.status_code != 200:
@@ -286,39 +285,17 @@ class Focoos:
 
         download_data = res.json()
         metadata = ModelMetadata.from_json(download_data["model_metadata"])
+        with open(metadata_path, "w") as f:
+            f.write(metadata.model_dump_json())
+        logger.debug(f"Dumped metadata to {metadata_path}")
         download_uri = download_data["download_uri"]
 
         ## download model from Focoos Cloud
         logger.debug(f"Model URI: {download_uri}")
         logger.info("📥 Downloading model from Focoos Cloud.. ")
-        response = self.api_client.external_get(download_uri, stream=True)
-        if response.status_code != 200:
-            logger.error(f"Failed to download model: {response.status_code} {response.text}")
-            raise ValueError(f"Failed to download model: {response.status_code} {response.text}")
-        total_size = int(response.headers.get("content-length", 0))
-        logger.info(f"📥 Size: {total_size / (1024**2):.2f} MB")
 
-        if not os.path.exists(model_dir):
-            os.makedirs(model_dir)
+        model_path = self.api_client.download_file(download_uri, model_dir)
 
-        with open(metadata_path, "w") as f:
-            f.write(metadata.model_dump_json())
-        logger.debug(f"Dumped metadata to {metadata_path}")
-
-        with (
-            open(model_path, "wb") as f,
-            tqdm(
-                desc=str(model_path).split("/")[-1],
-                total=total_size,
-                unit="B",
-                unit_scale=True,
-                unit_divisor=1024,
-            ) as bar,
-        ):
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-                bar.update(len(chunk))
-        logger.info(f"📥 File downloaded: {model_path}")
         return model_path
 
     def get_dataset_by_name(self, name: str) -> Optional[DatasetMetadata]:
@@ -373,6 +350,21 @@ class Focoos:
         return datasets
 
     def add_remote_dataset(self, name: str, description: str, layout: DatasetLayout, task: FocoosTask) -> RemoteDataset:
+        """
+        Creates a new remote dataset with the specified parameters.
+
+        Args:
+            name (str): The name of the dataset.
+            description (str): A description of the dataset.
+            layout (DatasetLayout): The layout structure of the dataset.
+            task (FocoosTask): The task type associated with the dataset.
+
+        Returns:
+            RemoteDataset: A RemoteDataset instance representing the newly created dataset.
+
+        Raises:
+            ValueError: If the dataset creation fails due to API errors.
+        """
         res = self.api_client.post(
             "datasets/", data={"name": name, "description": description, "layout": layout.value, "task": task.value}
         )
@@ -383,4 +375,13 @@ class Focoos:
         return RemoteDataset(res.json()["ref"], self.api_client)
 
     def get_remote_dataset(self, ref: str) -> RemoteDataset:
+        """
+        Retrieves a remote dataset by its reference ID.
+
+        Args:
+            ref (str): The reference ID of the dataset to retrieve.
+
+        Returns:
+            RemoteDataset: A RemoteDataset instance for the specified reference.
+        """
         return RemoteDataset(ref, self.api_client)
