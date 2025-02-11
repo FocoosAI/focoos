@@ -280,21 +280,28 @@ class Focoos:
         ## download model metadata
         res = self.api_client.get(f"models/{model_ref}/download?format={format.value}")
         if res.status_code != 200:
-            logger.error(f"Failed to download model: {res.status_code} {res.text}")
-            raise ValueError(f"Failed to download model: {res.status_code} {res.text}")
+            logger.error(f"Failed to retrieve download url for model: {res.status_code} {res.text}")
+            raise ValueError(f"Failed to retrieve download url for model: {res.status_code} {res.text}")
 
         download_data = res.json()
-        metadata = ModelMetadata.from_json(download_data["model_metadata"])
-        with open(metadata_path, "w") as f:
-            f.write(metadata.model_dump_json())
-        logger.debug(f"Dumped metadata to {metadata_path}")
+
         download_uri = download_data["download_uri"]
 
         ## download model from Focoos Cloud
         logger.debug(f"Model URI: {download_uri}")
         logger.info("📥 Downloading model from Focoos Cloud.. ")
-
-        model_path = self.api_client.download_file(download_uri, model_dir)
+        try:
+            model_path = self.api_client.download_file(download_uri, model_dir)
+            metadata = ModelMetadata.from_json(download_data["model_metadata"])
+            with open(metadata_path, "w") as f:
+                f.write(metadata.model_dump_json())
+            logger.debug(f"Dumped metadata to {metadata_path}")
+        except Exception as e:
+            logger.error(f"Failed to download model: {e}")
+            raise ValueError(f"Failed to download model: {e}")
+        if model_path is None:
+            logger.error(f"Failed to download model: {res.status_code} {res.text}")
+            raise ValueError(f"Failed to download model: {res.status_code} {res.text}")
 
         return model_path
 

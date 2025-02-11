@@ -411,6 +411,7 @@ def test_download_model_onnx_fail(focoos_instance: Focoos):
 
 def test_download_model_onnx_ok_but_get_external_fail(mocker: MockerFixture, focoos_instance: Focoos):
     model_ref = "ref1"
+    # Mock successful API response for model metadata
     focoos_instance.api_client.get = MagicMock(
         return_value=MagicMock(
             status_code=200,
@@ -420,46 +421,56 @@ def test_download_model_onnx_ok_but_get_external_fail(mocker: MockerFixture, foc
             },
         ),
     )
+    # Mock model metadata parsing
     mock_model_metadata = mocker.patch("focoos.focoos.ModelMetadata.from_json", autospec=True)
     mock_model_metadata.return_value = MagicMock(model_dump_json=lambda: "fake_model_dump")
-    focoos_instance.api_client.external_get = MagicMock(return_value=MagicMock(status_code=500))
+
     with tempfile.TemporaryDirectory() as model_dir_tmp:
         focoos_instance.cache_dir = model_dir_tmp
-        with pytest.raises(ValueError):
+        # Mock failed download from Focoos Cloud
+        focoos_instance.api_client.download_file = MagicMock(side_effect=ValueError("Failed to download model"))
+
+        # Should raise ValueError when download fails
+        with pytest.raises(ValueError, match="Failed to download model"):
             focoos_instance._download_model(model_ref)
+
+        # Verify no files were created
         model_dir = pathlib.Path(model_dir_tmp) / model_ref
-        assert not model_dir.exists()
         assert not (model_dir / "model.onnx").exists()
         assert not (model_dir / "focoos_metadata.json").exists()
 
 
 def test_download_model_onnx(mocker: MockerFixture, focoos_instance: Focoos):
-    model_ref = "ref1"
-    focoos_instance.api_client.get = MagicMock(
-        return_value=MagicMock(
-            status_code=200,
-            json=lambda: {
-                "download_uri": "https://fake.com",
-                "model_metadata": MagicMock(),
-            },
-        ),
-    )
-    mock_model_metadata = mocker.patch("focoos.focoos.ModelMetadata.from_json", autospec=True)
-    mock_model_metadata.return_value = MagicMock(model_dump_json=lambda: "fake_model_dump")
-    focoos_instance.api_client.external_get = MagicMock(
-        return_value=MagicMock(
-            status_code=200,
-            headers={"content-length": 100},
-            iter_content=lambda chunk_size: [
-                b"chunk1",
-                b"chunk2",
-                b"chunk3",
-                b"chunk4",
-            ],
-        )
-    )
     with tempfile.TemporaryDirectory() as model_dir_tmp:
         focoos_instance.cache_dir = model_dir_tmp
+        model_ref = "ref1"
+        expected_path = str(pathlib.Path(model_dir_tmp) / model_ref / "model.onnx")
+        focoos_instance.api_client.get = MagicMock(
+            return_value=MagicMock(
+                status_code=200,
+                json=lambda: {
+                    "download_uri": "https://fake.com",
+                    "model_metadata": MagicMock(),
+                },
+            ),
+        )
+        focoos_instance.api_client.external_get = MagicMock(return_value=MagicMock(status_code=200))
+        focoos_instance.api_client.download_file = MagicMock(return_value=expected_path)
+        mock_model_metadata = mocker.patch("focoos.focoos.ModelMetadata.from_json", autospec=True)
+        mock_model_metadata.return_value = MagicMock(model_dump_json=lambda: "fake_model_dump")
+        focoos_instance.api_client.external_get = MagicMock(
+            return_value=MagicMock(
+                status_code=200,
+                headers={"content-length": 100},
+                iter_content=lambda chunk_size: [
+                    b"chunk1",
+                    b"chunk2",
+                    b"chunk3",
+                    b"chunk4",
+                ],
+            )
+        )
+
         model_path = focoos_instance._download_model(model_ref)
         assert model_path is not None
-        assert model_path == str(pathlib.Path(model_dir_tmp) / model_ref / "model.onnx")
+        assert model_path == expected_path

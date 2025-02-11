@@ -85,10 +85,11 @@ class RemoteDataset:
             FileNotFoundError: If the specified file does not exist.
             ValueError: If the file is not a zip file or upload fails.
         """
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"File not found: {path}")
         if not path.endswith(".zip"):
             raise ValueError("Dataset must be .zip compressed")
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"File not found: {path}")
+
         file_name = os.path.basename(path)
         file_size = os.path.getsize(path)
         file_size_mb = file_size / (1024 * 1024)
