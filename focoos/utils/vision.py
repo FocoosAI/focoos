@@ -51,8 +51,10 @@ def image_loader(im: Union[bytes, str, Path, np.ndarray, Image.Image]) -> np.nda
     elif isinstance(im, Buffer):
         byte_array = np.frombuffer(im, dtype=np.uint8)
         cv_image = cv2.imdecode(byte_array, cv2.IMREAD_COLOR)
+    else:
+        raise ValueError(f"Unsupported image type: {type(im)}")
 
-    return cv_image
+    return cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
 
 
 def image_preprocess(

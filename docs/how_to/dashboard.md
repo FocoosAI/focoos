@@ -50,7 +50,7 @@ for model in models:
     print("-" * 50)
 
 ```
-`models` is a list of [`ModelPreview`](../../api/ports/#focoos.ports.ModelPreview) objects that contains the following information:
+`models` is a list of [`ModelPreview`](/focoos/api/ports/#focoos.ports.ModelPreview) objects that contains the following information:
 
 - `name`: The name of the model.
 - `ref`: The reference of the model.
@@ -58,7 +58,7 @@ for model in models:
 - `task`: The task of the model.
 - `description`: The description of the model.
 - `focoos_model`: The starting Focoos Model used for training.
-- `status`: The status of the model, which indicates its current state (e.g. CREATED, TRAINING_RUNNING, TRAINING_COMPLETED - see [`ModelStatus`](../../api/ports/#focoos.ports.ModelStatus)).
+- `status`: The status of the model, which indicates its current state (e.g. CREATED, TRAINING_RUNNING, TRAINING_COMPLETED - see [`ModelStatus`](/focoos/api/ports/#focoos.ports.ModelStatus)).
 
 ## See the metrics for a model
 To see the validation metrics of a model, you can use the [`metrics` method](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.metrics) on the model object.

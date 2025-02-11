@@ -1,4 +1,4 @@
-.PHONY: venv test install install-dev install-pre-commit run-pre-commit .uv .pre-commit tox
+.PHONY: venv test install install-gpu run-pre-commit .uv .pre-commit tox
 
 .uv: ## Check that uv is installed
 	@uv --version || echo 'Please install uv: https://docs.astral.sh/uv/getting-started/installation/'
@@ -10,7 +10,7 @@ venv:
 	@uv venv --python=python3.12
 
 install: .uv .pre-commit
-	@uv pip install -e ".[cuda,dev]" --no-cache-dir
+	@uv pip install -e ".[dev]" --no-cache-dir
 	@pre-commit install
 
 install-gpu: .uv .pre-commit
