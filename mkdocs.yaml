@@ -31,22 +31,36 @@ plugins:
   - include-markdown
 
 nav:
-  - Home:
-      - Focoos AI: index.md
-      - Datasets: datasets.md
+  - Focoos AI:
+      - Welcome: index.md
+      - Installation: setup.md
       - Models: models.md
-  - Getting Started:
-      - Introduction: getting_started/introduction.md
-      - Installation: getting_started/installation.md
-      - Quickstart: getting_started/quickstart.md
+
   - How to:
-      - Cloud Training: how_to/cloud_training.md
-      - Inference: how_to/inference.md
+      - Use Focoos Models: how_to/inference.md
+      - Personalize Your Model: how_to/cloud_training.md
+      - Managing your models: how_to/dashboard.md
+      - Managing your user: how_to/user.md
+  - Focoos Models:
+      - Overview: models.md
+      - Semantic segmentation:
+        - fai-m2f-l-ade: models/fai-m2f-l-ade.md
+        - fai-m2f-m-ade: models/fai-m2f-m-ade.md
+        - fai-m2f-s-ade: models/fai-m2f-s-ade.md
+      - Object detection:
+        - fai-rtdetr-l-coco: models/fai-rtdetr-l-coco.md
+        - fai-rtdetr-m-coco: models/fai-rtdetr-m-coco.md
+        - fai-rtdetr-s-coco: models/fai-rtdetr-s-coco.md
+        - fai-rtdetr-n-coco: models/fai-rtdetr-n-coco.md
+        - fai-rtdetr-m-obj365: models/fai-rtdetr-m-obj365.md
+      - Instance_segmentation:
+        - fai-m2f-l-coco-ins: models/fai-m2f-l-coco-ins.md
   - API Reference:
       - focoos: api/focoos.md
       - remote model: api/remote_model.md
       - local model: api/local_model.md
       - runtime: api/runtime.md
+      - ports: api/ports.md
   - Development:
       - Contributing: development/contributing.md
       - Code of Conduct: development/code_of_conduct.md

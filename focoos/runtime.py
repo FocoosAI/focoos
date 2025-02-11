@@ -1,18 +1,20 @@
 """
-Runtime Module for ONNX-based Models
+Runtime Module for the models
 
 This module provides the necessary functionality for loading, preprocessing,
-running inference, and benchmarking ONNX-based models using different execution
-providers such as CUDA, TensorRT, OpenVINO, and CPU. It includes utility functions
-for image preprocessing, postprocessing, and interfacing with the ONNXRuntime library.
+running inference, and benchmarking ONNX and TorchScript models using different execution
+providers such as CUDA, TensorRT, and CPU. It includes utility functions
+for image preprocessing, postprocessing, and interfacing with the ONNXRuntime and TorchScript libraries.
 
 Functions:
     det_postprocess: Postprocesses detection model outputs into sv.Detections.
     semseg_postprocess: Postprocesses semantic segmentation model outputs into sv.Detections.
-    get_runtime: Returns an ONNXRuntime instance configured for the given runtime type.
+    load_runtime: Returns an ONNXRuntime or TorchscriptRuntime instance configured for the given runtime type.
 
 Classes:
+    RuntimeTypes: Enum for the different runtime types.
     ONNXRuntime: A class that interfaces with ONNX Runtime for model inference.
+    TorchscriptRuntime: A class that interfaces with TorchScript for model inference.
 """
 
 from abc import abstractmethod
@@ -26,8 +28,7 @@ try:
     import torch
 
     TORCH_AVAILABLE = True
-except ImportError as e:
-    print(e)
+except ImportError:
     TORCH_AVAILABLE = False
 
 try:
@@ -349,13 +350,17 @@ def load_runtime(
     """
     if runtime_type == RuntimeTypes.TORCHSCRIPT_32:
         if not TORCH_AVAILABLE:
-            logger.error("⚠️ Pytorch not found =(  please install focoos with ['torch'] extra")
+            logger.error(
+                "⚠️ Pytorch not found =(  please install focoos with ['torch'] extra. See https://focoosai.github.io/focoos/setup/ for more details"
+            )
             raise ImportError("Pytorch not found")
         opts = TorchscriptRuntimeOpts(warmup_iter=warmup_iter)
         return TorchscriptRuntime(model_path, opts, model_metadata)
     else:
         if not ORT_AVAILABLE:
-            logger.error("⚠️ onnxruntime not found =(  please install focoos with ['onnx'] extra")
+            logger.error(
+                "⚠️ onnxruntime not found =(  please install focoos with one of 'cpu', 'cuda', 'tensorrt' extra. See https://focoosai.github.io/focoos/setup/ for more details"
+            )
             raise ImportError("onnxruntime not found")
         opts = OnnxRuntimeOpts(
             cuda=runtime_type == RuntimeTypes.ONNX_CUDA32,

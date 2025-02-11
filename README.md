@@ -1,124 +1,117 @@
 ![Tests](https://github.com/FocoosAI/focoos/actions/workflows/test.yml/badge.svg??event=push&branch=main)
 
-# Focoos pre-trained models
+# Welcome to Focoos AI
 
-| Model Name          | Task                  | Metrics | Domain                          |
-| ------------------- | --------------------- | ------- | ------------------------------- |
-| focoos_object365    | Detection             | -       | Common Objects, 365 classes     |
-| focoos_rtdetr       | Detection             | -       | Common Objects, 80 classes      |
-| focoos_cts_medium   | Semantic Segmentation | -       | Autonomous driving, 30 classes  |
-| focoos_cts_large    | Semantic Segmentation | -       | Autonomous driving, 30 classes  |
-| focoos_ade_nano     | Semantic Segmentation | -       | Common Scenes, 150 classes      |
-| focoos_ade_small    | Semantic Segmentation | -       | Common Scenes, 150 classes      |
-| focoos_ade_medium   | Semantic Segmentation | -       | Common Scenes, 150 classes      |
-| focoos_ade_large    | Semantic Segmentation | -       | Common Scenes, 150 classes      |
-| focoos_aeroscapes   | Semantic Segmentation | -       | Drone Aerial Scenes, 11 classes |
-| focoos_isaid_nano   | Semantic Segmentation | -       | Satellite Imagery, 15 classes   |
-| focoos_isaid_medium | Semantic Segmentation | -       | Satellite Imagery, 15 classes   |
+Focoos AI provides an advanced development platform designed to empower developers and businesses with efficient, customizable computer vision solutions. Whether you're working with data from cloud infrastructures or deploying on edge devices, Focoos AI enables you to select, fine-tune, and deploy state-of-the-art models optimized for your unique needs.
 
-# Focoos
-Focoos is a comprehensive SDK designed for computer vision tasks such as object detection, semantic segmentation, instance segmentation, and more. It provides pre-trained models that can be easily integrated and customized by users for various applications.
-Focoos supports both cloud and local inference, and enables training on the cloud, making it a versatile tool for developers working in different domains, including autonomous driving, common scenes, drone aerial scenes, and satellite imagery.
+## SDK Overview
 
-### Key Features
+<!-- Unlock the full potential of Focoos AI with the Focoos Python SDK! 🚀  -->
+This powerful SDK gives you seamless access to our cutting-edge computer vision models and tools, allowing you to effortlessly interact with the Focoos API. With just a few lines of code, you can easily **select, customize, test, and deploy** pre-trained models tailored to your specific needs.
 
-- **Pre-trained Models**: A wide range of pre-trained models for different tasks and domains.
-- **Cloud Inference**: API to Focoos cloud inference.
-- **Cloud Training**: Train custom models with the Focoos cloud.
-- **Multiple Local Inference Runtimes**: Support for various inference runtimes including CPU, GPU, Torchscript CUDA, OnnxRuntime CUDA, and OnnxRuntime TensorRT.
-- **Model Monitoring**: Monitor model performance and metrics.
+Whether you're deploying in the cloud or on edge devices, the Focoos Python SDK integrates smoothly into your workflow, speeding up your development process.
+
+### Key Features 🔑
+
+1. **Select Ready-to-use Models** 🧩
+   Get started quickly by selecting one of our efficient, [pre-trained models](https://focoosai.github.io/focoos/models/) that best suits your data and application needs.
+
+2. **Personalize Your Model** ✨
+   Customize the selected model for higher accuracy through [fine-tuning](https://focoosai.github.io/focoos/how_to/cloud_training/). Adapt the model to your specific use case by training it on your own dataset.
+
+3. **Test and Validate** 🧪
+   Upload your data sample to [test the model](https://focoosai.github.io/focoos/how_to/inference/)'s accuracy and efficiency. Iterate the process to ensure the model performs to your expectations.
+
+4. **Remote and Local Inference** 🖥️
+   Deploy the model on your devices or use it on our servers. Download the model to run it locally, without sending any data over the network, ensuring full privacy.
 
 
+### Quickstart 🚀
+Ready to dive in? Get started with the setup in just a few simple steps!
 
-# 🐍 Setup
-We recommend using [UV](https://docs.astral.sh/uv/) as a package manager and environment manager for a streamlined dependency management experience.
-Here’s how to create a new virtual environment with UV:
-```bash
-pip install uv
-uv venv --python 3.12
-source .venv/bin/activate
+**Install** the Focoos Python SDK (for more options, see [setup](https://focoosai.github.io/focoos/setup))
+
+**uv**
+```bash linenums="0"
+uv pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
 ```
 
-Focoos models support multiple inference runtimes.
-To keep the library lightweight and to allow users to use their environment, optional dependencies (e.g., torch, onnxruntime, tensorrt) are not installed by default.
-Foocoos is shipped with the following extras dependencies:
-
-- `[torch]`: torchscript CUDA
-- `[cuda]`: onnxruntime CUDA
-- `[tensorrt]`: onnxruntime TensorRT
-
-## CPU only or Remote Usage
-
-```bash
-uv pip install focoos[cpu] git+https://github.com/FocoosAI/focoos.git
+**pip**
+```bash linenums="0"
+pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
 ```
 
-## GPU Runtimes
-### Torchscript CUDA
-```bash
-uv pip install focoos[torch] git+https://github.com/FocoosAI/focoos.git
+**conda**
+```bash linenums="0"
+conda install pip # if you don't have it already
+pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
 ```
 
-### OnnxRuntime CUDA
--
-
-```bash
-uv pip install focoos[cuda] git+https://github.com/FocoosAI/focoos.gi
-```
-
-### OnnxRuntime TensorRT
-
-To perform inference using TensorRT, ensure you have TensorRT version 10.5 installed.
-```bash
-sudo apt-get install tensorrt
-```
-
-```bash
-uv pip install focoos[tensorrt] git+https://github.com/FocoosAI/focoos.git
-```
-
-
-## 🤖 Cloud Inference
+🚀 [Directly use](https://focoosai.github.io/focoos/how_to/inference/) our **Efficient Models**, optimized for different data, applications, and hardware.
 
 ```python
 from focoos import Focoos
 
-focoos = Focoos(api_key=os.getenv("FOCOOS_API_KEY"))
+# Initialize the Focoos client with your API key
+focoos = Focoos(api_key="<YOUR-API-KEY>")
 
-model = focoos.get_remote_model("focoos_object365")
-detections = model.infer("./image.jpg", threshold=0.4)
+# Get the remote model (fai-rtdetr-m-obj365) from Focoos API
+model = focoos.get_remote_model("fai-rtdetr-m-obj365")
+
+# Run inference on an image
+detections, _ = model.infer(image_path, threshold=0.4)
+
+# Output the detections
+print(detections)
 ```
 
-## 🤖 Cloud Inference with Gradio
-
-setup FOCOOS_API_KEY_GRADIO environment variable with your Focoos API key
-
-```bash
-uv pip install focoos[dev] git+https://github.com/FocoosAI/focoos.git
-```
-
-```bash
-gradio gradio/app.py
-```
-
-## Local Inference
+⚙️ **Customize** the models to your specific needs by [fine-tuning](https://focoosai.github.io/focoos/how_to/cloud_training/) on your own dataset.
 
 ```python
 from focoos import Focoos
+from focoos.ports import Hyperparameters
 
-focoos = Focoos(api_key=os.getenv("FOCOOS_API_KEY"))
+focoos = Focoos(api_key="<YOUR-API-KEY>")
+model = focoos.new_model(name="awesome",
+                         focoos_model="fai-rtdetr-m-obj365",
+                         description="An awesome model")
 
-model = focoos.get_local_model("focoos_object365")
-
-detections = model.infer("./image.jpg", threshold=0.4)
+res = model.train(
+    dataset_ref="<YOUR-DATASET-ID>",
+    hyperparameters=Hyperparameters(
+        learning_rate=0.0001,
+        batch_size=16,
+        max_iters=1500,
+    )
+)
 ```
 
+See more examples in the [how to](https://focoosai.github.io/focoos/how_to) section.
 
-## Docker and devcontainers
-For container support, Focoos offers four different Docker images:
-- `focoos-cpu`: only CPU
-- `focoos-onnx`: Includes ONNX support
-- `focoos-torch`: Includes ONNX and Torchscript support
-- `focoos-tensorrt`: Includes ONNX, Torchscript, and TensorRT support
+### Our Models 🧠
+Focoos AI offers the best models in object detection, semantic and instance segmentation, and more is coming soon.
 
-This repository also includes a devcontainer configuration for each of the above images. You can launch these devcontainers in Visual Studio Code for a seamless development experience.
+Using Focoos AI helps you save both time and money while delivering high-performance AI models 💪:
+
+- **10x Faster** ⏳: Our models are able to process images up to ten times faster than traditional methods.
+- **4x Cheaper** 💰: Our models require up to 4x less computational power, letting you save on hardware or cloud bill while ensuring high-quality results.
+- **Tons of CO2 saved annually per model** 🌱: Our models are energy-efficient, helping you reduce your carbon footprint by using less powerful hardware with respect to mainstream models.
+
+These are not empty promises, but the result of years of research and development by our team 🔬:
+<div style="space-between; margin: 20px 0;">
+    <div style="flex: 1; margin-right: 10px;">
+        <img src="https://raw.githubusercontent.com/FocoosAI/focoos/refs/heads/main/docs/models/fai-ade.png" alt="ADE-20k Semantic Segmentation" style="width: 100%;">
+        <figcaption style="text-align: center;">ADE-20k <a href="https://focoosai.github.io/focoos/models/#semantic-segmentation">Semantic Segmentation</a> Results</figcaption>
+    </div>
+    <div style="flex: 1; margin-left: 10px;">
+        <img src="https://raw.githubusercontent.com/FocoosAI/focoos/refs/heads/main/docs/models/fai-coco.png" alt="COCO Object Detection" style="width: 100%;">
+        <figcaption style="text-align: center;">COCO <a href="https://focoosai.github.io/focoos/models/#object-detection">Object Detection</a> Results</figcaption>
+    </div>
+</div>
+
+See the list of our models in the [models](https://focoosai.github.io/focoos/models/) section.
+
+---
+### Start now!
+By choosing Focoos AI, you can save time, reduce costs, and achieve superior model performance, all while ensuring the privacy and efficiency of your deployments.
+[Reach out to us](mailto:info@focoos.ai) to ask for your API key for free and power your computer vision projects. 🚀
