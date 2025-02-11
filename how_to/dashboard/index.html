@@ -8,6 +8,8 @@
       
       
       
+        <link rel="canonical" href="https://focoosai.github.io/focoos/how_to/dashboard/">
+      
       
         <link rel="prev" href="../cloud_training/">
       
@@ -1437,7 +1439,7 @@
 
 <h1 id="model-management">Model Management<a class="headerlink" href="#model-management" title="Permanent link">#</a></h1>
 <p>This section covers the steps to monitor the status of your models on the FocoosAI platform.</p>
-<p><a href="https://colab.research.google.com/github/FocoosAI/focoos/blob/documentation%2Fnomenclature/notebooks/model_management.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+<p><a href="https://colab.research.google.com/github/FocoosAI/focoos/blob/main/notebooks/model_management.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
 <h2 id="how-to-list-the-focoos-models">How to list the Focoos Models<a class="headerlink" href="#how-to-list-the-focoos-models" title="Permanent link">#</a></h2>
 <p>To list all the models available on the FocoosAI platform, you can use the following code:
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -1464,14 +1466,14 @@
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Description: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-<code>models</code> is a list of <a href="/api/ports/#focoos.ports.ModelPreview"><code>ModelPreview</code></a> objects that contains the following information:</p>
+<code>models</code> is a list of <a href="/focoos/api/ports/#focoos.ports.ModelPreview"><code>ModelPreview</code></a> objects that contains the following information:</p>
 <ul>
 <li><code>name</code>: The name of the model.</li>
 <li><code>ref</code>: The reference of the model.</li>
 <li><code>status</code>: The status of the model.</li>
 <li><code>task</code>: The task of the model.</li>
 <li><code>description</code>: The description of the model.</li>
-<li><code>status</code>: The status of the model, which indicates its current state (e.g. CREATED, TRAINING_RUNNING, TRAINING_COMPLETED - see <a href="/api/ports/#focoos.ports.ModelStatus"><code>ModelStatus</code></a>).</li>
+<li><code>status</code>: The status of the model, which indicates its current state (e.g. CREATED, TRAINING_RUNNING, TRAINING_COMPLETED - see <a href="/focoos/api/ports/#focoos.ports.ModelStatus"><code>ModelStatus</code></a>).</li>
 </ul>
 <h2 id="how-to-list-all-your-models">How to list all your models<a class="headerlink" href="#how-to-list-all-your-models" title="Permanent link">#</a></h2>
 <p>To list all your models, the library provides a <code>list_models</code> function. This function will return a list of <code>Model</code> objects.</p>
@@ -1501,7 +1503,7 @@
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Focoos Model: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">focoos_model</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-<code>models</code> is a list of <a href="/api/ports/#focoos.ports.ModelPreview"><code>ModelPreview</code></a> objects that contains the following information:</p>
+<code>models</code> is a list of <a href="/focoos/api/ports/#focoos.ports.ModelPreview"><code>ModelPreview</code></a> objects that contains the following information:</p>
 <ul>
 <li><code>name</code>: The name of the model.</li>
 <li><code>ref</code>: The reference of the model.</li>
@@ -1509,10 +1511,10 @@
 <li><code>task</code>: The task of the model.</li>
 <li><code>description</code>: The description of the model.</li>
 <li><code>focoos_model</code>: The starting Focoos Model used for training.</li>
-<li><code>status</code>: The status of the model, which indicates its current state (e.g. CREATED, TRAINING_RUNNING, TRAINING_COMPLETED - see <a href="/api/ports/#focoos.ports.ModelStatus"><code>ModelStatus</code></a>).</li>
+<li><code>status</code>: The status of the model, which indicates its current state (e.g. CREATED, TRAINING_RUNNING, TRAINING_COMPLETED - see <a href="/focoos/api/ports/#focoos.ports.ModelStatus"><code>ModelStatus</code></a>).</li>
 </ul>
 <h2 id="see-the-metrics-for-a-model">See the metrics for a model<a class="headerlink" href="#see-the-metrics-for-a-model" title="Permanent link">#</a></h2>
-<p>To see the validation metrics of a model, you can use the <a href="/api/remote_model/#focoos.remote_model.RemoteModel.metrics"><code>metrics</code> method</a> on the model object.</p>
+<p>To see the validation metrics of a model, you can use the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.metrics"><code>metrics</code> method</a> on the model object.</p>
 <p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -1555,9 +1557,9 @@
     <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">metrics</span><span class="o">.</span><span class="n">train_metrics</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-<code>metrics</code> is a <a href="/api/ports/#focoos.ports.Metrics"><code>Metrics</code></a> object that contains the validation metrics of the model.</p>
+<code>metrics</code> is a <a href="/focoos/api/ports/#focoos.ports.Metrics"><code>Metrics</code></a> object that contains the validation metrics of the model.</p>
 <h2 id="delete-a-model">Delete a model<a class="headerlink" href="#delete-a-model" title="Permanent link">#</a></h2>
-<p>To delete a model, you can use the <a href="/api/remote_model/#focoos.remote_model.RemoteModel.delete_model"><code>delete_model</code> method</a> on the model object.</p>
+<p>To delete a model, you can use the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.delete_model"><code>delete_model</code> method</a> on the model object.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>This action is irreversible and the model will be deleted forever from the platform.</p>
@@ -1599,7 +1601,7 @@ To list all the shared datasets, the library provides a `list_shared_datasets` f
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Description: </span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-`datasets` is a list of [`DatasetMetadata`](../../api/ports/#focoos.ports.DatasetMetadata) objects that contains the following information:
+`datasets` is a list of [`DatasetMetadata`](/focoos/api/ports/#focoos.ports.DatasetMetadata) objects that contains the following information:
 
 - `name`: The name of the dataset.
 - `ref`: The reference of the dataset.

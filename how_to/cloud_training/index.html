@@ -8,6 +8,8 @@
       
       
       
+        <link rel="canonical" href="https://focoosai.github.io/focoos/how_to/cloud_training/">
+      
       
         <link rel="prev" href="../inference/">
       
@@ -1503,7 +1505,7 @@
 
 <h1 id="personalize-your-model">Personalize your model<a class="headerlink" href="#personalize-your-model" title="Permanent link">#</a></h1>
 <p>This section covers the steps to create a model and train it in the cloud using the <code>focoos</code> library. The following example demonstrates how to interact with the Focoos API to manage models, datasets, and training jobs.</p>
-<p><a href="https://colab.research.google.com/github/FocoosAI/focoos/blob/documentation%2Fnomenclature/notebooks/training.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+<p><a href="https://colab.research.google.com/github/FocoosAI/focoos/blob/main/notebooks/training.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
 <p>In this guide, we will perform the following steps:</p>
 <ol>
 <li><a href="#1-load-or-select-a-dataset">📦 Load or select a dataset</a></li>
@@ -1517,7 +1519,7 @@
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Currently, we are not supporting dataset creation from the SDK (it's coming really soon) and you can only use a dataset already available on the platform.
-To upload your own dataset, you can write us a mail to <a href="mailto:info@focoos.ai">info@focoos.ai</a> and we will load your dataset on the platform on your private workspace (your data will not be shared with anyone and not used for any other purpose than training your model).</p>
+To upload your own dataset, you can write us a mail to <a href="mailto:support@focoos.ai">support@focoos.ai</a> and we will load your dataset on the platform on your private workspace (your data will not be shared with anyone and not used for any other purpose than training your model).</p>
 </div>
 <p>You can list all available datasets using the following code:
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -1537,7 +1539,7 @@ To upload your own dataset, you can write us a mail to <a href="mailto:info@foco
 </code></pre></div></td></tr></table></div></p>
 <h2 id="2-create-a-model">2. Create a model<a class="headerlink" href="#2-create-a-model" title="Permanent link">#</a></h2>
 <p>The first step to personalize your model is to create a model.
-You can create a model by calling the <a href="/api/focoos/#focoos.Focoos.new_model"><code>new_model</code> method</a> on the <code>Focoos</code> object. You can choose the model you want to personalize from the list of <a href="/models">Focoos Models</a> available on the platform. Make sure to select the correct model for your task.</p>
+You can create a model by calling the <a href="/focoos/api/focoos/#focoos.focoos.Focoos.new_model"><code>new_model</code> method</a> on the <code>Focoos</code> object. You can choose the model you want to personalize from the list of <a href="../../models/">Focoos Models</a> available on the platform. Make sure to select the correct model for your task.</p>
 <p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -1567,9 +1569,9 @@ An example of how to create a model is the following:
     <span class="n">focoos_model</span><span class="o">=</span><span class="s2">&quot;fai-rtdetr-m-obj365&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-This function will return a new <a href="/api/remote_model"><code>RemoteModel</code></a> object that you can use to train the model and to perform remote inference.</p>
+This function will return a new <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel"><code>RemoteModel</code></a> object that you can use to train the model and to perform remote inference.</p>
 <h2 id="3-train-the-model">3. Train the model<a class="headerlink" href="#3-train-the-model" title="Permanent link">#</a></h2>
-<p>Once the model is created, you can start the training process by calling the <a href="/api/remote_model/#focoos.remote_model.RemoteModel.train"><code>train</code> method</a> on the model object.</p>
+<p>Once the model is created, you can start the training process by calling the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.train"><code>train</code> method</a> on the model object.</p>
 <p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -1591,33 +1593,33 @@ This function will return a new <a href="/api/remote_model"><code>RemoteModel</c
 <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
 For selecting the <code>dataset_ref</code> see the <a href="#1-load-or-select-a-dataset">step 1</a>.
-You can further customize the training process by passing additional parameters to the <a href="/api/remote_model/#focoos.remote_model.RemoteModel.train"><code>train</code> method</a> (such as the instance type, the volume size, the maximum runtime, etc.) or use additional hyperparameters (see the list <a href="/api/ports/#focoos.ports.Hyperparameters">available hyperparameters</a>).</p>
-<p>Futhermore, you can monitor the training progress by polling the training status. Use the <a href="/api/remote_model/#focoos.remote_model.RemoteModel.notebook_monitor_train"><code>notebook_monitor_train</code></a> method on a jupyter notebook:
+You can further customize the training process by passing additional parameters to the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.train"><code>train</code> method</a> (such as the instance type, the volume size, the maximum runtime, etc.) or use additional hyperparameters (see the list <a href="/focoos/api/ports/#focoos.ports.Hyperparameters">available hyperparameters</a>).</p>
+<p>Futhermore, you can monitor the training progress by polling the training status. Use the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.notebook_monitor_train"><code>notebook_monitor_train</code></a> method on a jupyter notebook:
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">model</span><span class="o">.</span><span class="n">notebook_monitor_train</span><span class="p">(</span><span class="n">interval</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">plot_metrics</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div></p>
-<p>You can also get the training logs by calling the <a href="/api/remote_model/#focoos.remote_model.RemoteModel.train_logs"><code>train_logs</code> method</a>:
+<p>You can also get the training logs by calling the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.train_logs"><code>train_logs</code> method</a>:
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">logs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">train_logs</span><span class="p">()</span>
 <span class="n">pprint</span><span class="p">(</span><span class="n">logs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div></p>
-<p>Finally, if for some reason you need to cancel the training, you can do so by calling the <a href="/api/remote_model/#focoos.remote_model.RemoteModel.stop_training"><code>stop_training</code> method</a>:
+<p>Finally, if for some reason you need to cancel the training, you can do so by calling the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.stop_training"><code>stop_training</code> method</a>:
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">model</span><span class="o">.</span><span class="n">stop_training</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div></p>
 <h2 id="4-visualize-training-metrics">4. Visualize training metrics<a class="headerlink" href="#4-visualize-training-metrics" title="Permanent link">#</a></h2>
-<p>You can visualize the training metrics by calling the <a href="/api/remote_model/#focoos.remote_model.RemoteModel.metrics"><code>metrics</code> method</a>:
+<p>You can visualize the training metrics by calling the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.metrics"><code>metrics</code> method</a>:
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">metrics</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">metrics</span><span class="p">()</span>
 <span class="n">visualizer</span> <span class="o">=</span> <span class="n">MetricsVisualizer</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span>
 <span class="n">visualizer</span><span class="o">.</span><span class="n">log_metrics</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
-The function will return an object of type <a href="/api/ports/#focoos.ports.Metrics"><code>Metrics</code></a> that you can use to visualize the training metrics using a <code>MetricsVisualizer</code> object.</p>
-<p>On notebooks, you can also plot the metrics by calling the <a href="/api/remote_model/#focoos.remote_model.RemoteModel.notebook_plot_training_metrics"><code>notebook_plot_training_metrics</code></a> method:
+The function will return an object of type <a href="/focoos/api/ports/#focoos.ports.Metrics"><code>Metrics</code></a> that you can use to visualize the training metrics using a <code>MetricsVisualizer</code> object.</p>
+<p>On notebooks, you can also plot the metrics by calling the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.notebook_plot_training_metrics"><code>notebook_plot_training_metrics</code></a> method:
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">visualizer</span><span class="o">.</span><span class="n">notebook_plot_training_metrics</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div></p>
 <h2 id="5-test-your-model">5. Test your model<a class="headerlink" href="#5-test-your-model" title="Permanent link">#</a></h2>
 <h3 id="remote-inference">Remote Inference<a class="headerlink" href="#remote-inference" title="Permanent link">#</a></h3>
-<p>Once the training is over, you can test your model using remote inference by calling the <a href="/api/remote_model/#focoos.remote_model.RemoteModel.infer"><code>infer</code> method</a> on the model object.</p>
+<p>Once the training is over, you can test your model using remote inference by calling the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.infer"><code>infer</code> method</a> on the model object.</p>
 <p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -1634,7 +1636,7 @@ The function will return an object of type <a href="/api/ports/#focoos.ports.Met
     <span class="k">if</span> <span class="n">det</span><span class="o">.</span><span class="n">mask</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Instance segmentation mask included&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-<code>result</code> is a <a href="/api/ports/#focoos.ports.FocoosDetections">FocoosDetections</a> object, containing a list of <a href="/api/ports/#focoos.ports.FocoosDet">FocoosDet</a> objects and optionally a dict of information about the latency of the inference.</p>
+<code>result</code> is a <a href="/focoos/api/ports/#focoos.ports.FocoosDetections">FocoosDetections</a> object, containing a list of <a href="/focoos/api/ports/#focoos.ports.FocoosDet">FocoosDet</a> objects and optionally a dict of information about the latency of the inference.</p>
 <p>The <code>threshold</code> parameter is optional and defines the minimum confidence score for a detection to be considered valid (predictions with a confidence score lower than the threshold are discarded).</p>
 <p>Optionally, you can preview the results by passing the <code>annotate</code> parameter to the <code>infer</code> method.
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
@@ -1648,9 +1650,9 @@ The function will return an object of type <a href="/api/ports/#focoos.ports.Met
 <h3 id="local-inference">Local Inference<a class="headerlink" href="#local-inference" title="Permanent link">#</a></h3>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>To perform local inference, you need to install the package with one of the extra modules (<code>[cpu]</code>, <code>[torch]</code>, <code>[cuda]</code>, <code>[tensorrt]</code>). See the <a href="./setup.md">installation</a> page for more details.</p>
+<p>To perform local inference, you need to install the package with one of the extra modules (<code>[cpu]</code>, <code>[torch]</code>, <code>[cuda]</code>, <code>[tensorrt]</code>). See the <a href="../../setup/">installation</a> page for more details.</p>
 </div>
-<p>You can perform inference locally by getting the <a href="/api/local_model"><code>LocalModel</code></a> you already trained and calling the <a href="/api/local_model/#focoos.local_model.LocalModel.infer"><code>infer</code> method</a> on your image. If it's the first time you run the model locally, the model will be downloaded from the cloud and saved on your machine. Additionally, if you use CUDA or TensorRT, the model will be optimized for your GPU before running the inference (it can take few seconds, especially for TensorRT).</p>
+<p>You can perform inference locally by getting the <a href="/focoos/api/local_model"><code>LocalModel</code></a> you already trained and calling the <a href="/focoos/api/local_model/#focoos.local_model.LocalModel.infer"><code>infer</code> method</a> on your image. If it's the first time you run the model locally, the model will be downloaded from the cloud and saved on your machine. Additionally, if you use CUDA or TensorRT, the model will be optimized for your GPU before running the inference (it can take few seconds, especially for TensorRT).</p>
 <p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
