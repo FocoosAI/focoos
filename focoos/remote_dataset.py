@@ -9,36 +9,82 @@ logger = get_logger(__name__)
 
 
 class RemoteDataset:
+    """
+    A class to manage remote datasets through the Focoos API.
+
+    This class provides functionality to interact with datasets stored remotely,
+    including uploading, downloading, and managing dataset data.
+
+    Args:
+        ref (str): The reference identifier for the dataset.
+        api_client (ApiClient): The API client instance for making requests.
+
+    Attributes:
+        ref (str): The dataset reference identifier.
+        api_client (ApiClient): The API client instance.
+        metadata (DatasetPreview): The dataset metadata.
+    """
+
     def __init__(self, ref: str, api_client: ApiClient):
         self.ref = ref
         self.api_client = api_client
         self.metadata: DatasetPreview = self.get_info()
 
     def get_info(self) -> DatasetPreview:
+        """
+        Retrieves the dataset information from the API.
+
+        Returns:
+            DatasetPreview: The dataset preview information.
+        """
         res = self.api_client.get(f"datasets/{self.ref}")
         return DatasetPreview.from_json(res.json())
 
     def delete(self):
+        """
+        Deletes the entire dataset from the remote storage.
+
+        Raises:
+            Exception: If the deletion fails.
+        """
         try:
             res = self.api_client.delete(f"datasets/{self.ref}")
             res.raise_for_status()
-            logger.info("Deleted dataset")
+            logger.warning(f"Deleted dataset {self.ref}")
         except Exception as e:
-            logger.error(f"Failed to delete dataset: {e}")
+            logger.error(f"Failed to delete dataset {self.ref}: {e}")
             raise e
 
     def delete_data(self):
+        """
+        Deletes only the data content of the dataset while preserving metadata.
+
+        Updates the metadata after successful deletion.
+        """
         try:
             res = self.api_client.delete(f"datasets/{self.ref}/data")
 
             res.raise_for_status()
             new_metadata = DatasetPreview.from_json(res.json())
             self.metadata = new_metadata
-            logger.info("Deleted dataset data")
+            logger.warning(f"Deleted dataset data {self.ref}")
         except Exception as e:
-            logger.error(f"Failed to delete dataset data: {e}")
+            logger.error(f"Failed to delete dataset data {self.ref}: {e}")
 
     def upload_data(self, path: str) -> Optional[DatasetSpec]:
+        """
+        Uploads dataset data from a local zip file to the remote storage.
+
+        Args:
+            path (str): Local path to the zip file containing dataset data.
+
+        Returns:
+            Optional[DatasetSpec]: The dataset specification after successful upload.
+
+        Raises:
+            FileNotFoundError: If the specified file does not exist.
+            ValueError: If the file is not a zip file or upload fails.
+        """
         if not os.path.exists(path):
             raise FileNotFoundError(f"File not found: {path}")
         if not path.endswith(".zip"):
@@ -64,15 +110,37 @@ class RemoteDataset:
             data=presigned_url["fields"],
             stream=True,
         )
-        logger.info("✅ Upload Done.")
+        logger.info("✅ Upload file done.")
         if res.status_code not in [200, 201, 204]:
             raise ValueError(f"Failed to upload dataset: {res.status_code} {res.text}")
 
-        logger.info("🔗 Validate dataset..")
+        logger.info("🔗 Validating dataset..")
         complete_upload = self.api_client.post(
             f"datasets/{self.ref}/complete-upload",
         )
         complete_upload.raise_for_status()
-        logger.info("✅ Done.")
         self.metadata = self.get_info()
+        logger.info(f"✅ Dataset validated! => {self.metadata.spec}")
         return self.metadata.spec
+
+    def download_data(self, path: str):
+        """
+        Downloads the dataset data to a local path.
+
+        Args:
+            path (str): Local path where the dataset should be downloaded.
+
+        Returns:
+            str: The path where the file was downloaded.
+
+        Raises:
+            ValueError: If the download fails.
+        """
+        res = self.api_client.get(f"datasets/{self.ref}/download")
+        if res.status_code != 200:
+            raise ValueError(f"Failed to download dataset data: {res.status_code} {res.text}")
+        logger.info(f"📥 Downloading dataset data to {path}")
+        url = res.json()["download_uri"]
+        path = self.api_client.download_file(url, path)
+        logger.info(f"✅ Dataset data downloaded to {path}")
+        return path
