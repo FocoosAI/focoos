@@ -79,10 +79,10 @@ As for remote inference, you can pass the `annotate` parameter to return a previ
 ## 🖼️ Cloud Inference with Gradio
 You can further use Gradio to create a web interface for your model.
 
-First, install the `gradio` extra dependency.
+First, install the `dev` extra dependency.
 
 ```bash linenums="0"
-pip install '.[gradio]'
+pip install '.[dev]'
 ```
 
 To use it, use an environment variable with your Focoos API key and run the app (you will select the model from the UI).
