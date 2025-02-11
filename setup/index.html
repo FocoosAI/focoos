@@ -9,6 +9,10 @@
       
       
       
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../models/">
       
       
       <link rel="icon" href="../assets/favicon.svg">
@@ -16,7 +20,7 @@
     
     
       
-        <title>Datasets - Focoos AI SDK</title>
+        <title>Installation - Focoos AI SDK</title>
       
     
     
@@ -84,7 +88,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#datasets" class="md-skip">
+        <a href="#python-sdk-setup" class="md-skip">
           Skip to content
         </a>
       
@@ -123,7 +127,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Datasets
+              Installation
             
           </span>
         </div>
@@ -208,10 +212,12 @@
         
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
+      <li class="md-tabs__item md-tabs__item--active">
         <a href=".." class="md-tabs__link">
           
   
@@ -349,23 +355,28 @@
       
   
   
+    
   
   
+  
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
         
           
-          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
             
   
   <span class="md-ellipsis">
@@ -377,7 +388,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_1">
             <span class="md-nav__icon md-icon"></span>
             Focoos AI
@@ -410,10 +421,31 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../setup/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Installation
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -423,6 +455,44 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#install-the-focoos-sdk" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install the Focoos SDK
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker-and-devcontainers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Docker and Devcontainers
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1286,6 +1356,32 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#install-the-focoos-sdk" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install the Focoos SDK
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker-and-devcontainers" class="md-nav__link">
+    <span class="md-ellipsis">
+      Docker and Devcontainers
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1303,130 +1399,220 @@
   
 
 
-<h1 id="datasets">Datasets<a class="headerlink" href="#datasets" title="Permanent link">#</a></h1>
-<p>With the Focoos SDK, you can leverage a diverse collection of foundational datasets specifically tailored for computer vision tasks. These datasets, spanning tasks such as segmentation, detection, and instance segmentation, provide a strong foundation for building and optimizing models across a variety of domains.</p>
-<hr />
-<p>Datasets:</p>
+<h1 id="python-sdk-setup">Python SDK Setup 🐍<a class="headerlink" href="#python-sdk-setup" title="Permanent link">#</a></h1>
+<p>Focoos models support multiple inference runtimes.
+To keep the library lightweight and to allow users to use their environment, optional dependencies (e.g., torch, onnxruntime, tensorrt) are not installed by default.</p>
+<p>Focoos is shipped with the following local inference runtimes that requires to install additional dependencies. If you intend to use only Focoos AI servers for inference, you don't need to install any of the following dependencies.</p>
 <table>
 <thead>
 <tr>
-<th>Name</th>
-<th>Task</th>
-<th>Description</th>
-<th>Layout</th>
+<th>RuntimeType</th>
+<th>Extra</th>
+<th>Runtime</th>
+<th>Compatible Devices</th>
+<th>Available ExecutionProvider</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Aeroscapes</td>
-<td>semseg</td>
-<td>A drone dataset to recognize many classes!</td>
-<td>supervisely</td>
+<td>ONNX_CUDA32</td>
+<td><code>[cuda]</code></td>
+<td>onnxruntime CUDA</td>
+<td>NVIDIA GPUs</td>
+<td>CUDAExecutionProvider</td>
 </tr>
 <tr>
-<td>Blister</td>
-<td>instseg</td>
-<td>A dataset to find blisters</td>
-<td>roboflow_coco</td>
+<td>ONNX_TRT32</td>
+<td><code>[tensorrt]</code></td>
+<td>onnxruntime TRT</td>
+<td>NVIDIA GPUs (Optimized)</td>
+<td>CUDAExecutionProvider, TensorrtExecutionProvider</td>
 </tr>
 <tr>
-<td>Boxes</td>
-<td>detection</td>
-<td>Finding different boxes on the conveyor belt</td>
-<td>roboflow_coco</td>
+<td>ONNX_TRT16</td>
+<td><code>[tensorrt]</code></td>
+<td>onnxruntime TRT</td>
+<td>NVIDIA GPUs (Optimized)</td>
+<td>CUDAExecutionProvider, TensorrtExecutionProvider</td>
 </tr>
 <tr>
-<td>Cable</td>
-<td>detection</td>
-<td>A dataset for detecting damages in cables (from Roboflow 100) - <a href="https://universe.roboflow.com/roboflow-100/cable-damage/dataset/2#">https://universe.roboflow.com/roboflow-100/cable-damage/dataset/2#</a></td>
-<td>roboflow_coco</td>
+<td>ONNX_CPU</td>
+<td><code>[cpu]</code></td>
+<td>onnxruntime CPU</td>
+<td>CPU (x86, ARM), M1, M2, M3 (Apple Silicon)</td>
+<td>CPUExecutionProvider, CoreMLExecutionProvider, AzureExecutionProvider</td>
 </tr>
 <tr>
-<td>Circuit dataset</td>
-<td>detection</td>
-<td>A dataset with electronic circuits</td>
-<td>roboflow_coco</td>
+<td>ONNX_COREML</td>
+<td><code>[cpu]</code></td>
+<td>onnxruntime CPU</td>
+<td>M1, M2, M3 (Apple Silicon)</td>
+<td>CoreMLExecutionProvider, CPUExecutionProvider</td>
 </tr>
 <tr>
-<td>Concrete</td>
-<td>instseg</td>
-<td>A dataset to find defect in concrete</td>
-<td>roboflow_coco</td>
-</tr>
-<tr>
-<td>Crack Segmentation</td>
-<td>instseg</td>
-<td>A dataset for segmenting cracks in buildings with 4k images.</td>
-<td>roboflow_coco</td>
-</tr>
-<tr>
-<td>Football-detection</td>
-<td>detection</td>
-<td>Football-detection by Roboflow</td>
-<td>roboflow_coco</td>
-</tr>
-<tr>
-<td>Peanuts</td>
-<td>detection</td>
-<td>Finding Molded or non Molded Peanuts</td>
-<td>roboflow_coco</td>
-</tr>
-<tr>
-<td>Strawberries</td>
-<td>instseg</td>
-<td>Finding defects on strawberries</td>
-<td>roboflow_coco</td>
-</tr>
-<tr>
-<td>aquarium</td>
-<td>detection</td>
-<td>aquarium</td>
-<td>roboflow_coco</td>
-</tr>
-<tr>
-<td>bottles</td>
-<td>detection</td>
-<td>bottles</td>
-<td>roboflow_coco</td>
-</tr>
-<tr>
-<td>chess_pieces</td>
-<td>detection</td>
-<td>A chess detector dataset by roboflow <a href="https://universe.roboflow.com/roboflow-100/chess-pieces-mjzgj">https://universe.roboflow.com/roboflow-100/chess-pieces-mjzgj</a></td>
-<td>roboflow_coco</td>
-</tr>
-<tr>
-<td>coco_2017_det</td>
-<td>detection</td>
-<td>COCO Detection</td>
-<td>catalog</td>
-</tr>
-<tr>
-<td>halo</td>
-<td>detection</td>
-<td>Halo fps by Roboflow</td>
-<td>roboflow_coco</td>
-</tr>
-<tr>
-<td>lettuce</td>
-<td>detection</td>
-<td>A dataset to find lettuce</td>
-<td>roboflow_coco</td>
-</tr>
-<tr>
-<td>safety</td>
-<td>detection</td>
-<td>From roboflow Universe: <a href="https://universe.roboflow.com/roboflow-100/construction-safety-gsnvb">https://universe.roboflow.com/roboflow-100/construction-safety-gsnvb</a></td>
-<td>roboflow_coco</td>
-</tr>
-<tr>
-<td>screw</td>
-<td>detection</td>
-<td>Screw by Roboflow</td>
-<td>roboflow_coco</td>
+<td>TORCHSCRIPT_32</td>
+<td><code>[torch]</code></td>
+<td>torchscript</td>
+<td>CPU, NVIDIA GPUs</td>
+<td>-</td>
 </tr>
 </tbody>
 </table>
+<h2 id="install-the-focoos-sdk">Install the Focoos SDK<a class="headerlink" href="#install-the-focoos-sdk" title="Permanent link">#</a></h2>
+<p>The Focoos SDK can be installed with different package managers using python 3.10 and above.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">uv</label><label for="__tabbed_1_2">pip</label><label for="__tabbed_1_3">conda</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>We recommend using <a href="https://docs.astral.sh/uv/">UV</a> (how to <a href="https://docs.astral.sh/uv/getting-started/installation/">install uv</a>) as a package manager and environment manager for a streamlined dependency management experience.</p>
+<p>You can easily create a new virtual environment with UV using the following command:
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>venv<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.12
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+</code></pre></div></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:5"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><input id="__tabbed_2_3" name="__tabbed_2" type="radio" /><input id="__tabbed_2_4" name="__tabbed_2" type="radio" /><input id="__tabbed_2_5" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Cloud Runtime</label><label for="__tabbed_2_2">CPU ONNX Runtime</label><label for="__tabbed_2_3">Torchscript Runtime</label><label for="__tabbed_2_4">NVIDIA GPU ONNX Runtime</label><label for="__tabbed_2_5">NVIDIA GPU ONNX Runtime with TensorRT</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[cpu] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<p>To run the models using the torchscript runtime, you need to install the torch package.
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[torch] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div></p>
+</div>
+<div class="tabbed-block">
+<p><strong>Additional requirements:</strong>
+Ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
+To install cuDNN 9:
+<div class="highlight"><pre><span></span><code>apt-get<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>cudnn9-cuda-12
+</code></pre></div></p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[cuda] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<p><strong>Additional requirements:</strong>
+Ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
+To install cuDNN 9:
+<div class="highlight"><pre><span></span><code>apt-get<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>cudnn9-cuda-12
+</code></pre></div>
+To perform inference using TensorRT, ensure you have TensorRT version 10.5 installed.
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[tensorrt] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div></p>
+</div>
+</div>
+</div>
+</div>
+<div class="tabbed-block">
+<p>Create and activate a new virtual environment using pip with the following commands:
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+</code></pre></div></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="3:5"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><input id="__tabbed_3_4" name="__tabbed_3" type="radio" /><input id="__tabbed_3_5" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Cloud Runtime</label><label for="__tabbed_3_2">CPU ONNX Runtime</label><label for="__tabbed_3_3">Torchscript Runtime</label><label for="__tabbed_3_4">NVIDIA GPU ONNX Runtime</label><label for="__tabbed_3_5">NVIDIA GPU ONNX Runtime with TensorRT</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[cpu] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[torch] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<p><strong>Additional requirements:</strong>
+Ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
+To install cuDNN 9:
+<div class="highlight"><pre><span></span><code>apt-get<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>cudnn9-cuda-12
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[cuda] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div></p>
+</div>
+<div class="tabbed-block">
+<p><strong>Additional requirements:</strong>
+Ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
+To install cuDNN 9:
+<div class="highlight"><pre><span></span><code>apt-get<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>cudnn9-cuda-12
+</code></pre></div>
+To perform inference using TensorRT, ensure you have TensorRT version 10.5 installed.
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[tensorrt] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div></p>
+</div>
+</div>
+</div>
+</div>
+<div class="tabbed-block">
+<p>Create and activate a new <a href="https://docs.conda.io/en/latest/">conda</a> (how to <a href="https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html">install conda</a>) environment with Python 3.10 or higher:
+<div class="highlight"><pre><span></span><code>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>focoos<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.12
+conda<span class="w"> </span>activate<span class="w"> </span>focoos
+conda<span class="w"> </span>install<span class="w"> </span>pip
+</code></pre></div></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="4:5"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><input id="__tabbed_4_3" name="__tabbed_4" type="radio" /><input id="__tabbed_4_4" name="__tabbed_4" type="radio" /><input id="__tabbed_4_5" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Cloud Runtime</label><label for="__tabbed_4_2">CPU ONNX Runtime</label><label for="__tabbed_4_3">Torchscript Runtime</label><label for="__tabbed_4_4">NVIDIA GPU ONNX Runtime</label><label for="__tabbed_4_5">NVIDIA GPU ONNX Runtime with TensorRT</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[cpu] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[torch] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<p><strong>Additional requirements:</strong>
+Ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
+To install cuDNN 9:
+<div class="highlight"><pre><span></span><code>apt-get<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>cudnn9-cuda-12
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[cuda] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div></p>
+</div>
+<div class="tabbed-block">
+<p><strong>Additional requirements:</strong>
+Ensure that you have CUDA 12 and cuDNN 9 installed, as they are required for onnxruntime version 1.20.1.
+To install cuDNN 9:
+<div class="highlight"><pre><span></span><code>apt-get<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>cudnn9-cuda-12
+</code></pre></div>
+To perform inference using TensorRT, ensure you have TensorRT version 10.5 installed.
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos[tensorrt] @ git+https://github.com/FocoosAI/focoos.git&#39;</span>
+</code></pre></div></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>🤖 <strong>Multiple Runtimes:</strong> You can install multiple extras by running <code>pip install .[torch,cuda,tensorrt]</code>. Anyway you can't use <code>cpu</code> and <code>cuda</code> or <code>tensorrt</code> at the same time.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>🛠️ <strong>Installation Tip:</strong> If you want to install a specific version, for example <code>v0.1.3</code>, use:
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;focoos @ git+https://github.com/FocoosAI/focoos.git@v0.1.3&#39;</span>
+</code></pre></div>
+📋 <strong>Check Versions:</strong> Visit <a href="https://github.com/FocoosAI/focoos/tags">https://github.com/FocoosAI/focoos/tags</a> for available versions.</p>
+</div>
+<h2 id="docker-and-devcontainers">Docker and Devcontainers<a class="headerlink" href="#docker-and-devcontainers" title="Permanent link">#</a></h2>
+<p>For container support, Focoos offers four different Docker images:</p>
+<ul>
+<li><code>focoos-cpu</code>: only CPU</li>
+<li><code>focoos-cuda</code>: Includes ONNX (CUDA) support</li>
+<li><code>focoos-torch</code>: Includes ONNX and Torchscript (CUDA) support</li>
+<li><code>focoos-tensorrt</code>: Includes ONNX, Torchscript, and TensorRT  support</li>
+</ul>
+<p>to use the docker images, you can run the following command:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>-it<span class="w"> </span>.<span class="w"> </span>--target<span class="o">=</span>focoos-cpu
+</code></pre></div>
+<p>This repository also includes a devcontainer configuration for each of the above images. You can launch these devcontainers in Visual Studio Code for a seamless development experience.</p>
 
 
 
