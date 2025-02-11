@@ -20,7 +20,6 @@ from focoos.config import FOCOOS_CONFIG
 from focoos.local_model import LocalModel
 from focoos.ports import (
     DatasetLayout,
-    DatasetMetadata,
     DatasetPreview,
     FocoosTask,
     ModelFormat,
@@ -240,12 +239,12 @@ class Focoos:
             return self.get_model_by_name(name, remote=True)
         logger.warning(f"Failed to create new model: {res.status_code} {res.text}")
 
-    def list_shared_datasets(self) -> list[DatasetMetadata]:
+    def list_shared_datasets(self) -> list[DatasetPreview]:
         """
         Lists datasets shared with the user.
 
         Returns:
-            list[DatasetMetadata]: List of shared datasets.
+            list[DatasetPreview]: List of shared datasets.
 
         Raises:
             ValueError: If the API request fails.
@@ -254,7 +253,7 @@ class Focoos:
         if res.status_code != 200:
             logger.error(f"Failed to list datasets: {res.status_code} {res.text}")
             raise ValueError(f"Failed to list datasets: {res.status_code} {res.text}")
-        return [DatasetMetadata.from_json(dataset) for dataset in res.json()]
+        return [DatasetPreview.from_json(dataset) for dataset in res.json()]
 
     def _download_model(self, model_ref: str, format: ModelFormat = ModelFormat.ONNX) -> str:
         """
@@ -305,7 +304,7 @@ class Focoos:
 
         return model_path
 
-    def get_dataset_by_name(self, name: str) -> Optional[DatasetMetadata]:
+    def get_dataset_by_name(self, name: str) -> Optional[DatasetPreview]:
         """
         Retrieves a dataset by its name.
 
@@ -313,7 +312,7 @@ class Focoos:
             name (str): Name of the dataset.
 
         Returns:
-            Optional[DatasetMetadata]: The dataset metadata if found, or None otherwise.
+            Optional[DatasetPreview]: The dataset metadata if found, or None otherwise.
         """
         datasets = self.list_shared_datasets()
         name_lower = name.lower()

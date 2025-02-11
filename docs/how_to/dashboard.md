@@ -122,7 +122,7 @@ for dataset in datasets:
     print("-" * 50)
 
 ```
-`datasets` is a list of [`DatasetMetadata`](../../api/ports/#focoos.ports.DatasetMetadata) objects that contains the following information:
+`datasets` is a list of [`DatasetPreview`](../../api/ports/#focoos.ports.DatasetPreview) objects that contains the following information:
 
 - `name`: The name of the dataset.
 - `ref`: The reference of the dataset.
