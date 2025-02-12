@@ -2,7 +2,7 @@
 
 This section covers the steps to monitor the status of your models on the FocoosAI platform.
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/documentation%2Fnomenclature/notebooks/model_management.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/main/notebooks/model_management.ipynb)
 
 ## How to list the Focoos Models
 To list all the models available on the FocoosAI platform, you can use the following code:
@@ -22,14 +22,14 @@ for model in models:
 
 
 ```
-`models` is a list of [`ModelPreview`](/api/ports/#focoos.ports.ModelPreview) objects that contains the following information:
+`models` is a list of [`ModelPreview`](/focoos/api/ports/#focoos.ports.ModelPreview) objects that contains the following information:
 
 - `name`: The name of the model.
 - `ref`: The reference of the model.
 - `status`: The status of the model.
 - `task`: The task of the model.
 - `description`: The description of the model.
-- `status`: The status of the model, which indicates its current state (e.g. CREATED, TRAINING_RUNNING, TRAINING_COMPLETED - see [`ModelStatus`](/api/ports/#focoos.ports.ModelStatus)).
+- `status`: The status of the model, which indicates its current state (e.g. CREATED, TRAINING_RUNNING, TRAINING_COMPLETED - see [`ModelStatus`](/focoos/api/ports/#focoos.ports.ModelStatus)).
 
 ## How to list all your models
 To list all your models, the library provides a `list_models` function. This function will return a list of `Model` objects.
@@ -50,7 +50,7 @@ for model in models:
     print("-" * 50)
 
 ```
-`models` is a list of [`ModelPreview`](/api/ports/#focoos.ports.ModelPreview) objects that contains the following information:
+`models` is a list of [`ModelPreview`](/focoos/api/ports/#focoos.ports.ModelPreview) objects that contains the following information:
 
 - `name`: The name of the model.
 - `ref`: The reference of the model.
@@ -58,10 +58,10 @@ for model in models:
 - `task`: The task of the model.
 - `description`: The description of the model.
 - `focoos_model`: The starting Focoos Model used for training.
-- `status`: The status of the model, which indicates its current state (e.g. CREATED, TRAINING_RUNNING, TRAINING_COMPLETED - see [`ModelStatus`](/api/ports/#focoos.ports.ModelStatus)).
+- `status`: The status of the model, which indicates its current state (e.g. CREATED, TRAINING_RUNNING, TRAINING_COMPLETED - see [`ModelStatus`](/focoos/api/ports/#focoos.ports.ModelStatus)).
 
 ## See the metrics for a model
-To see the validation metrics of a model, you can use the [`metrics` method](/api/remote_model/#focoos.remote_model.RemoteModel.metrics) on the model object.
+To see the validation metrics of a model, you can use the [`metrics` method](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.metrics) on the model object.
 
 ```python
 from focoos import Focoos
@@ -87,10 +87,10 @@ if metrics.train_metrics:
         print(f"  {k}: {v}")
 
 ```
-`metrics` is a [`Metrics`](/api/ports/#focoos.ports.Metrics) object that contains the validation metrics of the model.
+`metrics` is a [`Metrics`](/focoos/api/ports/#focoos.ports.Metrics) object that contains the validation metrics of the model.
 
 ## Delete a model
-To delete a model, you can use the [`delete_model` method](/api/remote_model/#focoos.remote_model.RemoteModel.delete_model) on the model object.
+To delete a model, you can use the [`delete_model` method](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.delete_model) on the model object.
 
 !!! warning
     This action is irreversible and the model will be deleted forever from the platform.
@@ -122,7 +122,9 @@ for dataset in datasets:
     print("-" * 50)
 
 ```
+
 `datasets` is a list of [`DatasetPreview`](../../api/ports/#focoos.ports.DatasetPreview) objects that contains the following information:
+
 
 - `name`: The name of the dataset.
 - `ref`: The reference of the dataset.

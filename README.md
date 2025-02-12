@@ -26,9 +26,10 @@ Whether you're deploying in the cloud or on edge devices, the Focoos Python SDK 
    Deploy the model on your devices or use it on our servers. Download the model to run it locally, without sending any data over the network, ensuring full privacy.
 
 
-### Quickstart 🚀
+## Quickstart 🚀
 Ready to dive in? Get started with the setup in just a few simple steps!
 
+### Installation
 **Install** the Focoos Python SDK (for more options, see [setup](https://focoosai.github.io/focoos/setup))
 
 **uv**
@@ -36,21 +37,21 @@ Ready to dive in? Get started with the setup in just a few simple steps!
 uv pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
 ```
 
-**pip**
+**pip**, **conda**
 ```bash linenums="0"
 pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
 ```
 
-**conda**
-```bash linenums="0"
-conda install pip # if you don't have it already
-pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
-```
+### Inference
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/main/notebooks/inference.ipynb)
 
 🚀 [Directly use](https://focoosai.github.io/focoos/how_to/inference/) our **Efficient Models**, optimized for different data, applications, and hardware.
 
+
+
 ```python
 from focoos import Focoos
+from PIL import Image
 
 # Initialize the Focoos client with your API key
 focoos = Focoos(api_key="<YOUR-API-KEY>")
@@ -59,13 +60,18 @@ focoos = Focoos(api_key="<YOUR-API-KEY>")
 model = focoos.get_remote_model("fai-rtdetr-m-obj365")
 
 # Run inference on an image
-detections, _ = model.infer(image_path, threshold=0.4)
+detections, preview = model.infer(image_path, annotate=True)
 
 # Output the detections
-print(detections)
+Image.fromarray(preview)
 ```
 
+### Training
+[![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/main/notebooks/training.ipynb)
+
 ⚙️ **Customize** the models to your specific needs by [fine-tuning](https://focoosai.github.io/focoos/how_to/cloud_training/) on your own dataset.
+
+
 
 ```python
 from focoos import Focoos
@@ -88,7 +94,7 @@ res = model.train(
 
 See more examples in the [how to](https://focoosai.github.io/focoos/how_to) section.
 
-### Our Models 🧠
+## Our Models 🧠
 Focoos AI offers the best models in object detection, semantic and instance segmentation, and more is coming soon.
 
 Using Focoos AI helps you save both time and money while delivering high-performance AI models 💪:
