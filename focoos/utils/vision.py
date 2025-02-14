@@ -109,7 +109,6 @@ def scale_mask(mask: np.ndarray, target_shape: tuple) -> np.ndarray:
     """
     # Calculate scale factors for height and width
     scale_factors = (target_shape[0] / mask.shape[0], target_shape[1] / mask.shape[1])
-
     # Resize the mask using zoom with nearest-neighbor interpolation (order=0)
     scaled_mask = zoom(mask, scale_factors, order=0) > 0.5
 
@@ -123,6 +122,9 @@ def scale_detections(detections: sv.Detections, in_shape: tuple, out_shape: tupl
         x_ratio = out_shape[0] / in_shape[0]
         y_ratio = out_shape[1] / in_shape[1]
         detections.xyxy = detections.xyxy * np.array([x_ratio, y_ratio, x_ratio, y_ratio])
+
+    if detections.mask is not None:
+        detections.mask = np.array([scale_mask(m, out_shape) for m in detections.mask])
     return detections
 
 
