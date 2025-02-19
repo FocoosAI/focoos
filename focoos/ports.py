@@ -330,7 +330,13 @@ class ModelPreview(FocoosBaseModel):
     focoos_model: str
 
 
-class DatasetMetadata(FocoosBaseModel):
+class DatasetSpec(FocoosBaseModel):
+    train_length: int
+    valid_length: int
+    size_mb: float
+
+
+class DatasetPreview(FocoosBaseModel):
     """
     Metadata for a dataset.
 
@@ -359,6 +365,7 @@ class DatasetMetadata(FocoosBaseModel):
     task: FocoosTask
     layout: DatasetLayout
     description: Optional[str] = None
+    spec: Optional[DatasetSpec] = None
 
 
 class ModelMetadata(FocoosBaseModel):
@@ -401,7 +408,7 @@ class ModelMetadata(FocoosBaseModel):
     hyperparameters: Optional[Hyperparameters] = None
     training_info: Optional[TrainingInfo] = None
     location: Optional[str] = None
-    dataset: Optional[DatasetMetadata] = None
+    dataset: Optional[DatasetPreview] = None
 
 
 class TrainInstance(str, Enum):

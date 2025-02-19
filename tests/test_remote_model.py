@@ -9,9 +9,9 @@ from focoos.ports import FocoosTask, Hyperparameters, Metrics, ModelMetadata, Mo
 from focoos.remote_model import RemoteModel
 
 
-def _get_mock_remote_model(mocker: MockerFixture, mock_http_client, image_ndarray, mock_metadata: ModelMetadata):
-    mock_http_client.get = MagicMock(return_value=MagicMock(status_code=200, json=lambda: mock_metadata.model_dump()))
-    model = RemoteModel(model_ref="test_model_ref", http_client=mock_http_client)
+def _get_mock_remote_model(mocker: MockerFixture, mock_api_client, image_ndarray, mock_metadata: ModelMetadata):
+    mock_api_client.get = MagicMock(return_value=MagicMock(status_code=200, json=lambda: mock_metadata.model_dump()))
+    model = RemoteModel(model_ref="test_model_ref", api_client=mock_api_client)
 
     # Mock BoxAnnotator
     mock_box_annotator = mocker.patch("focoos.remote_model.sv.BoxAnnotator", autospec=True)
@@ -29,28 +29,28 @@ def _get_mock_remote_model(mocker: MockerFixture, mock_http_client, image_ndarra
 
 
 @pytest.fixture
-def mock_remote_model(mocker: MockerFixture, mock_http_client, image_ndarray, mock_metadata: ModelMetadata):
+def mock_remote_model(mocker: MockerFixture, mock_api_client, image_ndarray, mock_metadata: ModelMetadata):
     return _get_mock_remote_model(
         mocker=mocker,
-        mock_http_client=mock_http_client,
+        mock_api_client=mock_api_client,
         image_ndarray=image_ndarray,
         mock_metadata=mock_metadata,
     )
 
 
-def test_remote_model_initialization_fail_to_fetch_model_info(mock_http_client):
+def test_remote_model_initialization_fail_to_fetch_model_info(mock_api_client):
     with pytest.raises(ValueError):
-        mock_http_client.get = MagicMock(return_value=MagicMock(status_code=500))
-        RemoteModel(model_ref="test_model_ref", http_client=mock_http_client)
+        mock_api_client.get = MagicMock(return_value=MagicMock(status_code=500))
+        RemoteModel(model_ref="test_model_ref", api_client=mock_api_client)
 
 
 def test_remote_model_initialization_ok(
-    mocker: MockerFixture, mock_http_client, image_ndarray, mock_metadata: ModelMetadata
+    mocker: MockerFixture, mock_api_client, image_ndarray, mock_metadata: ModelMetadata
 ):
     with tests.not_raises(Exception):
         _get_mock_remote_model(
             mocker=mocker,
-            mock_http_client=mock_http_client,
+            mock_api_client=mock_api_client,
             image_ndarray=image_ndarray,
             mock_metadata=mock_metadata,
         )
@@ -58,13 +58,13 @@ def test_remote_model_initialization_ok(
 
 def test_train_status_fail(mock_remote_model: RemoteModel):
     with pytest.raises(ValueError):
-        mock_remote_model.http_client.get = MagicMock(return_value=MagicMock(status_code=500))
+        mock_remote_model.api_client.get = MagicMock(return_value=MagicMock(status_code=500))
         mock_remote_model.train_info()
 
 
 def test_train_status_ok(mock_remote_model: RemoteModel):
     with tests.not_raises(Exception):
-        mock_remote_model.http_client.get = MagicMock(
+        mock_remote_model.api_client.get = MagicMock(
             return_value=MagicMock(
                 status_code=200,
                 json=MagicMock(
@@ -85,14 +85,14 @@ def test_train_status_ok(mock_remote_model: RemoteModel):
 
 
 def test_train_logs_fail(mock_remote_model: RemoteModel):
-    mock_remote_model.http_client.get = MagicMock(return_value=MagicMock(status_code=500, text="Internal Server Error"))
+    mock_remote_model.api_client.get = MagicMock(return_value=MagicMock(status_code=500, text="Internal Server Error"))
     result = mock_remote_model.train_logs()
     assert result == []
 
 
 def test_train_logs_ok(mock_remote_model: RemoteModel):
     with tests.not_raises(Exception):
-        mock_remote_model.http_client.get = MagicMock(
+        mock_remote_model.api_client.get = MagicMock(
             return_value=MagicMock(status_code=200, json=MagicMock(return_value=["log1", "log2"]))
         )
         result = mock_remote_model.train_logs()
@@ -101,37 +101,37 @@ def test_train_logs_ok(mock_remote_model: RemoteModel):
 
 def test_stop_training_fail(mock_remote_model: RemoteModel):
     with pytest.raises(ValueError):
-        mock_remote_model.http_client.delete = MagicMock(return_value=MagicMock(status_code=500))
+        mock_remote_model.api_client.delete = MagicMock(return_value=MagicMock(status_code=500))
         mock_remote_model.stop_training()
 
 
 def test_stop_training_ok(mock_remote_model: RemoteModel):
     with tests.not_raises(Exception):
-        mock_remote_model.http_client.delete = MagicMock(return_value=MagicMock(status_code=200))
+        mock_remote_model.api_client.delete = MagicMock(return_value=MagicMock(status_code=200))
         mock_remote_model.stop_training()
 
 
 def test_delete_model_fail(mock_remote_model: RemoteModel):
     with pytest.raises(ValueError):
-        mock_remote_model.http_client.delete = MagicMock(return_value=MagicMock(status_code=500))
+        mock_remote_model.api_client.delete = MagicMock(return_value=MagicMock(status_code=500))
         mock_remote_model.delete_model()
 
 
 def test_delete_model_ok(mock_remote_model: RemoteModel):
     with tests.not_raises(Exception):
-        mock_remote_model.http_client.delete = MagicMock(return_value=MagicMock(status_code=204))
+        mock_remote_model.api_client.delete = MagicMock(return_value=MagicMock(status_code=204))
         mock_remote_model.delete_model()
 
 
 def test_train_metrics_fail(mock_remote_model: RemoteModel):
-    mock_remote_model.http_client.get = MagicMock(return_value=MagicMock(status_code=500, text="Internal Server Error"))
+    mock_remote_model.api_client.get = MagicMock(return_value=MagicMock(status_code=500, text="Internal Server Error"))
     result = mock_remote_model.metrics()
     assert result == Metrics()
 
 
 def test_train_metrics_ok(mock_remote_model: RemoteModel):
     with tests.not_raises(Exception):
-        mock_remote_model.http_client.get = MagicMock(
+        mock_remote_model.api_client.get = MagicMock(
             return_value=MagicMock(
                 status_code=200,
                 json=MagicMock(return_value={"train_metrics": [{"iteration": 1, "loss": 0.1, "sem_seg/mIoU": 0.95}]}),
@@ -156,7 +156,7 @@ def test_train_fail(
     mock_hyperparameters: Hyperparameters,
 ):
     with pytest.raises(ValueError):
-        mock_remote_model.http_client.post = MagicMock(return_value=MagicMock(status_code=500))
+        mock_remote_model.api_client.post = MagicMock(return_value=MagicMock(status_code=500))
         mock_remote_model.train(
             dataset_ref="dataset_123",
             hyperparameters=mock_hyperparameters,
@@ -167,7 +167,7 @@ def test_train_fail(
 
 
 def test_train_ok(mock_remote_model: RemoteModel, mock_hyperparameters: Hyperparameters):
-    mock_remote_model.http_client.post = MagicMock(
+    mock_remote_model.api_client.post = MagicMock(
         return_value=MagicMock(
             status_code=200,
             json=MagicMock(

@@ -90,3 +90,4 @@ notebooks/.data
 .venv
 /data
 tests/junit.xml
+notebooks/datasets
