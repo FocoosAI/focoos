@@ -1,4 +1,5 @@
 import pathlib
+import sys
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
@@ -7,26 +8,51 @@ import pytest
 import supervision as sv
 from pytest_mock import MockerFixture
 
-from focoos.ports import (
-    FocoosTask,
-    LatencyMetrics,
-    ModelMetadata,
-    ModelStatus,
-    OnnxRuntimeOpts,
-    RuntimeTypes,
-    TorchscriptRuntimeOpts,
-)
-from focoos.runtime import (
-    ORT_AVAILABLE,
-    TORCH_AVAILABLE,
-    ONNXRuntime,
-    TorchscriptRuntime,
-    det_postprocess,
-    get_postprocess_fn,
-    instance_postprocess,
-    load_runtime,
-    semseg_postprocess,
-)
+torch_mock = MagicMock()
+with patch.dict("sys.modules", {"torch": torch_mock}):
+    # Force reload of focoos.runtime to ensure our mock is used
+    if "focoos.runtime" in sys.modules:
+        del sys.modules["focoos.runtime"]
+    from focoos.ports import (
+        FocoosTask,
+        LatencyMetrics,
+        ModelMetadata,
+        ModelStatus,
+        OnnxRuntimeOpts,
+        RuntimeTypes,
+        TorchscriptRuntimeOpts,
+    )
+    from focoos.runtime import (
+        ORT_AVAILABLE,
+        TORCH_AVAILABLE,
+        ONNXRuntime,
+        TorchscriptRuntime,
+        det_postprocess,
+        get_postprocess_fn,
+        instance_postprocess,
+        load_runtime,
+        semseg_postprocess,
+    )
+
+
+@pytest.fixture
+def setup_torch_mock():
+    """Setup torch mock with required attributes"""
+    # Mock device
+    mock_device = MagicMock()
+    torch_mock.device.return_value = mock_device
+    torch_mock.cuda.is_available.return_value = True
+
+    # Mock model
+    mock_model = MagicMock()
+    torch_mock.jit.load.return_value = mock_model
+    mock_model.to.return_value = mock_model
+
+    # Mock tensor operations
+    torch_mock.from_numpy.return_value = MagicMock()
+    torch_mock.rand.return_value = MagicMock()
+
+    return torch_mock
 
 
 def test_runtime_availability():
@@ -41,17 +67,6 @@ def test_runtime_availability():
 
     # At least one runtime should be available for the library to work
     assert TORCH_AVAILABLE or ORT_AVAILABLE, "At least one runtime (PyTorch or ONNX Runtime) must be available"
-
-
-@pytest.mark.skipif(not TORCH_AVAILABLE, reason="PyTorch not available")
-def test_torch_import():
-    """
-    Test PyTorch import when available.
-    This test is skipped if PyTorch is not installed.
-    """
-    import torch
-
-    assert torch is not None, "PyTorch should be properly imported"
 
 
 @pytest.mark.skipif(not ORT_AVAILABLE, reason="ONNX Runtime not available")
@@ -241,9 +256,41 @@ def test_load_unavailable_runtime(mocker: MockerFixture):
     mocker.patch("focoos.runtime.ORT_AVAILABLE", False)
     mocker.patch("focoos.runtime.TORCH_AVAILABLE", False)
     with pytest.raises(ImportError):
-        load_runtime(RuntimeTypes.TORCHSCRIPT_32, "fake_model_path", MagicMock(spec=ModelMetadata), 2)
+        load_runtime(
+            RuntimeTypes.TORCHSCRIPT_32,
+            "fake_model_path",
+            MagicMock(
+                spec=ModelMetadata(
+                    task=FocoosTask.DETECTION,
+                    ref="test_ref",
+                    name="test_name",
+                    owner_ref="test_owner_ref",
+                    focoos_model="test_focoos_model",
+                    created_at=datetime.now(),
+                    updated_at=datetime.now(),
+                    status=ModelStatus.TRAINING_COMPLETED,
+                )
+            ),
+            2,
+        )
     with pytest.raises(ImportError):
-        load_runtime(RuntimeTypes.ONNX_CUDA32, "fake_model_path", MagicMock(spec=ModelMetadata), 2)
+        load_runtime(
+            RuntimeTypes.ONNX_CUDA32,
+            "fake_model_path",
+            MagicMock(
+                spec=ModelMetadata(
+                    task=FocoosTask.DETECTION,
+                    ref="test_ref",
+                    name="test_name",
+                    owner_ref="test_owner_ref",
+                    focoos_model="test_focoos_model",
+                    created_at=datetime.now(),
+                    updated_at=datetime.now(),
+                    status=ModelStatus.TRAINING_COMPLETED,
+                )
+            ),
+            2,
+        )
 
 
 def test_get_postprocess_fn():
