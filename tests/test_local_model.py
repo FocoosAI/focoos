@@ -216,7 +216,7 @@ def mock_infer_setup(
 
 
 @pytest.mark.parametrize("annotate", [(False, None)])
-def test_infer_(
+def test_infer_onnx(
     mocker,
     mock_local_model_onnx,
     image_ndarray,
