@@ -227,9 +227,7 @@ def sv_to_fai_detections(detections: sv.Detections, classes: Optional[list[str]]
     res = []
     for xyxy, mask, conf, cls_id, _, _ in detections:
         if mask is not None:
-            print(f"MASK SHAPE {mask.shape} xyxy {xyxy}")
             cropped_mask = mask[int(xyxy[1]) : int(xyxy[3]), int(xyxy[0]) : int(xyxy[2])]
-            print(f"CROPPED MASK SHAPE {cropped_mask.shape} xyxy {xyxy}")
             mask = binary_mask_to_base64(cropped_mask)
         det = FocoosDet(
             cls_id=int(cls_id) if cls_id is not None else None,
