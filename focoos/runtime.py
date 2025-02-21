@@ -24,6 +24,8 @@ from typing import Any, List, Tuple
 
 import numpy as np
 
+from focoos.utils.vision import mask_to_xyxy
+
 try:
     import torch
 
@@ -40,6 +42,7 @@ except ImportError:
 
 import supervision as sv
 
+# from supervision.detection.utils import mask_to_xyxy
 from focoos.ports import (
     FocoosTask,
     LatencyMetrics,
@@ -108,10 +111,11 @@ def semseg_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_t
     masks = masks[high_conf_indices].astype(bool)
     cls_ids = cls_ids[high_conf_indices].astype(int)
     confs = confs[high_conf_indices].astype(float)
+    xyxy = mask_to_xyxy(masks)
     return sv.Detections(
         mask=masks,
         # xyxy is required from supervision
-        xyxy=np.zeros(shape=(len(high_conf_indices), 4), dtype=np.uint8),
+        xyxy=xyxy,
         class_id=cls_ids,
         confidence=confs,
     )
@@ -128,10 +132,11 @@ def instance_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf
     masks = mask[high_conf_indices].astype(bool)
     cls_ids = cls_ids[high_conf_indices].astype(int)
     confs = confs[high_conf_indices].astype(float)
+    xyxy = mask_to_xyxy(masks)
     return sv.Detections(
         mask=masks,
         # xyxy is required from supervision
-        xyxy=np.zeros(shape=(len(high_conf_indices), 4), dtype=np.uint8),
+        xyxy=xyxy,
         class_id=cls_ids,
         confidence=confs,
     )

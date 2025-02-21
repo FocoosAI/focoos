@@ -9,13 +9,13 @@ from focoos.utils.vision import (
     base64mask_to_mask,
     binary_mask_to_base64,
     class_to_index,
-    focoos_detections_to_supervision,
+    fai_detections_to_sv,
     image_loader,
     image_preprocess,
     index_to_class,
     scale_detections,
     scale_mask,
-    sv_to_focoos_detections,
+    sv_to_fai_detections,
 )
 
 
@@ -110,7 +110,7 @@ def test_base64mask_to_mask(image_bytes):
 
 
 def test_focoos_detections_to_supervision_bbox(focoos_detections_bbox):
-    result = focoos_detections_to_supervision(focoos_detections_bbox)
+    result = fai_detections_to_sv(focoos_detections_bbox)
 
     # Verify the result is an instance of Supervision Detections
     assert isinstance(result[0], sv.Detections), "Result should be an instance of Supervision Detections"
@@ -125,7 +125,7 @@ def test_focoos_detections_to_supervision_bbox(focoos_detections_bbox):
 
 
 def test_focoos_detections_to_supervision_mask(focoos_detections_mask):
-    result = focoos_detections_to_supervision(focoos_detections_mask)
+    result = fai_detections_to_sv(focoos_detections_mask)
 
     # Verify the result is an instance of Supervision Detections
     assert isinstance(result[0], sv.Detections), "Result should be an instance of Supervision Detections"
@@ -138,7 +138,7 @@ def test_focoos_detections_to_supervision_mask(focoos_detections_mask):
 
 
 def test_focoos_detections_no_detections(focoos_detections_no_detections):
-    result = focoos_detections_to_supervision(focoos_detections_no_detections)
+    result = fai_detections_to_sv(focoos_detections_no_detections)
 
     # Verify the result is an instance of Supervision Detections
     assert isinstance(result, sv.Detections), "Result should be an instance of sv.Detections"
@@ -157,7 +157,7 @@ def test_binary_mask_to_base64(binary_mask, base64_binary_mask):
 
 
 def test_sv_to_focoos_detections(sv_detections: sv.Detections):
-    result = sv_to_focoos_detections(sv_detections)
+    result = sv_to_fai_detections(sv_detections)
 
     # Verify the result is an instance of FocoosDetections
     assert isinstance(result, FocoosDetections), "Result should be an instance of FocoosDetections"

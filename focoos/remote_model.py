@@ -48,7 +48,7 @@ from focoos.ports import (
 from focoos.utils.logger import get_logger
 from focoos.utils.metrics import MetricsVisualizer
 from focoos.utils.system import HttpClient
-from focoos.utils.vision import focoos_detections_to_supervision, image_loader
+from focoos.utils.vision import fai_detections_to_sv, image_loader
 
 logger = get_logger()
 
@@ -299,7 +299,7 @@ class RemoteModel:
             preview = None
             if annotate:
                 im0 = image_loader(image)
-                sv_detections = focoos_detections_to_supervision(detections)
+                sv_detections = fai_detections_to_sv(detections, im0.shape[:-1])
                 preview = self._annotate(im0, sv_detections)
             return detections, preview
         else:

@@ -1,7 +1,6 @@
 import base64
-import io
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -129,23 +128,40 @@ def scale_detections(detections: sv.Detections, in_shape: tuple, out_shape: tupl
 
 
 def base64mask_to_mask(base64mask: str) -> np.ndarray:
-    return np.array(Image.open(io.BytesIO(base64.b64decode(base64mask))))
+    """
+    Convert a base64-encoded mask to a binary mask using OpenCV.
+
+    Args:
+        base64mask (str): Base64-encoded string representing the mask.
+
+    Returns:
+        np.ndarray: Decoded binary mask as a NumPy array.
+    """
+    # Decode the base64 string to bytes and convert to a NumPy array in one step
+    np_arr = np.frombuffer(base64.b64decode(base64mask), np.uint8)
+    # Decode the NumPy array to an image using OpenCV and convert to a binary mask in one step
+    binary_mask = cv2.imdecode(np_arr, cv2.IMREAD_GRAYSCALE) > 0
+
+    return binary_mask.astype(bool)
 
 
-def focoos_detections_to_supervision(
-    inference_output: FocoosDetections,
-) -> sv.Detections:
+def fai_detections_to_sv(inference_output: FocoosDetections, im0_shape: tuple) -> sv.Detections:
     xyxy = np.array([d.bbox if d.bbox is not None else np.empty(4) for d in inference_output.detections])
     class_id = np.array([d.cls_id for d in inference_output.detections])
     confidence = np.array([d.conf for d in inference_output.detections])
-    if xyxy.shape[0] == 0:
-        xyxy = np.empty((0, 4))
     _masks = []
-    for det in inference_output.detections:
-        if det.mask:
-            mask = base64mask_to_mask(det.mask)
-            _masks.append(mask)
+    if len(inference_output.detections) > 0 and inference_output.detections[0].mask:
+        _masks = [np.zeros(im0_shape, dtype=bool) for _ in inference_output.detections]
+        for i, det in enumerate(inference_output.detections):
+            if det.mask:
+                mask = base64mask_to_mask(det.mask)
+                if det.bbox is not None and not np.array_equal(det.bbox, [0, 0, 0, 0]):
+                    x1, y1, x2, y2 = map(int, det.bbox)
+                    _masks[i][y1:y2, x1:x2] = mask
+                else:
+                    _masks[i] = mask
     masks = np.array(_masks).astype(bool) if len(_masks) > 0 else None
+
     return sv.Detections(
         xyxy=xyxy,
         class_id=class_id,
@@ -156,7 +172,7 @@ def focoos_detections_to_supervision(
 
 def binary_mask_to_base64(binary_mask: np.ndarray) -> str:
     """
-    Converts a binary mask (NumPy array) to a base64-encoded PNG image.
+    Converts a binary mask (NumPy array) to a base64-encoded PNG image using OpenCV.
 
     This function takes a binary mask, where values of `True` represent the areas of interest (usually 1s)
     and `False` represents the background (usually 0s). The binary mask is then converted to an image,
@@ -168,23 +184,19 @@ def binary_mask_to_base64(binary_mask: np.ndarray) -> str:
     Returns:
         str: A base64-encoded string representing the PNG image of the binary mask.
     """
-    # Convert the binary mask to uint8 type, then multiply by 255 to set True values to 255 (white)
-    # and False values to 0 (black).
-    binary_mask = binary_mask.astype(np.uint8) * 255
+    # Directly convert the binary mask to uint8 and multiply by 255 in one step
+    binary_mask = (binary_mask * 255).astype(np.uint8)
 
-    # Create a PIL image from the NumPy array
-    binary_mask_image = Image.fromarray(binary_mask)
+    # Use OpenCV to encode the image as PNG
+    success, encoded_image = cv2.imencode(".png", binary_mask)
+    if not success:
+        raise ValueError("Failed to encode image")
 
-    # Save the image to an in-memory buffer as PNG
-    with io.BytesIO() as buffer:
-        binary_mask_image.save(buffer, bitmap_format="png", format="PNG")
-        # Get the PNG image in binary form and encode it to base64
-        encoded_png = base64.b64encode(buffer.getvalue()).decode("utf-8")
-
-    return encoded_png
+    # Encode the image to base64
+    return base64.b64encode(encoded_image).decode("utf-8")
 
 
-def sv_to_focoos_detections(detections: sv.Detections, classes: Optional[list[str]] = None) -> FocoosDetections:
+def sv_to_fai_detections(detections: sv.Detections, classes: Optional[list[str]] = None) -> List[FocoosDet]:
     """
     Convert a list of detections from the supervision format to Focoos detection format.
 
@@ -213,12 +225,44 @@ def sv_to_focoos_detections(detections: sv.Detections, classes: Optional[list[st
     """
     res = []
     for xyxy, mask, conf, cls_id, _, _ in detections:
+        if mask is not None:
+            cropped_mask = mask[int(xyxy[1]) : int(xyxy[3]), int(xyxy[0]) : int(xyxy[2])]
+            mask = binary_mask_to_base64(cropped_mask)
         det = FocoosDet(
             cls_id=int(cls_id) if cls_id is not None else None,
-            bbox=[round(float(x), 2) for x in xyxy],
-            mask=binary_mask_to_base64(mask) if mask is not None else None,
+            bbox=[int(x) for x in xyxy],
+            mask=mask,
             conf=round(float(conf), 2) if conf is not None else None,
             label=(classes[cls_id] if classes is not None and cls_id is not None else None),
         )
         res.append(det)
-    return FocoosDetections(detections=res)
+    return res
+
+
+def mask_to_xyxy(masks: np.ndarray) -> np.ndarray:
+    """
+    Converts a 3D `np.array` of 2D bool masks into a 2D `np.array` of bounding boxes.
+
+    Parameters:
+        masks (np.ndarray): A 3D `np.array` of shape `(N, W, H)`
+            containing 2D bool masks
+
+    Returns:
+        np.ndarray: A 2D `np.array` of shape `(N, 4)` containing the bounding boxes
+            `(x_min, y_min, x_max, y_max)` for each mask
+    """
+    # Vectorized approach to find bounding boxes
+    n = masks.shape[0]
+    xyxy = np.zeros((n, 4), dtype=int)
+
+    # Use np.any to quickly find rows and columns with True values
+    for i, mask in enumerate(masks):
+        rows = np.any(mask, axis=1)
+        cols = np.any(mask, axis=0)
+
+        if np.any(rows) and np.any(cols):
+            y_min, y_max = np.where(rows)[0][[0, -1]]
+            x_min, x_max = np.where(cols)[0][[0, -1]]
+            xyxy[i, :] = [x_min, y_min, x_max, y_max]
+
+    return xyxy
