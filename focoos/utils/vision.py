@@ -141,7 +141,6 @@ def base64mask_to_mask(base64mask: str) -> np.ndarray:
     np_arr = np.frombuffer(base64.b64decode(base64mask), np.uint8)
     # Decode the NumPy array to an image using OpenCV and convert to a binary mask in one step
     binary_mask = cv2.imdecode(np_arr, cv2.IMREAD_GRAYSCALE) > 0
-
     return binary_mask.astype(bool)
 
 
@@ -149,6 +148,8 @@ def fai_detections_to_sv(inference_output: FocoosDetections, im0_shape: tuple) -
     xyxy = np.array([d.bbox if d.bbox is not None else np.empty(4) for d in inference_output.detections])
     class_id = np.array([d.cls_id for d in inference_output.detections])
     confidence = np.array([d.conf for d in inference_output.detections])
+    if xyxy.shape[0] == 0:
+        xyxy = np.empty((0, 4))
     _masks = []
     if len(inference_output.detections) > 0 and inference_output.detections[0].mask:
         _masks = [np.zeros(im0_shape, dtype=bool) for _ in inference_output.detections]
@@ -157,11 +158,11 @@ def fai_detections_to_sv(inference_output: FocoosDetections, im0_shape: tuple) -
                 mask = base64mask_to_mask(det.mask)
                 if det.bbox is not None and not np.array_equal(det.bbox, [0, 0, 0, 0]):
                     x1, y1, x2, y2 = map(int, det.bbox)
-                    _masks[i][y1:y2, x1:x2] = mask
+                    y2, x2 = min(y2, _masks[i].shape[0]), min(x2, _masks[i].shape[1])
+                    _masks[i][y1:y2, x1:x2] = mask[: y2 - y1, : x2 - x1]
                 else:
                     _masks[i] = mask
     masks = np.array(_masks).astype(bool) if len(_masks) > 0 else None
-
     return sv.Detections(
         xyxy=xyxy,
         class_id=class_id,
@@ -226,7 +227,9 @@ def sv_to_fai_detections(detections: sv.Detections, classes: Optional[list[str]]
     res = []
     for xyxy, mask, conf, cls_id, _, _ in detections:
         if mask is not None:
+            print(f"MASK SHAPE {mask.shape} xyxy {xyxy}")
             cropped_mask = mask[int(xyxy[1]) : int(xyxy[3]), int(xyxy[0]) : int(xyxy[2])]
+            print(f"CROPPED MASK SHAPE {cropped_mask.shape} xyxy {xyxy}")
             mask = binary_mask_to_base64(cropped_mask)
         det = FocoosDet(
             cls_id=int(cls_id) if cls_id is not None else None,

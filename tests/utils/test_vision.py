@@ -4,7 +4,7 @@ import math
 import numpy as np
 import supervision as sv
 
-from focoos.ports import FocoosDet, FocoosDetections
+from focoos.ports import FocoosDet
 from focoos.utils.vision import (
     base64mask_to_mask,
     binary_mask_to_base64,
@@ -102,15 +102,15 @@ def test_base64mask_to_mask(image_bytes):
     base64ask = base64.b64encode(image_bytes).decode("utf-8")
 
     result = base64mask_to_mask(base64ask)
-
+    print(f"RESULT SHAPE {result.shape}")
     # Verify the result is a NumPy array
     assert isinstance(result, np.ndarray), "Result should be a NumPy array"
     # Verify the shape matches the original image
-    assert result.shape == (640, 640, 3), "Decoded image shape is incorrect"
+    assert result.shape == (640, 640), "Decoded image shape is incorrect"
 
 
 def test_focoos_detections_to_supervision_bbox(focoos_detections_bbox):
-    result = fai_detections_to_sv(focoos_detections_bbox)
+    result = fai_detections_to_sv(focoos_detections_bbox, im0_shape=(640, 640))
 
     # Verify the result is an instance of Supervision Detections
     assert isinstance(result[0], sv.Detections), "Result should be an instance of Supervision Detections"
@@ -125,7 +125,7 @@ def test_focoos_detections_to_supervision_bbox(focoos_detections_bbox):
 
 
 def test_focoos_detections_to_supervision_mask(focoos_detections_mask):
-    result = fai_detections_to_sv(focoos_detections_mask)
+    result = fai_detections_to_sv(focoos_detections_mask, im0_shape=(2, 2))
 
     # Verify the result is an instance of Supervision Detections
     assert isinstance(result[0], sv.Detections), "Result should be an instance of Supervision Detections"
@@ -138,7 +138,7 @@ def test_focoos_detections_to_supervision_mask(focoos_detections_mask):
 
 
 def test_focoos_detections_no_detections(focoos_detections_no_detections):
-    result = fai_detections_to_sv(focoos_detections_no_detections)
+    result = fai_detections_to_sv(focoos_detections_no_detections, im0_shape=(640, 640))
 
     # Verify the result is an instance of Supervision Detections
     assert isinstance(result, sv.Detections), "Result should be an instance of sv.Detections"
@@ -160,9 +160,9 @@ def test_sv_to_focoos_detections(sv_detections: sv.Detections):
     result = sv_to_fai_detections(sv_detections)
 
     # Verify the result is an instance of FocoosDetections
-    assert isinstance(result, FocoosDetections), "Result should be an instance of FocoosDetections"
-    assert len(result.detections) == 1, "Expected 1 detection"
-    result_focoos_detection = result.detections[0]
+    assert all(isinstance(det, FocoosDet) for det in result), "All elements in result should be instances of FocoosDet"
+    assert len(result) == 3, "Expected 3 detection"
+    result_focoos_detection = result[0]
     # Verify the result is an instance of FocoosDet
     assert isinstance(result_focoos_detection, FocoosDet), "Result should be an instance of FocoosDet"
 
@@ -171,9 +171,9 @@ def test_sv_to_focoos_detections(sv_detections: sv.Detections):
     assert result_focoos_detection.conf is not None, "Confidence score should not be None"
     assert math.isclose(result_focoos_detection.conf, 0.9), "Expected confidence score 0.9"
     assert result_focoos_detection.bbox == [
-        10,
-        20,
-        30,
-        40,
+        0,
+        0,
+        1,
+        1,
     ], "Bounding box coordinates are incorrect"
     assert isinstance(result_focoos_detection.mask, str), "Mask should be a string"

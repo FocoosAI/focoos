@@ -150,7 +150,7 @@ class LocalModel:
             FocoosTask.SEMSEG,
             FocoosTask.INSTANCE_SEGMENTATION,
         ]:
-            annotated_im = self.mask_annotator.annotate(scene=annotated_im, detections=detections)
+            annotated_im = self.mask_annotator.annotate(scene=im.copy(), detections=detections)
         return annotated_im
 
     def infer(

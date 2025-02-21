@@ -188,8 +188,8 @@ def mock_infer_setup(
     mock_scale_detections.return_value = mock_sv_detections
 
     # Mock sv_to_focoos_detections
-    mock_sv_to_focoos_detections = mocker.patch("focoos.local_model.sv_to_focoos_detections")
-    mock_sv_to_focoos_detections.return_value = mock_focoos_detections
+    mock_sv_to_focoos_detections = mocker.patch("focoos.local_model.sv_to_fai_detections")
+    mock_sv_to_focoos_detections.return_value = mock_focoos_detections.detections
 
     # Mock _annotate
     mock_annotate = mocker.patch.object(mock_local_model, "_annotate", autospec=True)
