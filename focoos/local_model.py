@@ -41,7 +41,7 @@ from focoos.utils.logger import get_logger
 from focoos.utils.vision import (
     image_preprocess,
     scale_detections,
-    sv_to_focoos_detections,
+    sv_to_fai_detections,
 )
 
 logger = get_logger(__name__)
@@ -194,18 +194,18 @@ class LocalModel:
         if resize:
             detections = scale_detections(detections, (resize, resize), (im0.shape[1], im0.shape[0]))
         logger.debug(f"Inference time: {t2 - t1:.3f} seconds")
-        im = None
-        if annotate:
-            im = self._annotate(im0, detections)
 
-        out = sv_to_focoos_detections(detections, classes=self.metadata.classes)
+        out = sv_to_fai_detections(detections, classes=self.metadata.classes)
         t3 = perf_counter()
-        out.latency = {
+        latency = {
             "inference": round(t2 - t1, 3),
             "preprocess": round(t1 - t0, 3),
             "postprocess": round(t3 - t2, 3),
         }
-        return out, im
+        im = None
+        if annotate:
+            im = self._annotate(im0, detections)
+        return FocoosDetections(detections=out, latency=latency), im
 
     def benchmark(self, iterations: int, size: int) -> LatencyMetrics:
         """

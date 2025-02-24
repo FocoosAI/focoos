@@ -3,10 +3,57 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+import supervision as sv
 from pytest_mock import MockerFixture
 
-from focoos.ports import ModelMetadata, OnnxRuntimeOpts, RuntimeTypes, TorchscriptRuntimeOpts
-from focoos.runtime import ONNXRuntime, TorchscriptRuntime, det_postprocess, load_runtime, semseg_postprocess
+from focoos.ports import FocoosTask, ModelMetadata, OnnxRuntimeOpts, RuntimeTypes, TorchscriptRuntimeOpts
+from focoos.runtime import (
+    ORT_AVAILABLE,
+    TORCH_AVAILABLE,
+    ONNXRuntime,
+    TorchscriptRuntime,
+    det_postprocess,
+    get_postprocess_fn,
+    instance_postprocess,
+    load_runtime,
+    semseg_postprocess,
+)
+
+
+def test_runtime_availability():
+    """
+    Test the runtime availability flags.
+    These flags should be boolean values indicating whether
+    PyTorch and ONNX Runtime are available in the environment.
+    """
+    # Check that the flags are boolean
+    assert isinstance(TORCH_AVAILABLE, bool), "TORCH_AVAILABLE should be a boolean"
+    assert isinstance(ORT_AVAILABLE, bool), "ORT_AVAILABLE should be a boolean"
+
+    # At least one runtime should be available for the library to work
+    assert TORCH_AVAILABLE or ORT_AVAILABLE, "At least one runtime (PyTorch or ONNX Runtime) must be available"
+
+
+@pytest.mark.skipif(not TORCH_AVAILABLE, reason="PyTorch not available")
+def test_torch_import():
+    """
+    Test PyTorch import when available.
+    This test is skipped if PyTorch is not installed.
+    """
+    import torch
+
+    assert torch is not None, "PyTorch should be properly imported"
+
+
+@pytest.mark.skipif(not ORT_AVAILABLE, reason="ONNX Runtime not available")
+def test_onnx_import():
+    """
+    Test ONNX Runtime import when available.
+    This test is skipped if ONNX Runtime is not installed.
+    """
+    import onnxruntime as ort
+
+    assert ort is not None, "ONNX Runtime should be properly imported"
 
 
 def test_det_post_process():
@@ -188,3 +235,59 @@ def test_load_unavailable_runtime(mocker: MockerFixture):
         load_runtime(RuntimeTypes.TORCHSCRIPT_32, "fake_model_path", MagicMock(spec=ModelMetadata), 2)
     with pytest.raises(ImportError):
         load_runtime(RuntimeTypes.ONNX_CUDA32, "fake_model_path", MagicMock(spec=ModelMetadata), 2)
+
+
+def test_get_postprocess_fn():
+    """
+    Test the get_postprocess_fn function to ensure it returns
+    the correct postprocessing function for each task.
+    """
+    # Test detection task
+    det_fn = get_postprocess_fn(FocoosTask.DETECTION)
+    assert det_fn == det_postprocess, "Detection task should return det_postprocess function"
+
+    # Test instance segmentation task
+    instance_fn = get_postprocess_fn(FocoosTask.INSTANCE_SEGMENTATION)
+    assert instance_fn == instance_postprocess, "Instance segmentation task should return instance_postprocess function"
+
+    # Test semantic segmentation task
+    semseg_fn = get_postprocess_fn(FocoosTask.SEMSEG)
+    assert semseg_fn == semseg_postprocess, "Semantic segmentation task should return semseg_postprocess function"
+
+    # Test all FocoosTask values to ensure no exceptions
+    for task in FocoosTask:
+        fn = get_postprocess_fn(task)
+        assert callable(fn), f"Postprocess function for {task} should be callable"
+
+
+def test_instance_postprocess():
+    """Test instance segmentation postprocessing"""
+    cls_ids = np.array([0, 1])
+    masks = np.zeros((2, 100, 100))
+    masks[0, 10:30, 10:30] = 1
+    masks[1, 40:60, 40:60] = 1
+    confs = np.array([0.95, 0.85])
+    out = [[cls_ids], [masks], [confs]]
+
+    result = instance_postprocess(out, (100, 100), 0.8)
+
+    assert isinstance(result, sv.Detections)
+    assert len(result) == 2
+    assert result.mask is not None
+    assert result.xyxy is not None
+    assert result.class_id is not None
+    assert result.confidence is not None
+
+
+def test_confidence_threshold_filtering():
+    """Test that confidence threshold filtering works correctly"""
+    out = [
+        np.array([0, 1, 2]),  # cls_ids
+        np.array([[0.1, 0.1, 0.3, 0.3], [0.4, 0.4, 0.6, 0.6], [0.7, 0.7, 0.9, 0.9]]),  # boxes
+        np.array([0.95, 0.55, 0.85]),  # confs
+    ]
+
+    result = det_postprocess(out, (100, 100), conf_threshold=0.8)
+
+    assert len(result) == 2  # Should only keep detections with conf > 0.8
+    assert all(conf > 0.8 for conf in result.confidence)
