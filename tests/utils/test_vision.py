@@ -13,6 +13,7 @@ from focoos.utils.vision import (
     image_loader,
     image_preprocess,
     index_to_class,
+    mask_to_xyxy,
     scale_detections,
     scale_mask,
     sv_to_fai_detections,
@@ -177,3 +178,30 @@ def test_sv_to_focoos_detections(sv_detections: sv.Detections):
         1,
     ], "Bounding box coordinates are incorrect"
     assert isinstance(result_focoos_detection.mask, str), "Mask should be a string"
+
+
+def test_mask_to_xyxy():
+    # Basic case: a single mask with one active pixel
+    mask1 = np.zeros((1, 5, 5), dtype=bool)
+    mask1[0, 2, 3] = True  # One active pixel at (2,3)
+    assert np.array_equal(mask_to_xyxy(mask1), np.array([[3, 2, 3, 2]]))
+
+    # Case with a rectangle
+    mask2 = np.zeros((1, 5, 5), dtype=bool)
+    mask2[0, 1:4, 2:5] = True  # Rectangle between (1,2) and (3,4)
+    assert np.array_equal(mask_to_xyxy(mask2), np.array([[2, 1, 4, 3]]))
+
+    # Case with multiple masks
+    masks = np.zeros((2, 5, 5), dtype=bool)
+    masks[0, 1:4, 2:5] = True  # First rectangle
+    masks[1, 0:3, 1:4] = True  # Second rectangle
+    expected = np.array([[2, 1, 4, 3], [1, 0, 3, 2]])
+    assert np.array_equal(mask_to_xyxy(masks), expected)
+
+    # Case with an empty mask
+    empty_mask = np.zeros((1, 5, 5), dtype=bool)
+    assert np.array_equal(mask_to_xyxy(empty_mask), np.array([[0, 0, 0, 0]]))
+
+    # Case with a mask covering the entire image
+    full_mask = np.ones((1, 5, 5), dtype=bool)
+    assert np.array_equal(mask_to_xyxy(full_mask), np.array([[0, 0, 4, 4]]))
