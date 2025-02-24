@@ -114,7 +114,6 @@ def semseg_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_t
     xyxy = mask_to_xyxy(masks)
     return sv.Detections(
         mask=masks,
-        # xyxy is required from supervision
         xyxy=xyxy,
         class_id=cls_ids,
         confidence=confs,
@@ -135,7 +134,6 @@ def instance_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf
     xyxy = mask_to_xyxy(masks)
     return sv.Detections(
         mask=masks,
-        # xyxy is required from supervision
         xyxy=xyxy,
         class_id=cls_ids,
         confidence=confs,
