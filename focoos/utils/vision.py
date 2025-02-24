@@ -9,7 +9,7 @@ import supervision as sv
 from scipy.ndimage import zoom
 from typing_extensions import Buffer
 
-from focoos.ports import FocoosDet, FocoosDetections
+from focoos.ports import FocoosDet, FocoosDetections, FocoosTask
 
 
 def index_to_class(class_ids: list[int], classes: list[str]) -> list[str]:
@@ -50,8 +50,6 @@ def image_loader(im: Union[bytes, str, Path, np.ndarray, Image.Image]) -> np.nda
     elif isinstance(im, Buffer):
         byte_array = np.frombuffer(im, dtype=np.uint8)
         cv_image = cv2.imdecode(byte_array, cv2.IMREAD_COLOR)
-    else:
-        raise ValueError(f"Unsupported image type: {type(im)}")
 
     return cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
 
@@ -227,8 +225,14 @@ def sv_to_fai_detections(detections: sv.Detections, classes: Optional[list[str]]
     res = []
     for xyxy, mask, conf, cls_id, _, _ in detections:
         if mask is not None:
-            cropped_mask = mask[int(xyxy[1]) : int(xyxy[3]), int(xyxy[0]) : int(xyxy[2])]
+            x1, y1, x2, y2 = map(int, xyxy)
+            x1 = max(x1 - 1, 0)
+            y1 = max(y1 - 1, 0)
+            x2 = min(x2 + 1, mask.shape[1])
+            y2 = min(y2 + 1, mask.shape[0])
+            cropped_mask = mask[y1:y2, x1:x2]
             mask = binary_mask_to_base64(cropped_mask)
+
         det = FocoosDet(
             cls_id=int(cls_id) if cls_id is not None else None,
             bbox=[int(x) for x in xyxy],
@@ -240,7 +244,7 @@ def sv_to_fai_detections(detections: sv.Detections, classes: Optional[list[str]]
     return res
 
 
-def mask_to_xyxy(masks: np.ndarray) -> np.ndarray:
+def masks_to_xyxy(masks: np.ndarray) -> np.ndarray:
     """
     Converts a 3D `np.array` of 2D bool masks into a 2D `np.array` of bounding boxes.
 
@@ -254,7 +258,7 @@ def mask_to_xyxy(masks: np.ndarray) -> np.ndarray:
     """
     # Vectorized approach to find bounding boxes
     n = masks.shape[0]
-    xyxy = np.zeros((n, 4), dtype=int)
+    xyxy = np.empty((n, 4), dtype=int)
 
     # Use np.any to quickly find rows and columns with True values
     for i, mask in enumerate(masks):
@@ -267,3 +271,112 @@ def mask_to_xyxy(masks: np.ndarray) -> np.ndarray:
             xyxy[i, :] = [x_min, y_min, x_max, y_max]
 
     return xyxy
+
+
+def get_postprocess_fn(task: FocoosTask):
+    if task == FocoosTask.INSTANCE_SEGMENTATION:
+        return instance_postprocess
+    elif task == FocoosTask.SEMSEG:
+        return semseg_postprocess
+    else:
+        return det_postprocess
+
+
+def det_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float) -> sv.Detections:
+    """
+    Postprocesses the output of an object detection model and filters detections
+    based on a confidence threshold.
+
+    Args:
+        out (List[np.ndarray]): The output of the detection model.
+        im0_shape (Tuple[int, int]): The original shape of the input image (height, width).
+        conf_threshold (float): The confidence threshold for filtering detections.
+
+    Returns:
+        sv.Detections: A sv.Detections object containing the filtered bounding boxes, class ids, and confidences.
+    """
+    cls_ids, boxes, confs = out
+    boxes[:, 0::2] *= im0_shape[1]
+    boxes[:, 1::2] *= im0_shape[0]
+    high_conf_indices = (confs > conf_threshold).nonzero()
+
+    return sv.Detections(
+        xyxy=boxes[high_conf_indices].astype(int),
+        class_id=cls_ids[high_conf_indices].astype(int),
+        confidence=confs[high_conf_indices].astype(float),
+    )
+
+
+def semseg_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float) -> sv.Detections:
+    """
+    Postprocesses the output of a semantic segmentation model and filters based
+    on a confidence threshold, removing empty masks.
+
+    Args:
+        out (List[np.ndarray]): The output of the semantic segmentation model.
+        conf_threshold (float): The confidence threshold for filtering detections.
+
+    Returns:
+        sv.Detections: A sv.Detections object containing the non-empty masks, class ids, and confidences.
+    """
+    cls_ids, mask, confs = out[0][0], out[1][0], out[2][0]
+    masks = np.equal(mask, np.arange(len(cls_ids))[:, None, None])
+    high_conf_indices = confs > conf_threshold
+    masks = masks[high_conf_indices]
+    cls_ids = cls_ids[high_conf_indices]
+    confs = confs[high_conf_indices]
+
+    if len(masks.shape) != 3:
+        return sv.Detections(
+            mask=None,
+            xyxy=np.empty((0, 4)),
+            class_id=None,
+            confidence=None,
+        )
+    # Filter out empty masks
+    non_empty_mask_indices = np.any(masks, axis=(1, 2))
+    masks = masks[non_empty_mask_indices]
+    cls_ids = cls_ids[non_empty_mask_indices]
+    confs = confs[non_empty_mask_indices]
+    xyxy = masks_to_xyxy(masks)
+    return sv.Detections(
+        mask=masks,
+        # xyxy is required from supervision
+        xyxy=xyxy,
+        class_id=cls_ids,
+        confidence=confs,
+    )
+
+
+def instance_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float) -> sv.Detections:
+    """
+    Postprocesses the output of an instance segmentation model and filters detections
+    based on a confidence threshold.
+    """
+    cls_ids, mask, confs = out[0][0], out[1][0], out[2][0]
+    high_conf_indices = np.where(confs > conf_threshold)[0]
+    masks = mask[high_conf_indices].astype(bool)
+    cls_ids = cls_ids[high_conf_indices].astype(int)
+    confs = confs[high_conf_indices].astype(float)
+    if len(masks.shape) != 3:
+        return sv.Detections(
+            mask=None,
+            xyxy=np.empty((0, 4)),
+            class_id=None,
+            confidence=None,
+        )
+
+    # Filter out empty masks
+    non_empty_mask_indices = np.any(masks, axis=(1, 2))
+    masks = masks[non_empty_mask_indices]
+    cls_ids = cls_ids[non_empty_mask_indices]
+    confs = confs[non_empty_mask_indices]
+    xyxy = masks_to_xyxy(masks)
+
+    return sv.Detections(
+        mask=masks,
+        # xyxy is required from supervision
+        xyxy=xyxy,
+        class_id=cls_ids,
+        confidence=confs,
+    )

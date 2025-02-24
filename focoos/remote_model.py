@@ -291,10 +291,12 @@ class RemoteModel:
         )
         t1 = time.time()
         if res.status_code == 200:
-            logger.debug(f"Inference time: {t1 - t0:.3f} seconds")
             detections = FocoosDetections(
                 detections=[FocoosDet.from_json(d) for d in res.json().get("detections", [])],
                 latency=res.json().get("latency", None),
+            )
+            logger.debug(
+                f"Found {len(detections.detections)} detections. Inference Request time: {(t1 - t0) * 1000:.0f}ms"
             )
             preview = None
             if annotate:
