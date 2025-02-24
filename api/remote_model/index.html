@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.4">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.5">
     
     
       
@@ -2451,7 +2451,7 @@ various functionalities including model training, deployment, inference, and mon
             <span class="n">preview</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="n">annotate</span><span class="p">:</span>
                 <span class="n">im0</span> <span class="o">=</span> <span class="n">image_loader</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
-                <span class="n">sv_detections</span> <span class="o">=</span> <span class="n">focoos_detections_to_supervision</span><span class="p">(</span><span class="n">detections</span><span class="p">)</span>
+                <span class="n">sv_detections</span> <span class="o">=</span> <span class="n">fai_detections_to_sv</span><span class="p">(</span><span class="n">detections</span><span class="p">,</span> <span class="n">im0</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
                 <span class="n">preview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_annotate</span><span class="p">(</span><span class="n">im0</span><span class="p">,</span> <span class="n">sv_detections</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">detections</span><span class="p">,</span> <span class="n">preview</span>
         <span class="k">else</span><span class="p">:</span>
@@ -3171,7 +3171,7 @@ Optionally, it can annotate the image with the detection results.</p>
         <span class="n">preview</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">annotate</span><span class="p">:</span>
             <span class="n">im0</span> <span class="o">=</span> <span class="n">image_loader</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
-            <span class="n">sv_detections</span> <span class="o">=</span> <span class="n">focoos_detections_to_supervision</span><span class="p">(</span><span class="n">detections</span><span class="p">)</span>
+            <span class="n">sv_detections</span> <span class="o">=</span> <span class="n">fai_detections_to_sv</span><span class="p">(</span><span class="n">detections</span><span class="p">,</span> <span class="n">im0</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
             <span class="n">preview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_annotate</span><span class="p">(</span><span class="n">im0</span><span class="p">,</span> <span class="n">sv_detections</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">detections</span><span class="p">,</span> <span class="n">preview</span>
     <span class="k">else</span><span class="p">:</span>

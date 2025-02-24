@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.4">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.5">
     
     
       
@@ -1896,18 +1896,18 @@ and segmentation tasks, and utilizes ONNXRuntime for model execution.</p>
         <span class="k">if</span> <span class="n">resize</span><span class="p">:</span>
             <span class="n">detections</span> <span class="o">=</span> <span class="n">scale_detections</span><span class="p">(</span><span class="n">detections</span><span class="p">,</span> <span class="p">(</span><span class="n">resize</span><span class="p">,</span> <span class="n">resize</span><span class="p">),</span> <span class="p">(</span><span class="n">im0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">im0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Inference time: </span><span class="si">{</span><span class="n">t2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t1</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
-        <span class="n">im</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="n">annotate</span><span class="p">:</span>
-            <span class="n">im</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_annotate</span><span class="p">(</span><span class="n">im0</span><span class="p">,</span> <span class="n">detections</span><span class="p">)</span>
 
-        <span class="n">out</span> <span class="o">=</span> <span class="n">sv_to_focoos_detections</span><span class="p">(</span><span class="n">detections</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">classes</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">sv_to_fai_detections</span><span class="p">(</span><span class="n">detections</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">classes</span><span class="p">)</span>
         <span class="n">t3</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-        <span class="n">out</span><span class="o">.</span><span class="n">latency</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">latency</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;inference&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">t2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
             <span class="s2">&quot;preprocess&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">t1</span> <span class="o">-</span> <span class="n">t0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
             <span class="s2">&quot;postprocess&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">t3</span> <span class="o">-</span> <span class="n">t2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
         <span class="p">}</span>
-        <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">im</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">annotate</span><span class="p">:</span>
+            <span class="n">im</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_annotate</span><span class="p">(</span><span class="n">im0</span><span class="p">,</span> <span class="n">detections</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">FocoosDetections</span><span class="p">(</span><span class="n">detections</span><span class="o">=</span><span class="n">out</span><span class="p">,</span> <span class="n">latency</span><span class="o">=</span><span class="n">latency</span><span class="p">),</span> <span class="n">im</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -2588,18 +2588,18 @@ If <code>annotate=False</code>, this value will be <code>None</code>.</p>
     <span class="k">if</span> <span class="n">resize</span><span class="p">:</span>
         <span class="n">detections</span> <span class="o">=</span> <span class="n">scale_detections</span><span class="p">(</span><span class="n">detections</span><span class="p">,</span> <span class="p">(</span><span class="n">resize</span><span class="p">,</span> <span class="n">resize</span><span class="p">),</span> <span class="p">(</span><span class="n">im0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">im0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Inference time: </span><span class="si">{</span><span class="n">t2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t1</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
-    <span class="n">im</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">annotate</span><span class="p">:</span>
-        <span class="n">im</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_annotate</span><span class="p">(</span><span class="n">im0</span><span class="p">,</span> <span class="n">detections</span><span class="p">)</span>
 
-    <span class="n">out</span> <span class="o">=</span> <span class="n">sv_to_focoos_detections</span><span class="p">(</span><span class="n">detections</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">classes</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">sv_to_fai_detections</span><span class="p">(</span><span class="n">detections</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">classes</span><span class="p">)</span>
     <span class="n">t3</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-    <span class="n">out</span><span class="o">.</span><span class="n">latency</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">latency</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;inference&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">t2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
         <span class="s2">&quot;preprocess&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">t1</span> <span class="o">-</span> <span class="n">t0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
         <span class="s2">&quot;postprocess&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">t3</span> <span class="o">-</span> <span class="n">t2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
     <span class="p">}</span>
-    <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">im</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">annotate</span><span class="p">:</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_annotate</span><span class="p">(</span><span class="n">im0</span><span class="p">,</span> <span class="n">detections</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">FocoosDetections</span><span class="p">(</span><span class="n">detections</span><span class="o">=</span><span class="n">out</span><span class="p">,</span> <span class="n">latency</span><span class="o">=</span><span class="n">latency</span><span class="p">),</span> <span class="n">im</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
