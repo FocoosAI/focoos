@@ -224,6 +224,10 @@ class RemoteModel:
         Returns:
             np.ndarray: The annotated image as a NumPy array.
         """
+
+        if len(detections.xyxy) == 0:
+            logger.warning("No detections found, skipping annotation")
+            return im
         classes = self.metadata.classes
         if classes is not None:
             labels = [

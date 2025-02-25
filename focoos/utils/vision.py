@@ -147,7 +147,7 @@ def fai_detections_to_sv(inference_output: FocoosDetections, im0_shape: tuple) -
     class_id = np.array([d.cls_id for d in inference_output.detections])
     confidence = np.array([d.conf for d in inference_output.detections])
     if xyxy.shape[0] == 0:
-        xyxy = np.empty((0, 4))
+        xyxy = np.zeros((0, 4))
     _masks = []
     if len(inference_output.detections) > 0 and inference_output.detections[0].mask:
         _masks = [np.zeros(im0_shape, dtype=bool) for _ in inference_output.detections]
@@ -228,8 +228,8 @@ def sv_to_fai_detections(detections: sv.Detections, classes: Optional[list[str]]
             x1, y1, x2, y2 = map(int, xyxy)
             x1 = max(x1 - 1, 0)
             y1 = max(y1 - 1, 0)
-            x2 = min(x2 + 1, mask.shape[1])
-            y2 = min(y2 + 1, mask.shape[0])
+            x2 = min(x2 + 2, mask.shape[1])
+            y2 = min(y2 + 2, mask.shape[0])
             cropped_mask = mask[y1:y2, x1:x2]
             mask = binary_mask_to_base64(cropped_mask)
 
@@ -258,7 +258,7 @@ def masks_to_xyxy(masks: np.ndarray) -> np.ndarray:
     """
     # Vectorized approach to find bounding boxes
     n = masks.shape[0]
-    xyxy = np.empty((n, 4), dtype=int)
+    xyxy = np.zeros((n, 4), dtype=int)
 
     # Use np.any to quickly find rows and columns with True values
     for i, mask in enumerate(masks):
@@ -329,7 +329,7 @@ def semseg_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_t
     if len(masks.shape) != 3:
         return sv.Detections(
             mask=None,
-            xyxy=np.empty((0, 4)),
+            xyxy=np.zeros((0, 4)),
             class_id=None,
             confidence=None,
         )
@@ -361,7 +361,7 @@ def instance_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf
     if len(masks.shape) != 3:
         return sv.Detections(
             mask=None,
-            xyxy=np.empty((0, 4)),
+            xyxy=np.zeros((0, 4)),
             class_id=None,
             confidence=None,
         )
