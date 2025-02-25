@@ -39,6 +39,7 @@ from focoos.ports import (
 from focoos.runtime import BaseRuntime, load_runtime
 from focoos.utils.logger import get_logger
 from focoos.utils.vision import (
+    get_postprocess_fn,
     image_preprocess,
     scale_detections,
     sv_to_fai_detections,
@@ -99,6 +100,7 @@ class LocalModel:
         # Load metadata and set model reference
         self.metadata: ModelMetadata = self._read_metadata()
         self.model_ref = self.metadata.ref
+        self.postprocess_fn = get_postprocess_fn(self.metadata.task)
 
         # Initialize annotation utilities
         self.label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
@@ -137,6 +139,9 @@ class LocalModel:
         Returns:
             np.ndarray: The annotated image with bounding boxes or masks.
         """
+        if len(detections.xyxy) == 0:
+            logger.warning("No detections found, skipping annotation")
+            return im
         classes = self.metadata.classes
         labels = [
             f"{classes[int(class_id)] if classes is not None else str(class_id)}: {confid * 100:.0f}%"
@@ -189,11 +194,16 @@ class LocalModel:
         t0 = perf_counter()
         im1, im0 = image_preprocess(image, resize=resize)
         t1 = perf_counter()
-        detections = self.runtime(im1.astype(np.float32), threshold)
+        detections = self.runtime(im1.astype(np.float32))
+
         t2 = perf_counter()
+
+        detections = self.postprocess_fn(
+            out=detections, im0_shape=(im0.shape[1], im0.shape[0]), conf_threshold=threshold
+        )
+
         if resize:
             detections = scale_detections(detections, (resize, resize), (im0.shape[1], im0.shape[0]))
-        logger.debug(f"Inference time: {t2 - t1:.3f} seconds")
 
         out = sv_to_fai_detections(detections, classes=self.metadata.classes)
         t3 = perf_counter()
@@ -205,6 +215,10 @@ class LocalModel:
         im = None
         if annotate:
             im = self._annotate(im0, detections)
+
+        logger.debug(
+            f"Found {len(detections)} detections. Inference time: {(t2 - t1) * 1000:.0f}ms, preprocess: {(t1 - t0) * 1000:.0f}ms, postprocess: {(t3 - t2) * 1000:.0f}ms"
+        )
         return FocoosDetections(detections=out, latency=latency), im
 
     def benchmark(self, iterations: int, size: int) -> LatencyMetrics:
