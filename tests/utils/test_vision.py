@@ -208,9 +208,9 @@ def test_masks_to_xyxy():
 
 
 def test_det_post_process():
-    cls_ids = np.array([1, 2, 3])
-    boxes = np.array([[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8], [0.9, 1.0, 1.1, 1.2]])
-    confs = np.array([0.8, 0.9, 0.7])
+    cls_ids = np.array([[1, 2, 3]])
+    boxes = np.array([[[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8], [0.9, 1.0, 1.1, 1.2]]])
+    confs = np.array([[0.8, 0.9, 0.7]])
     out = [cls_ids, boxes, confs]
 
     im0_shape = (640, 480)
@@ -316,9 +316,9 @@ def test_instance_postprocess():
 def test_confidence_threshold_filtering():
     """Test that confidence threshold filtering works correctly"""
     out = [
-        np.array([0, 1, 2]),  # cls_ids
-        np.array([[0.1, 0.1, 0.3, 0.3], [0.4, 0.4, 0.6, 0.6], [0.7, 0.7, 0.9, 0.9]]),  # boxes
-        np.array([0.95, 0.55, 0.85]),  # confs
+        np.array([[0, 1, 2]]),  # cls_ids
+        np.array([[[0.1, 0.1, 0.3, 0.3], [0.4, 0.4, 0.6, 0.6], [0.7, 0.7, 0.9, 0.9]]]),  # boxes
+        np.array([[0.95, 0.55, 0.85]]),  # confs
     ]
 
     result = det_postprocess(out, (100, 100), conf_threshold=0.8)

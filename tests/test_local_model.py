@@ -189,10 +189,6 @@ def mock_infer_setup(
     mock_image_preprocess = mocker.patch("focoos.local_model.image_preprocess")
     mock_image_preprocess.return_value = (image_ndarray, image_ndarray)
 
-    # Mock scale_detections
-    mock_scale_detections = mocker.patch("focoos.local_model.scale_detections")
-    mock_scale_detections.return_value = mock_sv_detections
-
     # Mock sv_to_focoos_detections
     mock_sv_to_focoos_detections = mocker.patch("focoos.local_model.sv_to_fai_detections")
     mock_sv_to_focoos_detections.return_value = mock_focoos_detections.detections
@@ -219,7 +215,6 @@ def mock_infer_setup(
     return (
         mock_image_preprocess,
         mock_runtime_call,
-        mock_scale_detections,
         mock_sv_to_focoos_detections,
         mock_annotate,
     )

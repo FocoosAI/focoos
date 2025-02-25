@@ -296,8 +296,8 @@ def det_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_thre
         sv.Detections: A sv.Detections object containing the filtered bounding boxes, class ids, and confidences.
     """
     cls_ids, boxes, confs = out
-    boxes[:, 0::2] *= im0_shape[1]
-    boxes[:, 1::2] *= im0_shape[0]
+    boxes[:, :, 0::2] *= im0_shape[1]
+    boxes[:, :, 1::2] *= im0_shape[0]
     high_conf_indices = (confs > conf_threshold).nonzero()
 
     return sv.Detections(

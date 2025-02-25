@@ -41,7 +41,6 @@ from focoos.utils.logger import get_logger
 from focoos.utils.vision import (
     get_postprocess_fn,
     image_preprocess,
-    scale_detections,
     sv_to_fai_detections,
 )
 
@@ -190,21 +189,18 @@ class LocalModel:
         resize = None  #!TODO  check for segmentation
         if self.metadata.task == FocoosTask.DETECTION:
             resize = 640 if not self.metadata.im_size else self.metadata.im_size
-        logger.debug(f"Resize: {resize}")
+
         t0 = perf_counter()
         im1, im0 = image_preprocess(image, resize=resize)
+        logger.debug(f"Input image size: {im0.shape}, Resize to: {resize}")
         t1 = perf_counter()
         detections = self.runtime(im1.astype(np.float32))
 
         t2 = perf_counter()
 
         detections = self.postprocess_fn(
-            out=detections, im0_shape=(im0.shape[1], im0.shape[0]), conf_threshold=threshold
+            out=detections, im0_shape=(im0.shape[0], im0.shape[1]), conf_threshold=threshold
         )
-
-        if resize:
-            detections = scale_detections(detections, (resize, resize), (im0.shape[1], im0.shape[0]))
-
         out = sv_to_fai_detections(detections, classes=self.metadata.classes)
         t3 = perf_counter()
         latency = {
