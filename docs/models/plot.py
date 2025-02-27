@@ -5,13 +5,14 @@ import seaborn as sns
 # Configure plot style
 sns.set_palette("husl")
 
-METRIC = "mIoU"
+METRIC = "segm/AP"
 DEVICE = "NVIDIA T4"
-DATASET = "coco"
+DATASET = "coco-ins"
 # Create DataFrame with model performance data
 model_data = [
-    ["Baseline", 10, 10],
-    ["fai-model", 20, 20],
+    ["fai-m2f-s-coco-ins", 41.4, 86],
+    ["fai-m2f-m-coco-ins", 43.1, 69],
+    ["fai-m2f-l-coco-ins", 44.2, 55],
 ]
 data = pd.DataFrame(model_data, columns=["Model", f"{METRIC}", f"FPS ({DEVICE})"])
 

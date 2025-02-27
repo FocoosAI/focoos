@@ -55,6 +55,8 @@ nav:
         - fai-rtdetr-n-coco: models/fai-rtdetr-n-coco.md
         - fai-rtdetr-m-obj365: models/fai-rtdetr-m-obj365.md
       - Instance_segmentation:
+        - fai-m2f-s-coco-ins: models/fai-m2f-s-coco-ins.md
+        - fai-m2f-m-coco-ins: models/fai-m2f-m-coco-ins.md
         - fai-m2f-l-coco-ins: models/fai-m2f-l-coco-ins.md
   - API Reference:
       - focoos: api/focoos.md
@@ -62,10 +64,6 @@ nav:
       - local model: api/local_model.md
       - runtime: api/runtime.md
       - ports: api/ports.md
-  - Development:
-      - Contributing: development/contributing.md
-      - Code of Conduct: development/code_of_conduct.md
-      - Changelog: development/changelog.md
 
 markdown_extensions:
   - pymdownx.highlight:

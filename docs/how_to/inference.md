@@ -35,9 +35,16 @@ for det in result.detections:
     print(f"Bounding box: {det.bbox}")
     if det.mask:
         print("Instance segmentation mask included")
+        print(f"Mask shape: {det.mask.shape}")
 
 ```
-`result` is a [FocoosDetections](/focoos/api/ports/#focoos.ports.FocoosDetections) object, containing a list of [FocoosDet](/focoos/api/ports/#focoos.ports.FocoosDet) objects and optionally a dict of information about the latency of the inference.
+`result` is a [FocoosDetections](/focoos/api/ports/#focoos.ports.FocoosDetections) object, containing a list of [FocoosDet](/focoos/api/ports/#focoos.ports.FocoosDet) objects and optionally a dict of information about the latency of the inference. The `FocoosDet` object contains the following attributes:
+
+- `bbox`: Bounding box coordinates in x1y1x2y2 absolute format.
+- `conf`: Confidence score (from 0 to 1).
+- `cls_id`: Class ID (0-indexed).
+- `label`: Label (name of the class).
+- `mask`: Mask (base64 encoded string having origin in the top left corner of bbox and the same width and height of the bbox).
 
 The `threshold` parameter is optional and defines the minimum confidence score for a detection to be considered valid (predictions with a confidence score lower than the threshold are discarded).
 
@@ -46,7 +53,7 @@ Optionally, you can preview the results by passing the `annotate` parameter to t
 from PIL import Image
 
 output, preview = model.infer(image_path, threshold=0.5, annotate=True)
-preview = Image.fromarray(preview[:,:,[2,1,0]]) # invert to make it RGB
+preview = Image.fromarray(preview)  # invert to make it RGB
 ```
 
 ## 🤖 Local Inference
@@ -70,9 +77,16 @@ for det in result.detections:
     print(f"Bounding box: {det.bbox}")
     if det.mask:
         print("Instance segmentation mask included")
+        print(f"Mask shape: {det.mask.shape}")
 
 ```
-`result` is a [FocoosDetections](/focoos/api/ports/#focoos.ports.FocoosDetections) object, containing a list of [FocoosDet](/focoos/api/ports/#focoos.ports.FocoosDet) objects and optionally a dict of information about the latency of the inference.
+`result` is a [FocoosDetections](/focoos/api/ports/#focoos.ports.FocoosDetections) object, containing a list of [FocoosDet](/focoos/api/ports/#focoos.ports.FocoosDet) objects and optionally a dict of information about the latency of the inference. The `FocoosDet` object contains the following attributes:
+
+- `bbox`: Bounding box coordinates in x1y1x2y2 absolute format.
+- `conf`: Confidence score (from 0 to 1).
+- `cls_id`: Class ID (0-indexed).
+- `label`: Label (name of the class).
+- `mask`: Mask (base64 encoded string having origin in the top left corner of bbox and the same width and height of the bbox).
 
 As for remote inference, you can pass the `annotate` parameter to return a preview of the prediction.
 
