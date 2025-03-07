@@ -58,10 +58,10 @@ focoos = Focoos(api_key="<YOUR-API-KEY>")
 model = focoos.get_remote_model("fai-rtdetr-m-obj365")
 
 # Run inference on an image
-detections, preview = model.infer(image_path, threshold=0.4, annotations=True)
+detections, preview = model.infer(image_path, threshold=0.4, annotate=True)
 
 # Output the detections
-Image.fromarray(preview[:, :, [2, 1, 0]])
+Image.fromarray(preview)
 ```
 
 ⚙️ **Customize** the models to your specific needs by [fine-tuning](how_to/cloud_training.md) on your own dataset.

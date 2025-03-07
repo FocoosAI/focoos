@@ -1,4 +1,4 @@
-# fai-m2f-l-coco-ins
+# fai-m2f-m-coco-ins
 
 ## Overview
 The models is a [Mask2Former](https://github.com/facebookresearch/Mask2Former) model otimized by [FocoosAI](https://focoos.ai) for the [COCO dataset](https://cocodataset.org/#home). It is an instance segmentation model able to segment 80 thing (dog, cat, car, etc.) classes.
@@ -19,8 +19,8 @@ Mask2Former is a hybrid model that uses three main components: a *backbone* for 
 
 In this implementation:
 
-- the backbone is [Resnet-50](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py) that show an amazing trade-off between performance and efficiency.
-- the pixel decoder is a transformer-augmented [FPN](https://arxiv.org/abs/1612.03144). It gets the features from the stage 2 (1/4 resolution), 3 (1/8 resolution), 4 (1/16 resolution) and 5 (1/32 resolution) of the backbone. It first uses a transformer encoder to process the features at the lowest resolution (stage 5) and then uses a feature pyramid network to upsample the features. This part is different from the original implementation using deformable attention modules.
+- the backbone is [Resnet-101](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py) that show an amazing trade-off between performance and efficiency.
+- the pixel decoder is an efficient transformer-augmented [FPN](https://arxiv.org/abs/1612.03144). It gets the features from the stage 2 (1/4 resolution), 3 (1/8 resolution), 4 (1/16 resolution) and 5 (1/32 resolution) of the backbone. It first uses a transformer encoder to process the features at the lowest resolution (stage 5) and then uses a feature pyramid network to upsample the features. This part is different from the original implementation using deformable attention modules.
 - the transformer decoder is implemented as in the original paper, having 9 decoder layers and 100 learnable queries.
 
 ### Losses
@@ -53,8 +53,6 @@ The model is pretrained on the [COCO dataset](https://cocodataset.org/#home) wit
     .class-table {
       max-height: 500px;
       overflow-y: auto;
-      /* border: 1px solid #ccc; */
-      /* border-radius: 4px; */
       padding: 1rem;
       margin: 1rem 0;
       background: rgba(0,0,0,0.05);
@@ -81,60 +79,60 @@ The model is pretrained on the [COCO dataset](https://cocodataset.org/#home) wit
     </tr>
   </thead>
   <tbody>
- <tr>
+    <tr>
       <td>1</td>
       <td>person</td>
-      <td>48.9</td>
+      <td>49.3</td>
     </tr>
     <tr>
       <td>2</td>
       <td>bicycle</td>
-      <td>22.2</td>
+      <td>23.5</td>
     </tr>
     <tr>
       <td>3</td>
       <td>car</td>
-      <td>41.3</td>
+      <td>41.6</td>
     </tr>
     <tr>
       <td>4</td>
       <td>motorcycle</td>
-      <td>40.0</td>
+      <td>40.9</td>
     </tr>
     <tr>
       <td>5</td>
       <td>airplane</td>
-      <td>55.6</td>
+      <td>55.1</td>
     </tr>
     <tr>
       <td>6</td>
       <td>bus</td>
-      <td>68.2</td>
+      <td>69.0</td>
     </tr>
     <tr>
       <td>7</td>
       <td>train</td>
-      <td>69.6</td>
+      <td>70.0</td>
     </tr>
     <tr>
       <td>8</td>
       <td>truck</td>
-      <td>40.5</td>
+      <td>43.0</td>
     </tr>
     <tr>
       <td>9</td>
       <td>boat</td>
-      <td>26.2</td>
+      <td>26.9</td>
     </tr>
     <tr>
       <td>10</td>
       <td>traffic light</td>
-      <td>27.4</td>
+      <td>26.6</td>
     </tr>
     <tr>
       <td>11</td>
       <td>fire hydrant</td>
-      <td>69.2</td>
+      <td>68.7</td>
     </tr>
     <tr>
       <td>12</td>
@@ -144,52 +142,52 @@ The model is pretrained on the [COCO dataset](https://cocodataset.org/#home) wit
     <tr>
       <td>13</td>
       <td>parking meter</td>
-      <td>45.4</td>
+      <td>48.6</td>
     </tr>
     <tr>
       <td>14</td>
       <td>bench</td>
-      <td>23.4</td>
+      <td>21.9</td>
     </tr>
     <tr>
       <td>15</td>
       <td>bird</td>
-      <td>33.8</td>
+      <td>34.6</td>
     </tr>
     <tr>
       <td>16</td>
       <td>cat</td>
-      <td>77.7</td>
+      <td>79.6</td>
     </tr>
     <tr>
       <td>17</td>
       <td>dog</td>
-      <td>68.9</td>
+      <td>69.6</td>
     </tr>
     <tr>
       <td>18</td>
       <td>horse</td>
-      <td>50.1</td>
+      <td>51.4</td>
     </tr>
     <tr>
       <td>19</td>
       <td>sheep</td>
-      <td>54.0</td>
+      <td>54.1</td>
     </tr>
     <tr>
       <td>20</td>
       <td>cow</td>
-      <td>51.0</td>
+      <td>51.9</td>
     </tr>
     <tr>
       <td>21</td>
       <td>elephant</td>
-      <td>63.4</td>
+      <td>64.3</td>
     </tr>
     <tr>
       <td>22</td>
       <td>bear</td>
-      <td>81.1</td>
+      <td>80.5</td>
     </tr>
     <tr>
       <td>23</td>
@@ -199,102 +197,102 @@ The model is pretrained on the [COCO dataset](https://cocodataset.org/#home) wit
     <tr>
       <td>24</td>
       <td>giraffe</td>
-      <td>60.5</td>
+      <td>61.1</td>
     </tr>
     <tr>
       <td>25</td>
       <td>backpack</td>
-      <td>22.7</td>
+      <td>22.8</td>
     </tr>
     <tr>
       <td>26</td>
       <td>umbrella</td>
-      <td>52.6</td>
+      <td>52.3</td>
     </tr>
     <tr>
       <td>27</td>
       <td>handbag</td>
-      <td>23.3</td>
+      <td>21.7</td>
     </tr>
     <tr>
       <td>28</td>
       <td>tie</td>
-      <td>33.2</td>
+      <td>35.3</td>
     </tr>
     <tr>
       <td>29</td>
       <td>suitcase</td>
-      <td>45.3</td>
+      <td>46.2</td>
     </tr>
     <tr>
       <td>30</td>
       <td>frisbee</td>
-      <td>66.4</td>
+      <td>65.4</td>
     </tr>
     <tr>
       <td>31</td>
       <td>skis</td>
-      <td>7.4</td>
+      <td>8.4</td>
     </tr>
     <tr>
       <td>32</td>
       <td>snowboard</td>
-      <td>28.2</td>
+      <td>27.0</td>
     </tr>
     <tr>
       <td>33</td>
       <td>sports ball</td>
-      <td>42.8</td>
+      <td>42.1</td>
     </tr>
     <tr>
       <td>34</td>
       <td>kite</td>
-      <td>30.3</td>
+      <td>32.5</td>
     </tr>
     <tr>
       <td>35</td>
       <td>baseball bat</td>
-      <td>32.1</td>
+      <td>31.0</td>
     </tr>
     <tr>
       <td>36</td>
       <td>baseball glove</td>
-      <td>42.3</td>
+      <td>39.5</td>
     </tr>
     <tr>
       <td>37</td>
       <td>skateboard</td>
-      <td>36.8</td>
+      <td>40.0</td>
     </tr>
     <tr>
       <td>38</td>
       <td>surfboard</td>
-      <td>37.3</td>
+      <td>37.6</td>
     </tr>
     <tr>
       <td>39</td>
       <td>tennis racket</td>
-      <td>58.7</td>
+      <td>59.1</td>
     </tr>
     <tr>
       <td>40</td>
       <td>bottle</td>
-      <td>39.2</td>
+      <td>38.9</td>
     </tr>
     <tr>
       <td>41</td>
       <td>wine glass</td>
-      <td>36.9</td>
+      <td>38.3</td>
     </tr>
     <tr>
       <td>42</td>
       <td>cup</td>
-      <td>46.0</td>
+      <td>48.0</td>
     </tr>
     <tr>
       <td>43</td>
       <td>fork</td>
-      <td>22.2</td>
+      <td>24.5</td>
     </tr>
     <tr>
       <td>44</td>
@@ -304,182 +302,182 @@ The model is pretrained on the [COCO dataset](https://cocodataset.org/#home) wit
     <tr>
       <td>45</td>
       <td>spoon</td>
-      <td>18.0</td>
+      <td>19.6</td>
     </tr>
     <tr>
       <td>46</td>
       <td>bowl</td>
-      <td>44.3</td>
+      <td>43.0</td>
     </tr>
     <tr>
       <td>47</td>
       <td>banana</td>
-      <td>26.5</td>
+      <td>22.6</td>
     </tr>
     <tr>
       <td>48</td>
       <td>apple</td>
-      <td>23.9</td>
+      <td>22.3</td>
     </tr>
     <tr>
       <td>49</td>
       <td>sandwich</td>
-      <td>43.0</td>
+      <td>46.3</td>
     </tr>
     <tr>
       <td>50</td>
       <td>orange</td>
-      <td>33.8</td>
+      <td>31.6</td>
     </tr>
     <tr>
       <td>51</td>
       <td>broccoli</td>
-      <td>24.4</td>
+      <td>24.9</td>
     </tr>
     <tr>
       <td>52</td>
       <td>carrot</td>
-      <td>22.7</td>
+      <td>20.9</td>
     </tr>
     <tr>
       <td>53</td>
       <td>hot dog</td>
-      <td>36.3</td>
+      <td>42.3</td>
     </tr>
     <tr>
       <td>54</td>
       <td>pizza</td>
-      <td>55.1</td>
+      <td>53.9</td>
     </tr>
     <tr>
       <td>55</td>
       <td>donut</td>
-      <td>51.1</td>
+      <td>52.8</td>
     </tr>
     <tr>
       <td>56</td>
       <td>cake</td>
-      <td>44.6</td>
+      <td>44.0</td>
     </tr>
     <tr>
       <td>57</td>
       <td>chair</td>
-      <td>25.0</td>
+      <td>25.8</td>
     </tr>
     <tr>
       <td>58</td>
       <td>couch</td>
-      <td>47.7</td>
+      <td>44.9</td>
     </tr>
     <tr>
       <td>59</td>
       <td>potted plant</td>
-      <td>25.0</td>
+      <td>27.4</td>
     </tr>
     <tr>
       <td>60</td>
       <td>bed</td>
-      <td>45.0</td>
+      <td>46.8</td>
     </tr>
     <tr>
       <td>61</td>
       <td>dining table</td>
-      <td>22.9</td>
+      <td>22.1</td>
     </tr>
     <tr>
       <td>62</td>
       <td>toilet</td>
-      <td>67.6</td>
+      <td>67.0</td>
     </tr>
     <tr>
       <td>63</td>
       <td>tv</td>
-      <td>64.3</td>
+      <td>65.8</td>
     </tr>
     <tr>
       <td>64</td>
       <td>laptop</td>
-      <td>67.2</td>
+      <td>67.9</td>
     </tr>
     <tr>
       <td>65</td>
       <td>mouse</td>
-      <td>60.1</td>
+      <td>59.2</td>
     </tr>
     <tr>
       <td>66</td>
       <td>remote</td>
-      <td>36.1</td>
+      <td>36.8</td>
     </tr>
     <tr>
       <td>67</td>
       <td>keyboard</td>
-      <td>52.6</td>
+      <td>53.2</td>
     </tr>
     <tr>
       <td>68</td>
       <td>cell phone</td>
-      <td>42.0</td>
+      <td>39.8</td>
     </tr>
     <tr>
       <td>69</td>
       <td>microwave</td>
-      <td>60.7</td>
+      <td>63.4</td>
     </tr>
     <tr>
       <td>70</td>
       <td>oven</td>
-      <td>33.8</td>
+      <td>36.4</td>
     </tr>
     <tr>
       <td>71</td>
       <td>toaster</td>
-      <td>35.9</td>
+      <td>47.0</td>
     </tr>
     <tr>
       <td>72</td>
       <td>sink</td>
-      <td>39.9</td>
+      <td>41.1</td>
     </tr>
     <tr>
       <td>73</td>
       <td>refrigerator</td>
-      <td>64.0</td>
+      <td>64.6</td>
     </tr>
     <tr>
       <td>74</td>
       <td>book</td>
-      <td>12.0</td>
+      <td>12.3</td>
     </tr>
     <tr>
       <td>75</td>
       <td>clock</td>
-      <td>52.5</td>
+      <td>53.0</td>
     </tr>
     <tr>
       <td>76</td>
       <td>vase</td>
-      <td>37.7</td>
+      <td>38.9</td>
     </tr>
     <tr>
       <td>77</td>
       <td>scissors</td>
-      <td>26.8</td>
+      <td>28.7</td>
     </tr>
     <tr>
       <td>78</td>
       <td>teddy bear</td>
-      <td>55.1</td>
+      <td>53.8</td>
     </tr>
     <tr>
       <td>79</td>
       <td>hair drier</td>
-      <td>16.8</td>
+      <td>14.1</td>
     </tr>
     <tr>
       <td>80</td>
       <td>toothbrush</td>
-      <td>22.4</td>
+      <td>22.2</td>
     </tr>
   </tbody>
 </table>
@@ -495,8 +493,8 @@ import os
 # Initialize the Focoos client with your API key
 focoos = Focoos(api_key=os.getenv("FOCOOS_API_KEY"))
 
-# Get the remote model (fai-m2f-l-coco-ins) from Focoos API
-model = focoos.get_remote_model("fai-m2f-l-coco-ins")
+# Get the remote model (fai-m2f-m-coco-ins) from Focoos API
+model = focoos.get_remote_model("fai-m2f-m-coco-ins")
 
 # Run inference on an image
 predictions = model.infer("./image.jpg", threshold=0.5)

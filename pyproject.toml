@@ -79,4 +79,5 @@ docs = [
     "mkdocs-material>=9.5.28,<10.0.0",
     "mkdocstrings[python]>=0.25.1,<0.26.0",
     "mkdocs-include-markdown-plugin>=6.2.1,<7.0.0",
+    "mkdocs-autorefs>=0.5.0,<0.6.0",
 ]

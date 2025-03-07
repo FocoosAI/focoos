@@ -421,6 +421,17 @@ class TrainInstance(str, Enum):
 class FocoosDet(FocoosBaseModel):
     """Single detection result from a model.
 
+    Attributes:
+        bbox (list[int]): Bounding box coordinates in xyxy absolute format.
+        conf (float): Confidence score (from 0 to 1).
+        cls_id (int): Class ID (0-indexed).
+        label (str): Label (name of the class).
+        mask (str): Mask (base64 encoded string having origin in the top left corner of bbox).
+
+    !!! Note
+        The mask is only present if the model is an instance segmentation or semantic segmentation model.
+        The mask is a base64 encoded string having origin in the top left corner of bbox and the same width and height of the bbox.
+
     Example:
         ```python
         from focoos import Focoos
