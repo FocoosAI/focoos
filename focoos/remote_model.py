@@ -21,7 +21,6 @@ Modules:
     ModelStatus: Enum for representing the current status of the model.
     TrainInstance: Enum for defining available training instances.
     image_loader: Utility function for loading images.
-    focoos_detections_to_supervision: Converter for Focoos detections to supervision format.
 """
 
 import os
@@ -48,7 +47,9 @@ from focoos.ports import (
 from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
 from focoos.utils.metrics import MetricsVisualizer
-from focoos.utils.vision import focoos_detections_to_supervision, image_loader
+
+from focoos.utils.system import HttpClient
+from focoos.utils.vision import fai_detections_to_sv, image_loader
 
 logger = get_logger()
 
@@ -227,6 +228,10 @@ class RemoteModel:
         Returns:
             np.ndarray: The annotated image as a NumPy array.
         """
+
+        if len(detections.xyxy) == 0:
+            logger.warning("No detections found, skipping annotation")
+            return im
         classes = self.metadata.classes
         if classes is not None:
             labels = [
@@ -294,15 +299,17 @@ class RemoteModel:
         )
         t1 = time.time()
         if res.status_code == 200:
-            logger.debug(f"Inference time: {t1 - t0:.3f} seconds")
             detections = FocoosDetections(
                 detections=[FocoosDet.from_json(d) for d in res.json().get("detections", [])],
                 latency=res.json().get("latency", None),
             )
+            logger.debug(
+                f"Found {len(detections.detections)} detections. Inference Request time: {(t1 - t0) * 1000:.0f}ms"
+            )
             preview = None
             if annotate:
                 im0 = image_loader(image)
-                sv_detections = focoos_detections_to_supervision(detections)
+                sv_detections = fai_detections_to_sv(detections, im0.shape[:-1])
                 preview = self._annotate(im0, sv_detections)
             return detections, preview
         else:

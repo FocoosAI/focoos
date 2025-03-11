@@ -1,10 +1,9 @@
 import base64
-import io
 
+import cv2
 import numpy as np
 import pytest
 import supervision as sv
-from PIL import Image
 
 from focoos.ports import FocoosDet, FocoosDetections
 
@@ -18,12 +17,12 @@ def binary_mask() -> np.ndarray:
 
 @pytest.fixture
 def base64_binary_mask(binary_mask: np.ndarray) -> str:
-    """Create a base64-encoded binary mask."""
+    """Create a base64-encoded binary mask using OpenCV."""
     mask = binary_mask.astype(np.uint8) * 255
-    mask_image = Image.fromarray(mask)
-    with io.BytesIO() as buffer:
-        mask_image.save(buffer, format="PNG")
-        encoded_mask = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    success, encoded_image = cv2.imencode(".png", mask)
+    if not success:
+        raise ValueError("Failed to encode image")
+    encoded_mask = base64.b64encode(encoded_image).decode("utf-8")
     return encoded_mask
 
 
@@ -68,8 +67,8 @@ def focoos_detections_no_detections() -> FocoosDetections:
 @pytest.fixture
 def sv_detections() -> sv.Detections:
     return sv.Detections(
-        xyxy=np.array([[10, 20, 30, 40]]),
-        class_id=np.array([1]),
-        confidence=np.array([0.9]),
-        mask=np.array([[[1, 0], [0, 1]]], dtype=bool),
+        xyxy=np.array([[0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1]]),
+        class_id=np.array([1, 2, 3]),
+        confidence=np.array([0.9, 0.8, 0.7]),
+        mask=np.array([[[1, 1], [1, 1]], [[1, 1], [1, 1]], [[1, 1], [1, 1]]], dtype=bool),
     )

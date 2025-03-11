@@ -450,11 +450,25 @@ class FocoosDet(FocoosBaseModel):
         ```
     """
 
-    bbox: Optional[list[float]] = None
+    bbox: Optional[list[int]] = None
     conf: Optional[float] = None
     cls_id: Optional[int] = None
     label: Optional[str] = None
     mask: Optional[str] = None
+
+    @classmethod
+    def from_json(cls, data: Union[str, dict]):
+        if isinstance(data, str):
+            with open(data, encoding="utf-8") as f:
+                data_dict = json.load(f)
+        else:
+            data_dict = data
+
+        bbox = data_dict.get("bbox")
+        if bbox is not None:  # Retrocompatibility fix for remote results with float bbox, !TODO remove asap
+            data_dict["bbox"] = list(map(int, bbox))
+
+        return cls.model_validate(data_dict)
 
 
 class FocoosDetections(FocoosBaseModel):

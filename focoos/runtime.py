@@ -20,7 +20,7 @@ Classes:
 from abc import abstractmethod
 from pathlib import Path
 from time import perf_counter
-from typing import Any, List, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -38,10 +38,9 @@ try:
 except ImportError:
     ORT_AVAILABLE = False
 
-import supervision as sv
 
+# from supervision.detection.utils import mask_to_xyxy
 from focoos.ports import (
-    FocoosTask,
     LatencyMetrics,
     ModelMetadata,
     OnnxRuntimeOpts,
@@ -56,93 +55,12 @@ GPU_ID = 0
 logger = get_logger()
 
 
-def get_postprocess_fn(task: FocoosTask):
-    if task == FocoosTask.INSTANCE_SEGMENTATION:
-        return instance_postprocess
-    elif task == FocoosTask.SEMSEG:
-        return semseg_postprocess
-    else:
-        return det_postprocess
-
-
-def det_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float) -> sv.Detections:
-    """
-    Postprocesses the output of an object detection model and filters detections
-    based on a confidence threshold.
-
-    Args:
-        out (List[np.ndarray]): The output of the detection model.
-        im0_shape (Tuple[int, int]): The original shape of the input image (height, width).
-        conf_threshold (float): The confidence threshold for filtering detections.
-
-    Returns:
-        sv.Detections: A sv.Detections object containing the filtered bounding boxes, class ids, and confidences.
-    """
-    cls_ids, boxes, confs = out
-    boxes[:, 0::2] *= im0_shape[1]
-    boxes[:, 1::2] *= im0_shape[0]
-    high_conf_indices = (confs > conf_threshold).nonzero()
-
-    return sv.Detections(
-        xyxy=boxes[high_conf_indices].astype(int),
-        class_id=cls_ids[high_conf_indices].astype(int),
-        confidence=confs[high_conf_indices].astype(float),
-    )
-
-
-def semseg_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float) -> sv.Detections:
-    """
-    Postprocesses the output of a semantic segmentation model and filters based
-    on a confidence threshold.
-
-    Args:
-        out (List[np.ndarray]): The output of the semantic segmentation model.
-        conf_threshold (float): The confidence threshold for filtering detections.
-
-    Returns:
-        sv.Detections: A sv.Detections object containing the masks, class ids, and confidences.
-    """
-    cls_ids, mask, confs = out[0][0], out[1][0], out[2][0]
-    masks = np.equal(mask, np.arange(len(cls_ids))[:, None, None])
-    high_conf_indices = np.where(confs > conf_threshold)[0]
-    masks = masks[high_conf_indices].astype(bool)
-    cls_ids = cls_ids[high_conf_indices].astype(int)
-    confs = confs[high_conf_indices].astype(float)
-    return sv.Detections(
-        mask=masks,
-        # xyxy is required from supervision
-        xyxy=np.zeros(shape=(len(high_conf_indices), 4), dtype=np.uint8),
-        class_id=cls_ids,
-        confidence=confs,
-    )
-
-
-def instance_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float) -> sv.Detections:
-    """
-    Postprocesses the output of an instance segmentation model and filters detections
-    based on a confidence threshold.
-    """
-    cls_ids, mask, confs = out[0][0], out[1][0], out[2][0]
-    high_conf_indices = np.where(confs > conf_threshold)[0]
-
-    masks = mask[high_conf_indices].astype(bool)
-    cls_ids = cls_ids[high_conf_indices].astype(int)
-    confs = confs[high_conf_indices].astype(float)
-    return sv.Detections(
-        mask=masks,
-        # xyxy is required from supervision
-        xyxy=np.zeros(shape=(len(high_conf_indices), 4), dtype=np.uint8),
-        class_id=cls_ids,
-        confidence=confs,
-    )
-
-
 class BaseRuntime:
     def __init__(self, model_path: str, opts: Any, model_metadata: ModelMetadata):
         pass
 
     @abstractmethod
-    def __call__(self, im: np.ndarray, conf_threshold: float) -> sv.Detections:
+    def __call__(self, im: np.ndarray) -> np.ndarray:
         pass
 
     @abstractmethod
@@ -165,8 +83,6 @@ class ONNXRuntime(BaseRuntime):
         self.name = Path(model_path).stem
         self.opts = opts
         self.model_metadata = model_metadata
-
-        self.postprocess_fn = get_postprocess_fn(model_metadata.task)
 
         # Setup session options
         options = ort.SessionOptions()
@@ -238,12 +154,12 @@ class ONNXRuntime(BaseRuntime):
 
         self.logger.info("⏱️ [onnxruntime] Warmup done")
 
-    def __call__(self, im: np.ndarray, conf_threshold: float) -> sv.Detections:
+    def __call__(self, im: np.ndarray) -> list[np.ndarray]:
         """Run inference and return detections."""
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
         out = self.ort_sess.run(out_name, {input_name: im})
-        return self.postprocess_fn(out=out, im0_shape=(im.shape[2], im.shape[3]), conf_threshold=conf_threshold)
+        return out
 
     def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
         """Benchmark model latency."""
@@ -294,7 +210,6 @@ class TorchscriptRuntime(BaseRuntime):
         self.logger = get_logger(name="TorchscriptEngine")
         self.logger.info(f"🔧 [torchscript] Device: {self.device}")
         self.opts = opts
-        self.postprocess_fn = get_postprocess_fn(model_metadata.task)
 
         map_location = None if torch.cuda.is_available() else "cpu"
 
@@ -309,12 +224,12 @@ class TorchscriptRuntime(BaseRuntime):
                     self.model(np_image)
             self.logger.info("⏱️ [torchscript] WARMUP DONE")
 
-    def __call__(self, im: np.ndarray, conf_threshold: float) -> sv.Detections:
+    def __call__(self, im: np.ndarray) -> list[np.ndarray]:
         """Run inference and return detections."""
         with torch.no_grad():
             torch_image = torch.from_numpy(im).to(self.device, dtype=torch.float32)
             res = self.model(torch_image)
-            return self.postprocess_fn([r.cpu().numpy() for r in res], (im.shape[2], im.shape[3]), conf_threshold)
+            return [r.cpu().numpy() for r in res]
 
     def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
         """Benchmark model latency."""

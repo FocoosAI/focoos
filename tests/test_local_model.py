@@ -139,6 +139,11 @@ def mock_sv_detections() -> sv.Detections:
     )
 
 
+@pytest.fixture
+def mock_runtime_detections() -> list[np.ndarray]:
+    return [np.array([[2, 8, 16, 32], [4, 10, 18, 34]]), np.array([0, 1]), np.array([0.8, 0.9])]
+
+
 def test_annotate_detection_metadata_classes_none(
     image_ndarray: np.ndarray, mock_local_model_onnx: LocalModel, mock_sv_detections
 ):
@@ -175,6 +180,7 @@ def mock_infer_setup(
     mock_local_model: LocalModel,
     image_ndarray: np.ndarray,
     mock_sv_detections: sv.Detections,
+    mock_runtime_detections: list[np.ndarray],
     mock_focoos_detections: FocoosDetections,
     annotate: bool,
 ):
@@ -183,13 +189,13 @@ def mock_infer_setup(
     mock_image_preprocess = mocker.patch("focoos.local_model.image_preprocess")
     mock_image_preprocess.return_value = (image_ndarray, image_ndarray)
 
-    # Mock scale_detections
-    mock_scale_detections = mocker.patch("focoos.local_model.scale_detections")
-    mock_scale_detections.return_value = mock_sv_detections
-
     # Mock sv_to_focoos_detections
-    mock_sv_to_focoos_detections = mocker.patch("focoos.local_model.sv_to_focoos_detections")
-    mock_sv_to_focoos_detections.return_value = mock_focoos_detections
+    mock_sv_to_focoos_detections = mocker.patch("focoos.local_model.sv_to_fai_detections")
+    mock_sv_to_focoos_detections.return_value = mock_focoos_detections.detections
+
+    # mock postprocess
+    mock_postprocess = mocker.patch.object(mock_local_model, "postprocess_fn")
+    mock_postprocess.return_value = mock_sv_detections
 
     # Mock _annotate
     mock_annotate = mocker.patch.object(mock_local_model, "_annotate", autospec=True)
@@ -201,27 +207,27 @@ def mock_infer_setup(
     # Mock runtime
     class MockRuntime(MagicMock):
         def __call__(self, *args, **kwargs):
-            return mock_sv_detections
+            return mock_runtime_detections
 
-    mock_runtime_call = mocker.patch.object(MockRuntime, "__call__", return_value=mock_sv_detections)
+    mock_runtime_call = mocker.patch.object(MockRuntime, "__call__", return_value=mock_runtime_detections)
     mock_local_model.runtime = MockRuntime(spec=ONNXRuntime)
 
     return (
         mock_image_preprocess,
         mock_runtime_call,
-        mock_scale_detections,
         mock_sv_to_focoos_detections,
         mock_annotate,
     )
 
 
 @pytest.mark.parametrize("annotate", [(False, None)])
-def test_infer_(
+def test_infer_onnx(
     mocker,
     mock_local_model_onnx,
     image_ndarray,
     mock_sv_detections,
     mock_focoos_detections,
+    mock_runtime_detections,
     annotate,
 ):
     # Arrange
@@ -230,6 +236,7 @@ def test_infer_(
         mock_local_model_onnx,
         image_ndarray,
         mock_sv_detections,
+        mock_runtime_detections,
         mock_focoos_detections,
         annotate,
     )

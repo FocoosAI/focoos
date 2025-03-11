@@ -1,76 +1,53 @@
 import pathlib
 from unittest.mock import MagicMock
 
-import numpy as np
 import pytest
 from pytest_mock import MockerFixture
 
 from focoos.ports import ModelMetadata, OnnxRuntimeOpts, RuntimeTypes, TorchscriptRuntimeOpts
-from focoos.runtime import ONNXRuntime, TorchscriptRuntime, det_postprocess, load_runtime, semseg_postprocess
+from focoos.runtime import (
+    ORT_AVAILABLE,
+    TORCH_AVAILABLE,
+    ONNXRuntime,
+    TorchscriptRuntime,
+    load_runtime,
+)
 
 
-def test_det_post_process():
-    cls_ids = np.array([1, 2, 3])
-    boxes = np.array([[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8], [0.9, 1.0, 1.1, 1.2]])
-    confs = np.array([0.8, 0.9, 0.7])
-    out = [cls_ids, boxes, confs]
+def test_runtime_availability():
+    """
+    Test the runtime availability flags.
+    These flags should be boolean values indicating whether
+    PyTorch and ONNX Runtime are available in the environment.
+    """
+    # Check that the flags are boolean
+    assert isinstance(TORCH_AVAILABLE, bool), "TORCH_AVAILABLE should be a boolean"
+    assert isinstance(ORT_AVAILABLE, bool), "ORT_AVAILABLE should be a boolean"
 
-    im0_shape = (640, 480)
-    conf_threshold = 0.75
-    sv_detections = det_postprocess(out, im0_shape, conf_threshold)
-
-    np.testing.assert_array_equal(sv_detections.xyxy, np.array([[48, 128, 144, 256], [240, 384, 336, 512]]))
-    assert sv_detections.class_id is not None
-    np.testing.assert_array_equal(sv_detections.class_id, np.array([1, 2]))
-    assert sv_detections.confidence is not None
-    np.testing.assert_array_equal(sv_detections.confidence, np.array([0.8, 0.9]))
+    # At least one runtime should be available for the library to work
+    assert TORCH_AVAILABLE or ORT_AVAILABLE, "At least one runtime (PyTorch or ONNX Runtime) must be available"
 
 
-def test_semseg_postprocess():
-    cls_ids = np.array([1, 2, 3])
-    mask = np.array(
-        [
-            [0, 1, 1, 2],
-            [0, 1, 2, 2],
-            [0, 0, 1, 2],
-        ]
-    )
-    confs = np.array([0.7, 0.9, 0.8])
-    out = [
-        np.expand_dims(cls_ids, axis=0),
-        np.expand_dims(mask, axis=0),
-        np.expand_dims(confs, axis=0),
-    ]
+@pytest.mark.skipif(not TORCH_AVAILABLE, reason="PyTorch not available")
+def test_torch_import():
+    """
+    Test PyTorch import when available.
+    This test is skipped if PyTorch is not installed.
+    """
+    import torch
 
-    im0_shape = (3, 4)
-    conf_threshold = 0.75
+    assert torch is not None, "PyTorch should be properly imported"
 
-    sv_detections = semseg_postprocess(out, im0_shape, conf_threshold)
 
-    # Expected masks
-    expected_masks = np.array(
-        [
-            [
-                [False, True, True, False],
-                [False, True, False, False],
-                [False, False, True, False],
-            ],  # Class 1
-            [
-                [False, False, False, True],
-                [False, False, True, True],
-                [False, False, False, True],
-            ],  # Class 2
-        ]
-    )
+@pytest.mark.skipif(not ORT_AVAILABLE, reason="ONNX Runtime not available")
+def test_onnx_import():
+    """
+    Test ONNX Runtime import when available.
+    This test is skipped if ONNX Runtime is not installed.
+    """
+    import onnxruntime as ort
 
-    # Assertions
-    assert sv_detections.mask is not None
-    np.testing.assert_array_equal(sv_detections.mask, expected_masks)
-    assert sv_detections.class_id is not None
-    np.testing.assert_array_equal(sv_detections.class_id, np.array([2, 3]))
-    assert sv_detections.confidence is not None
-    np.testing.assert_array_equal(sv_detections.confidence, np.array([0.9, 0.8]))
-    assert sv_detections.xyxy.shape == (2, 4)
+    assert ort is not None, "ONNX Runtime should be properly imported"
 
 
 @pytest.mark.parametrize(

@@ -31,11 +31,11 @@ from .utils.vision import (
     base64mask_to_mask,
     binary_mask_to_base64,
     class_to_index,
-    focoos_detections_to_supervision,
+    fai_detections_to_sv,
     image_loader,
     image_preprocess,
     index_to_class,
-    sv_to_focoos_detections,
+    sv_to_fai_detections,
 )
 
 __all__ = [
@@ -68,11 +68,11 @@ __all__ = [
     "base64mask_to_mask",
     "binary_mask_to_base64",
     "class_to_index",
-    "focoos_detections_to_supervision",
+    "fai_detections_to_sv",
     "image_loader",
     "image_preprocess",
     "index_to_class",
-    "sv_to_focoos_detections",
+    "sv_to_fai_detections",
     "get_logger",
     "ApiClient",
 ]
