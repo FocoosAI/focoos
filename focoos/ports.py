@@ -68,10 +68,39 @@ class DatasetLayout(str, Enum):
     """Supported dataset formats in Focoos.
 
     Values:
-        - ROBOFLOW_COCO: Roboflow COCO format
-        - ROBOFLOW_SEG: Roboflow segmentation format
-        - CATALOG: Catalog format
-        - SUPERVISELY: Supervisely format
+        - ROBOFLOW_COCO: (Detection,Instance Segmentation) Roboflow COCO format:
+            root/
+                train/
+                    - _annotations.coco.json
+                    - img_1.jpg
+                    - img_2.jpg
+                valid/
+                    - _annotations.coco.json
+                    - img_3.jpg
+                    - img_4.jpg
+        - ROBOFLOW_SEG: (Semantic Segmentation) Roboflow segmentation format:
+            root/
+                train/
+                    - _classes.csv (comma separated csv)
+                    - img_1.jpg
+                    - img_2.jpg
+                valid/
+                    - _classes.csv
+                    - img_3.png
+                    - img_4.png
+        - SUPERVISELY: (Semantic Segmentation) format:
+            root/
+                train/
+                    meta.json
+                    img/
+                    ann/
+                    mask/
+                valid/
+                    meta.json
+                    img/
+                    ann/
+                    mask/
+        - CATALOG: Catalog format, DEPRECATED.
 
     Example:
         ```python
@@ -344,7 +373,7 @@ class DatasetPreview(FocoosBaseModel):
     ```python
     from focoos import Focoos
 
-    focoos = Focoos(api_key="<YOUR-API-KEY>")
+    focoos = Focoos()
 
     # List all shared datasets
     datasets = focoos.list_shared_datasets()
@@ -371,25 +400,27 @@ class DatasetPreview(FocoosBaseModel):
 class ModelMetadata(FocoosBaseModel):
     """Complete metadata for a Focoos model.
 
-    Example:
-        ```python
-        from focoos import Focoos, RemoteModel
+    This class contains comprehensive information about a model in the Focoos platform,
+    including its identification, configuration, performance metrics, and training details.
 
-        # Initialize Focoos client
-        focoos = Focoos(api_key="<YOUR-API-KEY>")
-
-        # Get a remote model instance
-        model = focoos.get_remote_model("my-model")
-
-        # Get model metadata
-        metadata = model.get_info()
-
-        print(f"Model: {metadata.name}")
-        print(f"Reference: {metadata.ref}")
-        print(f"Task: {metadata.task}")
-        print(f"Status: {metadata.status}")
-        print(f"Description: {metadata.description}")
-        ```
+    Attributes:
+        ref (str): Unique reference ID for the model.
+        name (str): Human-readable name of the model.
+        description (Optional[str]): Optional description of the model's purpose or capabilities.
+        owner_ref (str): Reference ID of the model owner.
+        focoos_model (str): The base model architecture used.
+        task (FocoosTask): The task type the model is designed for (e.g., DETECTION, SEMSEG).
+        created_at (datetime): Timestamp when the model was created.
+        updated_at (datetime): Timestamp when the model was last updated.
+        status (ModelStatus): Current status of the model (e.g., TRAINING, DEPLOYED).
+        metrics (Optional[dict]): Performance metrics of the model (e.g., mAP, accuracy).
+        latencies (Optional[list[dict]]): Inference latency measurements across different configurations.
+        classes (Optional[list[str]]): List of class names the model can detect or segment.
+        im_size (Optional[int]): Input image size the model expects.
+        hyperparameters (Optional[Hyperparameters]): Training hyperparameters used.
+        training_info (Optional[TrainingInfo]): Information about the training process.
+        location (Optional[str]): Storage location of the model.
+        dataset (Optional[DatasetPreview]): Information about the dataset used for training.
     """
 
     ref: str
@@ -415,39 +446,30 @@ class TrainInstance(str, Enum):
     """Available training instance types.
 
     Values:
-        - ML_G4DN_XLARGE: ml.g4dn.xlarge instance
-        - ML_G5_XLARGE: ml.g5.xlarge instance
-        - ML_G5_12XLARGE: ml.g5.12xlarge instance
+        - ML_G4DN_XLARGE: ml.g4dn.xlarge instance, Nvidia Tesla T4, 16GB RAM, 4vCPU
     """
 
     ML_G4DN_XLARGE = "ml.g4dn.xlarge"
-    ML_G5_XLARGE = "ml.g5.xlarge"
-    ML_G5_12XLARGE = "ml.g5.12xlarge"
 
 
 class FocoosDet(FocoosBaseModel):
     """Single detection result from a model.
 
-    Example:
-        ```python
-        from focoos import Focoos
+    This class represents a single detection or segmentation result from a Focoos model.
+    It contains information about the detected object including its position, class,
+    confidence score, and optional segmentation mask.
 
-        focoos = Focoos(api_key="<YOUR-API-KEY>")
+    Attributes:
+        bbox (Optional[list[int]]): Bounding box coordinates in [x1, y1, x2, y2] format,
+            where (x1, y1) is the top-left corner and (x2, y2) is the bottom-right corner.
+        conf (Optional[float]): Confidence score of the detection, ranging from 0 to 1.
+        cls_id (Optional[int]): Class ID of the detected object, corresponding to the index
+            in the model's class list.
+        label (Optional[str]): Human-readable label of the detected object.
+        mask (Optional[str]): Base64-encoded PNG image representing the segmentation mask.
+            Note that the mask is cropped to the bounding box coordinates and does not
+            have the same shape as the input image.
 
-        # Get a remote model instance
-        model = focoos.get_remote_model("my-model")
-
-        # Run inference on an image
-        image_path = "image.jpg"
-        results, _ = model.infer(image_path)
-
-        # Print detection results
-        for det in results.detections:
-            print(f"Found {det.label} with confidence {det.conf:.2f}")
-            print(f"Bounding box: {det.bbox}")
-            if det.mask:
-                print("Instance segmentation mask included")
-        ```
     """
 
     bbox: Optional[list[int]] = None
@@ -474,26 +496,16 @@ class FocoosDet(FocoosBaseModel):
 class FocoosDetections(FocoosBaseModel):
     """Collection of detection results from a model.
 
-    Example:
-        ```python
-        from focoos import Focoos
+    This class represents a collection of detection or segmentation results from a Focoos model.
+    It contains a list of individual detections and optional latency information.
 
-        focoos = Focoos(api_key="<YOUR-API-KEY>")
-
-        # Get a remote model instance
-        model = focoos.get_remote_model("my-model")
-
-        # Run inference on an image
-        image_path = "image.jpg"
-        results, _ = model.infer(image_path)
-
-        # Print detection results
-        for det in results.detections:
-            print(f"Found {det.label} with confidence {det.conf:.2f}")
-            print(f"Bounding box: {det.bbox}")
-            if det.mask:
-                print("Instance segmentation mask included")
-        ```
+    Attributes:
+        detections (list[FocoosDet]): List of detection results, where each detection contains
+            information about a detected object including its position, class, confidence score,
+            and optional segmentation mask.
+        latency (Optional[dict]): Dictionary containing latency information for the inference process.
+            Typically includes keys like 'inference', 'preprocess', and 'postprocess' with values
+            representing the time taken in seconds for each step.
     """
 
     detections: list[FocoosDet]
@@ -504,26 +516,17 @@ class FocoosDetections(FocoosBaseModel):
 class OnnxRuntimeOpts:
     """ONNX runtime configuration options.
 
-    Example:
-        ```python
-        from focoos import ONNXRuntime, FocoosTask, ModelMetadata
+    This class provides configuration options for the ONNX runtime used for model inference.
 
-        # Configure ONNX Runtime options
-        opts = OnnxRuntimeOpts(
-            fp16=True,  # Enable FP16 precision
-            cuda=True,  # Use CUDA execution provider
-            trt=False,  # Disable TensorRT
-            vino=False,  # Disable OpenVINO
-            coreml=False,  # Disable CoreML
-            warmup_iter=10,  # Number of warmup iterations
-            verbose=False,  # Disable verbose logging
-        )
+    Attributes:
+        fp16 (Optional[bool]): Enable FP16 precision. Default is False.
+        cuda (Optional[bool]): Enable CUDA acceleration for GPU inference. Default is False.
+        vino (Optional[bool]): Enable OpenVINO acceleration for Intel hardware. Default is False.
+        verbose (Optional[bool]): Enable verbose logging during inference. Default is False.
+        trt (Optional[bool]): Enable TensorRT acceleration for NVIDIA GPUs. Default is False.
+        coreml (Optional[bool]): Enable CoreML acceleration for Apple hardware. Default is False.
+        warmup_iter (int): Number of warmup iterations to run before benchmarking. Default is 0.
 
-        # Create ONNX Runtime instance
-        model_path = "model.onnx"
-        model_metadata = ModelMetadata(task=FocoosTask.DETECTION)
-        runtime = ONNXRuntime(model_path, opts, model_metadata)
-        ```
     """
 
     fp16: Optional[bool] = False
@@ -539,22 +542,12 @@ class OnnxRuntimeOpts:
 class TorchscriptRuntimeOpts:
     """TorchScript runtime configuration options.
 
-    Example:
-        ```python
-        from focoos import TorchscriptRuntime, FocoosTask, ModelMetadata
+    This class provides configuration options for the TorchScript runtime used for model inference.
 
-        # Configure TorchScript Runtime options
-        opts = TorchscriptRuntimeOpts(
-            warmup_iter=10,  # Number of warmup iterations
-            optimize_for_inference=True,  # Enable inference optimizations
-            set_fusion_strategy=True,  # Enable operator fusion
-        )
-
-        # Create TorchScript Runtime instance
-        model_path = "model.pt"
-        model_metadata = ModelMetadata(task=FocoosTask.DETECTION)
-        runtime = TorchscriptRuntime(model_path, opts, model_metadata)
-        ```
+    Attributes:
+        warmup_iter (int): Number of warmup iterations to run before benchmarking. Default is 0.
+        optimize_for_inference (bool): Enable inference optimizations. Default is True.
+        set_fusion_strategy (bool): Enable operator fusion. Default is True.
     """
 
     warmup_iter: int = 0
@@ -566,23 +559,19 @@ class TorchscriptRuntimeOpts:
 class LatencyMetrics:
     """Performance metrics for model inference.
 
-    Example:
-        ```python
-        from focoos import Focoos
+    This class provides performance metrics for model inference, including frames per second (FPS),
+    engine used, minimum latency, maximum latency, mean latency, standard deviation of latency,
+    input image size, and device type.
 
-        focoos = Focoos(api_key="<YOUR-API-KEY>")
-
-        # Load model and run benchmark
-        model = focoos.get_local_model("my-model")
-        metrics = model.benchmark(iterations=20, size=640)
-
-        # Access latency metrics
-        print(f"FPS: {metrics.fps}")
-        print(f"Mean latency: {metrics.mean} ms")
-        print(f"Engine: {metrics.engine}")
-        print(f"Device: {metrics.device}")
-        print(f"Input size: {metrics.im_size}x{metrics.im_size}")
-        ```
+    Attributes:
+        fps (int): Frames per second (FPS) of the inference process.
+        engine (str): The inference engine used (e.g., "onnx", "torchscript").
+        min (float): Minimum latency in milliseconds.
+        max (float): Maximum latency in milliseconds.
+        mean (float): Mean latency in milliseconds.
+        std (float): Standard deviation of latency in milliseconds.
+        im_size (int): Input image size.
+        device (str): Device type.
     """
 
     fps: int
@@ -645,10 +634,7 @@ class ModelFormat(str, Enum):
 
 
 class GPUInfo(FocoosBaseModel):
-    """Information about a GPU device.
-
-    ```
-    """
+    """Information about a GPU device."""
 
     gpu_id: Optional[int] = None
     gpu_name: Optional[str] = None
@@ -753,25 +739,16 @@ class Quotas(FocoosBaseModel):
 class User(FocoosBaseModel):
     """User account information.
 
-    Example:
-        ```python
-        from focoos import Focoos
+    This class represents a user account in the Focoos platform, containing
+    personal information, API key, and usage quotas.
 
-        focoos = Focoos(api_key="<YOUR-API-KEY>")
-        user_info = focoos.get_user_info()
-
-        # Access user info fields
-        print(f"Email: {user_info.email}")
-        print(f"Created at: {user_info.created_at}")
-        print(f"Updated at: {user_info.updated_at}")
-        print(f"Company: {user_info.company}")
-        print(f"API key: {user_info.api_key.key}")
-
-        # Access quotas
-        quotas = user_info.quotas
-        print(f"Total inferences: {quotas.total_inferences}")
-        print(f"Max inferences: {quotas.max_inferences}")
-        ```
+    Attributes:
+        email (str): The user's email address.
+        created_at (datetime): When the user account was created.
+        updated_at (datetime): When the user account was last updated.
+        company (Optional[str]): The user's company name, if provided.
+        api_key (ApiKey): The API key associated with the user account.
+        quotas (Quotas): Usage quotas and limits for the user account.
     """
 
     email: str
@@ -791,26 +768,8 @@ class ModelNotFound(Exception):
 
 
 class Metrics(FocoosBaseModel):
-    """Collection of training and inference metrics.
-
-    Example:
-        ```python
-        from focoos import Focoos
-
-        focoos = Focoos(api_key="<YOUR-API-KEY>")
-        model = focoos.get_remote_model("my-model")
-
-        # Get model metrics
-        metrics = model.metrics()
-
-        # Access metrics fields
-        print(f"Inference metrics: {metrics.infer_metrics}")
-        print(f"Validation metrics: {metrics.valid_metrics}")
-        print(f"Training metrics: {metrics.train_metrics}")
-        print(f"Total iterations: {metrics.iterations}")
-        print(f"Best validation: {metrics.best_valid_metric}")
-        print(f"Last updated: {metrics.updated_at}")
-        ```
+    """
+    Collection of training and inference metrics.
     """
 
     infer_metrics: list[dict] = []

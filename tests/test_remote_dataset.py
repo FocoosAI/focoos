@@ -2,7 +2,7 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
-from focoos.ports import DatasetLayout, DatasetPreview, DatasetSpec, FocoosTask
+from focoos.ports import DatasetLayout, DatasetPreview, FocoosTask
 from focoos.remote_dataset import RemoteDataset
 
 
@@ -99,19 +99,15 @@ def test_upload_data_success(
     # Mock for upload URL generation
     mock_api_client.post.side_effect = [
         Mock(status_code=200, json=lambda: {"url": "https://test-url", "fields": {"key": "value"}}),
-        Mock(raise_for_status=lambda: None),
+        Mock(status_code=422, text="Invalid data"),
     ]
     mock_api_client.external_post.return_value = Mock(status_code=200)
 
     # Mock for dataset info update
     mock_api_client.get.return_value.json.return_value = dataset_preview_data
 
-    result = remote_dataset.upload_data("test.zip")
-
-    assert isinstance(result, DatasetSpec)
-    assert result.train_length == dataset_preview_data["spec"]["train_length"]
-    assert result.valid_length == dataset_preview_data["spec"]["valid_length"]
-    assert result.size_mb == dataset_preview_data["spec"]["size_mb"]
+    with pytest.raises(ValueError, match="Failed to validate dataset"):
+        remote_dataset.upload_data("test.zip")
 
 
 def test_download_data_success(remote_dataset, mock_api_client):

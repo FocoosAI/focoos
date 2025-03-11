@@ -47,8 +47,6 @@ from focoos.ports import (
 from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
 from focoos.utils.metrics import MetricsVisualizer
-
-from focoos.utils.system import HttpClient
 from focoos.utils.vision import fai_detections_to_sv, image_loader
 
 logger = get_logger()
@@ -103,6 +101,15 @@ class RemoteModel:
 
         Raises:
             ValueError: If the request fails.
+
+        Example:
+            ```python
+            from focoos import Focoos, RemoteModel
+
+            focoos = Focoos()
+            model = focoos.get_remote_model(model_ref="<model_ref>")
+            model_info = model.get_info()
+            ```
         """
         res = self.api_client.get(f"models/{self.model_ref}")
         if res.status_code != 200:
@@ -267,18 +274,40 @@ class RemoteModel:
         Optionally, it can annotate the image with the detection results.
 
         Args:
-            image (Union[str, Path, bytes]): The image to infer on, which can be a file path, a string representing the path, or raw bytes.
+            image (Union[str, Path, np.ndarray, bytes]): The image to infer on, which can be a file path,
+                a string representing the path, a NumPy array, or raw bytes.
             threshold (float, optional): The confidence threshold for detections. Defaults to 0.5.
+                Detections with confidence scores below this threshold will be discarded.
             annotate (bool, optional): Whether to annotate the image with the detection results. Defaults to False.
+                If set to True, the method will return the image with bounding boxes or segmentation masks.
 
         Returns:
             Tuple[FocoosDetections, Optional[np.ndarray]]:
-                - FocoosDetections: The detection results including class IDs, confidence scores, etc.
+                - FocoosDetections: The detection results including class IDs, confidence scores, bounding boxes,
+                  and segmentation masks (if applicable).
                 - Optional[np.ndarray]: The annotated image if `annotate` is True, else None.
+                  This will be a NumPy array representation of the image with drawn bounding boxes or segmentation masks.
 
         Raises:
             FileNotFoundError: If the provided image file path is invalid.
             ValueError: If the inference request fails.
+
+        Example:
+            ```python
+            from focoos import Focoos
+
+            focoos = Focoos()
+
+            model = focoos.get_remote_model("my-model")
+            results, annotated_image = model.infer("image.jpg", threshold=0.5, annotate=True)
+
+            # Print detection results
+            for det in results.detections:
+                print(f"Found {det.label} with confidence {det.conf:.2f}")
+                print(f"Bounding box: {det.bbox}")
+                if det.mask:
+                    print("Instance segmentation mask included")
+            ```
         """
         image_bytes = None
         if isinstance(image, str) or isinstance(image, Path):

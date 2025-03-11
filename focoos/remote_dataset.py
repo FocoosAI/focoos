@@ -119,7 +119,8 @@ class RemoteDataset:
         complete_upload = self.api_client.post(
             f"datasets/{self.ref}/complete-upload",
         )
-        complete_upload.raise_for_status()
+        if complete_upload.status_code not in [200, 201, 204]:
+            raise ValueError(f"Failed to validate dataset: {complete_upload.status_code} {complete_upload.text}")
         self.metadata = self.get_info()
         logger.info(f"✅ Dataset validated! => {self.metadata.spec}")
         return self.metadata.spec

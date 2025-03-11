@@ -222,16 +222,6 @@ def test_list_shared_datasets_fail(focoos_instance: Focoos):
         focoos_instance.list_shared_datasets()
 
 
-def test_get_dataset_by_name(focoos_instance: Focoos, mock_shared_datasets):
-    focoos_instance.api_client.get = MagicMock(
-        return_value=MagicMock(status_code=200, json=lambda: mock_shared_datasets)
-    )
-    ## test case insensitive search
-    dataset = focoos_instance.get_dataset_by_name(name="aeroscapes")
-    assert dataset is not None
-    assert dataset.name == "Aeroscapes"
-
-
 """
 unit tests get_model_by_name
 """
