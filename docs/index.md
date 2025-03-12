@@ -1,4 +1,4 @@
-# Welcome to Focoos AI
+# Welcome to Focoos AI SDK
 
 Focoos AI provides an advanced development platform designed to empower developers and businesses with efficient, customizable computer vision solutions. Whether you're working with data from cloud infrastructures or deploying on edge devices, Focoos AI enables you to select, fine-tune, and deploy state-of-the-art models optimized for your unique needs.
 

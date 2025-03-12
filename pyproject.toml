@@ -77,6 +77,6 @@ dev = [
 docs = [
     "mkdocs>=1.6.0,<2.0.0",
     "mkdocs-material>=9.5.28,<10.0.0",
-    "mkdocstrings[python]>=0.25.1,<0.26.0",
+    "mkdocstrings[python]>=0.29.0,<0.30.0",
     "mkdocs-include-markdown-plugin>=6.2.1,<7.0.0",
 ]

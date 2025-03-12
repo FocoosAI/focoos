@@ -1,4 +1,4 @@
-# Personalize your model
+# Create and train custom models
 
 This section covers the steps to create a model and train it in the cloud using the `focoos` library. The following example demonstrates how to interact with the Focoos API to manage models, datasets, and training jobs.
 
@@ -15,19 +15,24 @@ In this guide, we will perform the following steps:
 ---
 
 ## 1. Load or select a dataset
-!!! note
-    Currently, we are not supporting dataset creation from the SDK (it's coming really soon) and you can only use a dataset already available on the platform.
-    To upload your own dataset, you can write us a mail to [support@focoos.ai](mailto:support@focoos.ai) and we will load your dataset on the platform on your private workspace (your data will not be shared with anyone and not used for any other purpose than training your model).
 
-You can list all available datasets using the following code:
-```python
-from focoos import Focoos
+- You can list the public shared datasets using the following code:
+    ```python
+    from focoos import Focoos
 
-focoos = Focoos(api_key="<YOUR-API-KEY>")
+    focoos = Focoos(api_key="<YOUR-API-KEY>")
 
-datasets = focoos.list_shared_datasets()
-print(datasets)
-```
+    datasets = focoos.list_shared_datasets()
+    print(datasets)
+    ```
+- You can also create your own dataset and upload it to the platform [here](datasets.md)
+    ```python
+    from focoos import Focoos
+
+    focoos = Focoos(api_key="<YOUR-API-KEY>")
+
+    dataset = focoos.create_dataset(name="<YOUR-DATASET-NAME>", description="<YOUR-DATASET-DESCRIPTION>")
+    ```
 
 Find the dataset reference you want to use and store it in a variable:
 ```python

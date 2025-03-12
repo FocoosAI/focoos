@@ -136,7 +136,6 @@ class RemoteModel:
         Args:
             dataset_ref (str): The reference ID of the dataset to be used for training.
             hyperparameters (Hyperparameters): A structure containing the hyperparameters for the training process.
-            anyma_version (str, optional): The version of Anyma to use for training. Defaults to "anyma-sagemaker-cu12-torch22-0111".
             instance_type (TrainInstance, optional): The type of training instance to use. Defaults to TrainInstance.ML_G4DN_XLARGE.
             volume_size (int, optional): The size of the disk volume (in GB) for the training instance. Defaults to 50.
             max_runtime_in_seconds (int, optional): The maximum runtime for training in seconds. Defaults to 36000.
