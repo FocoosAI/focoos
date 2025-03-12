@@ -91,8 +91,9 @@ class DatasetLayout(str, Enum):
                     - img_2.jpg
                 valid/
                     - _classes.csv (comma separated csv)
-                    - img_3.png
-                    - img_4.png
+                    - img_3_mask.png
+                    - img_4_mask.png
+
         - SUPERVISELY: (Semantic Segmentation) format:
             root/
                 train/
@@ -419,6 +420,10 @@ class FocoosDet(FocoosBaseModel):
         mask (Optional[str]): Base64-encoded PNG image representing the segmentation mask.
             Note that the mask is cropped to the bounding box coordinates and does not
             have the same shape as the input image.
+
+    !!! Note
+        The mask is only present if the model is an instance segmentation or semantic segmentation model.
+        The mask is a base64 encoded string having origin in the top left corner of bbox and the same width and height of the bbox.
 
     """
 

@@ -61,12 +61,13 @@ nav:
       - Instance_segmentation:
         - fai-m2f-l-coco-ins: models/fai-m2f-l-coco-ins.md
   - API Reference:
-      - focoos: api/focoos.md
-      - remote model: api/remote_model.md
-      - local model: api/local_model.md
-      - remote dataset: api/remote_dataset.md
-      - runtime: api/runtime.md
-      - ports: api/ports.md
+      - Focoos: api/focoos.md
+      - Config: api/config.md
+      - RemoteModel: api/remote_model.md
+      - LocalModel: api/local_model.md
+      - RemoteDataset: api/remote_dataset.md
+      - Runtime: api/runtime.md
+      - Ports: api/ports.md
   - Development:
       - Contributing: development/contributing.md
       - Code of Conduct: development/code_of_conduct.md

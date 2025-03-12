@@ -29,8 +29,8 @@ root/
         - img_2.jpg
     valid/
         - _classes.csv (comma separated csv)
-        - img_3.png
-        - img_4.png
+        - img_3_mask.png
+        - img_4_mask.png
 ```
 - **SUPERVISELY** (Semantic Segmentation):
 ```python

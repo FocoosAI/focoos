@@ -8,19 +8,13 @@ Classes:
     RemoteModel: A class for interacting with remote models, managing their lifecycle,
                  and performing inference.
 
-
-Modules:
-    ApiClient: Handles HTTP requests.
-    logger: Logging utility.
-    BoxAnnotator, LabelAnnotator, MaskAnnotator: Annotation tools for visualizing
-                 detections and segmentation tasks.
-    FocoosDet, FocoosDetections: Classes for representing and managing detections.
-    FocoosTask: Enum for defining supported tasks (e.g., DETECTION, SEMSEG).
-    Hyperparameters: Structure for training configuration parameters.
-    ModelMetadata: Contains metadata for the model.
-    ModelStatus: Enum for representing the current status of the model.
-    TrainInstance: Enum for defining available training instances.
-    image_loader: Utility function for loading images.
+Methods:
+    __init__: Initializes the RemoteModel instance.
+    get_info: Retrieves model metadata.
+    train: Initiates model training.
+    train_info: Retrieves training status.
+    train_logs: Retrieves training logs.
+    metrics: Retrieves model metrics.
 """
 
 import os
