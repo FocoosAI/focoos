@@ -90,3 +90,5 @@ notebooks/.data
 .venv
 /data
 tests/junit.xml
+metrics+.json
+metrics.json

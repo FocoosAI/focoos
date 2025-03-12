@@ -7,11 +7,23 @@ sns.set_palette("husl")
 
 METRIC = "mIoU"
 DEVICE = "NVIDIA T4"
-DATASET = "coco"
+DATASET = "ade"
 # Create DataFrame with model performance data
 model_data = [
-    ["Baseline", 10, 10],
-    ["fai-model", 20, 20],
+    # ["ResNet18+FCN", 32.5, 172],
+    ["MobileNetV2+Deeplab", 34.0, 106],
+    ["SegFormerB0", 37.4, 119],
+    # ["BiSeNet-T", 37.4, 163],
+    ["BiSeNetv2-B", 39.2, 145],
+    ["DeepLabV3+ (R50)", 45.7, 30],
+    ["SegFormerB5", 49.6, 27],
+    ["Mask2Former (R50)", 47.2, 22],
+    ["MaskFormer (R50)", 44.3, 68],
+    ["fai-m2f-s-ade", 41.2, 189],
+    ["fai-m2f-m-ade", 45.3, 127],
+    ["fai-m2f-l-ade", 48.3, 73],
+    ["fai-pem-m-ade", 42.4, 142],
+    ["fai-bf-m-ade", 43.4, 162],
 ]
 data = pd.DataFrame(model_data, columns=["Model", f"{METRIC}", f"FPS ({DEVICE})"])
 

@@ -11,6 +11,8 @@ With the Focoos SDK, you can take advantage of a collection of foundational mode
 | [fai-m2f-l-ade](models/fai-m2f-l-ade.md) | [Mask2Former](https://github.com/facebookresearch/Mask2Former) ([Resnet-101](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py)) | Common Scene (150) | [ADE20K](https://groups.csail.mit.edu/vision/datasets/ADE20K/) | mIoU: 48.27<br>mAcc: 62.15 | 73 |
 | [fai-m2f-m-ade](models/fai-m2f-m-ade.md) | [Mask2Former](https://github.com/facebookresearch/Mask2Former) ([STDC-2](https://github.com/MichaelFan01/STDC-Seg)) | Common Scene (150) | [ADE20K](https://groups.csail.mit.edu/vision/datasets/ADE20K/) | mIoU: 45.32<br>mACC: 57.75 | 127 |
 | [fai-m2f-s-ade](models/fai-m2f-s-ade.md) | [Mask2Former](https://github.com/facebookresearch/Mask2Former) ([STDC-1](https://github.com/MichaelFan01/STDC-Seg)) | Common Scene (150) | [ADE20K](https://groups.csail.mit.edu/vision/datasets/ADE20K/) | mIoU: 41.23<br>mAcc: 52.21 | 189 |
+| [fai-pem-m-ade](models/fai-pem-m-ade.md) | [PEM](https://github.com/NiccoloCavagnero/PEM) ([STDC-2](https://github.com/MichaelFan01/STDC-Seg)) | Common Scene (150) | [ADE20K](https://groups.csail.mit.edu/vision/datasets/ADE20K/) | mIoU: 42.40<br>mAcc: 56.21 | 142 |
+| [fai-bf-m-ade](models/fai-bf-m-ade.md) | [BiSeNetFormer](https://arxiv.org/abs/2404.09570) ([STDC-2](https://github.com/MichaelFan01/STDC-Seg)) | Common Scene (150) | [ADE20K](https://groups.csail.mit.edu/vision/datasets/ADE20K/) | mIoU: 43.35<br>mAcc: 57.61 | 162 |
 
 <small> mIoU = Intersection over Union averaged by class </small> <br>
 <small> mAcc = Pixel Accuracy averaged by class </small> <br>
