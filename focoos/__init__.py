@@ -6,7 +6,7 @@ from .ports import (
     LOCAL_API_URL,
     PROD_API_URL,
     DatasetLayout,
-    DatasetMetadata,
+    DatasetPreview,
     FocoosDet,
     FocoosDetections,
     FocoosTask,
@@ -24,6 +24,7 @@ from .ports import (
 )
 from .remote_model import RemoteModel
 from .runtime import ONNXRuntime, load_runtime
+from .utils.api_client import ApiClient
 from .utils.logger import get_logger
 from .utils.system import get_system_info
 from .utils.vision import (
@@ -48,7 +49,7 @@ __all__ = [
     "ModelMetadata",
     "ModelStatus",
     "DatasetLayout",
-    "DatasetMetadata",
+    "DatasetPreview",
     "GPUInfo",
     "Hyperparameters",
     "LatencyMetrics",
@@ -73,4 +74,5 @@ __all__ = [
     "index_to_class",
     "sv_to_fai_detections",
     "get_logger",
+    "ApiClient",
 ]

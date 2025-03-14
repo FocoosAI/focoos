@@ -184,6 +184,15 @@ class LocalModel:
 
         Raises:
             ValueError: If the model is not deployed locally (i.e., `self.runtime` is `None`).
+
+        Example:
+            ```python
+            from focoos import Focoos, LocalModel
+
+            focoos = Focoos()
+            model = focoos.get_local_model(model_ref="<model_ref>")
+            detections, annotated_image = model.infer(image, threshold=0.5, annotate=True)
+            ```
         """
         assert self.runtime is not None, "Model is not deployed (locally)"
         resize = None  #!TODO  check for segmentation
@@ -227,5 +236,21 @@ class LocalModel:
 
         Returns:
             LatencyMetrics: Latency metrics including time taken for inference.
+
+        Example:
+            ```python
+            from focoos import Focoos, LocalModel
+
+            focoos = Focoos()
+            model = focoos.get_local_model(model_ref="<model_ref>")
+            metrics = model.benchmark(iterations=10, size=640)
+
+            # Access latency metrics
+            print(f"FPS: {metrics.fps}")
+            print(f"Mean latency: {metrics.mean} ms")
+            print(f"Engine: {metrics.engine}")
+            print(f"Device: {metrics.device}")
+            print(f"Input size: {metrics.im_size}x{metrics.im_size}")
+            ```
         """
         return self.runtime.benchmark(iterations, size)

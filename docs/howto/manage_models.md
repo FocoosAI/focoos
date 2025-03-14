@@ -4,8 +4,19 @@ This section covers the steps to monitor the status of your models on the Focoos
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/main/notebooks/model_management.ipynb)
 
-## How to list the Focoos Models
-To list all the models available on the FocoosAI platform, you can use the following code:
+
+In this guide, we will cover the following topics:
+
+1. [📋 List available Focoos models](#how-to-list-the-focoos-models)
+2. [📜 List all your models](#how-to-list-all-your-models)
+3. [📈 Retrieve model metrics](#see-the-metrics-for-a-model)
+4. [🗑️ Delete a model](#delete-a-model)
+
+
+
+
+## How to list the Focoos models
+To list all the models available on the Focoos AI platform, you can use the following code:
 ```python
 from focoos import Focoos
 
@@ -30,6 +41,7 @@ for model in models:
 - `task`: The task of the model.
 - `description`: The description of the model.
 - `status`: The status of the model, which indicates its current state (e.g. CREATED, TRAINING_RUNNING, TRAINING_COMPLETED - see [`ModelStatus`](/focoos/api/ports/#focoos.ports.ModelStatus)).
+
 
 ## How to list all your models
 To list all your models, the library provides a `list_models` function. This function will return a list of `Model` objects.
@@ -59,6 +71,7 @@ for model in models:
 - `description`: The description of the model.
 - `focoos_model`: The starting Focoos Model used for training.
 - `status`: The status of the model, which indicates its current state (e.g. CREATED, TRAINING_RUNNING, TRAINING_COMPLETED - see [`ModelStatus`](/focoos/api/ports/#focoos.ports.ModelStatus)).
+
 
 ## See the metrics for a model
 To see the validation metrics of a model, you can use the [`metrics` method](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.metrics) on the model object.
@@ -92,9 +105,6 @@ if metrics.train_metrics:
 ## Delete a model
 To delete a model, you can use the [`delete_model` method](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.delete_model) on the model object.
 
-!!! warning
-    This action is irreversible and the model will be deleted forever from the platform.
-
 ```python
 from focoos import Focoos
 
@@ -104,29 +114,6 @@ model = focoos.get_remote_model("my-model")
 model.delete_model()
 ```
 
-
-<!-- ## How to list all the shared datasets
-To list all the shared datasets, the library provides a `list_shared_datasets` function. This function will return a list of `Dataset` objects.
-
-```python
-from focoos import Focoos
-
-focoos = Focoos(api_key="<YOUR-API-KEY>")
-
-datasets = focoos.list_shared_datasets()
-for dataset in datasets:
-    print(f"Name: {dataset.name}")
-    print(f"Reference: {dataset.ref}")
-    print(f"Task: {dataset.task}")
-    print(f"Description: {dataset.description}")
-    print("-" * 50)
-
-```
-`datasets` is a list of [`DatasetMetadata`](/focoos/api/ports/#focoos.ports.DatasetMetadata) objects that contains the following information:
-
-- `name`: The name of the dataset.
-- `ref`: The reference of the dataset.
-- `task`: The task of the dataset.
-- `description`: The description of the dataset.
-
-     -->
+!!! warning
+    This action is irreversible.
+    Ensure you double-check before executing this command, as once deleted, the model cannot be recovered.

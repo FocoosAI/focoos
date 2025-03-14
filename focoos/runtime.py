@@ -56,22 +56,73 @@ logger = get_logger()
 
 
 class BaseRuntime:
+    """
+    Abstract base class for runtime implementations.
+
+    This class defines the interface that all runtime implementations must follow.
+    It provides methods for model initialization, inference, and performance benchmarking.
+
+    Attributes:
+        model_path (str): Path to the model file.
+        opts (Any): Runtime-specific options.
+        model_metadata (ModelMetadata): Metadata about the model.
+    """
+
     def __init__(self, model_path: str, opts: Any, model_metadata: ModelMetadata):
+        """
+        Initialize the runtime with model path, options and metadata.
+
+        Args:
+            model_path (str): Path to the model file.
+            opts (Any): Runtime-specific configuration options.
+            model_metadata (ModelMetadata): Metadata about the model.
+        """
         pass
 
     @abstractmethod
     def __call__(self, im: np.ndarray) -> np.ndarray:
+        """
+        Run inference on the input image.
+
+        Args:
+            im (np.ndarray): Input image as a numpy array.
+
+        Returns:
+            np.ndarray: Model output as a numpy array.
+        """
         pass
 
     @abstractmethod
     def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
+        """
+        Benchmark the model performance.
+
+        Args:
+            iterations (int, optional): Number of inference iterations to run. Defaults to 20.
+            size (int, optional): Input image size for benchmarking. Defaults to 640.
+
+        Returns:
+            LatencyMetrics: Performance metrics including mean, median, and percentile latencies.
+        """
         pass
 
 
 class ONNXRuntime(BaseRuntime):
     """
     ONNX Runtime wrapper for model inference with different execution providers.
-    Handles preprocessing, inference, postprocessing and benchmarking.
+
+    This class implements the BaseRuntime interface for ONNX models, supporting
+    various execution providers like CUDA, TensorRT, OpenVINO, and CoreML.
+    It handles model initialization, provider configuration, warmup, inference,
+    and performance benchmarking.
+
+    Attributes:
+        name (str): Name of the model derived from the model path.
+        opts (OnnxRuntimeOpts): Configuration options for the ONNX runtime.
+        model_metadata (ModelMetadata): Metadata about the model.
+        ort_sess (ort.InferenceSession): ONNX Runtime inference session.
+        active_providers (list): List of active execution providers.
+        dtype (np.dtype): Input data type for the model.
     """
 
     def __init__(self, model_path: str, opts: OnnxRuntimeOpts, model_metadata: ModelMetadata):
@@ -155,14 +206,34 @@ class ONNXRuntime(BaseRuntime):
         self.logger.info("⏱️ [onnxruntime] Warmup done")
 
     def __call__(self, im: np.ndarray) -> list[np.ndarray]:
-        """Run inference and return detections."""
+        """
+        Run inference on the input image.
+
+        Args:
+            im (np.ndarray): Input image as a numpy array.
+
+        Returns:
+            list[np.ndarray]: Model outputs as a list of numpy arrays.
+        """
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
         out = self.ort_sess.run(out_name, {input_name: im})
         return out
 
     def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
-        """Benchmark model latency."""
+        """
+        Benchmark the model performance.
+
+        Runs multiple inference iterations and measures execution time to calculate
+        performance metrics like FPS, mean latency, and other statistics.
+
+        Args:
+            iterations (int, optional): Number of inference iterations to run. Defaults to 20.
+            size (int or tuple, optional): Input image size for benchmarking. Defaults to 640.
+
+        Returns:
+            LatencyMetrics: Performance metrics including FPS, mean, min, max, and std latencies.
+        """
         self.logger.info("⏱️ [onnxruntime] Benchmarking latency..")
         size = size if isinstance(size, (tuple, list)) else (size, size)
 
@@ -200,6 +271,19 @@ class ONNXRuntime(BaseRuntime):
 
 
 class TorchscriptRuntime(BaseRuntime):
+    """
+    TorchScript Runtime wrapper for model inference.
+
+    This class implements the BaseRuntime interface for TorchScript models,
+    supporting both CPU and CUDA devices. It handles model initialization,
+    device placement, warmup, inference, and performance benchmarking.
+
+    Attributes:
+        device (torch.device): Device to run inference on (CPU or CUDA).
+        opts (TorchscriptRuntimeOpts): Configuration options for the TorchScript runtime.
+        model (torch.jit.ScriptModule): Loaded TorchScript model.
+    """
+
     def __init__(
         self,
         model_path: str,
@@ -225,14 +309,34 @@ class TorchscriptRuntime(BaseRuntime):
             self.logger.info("⏱️ [torchscript] WARMUP DONE")
 
     def __call__(self, im: np.ndarray) -> list[np.ndarray]:
-        """Run inference and return detections."""
+        """
+        Run inference on the input image.
+
+        Args:
+            im (np.ndarray): Input image as a numpy array.
+
+        Returns:
+            list[np.ndarray]: Model outputs as a list of numpy arrays.
+        """
         with torch.no_grad():
             torch_image = torch.from_numpy(im).to(self.device, dtype=torch.float32)
             res = self.model(torch_image)
             return [r.cpu().numpy() for r in res]
 
     def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
-        """Benchmark model latency."""
+        """
+        Benchmark the model performance.
+
+        Runs multiple inference iterations and measures execution time to calculate
+        performance metrics like FPS, mean latency, and other statistics.
+
+        Args:
+            iterations (int, optional): Number of inference iterations to run. Defaults to 20.
+            size (int or tuple, optional): Input image size for benchmarking. Defaults to 640.
+
+        Returns:
+            LatencyMetrics: Performance metrics including FPS, mean, min, max, and std latencies.
+        """
         self.logger.info("⏱️ [torchscript] Benchmarking latency..")
         size = size if isinstance(size, (tuple, list)) else (size, size)
 

@@ -11,10 +11,10 @@ from focoos.ports import FocoosTask, ModelMetadata, ModelStatus
 
 
 @pytest.fixture
-def mock_http_client():
-    """Fixture to create a mock HttpClient."""
-    with patch("focoos.focoos.HttpClient") as MockHttpClient:
-        mock_client = MockHttpClient.return_value
+def mock_api_client():
+    """Fixture to create a mock ApiClient."""
+    with patch("focoos.focoos.ApiClient") as MockApiClient:
+        mock_client = MockApiClient.return_value
         yield mock_client
 
 

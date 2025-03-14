@@ -16,12 +16,12 @@ Exceptions:
 import os
 from typing import Optional, Union
 
-from tqdm import tqdm
-
 from focoos.config import FOCOOS_CONFIG
 from focoos.local_model import LocalModel
 from focoos.ports import (
-    DatasetMetadata,
+    DatasetLayout,
+    DatasetPreview,
+    FocoosTask,
     ModelFormat,
     ModelMetadata,
     ModelNotFound,
@@ -29,9 +29,10 @@ from focoos.ports import (
     RuntimeTypes,
     User,
 )
+from focoos.remote_dataset import RemoteDataset
 from focoos.remote_model import RemoteModel
+from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import setup_logging
-from focoos.utils.system import HttpClient
 
 logger = setup_logging()
 
@@ -46,7 +47,7 @@ class Focoos:
 
     Attributes:
         api_key (str): The API key for authentication.
-        http_client (HttpClient): HTTP client for making API requests.
+        api_client (ApiClient): HTTP client for making API requests.
         user_info (dict): Information about the currently authenticated user.
         cache_dir (str): Local directory for caching downloaded models.
     """
@@ -75,56 +76,97 @@ class Focoos:
 
         Attributes:
             api_key (str): The API key used for authentication.
-            http_client (HttpClient): An HTTP client instance configured with the API key and host URL.
+            api_client (ApiClient): An HTTP client instance configured with the API key and host URL.
             user_info (dict): Information about the authenticated user retrieved from the API.
             cache_dir (str): Path to the cache directory used by the client.
 
         Logs:
             - Error if the API key or host URL is missing.
             - Info about the authenticated user and environment upon successful initialization.
+
+        Example:
+            ```python
+            from focoos import Focoos
+
+            focoos = Focoos()
+            ```
         """
         self.api_key = api_key or FOCOOS_CONFIG.focoos_api_key
         if not self.api_key:
             logger.error("API key is required 🤖")
             raise ValueError("API key is required 🤖")
 
-        host_url = host_url or FOCOOS_CONFIG.default_host_url
+        self.host_url = host_url or FOCOOS_CONFIG.default_host_url
 
-        self.http_client = HttpClient(self.api_key, host_url)
+        self.api_client = ApiClient(api_key=self.api_key, host_url=self.host_url)
         self.user_info = self.get_user_info()
         self.cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "focoos")
-        logger.info(f"Currently logged as: {self.user_info.email} environment: {host_url}")
+        logger.info(f"Currently logged as: {self.user_info.email} environment: {self.host_url}")
 
     def get_user_info(self) -> User:
         """
         Retrieves information about the authenticated user.
 
         Returns:
-            dict: Information about the user (e.g., email).
+            User: User object containing account information and usage quotas.
 
         Raises:
             ValueError: If the API request fails.
+
+        Example:
+            ```python
+            from focoos import Focoos
+
+            focoos = Focoos()
+            user_info = focoos.get_user_info()
+
+            # Access user info fields
+            print(f"Email: {user_info.email}")
+            print(f"Created at: {user_info.created_at}")
+            print(f"Updated at: {user_info.updated_at}")
+            print(f"Company: {user_info.company}")
+            print(f"API key: {user_info.api_key.key}")
+
+            # Access quotas
+            quotas = user_info.quotas
+            print(f"Total inferences: {quotas.total_inferences}")
+            print(f"Max inferences: {quotas.max_inferences}")
+            print(f"Used storage (GB): {quotas.used_storage_gb}")
+            print(f"Max storage (GB): {quotas.max_storage_gb}")
+            print(f"Active training jobs: {quotas.active_training_jobs}")
+            print(f"Max active training jobs: {quotas.max_active_training_jobs}")
+            print(f"Used MLG4DNXLarge training jobs hours: {quotas.used_mlg4dnxlarge_training_jobs_hours}")
+            print(f"Max MLG4DNXLarge training jobs hours: {quotas.max_mlg4dnxlarge_training_jobs_hours}")
+            ```
         """
-        res = self.http_client.get("user/")
+        res = self.api_client.get("user/")
         if res.status_code != 200:
             logger.error(f"Failed to get user info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get user info: {res.status_code} {res.text}")
         return User.from_json(res.json())
 
-    def get_model_info(self, model_name: str) -> ModelMetadata:
+    def get_model_info(self, model_ref: str) -> ModelMetadata:
         """
         Retrieves metadata for a specific model.
 
         Args:
-            model_name (str): Name of the model.
+            model_ref (str): Name of the model.
 
         Returns:
             ModelMetadata: Metadata of the specified model.
 
         Raises:
             ValueError: If the API request fails.
+
+        Example:
+            ```python
+            from focoos import Focoos
+
+            focoos = Focoos()
+            model_info = focoos.get_model_info(model_ref=<user-or-fai-model-ref>)
+            ```
         """
-        res = self.http_client.get(f"models/{model_name}")
+        res = self.api_client.get(f"models/{model_ref}")
         if res.status_code != 200:
             logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
@@ -132,15 +174,23 @@ class Focoos:
 
     def list_models(self) -> list[ModelPreview]:
         """
-        Lists all available models.
+        Lists all User Models.
 
         Returns:
             list[ModelPreview]: List of model previews.
 
         Raises:
             ValueError: If the API request fails.
+
+        Example:
+            ```python
+            from focoos import Focoos
+
+            focoos = Focoos()
+            models = focoos.list_models()
+            ```
         """
-        res = self.http_client.get("models/")
+        res = self.api_client.get("models/")
         if res.status_code != 200:
             logger.error(f"Failed to list models: {res.status_code} {res.text}")
             raise ValueError(f"Failed to list models: {res.status_code} {res.text}")
@@ -148,15 +198,23 @@ class Focoos:
 
     def list_focoos_models(self) -> list[ModelPreview]:
         """
-        Lists models specific to Focoos.
+        Lists FAI shared models.
 
         Returns:
             list[ModelPreview]: List of Focoos models.
 
         Raises:
             ValueError: If the API request fails.
+
+        Example:
+            ```python
+            from focoos import Focoos
+
+            focoos = Focoos()
+            focoos_models = focoos.list_focoos_models()
+            ```
         """
-        res = self.http_client.get("models/focoos-models")
+        res = self.api_client.get("models/focoos-models")
         if res.status_code != 200:
             logger.error(f"Failed to list focoos models: {res.status_code} {res.text}")
             raise ValueError(f"Failed to list focoos models: {res.status_code} {res.text}")
@@ -185,6 +243,15 @@ class Focoos:
 
         Notes:
             The model is cached in the directory specified by `self.cache_dir`.
+
+        Example:
+            ```python
+            from focoos import Focoos
+
+            focoos = Focoos()
+            model = focoos.get_local_model(model_ref=<user-or-fai-model-ref>)
+            results, annotated_image = model.infer("image.jpg", threshold=0.5, annotate=True) # inference is local!
+            ```
         """
         runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
         model_dir = os.path.join(self.cache_dir, model_ref)
@@ -205,12 +272,21 @@ class Focoos:
 
         Returns:
             RemoteModel: The remote model instance.
+
+        Example:
+            ```python
+            from focoos import Focoos
+
+            focoos = Focoos()
+            model = focoos.get_remote_model(model_ref=<fai-model-ref>)
+            results, annotated_image = model.infer("image.jpg", threshold=0.5, annotate=True) # inference is remote!
+            ```
         """
-        return RemoteModel(model_ref, self.http_client)
+        return RemoteModel(model_ref, self.api_client)
 
     def new_model(self, name: str, focoos_model: str, description: str) -> RemoteModel:
         """
-        Creates a new model in the Focoos system.
+        Creates a new model in the Focoos platform.
 
         Args:
             name (str): Name of the new model.
@@ -222,8 +298,16 @@ class Focoos:
 
         Raises:
             ValueError: If the API request fails.
+
+        Example:
+            ```python
+            from focoos import Focoos
+
+            focoos = Focoos()
+            model = focoos.new_model(name="my-model", focoos_model="fai-model-ref", description="my-model-description")
+            ```
         """
-        res = self.http_client.post(
+        res = self.api_client.post(
             "models/",
             data={
                 "name": name,
@@ -232,27 +316,35 @@ class Focoos:
             },
         )
         if res.status_code in [200, 201]:
-            return RemoteModel(res.json()["ref"], self.http_client)
+            return RemoteModel(res.json()["ref"], self.api_client)
         if res.status_code == 409:
             logger.warning(f"Model already exists: {name}")
             return self.get_model_by_name(name, remote=True)
         logger.warning(f"Failed to create new model: {res.status_code} {res.text}")
 
-    def list_shared_datasets(self) -> list[DatasetMetadata]:
+    def list_shared_datasets(self) -> list[DatasetPreview]:
         """
         Lists datasets shared with the user.
 
         Returns:
-            list[DatasetMetadata]: List of shared datasets.
+            list[DatasetPreview]: List of shared datasets.
 
         Raises:
             ValueError: If the API request fails.
+
+        Example:
+            ```python
+            from focoos import Focoos
+
+            focoos = Focoos()
+            datasets = focoos.list_shared_datasets()
+            ```
         """
-        res = self.http_client.get("datasets/shared")
+        res = self.api_client.get("datasets/shared")
         if res.status_code != 200:
             logger.error(f"Failed to list datasets: {res.status_code} {res.text}")
             raise ValueError(f"Failed to list datasets: {res.status_code} {res.text}")
-        return [DatasetMetadata.from_json(dataset) for dataset in res.json()]
+        return [DatasetPreview.from_json(dataset) for dataset in res.json()]
 
     def _download_model(self, model_ref: str, format: ModelFormat = ModelFormat.ONNX) -> str:
         """
@@ -273,65 +365,35 @@ class Focoos:
         if os.path.exists(model_path) and os.path.exists(metadata_path):
             logger.info("📥 Model already downloaded")
             return model_path
-
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
         ## download model metadata
-        res = self.http_client.get(f"models/{model_ref}/download?format={format.value}")
+        res = self.api_client.get(f"models/{model_ref}/download?format={format.value}")
         if res.status_code != 200:
-            logger.error(f"Failed to download model: {res.status_code} {res.text}")
-            raise ValueError(f"Failed to download model: {res.status_code} {res.text}")
+            logger.error(f"Failed to retrieve download url for model: {res.status_code} {res.text}")
+            raise ValueError(f"Failed to retrieve download url for model: {res.status_code} {res.text}")
 
         download_data = res.json()
-        metadata = ModelMetadata.from_json(download_data["model_metadata"])
+
         download_uri = download_data["download_uri"]
 
         ## download model from Focoos Cloud
         logger.debug(f"Model URI: {download_uri}")
         logger.info("📥 Downloading model from Focoos Cloud.. ")
-        response = self.http_client.get_external_url(download_uri, stream=True)
-        if response.status_code != 200:
-            logger.error(f"Failed to download model: {response.status_code} {response.text}")
-            raise ValueError(f"Failed to download model: {response.status_code} {response.text}")
-        total_size = int(response.headers.get("content-length", 0))
-        logger.info(f"📥 Size: {total_size / (1024**2):.2f} MB")
+        try:
+            model_path = self.api_client.download_file(download_uri, model_dir)
+            metadata = ModelMetadata.from_json(download_data["model_metadata"])
+            with open(metadata_path, "w") as f:
+                f.write(metadata.model_dump_json())
+            logger.debug(f"Dumped metadata to {metadata_path}")
+        except Exception as e:
+            logger.error(f"Failed to download model: {e}")
+            raise ValueError(f"Failed to download model: {e}")
+        if model_path is None:
+            logger.error(f"Failed to download model: {res.status_code} {res.text}")
+            raise ValueError(f"Failed to download model: {res.status_code} {res.text}")
 
-        if not os.path.exists(model_dir):
-            os.makedirs(model_dir)
-
-        with open(metadata_path, "w") as f:
-            f.write(metadata.model_dump_json())
-        logger.debug(f"Dumped metadata to {metadata_path}")
-
-        with (
-            open(model_path, "wb") as f,
-            tqdm(
-                desc=str(model_path).split("/")[-1],
-                total=total_size,
-                unit="B",
-                unit_scale=True,
-                unit_divisor=1024,
-            ) as bar,
-        ):
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-                bar.update(len(chunk))
-        logger.info(f"📥 File downloaded: {model_path}")
         return model_path
-
-    def get_dataset_by_name(self, name: str) -> Optional[DatasetMetadata]:
-        """
-        Retrieves a dataset by its name.
-
-        Args:
-            name (str): Name of the dataset.
-
-        Returns:
-            Optional[DatasetMetadata]: The dataset metadata if found, or None otherwise.
-        """
-        datasets = self.list_shared_datasets()
-        name_lower = name.lower()
-        for dataset in datasets:
-            if name_lower == dataset.name.lower():
-                return dataset
 
     def get_model_by_name(self, name: str, remote: bool = True) -> Union[RemoteModel, LocalModel]:
         """
@@ -353,3 +415,102 @@ class Focoos:
                 else:
                     return self.get_local_model(model.ref)
         raise ModelNotFound(f"Model not found: {name}")
+
+    def list_datasets(self, include_shared: bool = False) -> list[DatasetPreview]:
+        """
+        Lists all datasets available to the user.
+
+        This method retrieves all datasets owned by the user and optionally includes
+        shared datasets as well.
+
+        Args:
+            include_shared (bool): If True, includes datasets shared with the user.
+                Defaults to False.
+
+        Returns:
+            list[DatasetPreview]: A list of DatasetPreview objects representing the available datasets.
+
+        Raises:
+            ValueError: If the API request to list datasets fails.
+
+        Example:
+            ```python
+            from focoos import Focoos
+
+            focoos = Focoos()
+
+            # List only user's datasets
+            datasets = focoos.list_datasets()
+
+            # List user's datasets and shared datasets
+            all_datasets = focoos.list_datasets(include_shared=True)
+
+            for dataset in all_datasets:
+                print(f"Dataset: {dataset.name}, Task: {dataset.task}")
+            ```
+        """
+        res = self.api_client.get("datasets/")
+        if res.status_code != 200:
+            logger.error(f"Failed to list datasets: {res.status_code} {res.text}")
+            raise ValueError(f"Failed to list datasets: {res.status_code} {res.text}")
+        datasets = [DatasetPreview.from_json(r) for r in res.json()]
+        if include_shared:
+            res = self.api_client.get("datasets/shared")
+            if res.status_code != 200:
+                logger.error(f"Failed to list datasets: {res.status_code} {res.text}")
+                raise ValueError(f"Failed to list datasets: {res.status_code} {res.text}")
+            datasets.extend([DatasetPreview.from_json(sh_dataset) for sh_dataset in res.json()])
+        return datasets
+
+    def add_remote_dataset(self, name: str, description: str, layout: DatasetLayout, task: FocoosTask) -> RemoteDataset:
+        """
+        Creates a new user dataset with the specified parameters.
+
+        Args:
+            name (str): The name of the dataset.
+            description (str): A description of the dataset.
+            layout (DatasetLayout): The layout structure of the dataset.
+            task (FocoosTask): The task type associated with the dataset.
+
+        Returns:
+            RemoteDataset: A RemoteDataset instance representing the newly created dataset.
+
+        Raises:
+            ValueError: If the dataset creation fails due to API errors.
+
+        Example:
+            ```python
+            from focoos import Focoos
+
+            focoos = Focoos()
+            dataset = focoos.add_remote_dataset(name="my-dataset", description="my-dataset-description", layout=DatasetLayout.ROBOFLOW_COCO, task=FocoosTask.DETECTION)
+            ```
+        """
+        res = self.api_client.post(
+            "datasets/", data={"name": name, "description": description, "layout": layout.value, "task": task.value}
+        )
+        if res.status_code != 200:
+            logger.error(f"Failed to add dataset: {res.status_code} {res.text}")
+            raise ValueError(f"Failed to add dataset: {res.status_code} {res.text}")
+        logger.info(f"Remote Dataset created: {res.json()['ref']}")
+        return RemoteDataset(res.json()["ref"], self.api_client)
+
+    def get_remote_dataset(self, ref: str) -> RemoteDataset:
+        """
+        Retrieves a remote dataset by its reference ID.
+
+        Args:
+            ref (str): The reference ID of the dataset to retrieve.
+
+        Returns:
+            RemoteDataset: A RemoteDataset instance for the specified reference.
+
+        Example:
+            ```python
+            from focoos import Focoos
+
+            focoos = Focoos()
+            dataset = focoos.get_remote_dataset(ref="my-dataset-ref")
+            ```
+        """
+        return RemoteDataset(ref, self.api_client)

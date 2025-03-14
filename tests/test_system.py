@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from focoos.ports import SystemInfo
+from focoos.utils.api_client import ApiClient
 from focoos.utils.system import (
-    HttpClient,
     get_cpu_name,
     get_cuda_version,
     get_gpu_name,
@@ -57,17 +57,17 @@ def test_get_system_info():
     assert system_info.cpu_cores > 0
 
 
-def test_http_client_get_external_url():
-    client = HttpClient(api_key="test_key", host_url="http://example.com")
+def test_api_client_get_external_url():
+    client = ApiClient(api_key="test_key", host_url="http://example.com")
     with patch("requests.get") as mock_get:
         mock_get.return_value.status_code = 200
-        response = client.get_external_url("test/path")
+        response = client.external_get("test/path")
         assert response.status_code == 200
         mock_get.assert_called_with("test/path", params={}, stream=False)
 
 
-def test_http_client_get(extra_headers):
-    client = HttpClient(api_key="test_key", host_url="http://example.com")
+def test_api_client_get(extra_headers):
+    client = ApiClient(api_key="test_key", host_url="http://example.com")
     with patch("requests.get") as mock_get:
         mock_get.return_value.status_code = 200
         response = client.get("test/path", extra_headers=extra_headers)
@@ -80,8 +80,8 @@ def test_http_client_get(extra_headers):
         )
 
 
-def test_http_client_post(extra_headers):
-    client = HttpClient(api_key="test_key", host_url="http://example.com")
+def test_api_client_post(extra_headers):
+    client = ApiClient(api_key="test_key", host_url="http://example.com")
     with patch("requests.post") as mock_post:
         mock_post.return_value.status_code = 201
         response = client.post("test/path", data={"key": "value"}, extra_headers=extra_headers)
@@ -94,8 +94,8 @@ def test_http_client_post(extra_headers):
         )
 
 
-def test_http_client_delete(extra_headers):
-    client = HttpClient(api_key="test_key", host_url="http://example.com")
+def test_api_client_delete(extra_headers):
+    client = ApiClient(api_key="test_key", host_url="http://example.com")
     with patch("requests.delete") as mock_delete:
         mock_delete.return_value.status_code = 204
         response = client.delete("test/path", extra_headers=extra_headers)

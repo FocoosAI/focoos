@@ -8,20 +8,13 @@ Classes:
     RemoteModel: A class for interacting with remote models, managing their lifecycle,
                  and performing inference.
 
-
-Modules:
-    HttpClient: Handles HTTP requests.
-    logger: Logging utility.
-    BoxAnnotator, LabelAnnotator, MaskAnnotator: Annotation tools for visualizing
-                 detections and segmentation tasks.
-    FocoosDet, FocoosDetections: Classes for representing and managing detections.
-    FocoosTask: Enum for defining supported tasks (e.g., DETECTION, SEMSEG).
-    Hyperparameters: Structure for training configuration parameters.
-    ModelMetadata: Contains metadata for the model.
-    ModelStatus: Enum for representing the current status of the model.
-    TrainInstance: Enum for defining available training instances.
-    image_loader: Utility function for loading images.
-    focoos_detections_to_supervision: Converter for Focoos detections to supervision format.
+Methods:
+    __init__: Initializes the RemoteModel instance.
+    get_info: Retrieves model metadata.
+    train: Initiates model training.
+    train_info: Retrieves training status.
+    train_logs: Retrieves training logs.
+    metrics: Retrieves model metrics.
 """
 
 import os
@@ -45,9 +38,9 @@ from focoos.ports import (
     TrainingInfo,
     TrainInstance,
 )
+from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
 from focoos.utils.metrics import MetricsVisualizer
-from focoos.utils.system import HttpClient
 from focoos.utils.vision import fai_detections_to_sv, image_loader
 
 logger = get_logger()
@@ -59,7 +52,7 @@ class RemoteModel:
 
     Attributes:
         model_ref (str): Reference ID for the model.
-        http_client (HttpClient): Client for making HTTP requests.
+        api_client (ApiClient): Client for making HTTP requests.
         max_deploy_wait (int): Maximum wait time for model deployment.
         metadata (ModelMetadata): Metadata of the model.
         label_annotator (LabelAnnotator): Annotator for adding labels to images.
@@ -67,20 +60,23 @@ class RemoteModel:
         mask_annotator (sv.MaskAnnotator): Annotator for drawing masks on images.
     """
 
-    def __init__(self, model_ref: str, http_client: HttpClient):
+    def __init__(
+        self,
+        model_ref: str,
+        api_client: ApiClient,
+    ):
         """
         Initialize the RemoteModel instance.
 
         Args:
             model_ref (str): Reference ID for the model.
-            http_client (HttpClient): HTTP client instance for communication.
+            api_client (ApiClient): HTTP client instance for communication.
 
         Raises:
             ValueError: If model metadata retrieval fails.
         """
         self.model_ref = model_ref
-        self.http_client = http_client
-        self.max_deploy_wait = 10
+        self.api_client = api_client
         self.metadata: ModelMetadata = self.get_info()
 
         self.label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
@@ -99,8 +95,17 @@ class RemoteModel:
 
         Raises:
             ValueError: If the request fails.
+
+        Example:
+            ```python
+            from focoos import Focoos, RemoteModel
+
+            focoos = Focoos()
+            model = focoos.get_remote_model(model_ref="<model_ref>")
+            model_info = model.get_info()
+            ```
         """
-        res = self.http_client.get(f"models/{self.model_ref}")
+        res = self.api_client.get(f"models/{self.model_ref}")
         if res.status_code != 200:
             logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
@@ -125,7 +130,6 @@ class RemoteModel:
         Args:
             dataset_ref (str): The reference ID of the dataset to be used for training.
             hyperparameters (Hyperparameters): A structure containing the hyperparameters for the training process.
-            anyma_version (str, optional): The version of Anyma to use for training. Defaults to "anyma-sagemaker-cu12-torch22-0111".
             instance_type (TrainInstance, optional): The type of training instance to use. Defaults to TrainInstance.ML_G4DN_XLARGE.
             volume_size (int, optional): The size of the disk volume (in GB) for the training instance. Defaults to 50.
             max_runtime_in_seconds (int, optional): The maximum runtime for training in seconds. Defaults to 36000.
@@ -136,7 +140,7 @@ class RemoteModel:
         Raises:
             ValueError: If the request to start training fails (e.g., due to incorrect parameters or server issues).
         """
-        res = self.http_client.post(
+        res = self.api_client.post(
             f"models/{self.model_ref}/train",
             data={
                 "dataset_ref": dataset_ref,
@@ -163,7 +167,7 @@ class RemoteModel:
         Raises:
             ValueError: If the request to get training status fails.
         """
-        res = self.http_client.get(f"models/{self.model_ref}/train/status")
+        res = self.api_client.get(f"models/{self.model_ref}/train/status")
         if res.status_code != 200:
             logger.error(f"Failed to get train status: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get train status: {res.status_code} {res.text}")
@@ -183,7 +187,7 @@ class RemoteModel:
         Raises:
             None: Returns an empty list if the request fails.
         """
-        res = self.http_client.get(f"models/{self.model_ref}/train/logs")
+        res = self.api_client.get(f"models/{self.model_ref}/train/logs")
         if res.status_code != 200:
             logger.warning(f"Failed to get train logs: {res.status_code} {res.text}")
             return []
@@ -203,7 +207,7 @@ class RemoteModel:
         Raises:
             None: Returns an empty `Metrics` object if the request fails.
         """
-        res = self.http_client.get(f"models/{self.model_ref}/metrics")
+        res = self.api_client.get(f"models/{self.model_ref}/metrics")
         if res.status_code != 200:
             logger.warning(f"Failed to get metrics: {res.status_code} {res.text}")
             return Metrics()  # noqa: F821
@@ -263,18 +267,40 @@ class RemoteModel:
         Optionally, it can annotate the image with the detection results.
 
         Args:
-            image (Union[str, Path, bytes]): The image to infer on, which can be a file path, a string representing the path, or raw bytes.
+            image (Union[str, Path, np.ndarray, bytes]): The image to infer on, which can be a file path,
+                a string representing the path, a NumPy array, or raw bytes.
             threshold (float, optional): The confidence threshold for detections. Defaults to 0.5.
+                Detections with confidence scores below this threshold will be discarded.
             annotate (bool, optional): Whether to annotate the image with the detection results. Defaults to False.
+                If set to True, the method will return the image with bounding boxes or segmentation masks.
 
         Returns:
             Tuple[FocoosDetections, Optional[np.ndarray]]:
-                - FocoosDetections: The detection results including class IDs, confidence scores, etc.
+                - FocoosDetections: The detection results including class IDs, confidence scores, bounding boxes,
+                  and segmentation masks (if applicable).
                 - Optional[np.ndarray]: The annotated image if `annotate` is True, else None.
+                  This will be a NumPy array representation of the image with drawn bounding boxes or segmentation masks.
 
         Raises:
             FileNotFoundError: If the provided image file path is invalid.
             ValueError: If the inference request fails.
+
+        Example:
+            ```python
+            from focoos import Focoos
+
+            focoos = Focoos()
+
+            model = focoos.get_remote_model("my-model")
+            results, annotated_image = model.infer("image.jpg", threshold=0.5, annotate=True)
+
+            # Print detection results
+            for det in results.detections:
+                print(f"Found {det.label} with confidence {det.conf:.2f}")
+                print(f"Bounding box: {det.bbox}")
+                if det.mask:
+                    print("Instance segmentation mask included")
+            ```
         """
         image_bytes = None
         if isinstance(image, str) or isinstance(image, Path):
@@ -289,7 +315,7 @@ class RemoteModel:
             image_bytes = image
         files = {"file": image_bytes}
         t0 = time.time()
-        res = self.http_client.post(
+        res = self.api_client.post(
             f"models/{self.model_ref}/inference?confidence_threshold={threshold}",
             files=files,
         )
@@ -395,7 +421,7 @@ class RemoteModel:
         Returns:
             None: This method does not return any value.
         """
-        res = self.http_client.delete(f"models/{self.model_ref}/train")
+        res = self.api_client.delete(f"models/{self.model_ref}/train")
         if res.status_code != 200:
             logger.error(f"Failed to get stop training: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get stop training: {res.status_code} {res.text}")
@@ -417,7 +443,7 @@ class RemoteModel:
         Returns:
             None: This method does not return any value.
         """
-        res = self.http_client.delete(f"models/{self.model_ref}")
+        res = self.api_client.delete(f"models/{self.model_ref}")
         if res.status_code != 204:
             logger.error(f"Failed to delete model: {res.status_code} {res.text}")
             raise ValueError(f"Failed to delete model: {res.status_code} {res.text}")

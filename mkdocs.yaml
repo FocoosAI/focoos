@@ -36,12 +36,12 @@ nav:
       - Welcome: index.md
       - Installation: setup.md
       - Models: models.md
-
-  - How to:
-      - Use Focoos Models: how_to/inference.md
-      - Personalize Your Model: how_to/cloud_training.md
-      - Managing your models: how_to/dashboard.md
-      - Managing your user: how_to/user.md
+  - How To:
+      - Manage Dataset: howto/create_dataset.md
+      - Create and Train Model: howto/personalize_model.md
+      - Manage Models: howto/manage_models.md
+      - Use Model: howto/use_model.md
+      - Manage User: howto/manage_user.md
   - Focoos Models:
       - Overview: models.md
       - Semantic segmentation:
@@ -57,15 +57,13 @@ nav:
       - Instance_segmentation:
         - fai-m2f-l-coco-ins: models/fai-m2f-l-coco-ins.md
   - API Reference:
-      - focoos: api/focoos.md
-      - remote model: api/remote_model.md
-      - local model: api/local_model.md
-      - runtime: api/runtime.md
-      - ports: api/ports.md
-  - Development:
-      - Contributing: development/contributing.md
-      - Code of Conduct: development/code_of_conduct.md
-      - Changelog: development/changelog.md
+      - Focoos: api/focoos.md
+      - Config: api/config.md
+      - RemoteModel: api/remote_model.md
+      - LocalModel: api/local_model.md
+      - RemoteDataset: api/remote_dataset.md
+      - Runtime: api/runtime.md
+      - Ports: api/ports.md
 
 markdown_extensions:
   - pymdownx.highlight:

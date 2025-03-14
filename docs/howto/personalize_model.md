@@ -1,4 +1,4 @@
-# Personalize your model
+# Create and Train Model
 
 This section covers the steps to create a model and train it in the cloud using the `focoos` library. The following example demonstrates how to interact with the Focoos API to manage models, datasets, and training jobs.
 
@@ -6,35 +6,59 @@ This section covers the steps to create a model and train it in the cloud using 
 
 In this guide, we will perform the following steps:
 
-1. [📦 Load or select a dataset](#1-load-or-select-a-dataset)
-2. [🎯 Create a model](#2-create-a-model)
-3. [🏃‍♂️ Train the model](#3-train-the-model)
+1. [📦 Select dataset](#1-select-dataset)
+2. [🎯 Create model](#2-create-model)
+3. [🏃‍♂️ Train model](#3-train-model)
 4. [📊 Visualize training metrics](#4-visualize-training-metrics)
-5. [🧪 Test your model](#5-test-your-model)
+5. [🧪 Test model](#5-test-model)
+
 
 ---
 
-## 1. Load or select a dataset
-!!! note
-    Currently, we are not supporting dataset creation from the SDK (it's coming really soon) and you can only use a dataset already available on the platform.
-    To upload your own dataset, you can write us a mail to [support@focoos.ai](mailto:support@focoos.ai) and we will load your dataset on the platform on your private workspace (your data will not be shared with anyone and not used for any other purpose than training your model).
+## 1. Select dataset
 
-You can list all available datasets using the following code:
+You can list publicly shared datasets using the following code:
+
 ```python
 from focoos import Focoos
 
 focoos = Focoos(api_key="<YOUR-API-KEY>")
 
 datasets = focoos.list_shared_datasets()
-print(datasets)
+for dataset in datasets:
+    print(f"Name: {dataset.name}")
+    print(f"Reference: {dataset.ref}")
+    print(f"Task: {dataset.task}")
+    print(f"Description: {dataset.description}")
+    print("-" * 50)
 ```
 
-Find the dataset reference you want to use and store it in a variable:
+To view only your personal datasets, use the following code:
+```python
+from focoos import Focoos
+
+focoos = Focoos(api_key="<YOUR-API-KEY>")
+
+datasets = focoos.list_datasets(include_shared=False)
+for dataset in datasets:
+    print(f"Name: {dataset.name}")
+    print(f"Reference: {dataset.ref}")
+    print(f"Task: {dataset.task}")
+    print(f"Description: {dataset.description}")
+    print("-" * 50)
+```
+
+!!! Note
+    If you haven’t uploaded a dataset yet, you can follow this guide: [How to load a dataset](./create_dataset.md)
+
+
+Once you've identified the dataset you want to use, you’ll need its reference `dataset_ref` to train your model. You can either copy it or store it in a variable like this:
 ```python
 dataset_ref = "<YOUR-DATASET-REFERENCE>"
 ```
 
-## 2. Create a model
+
+## 2. Create model
 The first step to personalize your model is to create a model.
 You can create a model by calling the [`new_model` method](/focoos/api/focoos/#focoos.focoos.Focoos.new_model) on the `Focoos` object. You can choose the model you want to personalize from the list of [Focoos Models](../models.md) available on the platform. Make sure to select the correct model for your task.
 
@@ -59,7 +83,7 @@ model = focoos.new_model(
 ```
 This function will return a new [`RemoteModel`](/focoos/api/remote_model/#focoos.remote_model.RemoteModel) object that you can use to train the model and to perform remote inference.
 
-## 3. Train the model
+## 3. Train model
 Once the model is created, you can start the training process by calling the [`train` method](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.train) on the model object.
 
 ```python
@@ -74,7 +98,7 @@ res = model.train(
     ),
 )
 ```
-For selecting the `dataset_ref` see the [step 1](#1-load-or-select-a-dataset).
+For selecting the `dataset_ref` see the [step 2](create_dataset.md/#2-create-dataset).
 You can further customize the training process by passing additional parameters to the [`train` method](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.train) (such as the instance type, the volume size, the maximum runtime, etc.) or use additional hyperparameters (see the list [available hyperparameters](/focoos/api/ports/#focoos.ports.Hyperparameters)).
 
 Futhermore, you can monitor the training progress by polling the training status. Use the [`notebook_monitor_train`](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.notebook_monitor_train) method on a jupyter notebook:
@@ -107,9 +131,9 @@ On notebooks, you can also plot the metrics by calling the [`notebook_plot_train
 visualizer.notebook_plot_training_metrics()
 ```
 
-## 5. Test your model
+## 5. Test model
 
-### Remote Inference
+### Remote inference
 Once the training is over, you can test your model using remote inference by calling the [`infer` method](/focoos/api/remote_model/#focoos.remote_model.RemoteModel.infer) on the model object.
 
 ```python
@@ -134,7 +158,7 @@ output, preview = model.infer(image_path, threshold=0.5, annotate=True)
 preview = Image.fromarray(preview[:,:,[2,1,0]]) # invert to make it RGB
 ```
 
-### Local Inference
+### Local inference
 !!! Note
     To perform local inference, you need to install the package with one of the extra modules (`[cpu]`, `[torch]`, `[cuda]`, `[tensorrt]`). See the [installation](../setup.md) page for more details.
 
