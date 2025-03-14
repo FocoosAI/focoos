@@ -2,106 +2,114 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://focoosai.github.io/focoos/</loc>
-         <lastmod>2025-02-24</lastmod>
-    </url>
-    <url>
-         <loc>https://focoosai.github.io/focoos/datasets/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/models/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/setup/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
+    </url>
+    <url>
+         <loc>https://focoosai.github.io/focoos/api/config/</loc>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/api/focoos/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/api/local_model/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/api/ports/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
+    </url>
+    <url>
+         <loc>https://focoosai.github.io/focoos/api/remote_dataset/</loc>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/api/remote_model/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/api/runtime/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/development/changelog/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/development/code_of_conduct/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/development/contributing/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/helpers/wip/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
-         <loc>https://focoosai.github.io/focoos/how_to/cloud_training/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <loc>https://focoosai.github.io/focoos/howto/create_dataset/</loc>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
-         <loc>https://focoosai.github.io/focoos/how_to/dashboard/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <loc>https://focoosai.github.io/focoos/howto/manage_models/</loc>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
-         <loc>https://focoosai.github.io/focoos/how_to/inference/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <loc>https://focoosai.github.io/focoos/howto/manage_user/</loc>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
-         <loc>https://focoosai.github.io/focoos/how_to/user/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <loc>https://focoosai.github.io/focoos/howto/personalize_model/</loc>
+         <lastmod>2025-03-14</lastmod>
+    </url>
+    <url>
+         <loc>https://focoosai.github.io/focoos/howto/use_model/</loc>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/models/fai-m2f-l-ade/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/models/fai-m2f-l-coco-ins/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/models/fai-m2f-m-ade/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/models/fai-m2f-s-ade/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/models/fai-rtdetr-l-coco/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/models/fai-rtdetr-m-coco/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/models/fai-rtdetr-m-obj365/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/models/fai-rtdetr-n-coco/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
     <url>
          <loc>https://focoosai.github.io/focoos/models/fai-rtdetr-s-coco/</loc>
-         <lastmod>2025-02-24</lastmod>
+         <lastmod>2025-03-14</lastmod>
     </url>
 </urlset>

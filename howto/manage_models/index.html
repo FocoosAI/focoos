@@ -8,21 +8,21 @@
       
       
       
-        <link rel="canonical" href="https://focoosai.github.io/focoos/how_to/cloud_training/">
+        <link rel="canonical" href="https://focoosai.github.io/focoos/howto/manage_models/">
       
       
-        <link rel="prev" href="../inference/">
+        <link rel="prev" href="../personalize_model/">
       
       
-        <link rel="next" href="../dashboard/">
+        <link rel="next" href="../use_model/">
       
       
       <link rel="icon" href="../../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.5">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.8">
     
     
       
-        <title>Personalize Your Model - Focoos AI SDK</title>
+        <title>Manage Models - Focoos AI SDK</title>
       
     
     
@@ -90,7 +90,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#personalize-your-model" class="md-skip">
+        <a href="#model-management" class="md-skip">
           Skip to content
         </a>
       
@@ -129,7 +129,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Personalize Your Model
+              Manage Models
             
           </span>
         </div>
@@ -238,10 +238,10 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="../inference/" class="md-tabs__link">
+        <a href="../create_dataset/" class="md-tabs__link">
           
   
-  How to
+  How To
 
         </a>
       </li>
@@ -278,24 +278,6 @@
           
   
   API Reference
-
-        </a>
-      </li>
-    
-  
-
-      
-        
-  
-  
-  
-    
-    
-      <li class="md-tabs__item">
-        <a href="../../development/contributing/" class="md-tabs__link">
-          
-  
-  Development
 
         </a>
       </li>
@@ -494,7 +476,7 @@
             
   
   <span class="md-ellipsis">
-    How to
+    How To
     
   </span>
   
@@ -505,7 +487,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            How to
+            How To
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -516,11 +498,33 @@
   
   
     <li class="md-nav__item">
-      <a href="../inference/" class="md-nav__link">
+      <a href="../create_dataset/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Use Focoos Models
+    Manage Dataset
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../personalize_model/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Create and Train Model
     
   </span>
   
@@ -551,7 +555,7 @@
           
   
   <span class="md-ellipsis">
-    Personalize Your Model
+    Manage Models
     
   </span>
   
@@ -563,7 +567,7 @@
         
   
   <span class="md-ellipsis">
-    Personalize Your Model
+    Manage Models
     
   </span>
   
@@ -586,71 +590,38 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-load-or-select-a-dataset" class="md-nav__link">
+  <a href="#how-to-list-the-focoos-models" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Load or select a dataset
+      How to list the Focoos models
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-create-a-model" class="md-nav__link">
+  <a href="#how-to-list-all-your-models" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Create a model
+      How to list all your models
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-train-the-model" class="md-nav__link">
+  <a href="#see-the-metrics-for-a-model" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Train the model
+      See the metrics for a model
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-visualize-training-metrics" class="md-nav__link">
+  <a href="#delete-a-model" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Visualize training metrics
+      Delete a model
     </span>
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-test-your-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      5. Test your model
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="5. Test your model">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#remote-inference" class="md-nav__link">
-    <span class="md-ellipsis">
-      Remote Inference
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#local-inference" class="md-nav__link">
-    <span class="md-ellipsis">
-      Local Inference
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -670,11 +641,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../dashboard/" class="md-nav__link">
+      <a href="../use_model/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Managing your models
+    Use Model
     
   </span>
   
@@ -692,11 +663,11 @@
   
   
     <li class="md-nav__item">
-      <a href="../user/" class="md-nav__link">
+      <a href="../manage_user/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
-    Managing your user
+    Manage User
     
   </span>
   
@@ -1171,7 +1142,29 @@
         
   
   <span class="md-ellipsis">
-    focoos
+    Focoos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/config/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Config
     
   </span>
   
@@ -1193,7 +1186,7 @@
         
   
   <span class="md-ellipsis">
-    remote model
+    RemoteModel
     
   </span>
   
@@ -1215,7 +1208,29 @@
         
   
   <span class="md-ellipsis">
-    local model
+    LocalModel
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/remote_dataset/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    RemoteDataset
     
   </span>
   
@@ -1237,7 +1252,7 @@
         
   
   <span class="md-ellipsis">
-    runtime
+    Runtime
     
   </span>
   
@@ -1259,119 +1274,7 @@
         
   
   <span class="md-ellipsis">
-    ports
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
-        
-          
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
-  
-  <span class="md-ellipsis">
-    Development
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5">
-            <span class="md-nav__icon md-icon"></span>
-            Development
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development/contributing/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Contributing
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development/code_of_conduct/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Code of Conduct
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../development/changelog/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Changelog
+    Ports
     
   </span>
   
@@ -1416,71 +1319,38 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-load-or-select-a-dataset" class="md-nav__link">
+  <a href="#how-to-list-the-focoos-models" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Load or select a dataset
+      How to list the Focoos models
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-create-a-model" class="md-nav__link">
+  <a href="#how-to-list-all-your-models" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Create a model
+      How to list all your models
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-train-the-model" class="md-nav__link">
+  <a href="#see-the-metrics-for-a-model" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Train the model
+      See the metrics for a model
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-visualize-training-metrics" class="md-nav__link">
+  <a href="#delete-a-model" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Visualize training metrics
+      Delete a model
     </span>
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-test-your-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      5. Test your model
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="5. Test your model">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#remote-inference" class="md-nav__link">
-    <span class="md-ellipsis">
-      Remote Inference
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#local-inference" class="md-nav__link">
-    <span class="md-ellipsis">
-      Local Inference
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1503,25 +1373,136 @@
   
 
 
-<h1 id="personalize-your-model">Personalize your model<a class="headerlink" href="#personalize-your-model" title="Permanent link">#</a></h1>
-<p>This section covers the steps to create a model and train it in the cloud using the <code>focoos</code> library. The following example demonstrates how to interact with the Focoos API to manage models, datasets, and training jobs.</p>
-<p><a href="https://colab.research.google.com/github/FocoosAI/focoos/blob/main/notebooks/training.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
-<p>In this guide, we will perform the following steps:</p>
+<h1 id="model-management">Model Management<a class="headerlink" href="#model-management" title="Permanent link">#</a></h1>
+<p>This section covers the steps to monitor the status of your models on the FocoosAI platform.</p>
+<p><a href="https://colab.research.google.com/github/FocoosAI/focoos/blob/main/notebooks/model_management.ipynb"><img alt="Open In Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a></p>
+<p>In this guide, we will cover the following topics:</p>
 <ol>
-<li><a href="#1-load-or-select-a-dataset">📦 Load or select a dataset</a></li>
-<li><a href="#2-create-a-model">🎯 Create a model</a></li>
-<li><a href="#3-train-the-model">🏃‍♂️ Train the model</a></li>
-<li><a href="#4-visualize-training-metrics">📊 Visualize training metrics</a></li>
-<li><a href="#5-test-your-model">🧪 Test your model</a></li>
+<li><a href="#how-to-list-the-focoos-models">📋 List available Focoos models</a></li>
+<li><a href="#how-to-list-all-your-models">📜 List all your models</a></li>
+<li><a href="#see-the-metrics-for-a-model">📈 Retrieve model metrics</a></li>
+<li><a href="#delete-a-model">🗑️ Delete a model</a></li>
 </ol>
-<hr />
-<h2 id="1-load-or-select-a-dataset">1. Load or select a dataset<a class="headerlink" href="#1-load-or-select-a-dataset" title="Permanent link">#</a></h2>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Currently, we are not supporting dataset creation from the SDK (it's coming really soon) and you can only use a dataset already available on the platform.
-To upload your own dataset, you can write us a mail to <a href="mailto:support@focoos.ai">support@focoos.ai</a> and we will load your dataset on the platform on your private workspace (your data will not be shared with anyone and not used for any other purpose than training your model).</p>
-</div>
-<p>You can list all available datasets using the following code:
+<h2 id="how-to-list-the-focoos-models">How to list the Focoos models<a class="headerlink" href="#how-to-list-the-focoos-models" title="Permanent link">#</a></h2>
+<p>To list all the models available on the Focoos AI platform, you can use the following code:
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">Focoos</span>
+
+<span class="n">focoos</span> <span class="o">=</span> <span class="n">Focoos</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;&lt;YOUR-API-KEY&gt;&quot;</span><span class="p">)</span>
+
+<span class="n">models</span> <span class="o">=</span> <span class="n">focoos</span><span class="o">.</span><span class="n">list_focoos_models</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Name: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reference: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">ref</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Status: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Task: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Description: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<code>models</code> is a list of <a href="/focoos/api/ports/#focoos.ports.ModelPreview"><code>ModelPreview</code></a> objects that contains the following information:</p>
+<ul>
+<li><code>name</code>: The name of the model.</li>
+<li><code>ref</code>: The reference of the model.</li>
+<li><code>status</code>: The status of the model.</li>
+<li><code>task</code>: The task of the model.</li>
+<li><code>description</code>: The description of the model.</li>
+<li><code>status</code>: The status of the model, which indicates its current state (e.g. CREATED, TRAINING_RUNNING, TRAINING_COMPLETED - see <a href="/focoos/api/ports/#focoos.ports.ModelStatus"><code>ModelStatus</code></a>).</li>
+</ul>
+<h2 id="how-to-list-all-your-models">How to list all your models<a class="headerlink" href="#how-to-list-all-your-models" title="Permanent link">#</a></h2>
+<p>To list all your models, the library provides a <code>list_models</code> function. This function will return a list of <code>Model</code> objects.</p>
+<p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">Focoos</span>
+
+<span class="n">focoos</span> <span class="o">=</span> <span class="n">Focoos</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;&lt;YOUR-API-KEY&gt;&quot;</span><span class="p">)</span>
+
+<span class="n">models</span> <span class="o">=</span> <span class="n">focoos</span><span class="o">.</span><span class="n">list_models</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Name: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reference: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">ref</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Status: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Task: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Description: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Focoos Model: </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">focoos_model</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<code>models</code> is a list of <a href="/focoos/api/ports/#focoos.ports.ModelPreview"><code>ModelPreview</code></a> objects that contains the following information:</p>
+<ul>
+<li><code>name</code>: The name of the model.</li>
+<li><code>ref</code>: The reference of the model.</li>
+<li><code>status</code>: The status of the model.</li>
+<li><code>task</code>: The task of the model.</li>
+<li><code>description</code>: The description of the model.</li>
+<li><code>focoos_model</code>: The starting Focoos Model used for training.</li>
+<li><code>status</code>: The status of the model, which indicates its current state (e.g. CREATED, TRAINING_RUNNING, TRAINING_COMPLETED - see <a href="/focoos/api/ports/#focoos.ports.ModelStatus"><code>ModelStatus</code></a>).</li>
+</ul>
+<h2 id="see-the-metrics-for-a-model">See the metrics for a model<a class="headerlink" href="#see-the-metrics-for-a-model" title="Permanent link">#</a></h2>
+<p>To see the validation metrics of a model, you can use the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.metrics"><code>metrics</code> method</a> on the model object.</p>
+<p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">Focoos</span>
+
+<span class="n">focoos</span> <span class="o">=</span> <span class="n">Focoos</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;&lt;YOUR-API-KEY&gt;&quot;</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">focoos</span><span class="o">.</span><span class="n">get_remote_model</span><span class="p">(</span><span class="s2">&quot;my-model&quot;</span><span class="p">)</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">metrics</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="n">metrics</span><span class="o">.</span><span class="n">best_valid_metric</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Best validation metrics:&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">metrics</span><span class="o">.</span><span class="n">best_valid_metric</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">metrics</span><span class="o">.</span><span class="n">valid_metrics</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Last iteration validation metrics:&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">metrics</span><span class="o">.</span><span class="n">valid_metrics</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">metrics</span><span class="o">.</span><span class="n">train_metrics</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Last iteration training metrics:&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">metrics</span><span class="o">.</span><span class="n">train_metrics</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<code>metrics</code> is a <a href="/focoos/api/ports/#focoos.ports.Metrics"><code>Metrics</code></a> object that contains the validation metrics of the model.</p>
+<h2 id="delete-a-model">Delete a model<a class="headerlink" href="#delete-a-model" title="Permanent link">#</a></h2>
+<p>To delete a model, you can use the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.delete_model"><code>delete_model</code> method</a> on the model object.</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
@@ -1531,149 +1512,14 @@ To upload your own dataset, you can write us a mail to <a href="mailto:support@f
 
 <span class="n">focoos</span> <span class="o">=</span> <span class="n">Focoos</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;&lt;YOUR-API-KEY&gt;&quot;</span><span class="p">)</span>
 
-<span class="n">datasets</span> <span class="o">=</span> <span class="n">focoos</span><span class="o">.</span><span class="n">list_shared_datasets</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">datasets</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div></p>
-<p>Find the dataset reference you want to use and store it in a variable:
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">dataset_ref</span> <span class="o">=</span> <span class="s2">&quot;&lt;YOUR-DATASET-REFERENCE&gt;&quot;</span>
-</code></pre></div></td></tr></table></div></p>
-<h2 id="2-create-a-model">2. Create a model<a class="headerlink" href="#2-create-a-model" title="Permanent link">#</a></h2>
-<p>The first step to personalize your model is to create a model.
-You can create a model by calling the <a href="/focoos/api/focoos/#focoos.focoos.Focoos.new_model"><code>new_model</code> method</a> on the <code>Focoos</code> object. You can choose the model you want to personalize from the list of <a href="../../models/">Focoos Models</a> available on the platform. Make sure to select the correct model for your task.</p>
-<p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span>
-<span class="normal">8</span>
-<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">Focoos</span>
-
-<span class="n">focoos</span> <span class="o">=</span> <span class="n">Focoos</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;&lt;YOUR-API-KEY&gt;&quot;</span><span class="p">)</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">focoos</span><span class="o">.</span><span class="n">new_model</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;&lt;YOUR-MODEL-NAME&gt;&quot;</span><span class="p">,</span>
-    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;&lt;YOUR-MODEL-DESCRIPTION&gt;&quot;</span><span class="p">,</span>
-    <span class="n">focoos_model</span><span class="o">=</span><span class="s2">&quot;&lt;FOCOOS-MODEL-NAME&gt;&quot;</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">focoos</span><span class="o">.</span><span class="n">get_remote_model</span><span class="p">(</span><span class="s2">&quot;my-model&quot;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">delete_model</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
-An example of how to create a model is the following:
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">model</span> <span class="o">=</span> <span class="n">focoos</span><span class="o">.</span><span class="n">new_model</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my-model&quot;</span><span class="p">,</span>
-    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;my-model-description&quot;</span><span class="p">,</span>
-    <span class="n">focoos_model</span><span class="o">=</span><span class="s2">&quot;fai-rtdetr-m-obj365&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-This function will return a new <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel"><code>RemoteModel</code></a> object that you can use to train the model and to perform remote inference.</p>
-<h2 id="3-train-the-model">3. Train the model<a class="headerlink" href="#3-train-the-model" title="Permanent link">#</a></h2>
-<p>Once the model is created, you can start the training process by calling the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.train"><code>train</code> method</a> on the model object.</p>
-<p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.ports</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hyperparameters</span>
-
-<span class="n">res</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span>
-    <span class="n">dataset_ref</span><span class="o">=</span><span class="n">dataset_ref</span><span class="p">,</span>
-    <span class="n">hyperparameters</span><span class="o">=</span><span class="n">Hyperparameters</span><span class="p">(</span>
-        <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span> <span class="c1"># custom learning rate</span>
-        <span class="n">batch_size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="c1"># custom batch size</span>
-        <span class="n">max_iters</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span> <span class="c1"># custom max iterations</span>
-    <span class="p">),</span>
-<span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-For selecting the <code>dataset_ref</code> see the <a href="#1-load-or-select-a-dataset">step 1</a>.
-You can further customize the training process by passing additional parameters to the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.train"><code>train</code> method</a> (such as the instance type, the volume size, the maximum runtime, etc.) or use additional hyperparameters (see the list <a href="/focoos/api/ports/#focoos.ports.Hyperparameters">available hyperparameters</a>).</p>
-<p>Futhermore, you can monitor the training progress by polling the training status. Use the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.notebook_monitor_train"><code>notebook_monitor_train</code></a> method on a jupyter notebook:
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">model</span><span class="o">.</span><span class="n">notebook_monitor_train</span><span class="p">(</span><span class="n">interval</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">plot_metrics</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div></p>
-<p>You can also get the training logs by calling the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.train_logs"><code>train_logs</code> method</a>:
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">logs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">train_logs</span><span class="p">()</span>
-<span class="n">pprint</span><span class="p">(</span><span class="n">logs</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div></p>
-<p>Finally, if for some reason you need to cancel the training, you can do so by calling the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.stop_training"><code>stop_training</code> method</a>:
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">model</span><span class="o">.</span><span class="n">stop_training</span><span class="p">()</span>
-</code></pre></div></td></tr></table></div></p>
-<h2 id="4-visualize-training-metrics">4. Visualize training metrics<a class="headerlink" href="#4-visualize-training-metrics" title="Permanent link">#</a></h2>
-<p>You can visualize the training metrics by calling the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.metrics"><code>metrics</code> method</a>:
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">metrics</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">metrics</span><span class="p">()</span>
-<span class="n">visualizer</span> <span class="o">=</span> <span class="n">MetricsVisualizer</span><span class="p">(</span><span class="n">metrics</span><span class="p">)</span>
-<span class="n">visualizer</span><span class="o">.</span><span class="n">log_metrics</span><span class="p">()</span>
-</code></pre></div></td></tr></table></div>
-The function will return an object of type <a href="/focoos/api/ports/#focoos.ports.Metrics"><code>Metrics</code></a> that you can use to visualize the training metrics using a <code>MetricsVisualizer</code> object.</p>
-<p>On notebooks, you can also plot the metrics by calling the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.notebook_plot_training_metrics"><code>notebook_plot_training_metrics</code></a> method:
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">visualizer</span><span class="o">.</span><span class="n">notebook_plot_training_metrics</span><span class="p">()</span>
-</code></pre></div></td></tr></table></div></p>
-<h2 id="5-test-your-model">5. Test your model<a class="headerlink" href="#5-test-your-model" title="Permanent link">#</a></h2>
-<h3 id="remote-inference">Remote Inference<a class="headerlink" href="#remote-inference" title="Permanent link">#</a></h3>
-<p>Once the training is over, you can test your model using remote inference by calling the <a href="/focoos/api/remote_model/#focoos.remote_model.RemoteModel.infer"><code>infer</code> method</a> on the model object.</p>
-<p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span>
-<span class="normal">6</span>
-<span class="normal">7</span>
-<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">image_path</span> <span class="o">=</span> <span class="s2">&quot;&lt;PATH-TO-YOUR-IMAGE&gt;&quot;</span>
-<span class="n">result</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">annotate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-<span class="k">for</span> <span class="n">det</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">detections</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="n">det</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2"> with confidence </span><span class="si">{</span><span class="n">det</span><span class="o">.</span><span class="n">conf</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bounding box: </span><span class="si">{</span><span class="n">det</span><span class="o">.</span><span class="n">bbox</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">det</span><span class="o">.</span><span class="n">mask</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Instance segmentation mask included&quot;</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-<code>result</code> is a <a href="/focoos/api/ports/#focoos.ports.FocoosDetections">FocoosDetections</a> object, containing a list of <a href="/focoos/api/ports/#focoos.ports.FocoosDet">FocoosDet</a> objects and optionally a dict of information about the latency of the inference.</p>
-<p>The <code>threshold</code> parameter is optional and defines the minimum confidence score for a detection to be considered valid (predictions with a confidence score lower than the threshold are discarded).</p>
-<p>Optionally, you can preview the results by passing the <code>annotate</code> parameter to the <code>infer</code> method.
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
-
-<span class="n">output</span><span class="p">,</span> <span class="n">preview</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">annotate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">preview</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">preview</span><span class="p">[:,:,[</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]])</span> <span class="c1"># invert to make it RGB</span>
-</code></pre></div></td></tr></table></div></p>
-<h3 id="local-inference">Local Inference<a class="headerlink" href="#local-inference" title="Permanent link">#</a></h3>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>To perform local inference, you need to install the package with one of the extra modules (<code>[cpu]</code>, <code>[torch]</code>, <code>[cuda]</code>, <code>[tensorrt]</code>). See the <a href="../../setup/">installation</a> page for more details.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This action is irreversible.
+Ensure you double-check before executing this command, as once deleted, the model cannot be recovered.</p>
 </div>
-<p>You can perform inference locally by getting the <a href="/focoos/api/local_model"><code>LocalModel</code></a> you already trained and calling the <a href="/focoos/api/local_model/#focoos.local_model.LocalModel.infer"><code>infer</code> method</a> on your image. If it's the first time you run the model locally, the model will be downloaded from the cloud and saved on your machine. Additionally, if you use CUDA or TensorRT, the model will be optimized for your GPU before running the inference (it can take few seconds, especially for TensorRT).</p>
-<p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">model</span> <span class="o">=</span> <span class="n">focoos</span><span class="o">.</span><span class="n">get_local_model</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">model_ref</span><span class="p">)</span> <span class="c1"># get the local model</span>
-
-<span class="n">image_path</span> <span class="o">=</span> <span class="s2">&quot;&lt;PATH-TO-YOUR-IMAGE&gt;&quot;</span>
-<span class="n">result</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">annotate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-<span class="k">for</span> <span class="n">det</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">detections</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="n">det</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2"> with confidence </span><span class="si">{</span><span class="n">det</span><span class="o">.</span><span class="n">conf</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bounding box: </span><span class="si">{</span><span class="n">det</span><span class="o">.</span><span class="n">bbox</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">det</span><span class="o">.</span><span class="n">mask</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Instance segmentation mask included&quot;</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-As for remote inference, you can pass the <code>annotate</code> parameter to return a preview of the prediction and play with the <code>threshold</code> parameter to change the minimum confidence score for a detection to be considered valid.</p>
 
 
 
@@ -1755,7 +1601,7 @@ As for remote inference, you can pass the <code>annotate</code> parameter to ret
     <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.f1b6f286.min.js"></script>
+      <script src="../../assets/javascripts/bundle.c8b220af.min.js"></script>
       
     
   </body>
