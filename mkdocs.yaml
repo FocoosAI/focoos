@@ -36,16 +36,12 @@ nav:
       - Welcome: index.md
       - Installation: setup.md
       - Models: models.md
-
-  - Examples:
-      - Cloud Inference: examples/cloud_inference.md
-      - Local Inference: examples/local_inference.md
-      - Cloud Training: examples/cloud_training.md
-      - Manage Datasets: examples/datasets.md
-      - Manage Models: examples/dashboard.md
-      - User Details: examples/user.md
-      - Gradio: examples/gradio.md
-      - Model Metrics: examples/model_metrics.md
+  - How To:
+      - Manage Dataset: howto/create_dataset.md
+      - Create and Train Model: howto/personalize_model.md
+      - Manage Models: howto/manage_models.md
+      - Use Model: howto/use_model.md
+      - Manage User: howto/manage_user.md
   - Focoos Models:
       - Overview: models.md
       - Semantic segmentation:
@@ -68,10 +64,6 @@ nav:
       - RemoteDataset: api/remote_dataset.md
       - Runtime: api/runtime.md
       - Ports: api/ports.md
-  - Development:
-      - Contributing: development/contributing.md
-      - Code of Conduct: development/code_of_conduct.md
-      - Changelog: development/changelog.md
 
 markdown_extensions:
   - pymdownx.highlight:
