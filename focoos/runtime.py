@@ -141,7 +141,7 @@ class ONNXRuntime(BaseRuntime):
         options.enable_profiling = opts.verbose
 
         # Setup providers
-        providers = self._setup_providers()
+        providers = self._setup_providers(model_dir=Path(model_path).parent)
 
         # Create session
         self.ort_sess = ort.InferenceSession(model_path, options, providers=providers)
@@ -155,7 +155,7 @@ class ONNXRuntime(BaseRuntime):
         if self.opts.warmup_iter > 0:
             self._warmup()
 
-    def _setup_providers(self):
+    def _setup_providers(self, model_dir: str):
         providers = []
         available = ort.get_available_providers()
 
@@ -164,7 +164,17 @@ class ONNXRuntime(BaseRuntime):
             (
                 "TensorrtExecutionProvider",
                 self.opts.trt,
-                {"device_id": 0, "trt_fp16_enable": self.opts.fp16, "trt_force_sequential_engine_build": False},
+                {
+                    "device_id": GPU_ID,
+                    "trt_fp16_enable": self.opts.fp16,
+                    "trt_force_sequential_engine_build": False,
+                    # "trt_cuda_graph_enable": True,
+                    "trt_engine_cache_enable": True,
+                    "trt_engine_cache_path": str(model_dir / "trt_cache"),
+                    # "trt_dump_ep_context_model": True,
+                    "trt_ep_context_file_path": str(model_dir),
+                    "trt_timing_cache_enable": True,
+                },
             ),
             (
                 "OpenVINOExecutionProvider",
