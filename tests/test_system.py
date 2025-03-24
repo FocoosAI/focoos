@@ -32,15 +32,23 @@ def test_get_cuda_version():
 
 
 def test_get_gpu_name():
-    with patch("GPUtil.getGPUs") as mock_get_gpus:
+    with patch("subprocess.run") as mock_run:
         # Simulate GPU available
-        mock_gpu = MagicMock()
-        mock_gpu.name = "Tesla T4"
-        mock_get_gpus.return_value = [mock_gpu]
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Tesla T4",
+        )
         assert get_gpu_name() == "Tesla T4"
 
-        # Simulate no GPU available
-        mock_get_gpus.return_value = []
+        # Simulate empty response
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="",
+        )
+        assert get_gpu_name() is None
+
+        # Simulate nvidia-smi command not found
+        mock_run.side_effect = FileNotFoundError
         assert get_gpu_name() is None
 
 
@@ -50,11 +58,22 @@ def test_get_cpu_name():
 
 
 def test_get_system_info():
-    system_info = get_system_info()
-    assert isinstance(system_info, SystemInfo)
-    assert system_info.system is not None
-    assert system_info.cpu_cores is not None
-    assert system_info.cpu_cores > 0
+    with (
+        patch("focoos.utils.system.get_gpu_info") as mock_get_gpu_info,
+        patch("focoos.utils.system.get_gpu_driver") as mock_get_gpu_driver,
+        patch("focoos.utils.system.get_cuda_version") as mock_get_cuda_version,
+    ):
+        # Mock the GPU-related functions to avoid real nvidia-smi calls
+        mock_get_gpu_info.return_value = []
+        mock_get_gpu_driver.return_value = None
+        mock_get_cuda_version.return_value = None
+
+        system_info = get_system_info()
+        assert isinstance(system_info, SystemInfo)
+        assert system_info.system is not None
+        assert system_info.cpu_cores is not None
+        assert system_info.cpu_cores > 0
+        assert system_info.gpu_count == 0
 
 
 def test_api_client_get_external_url():
