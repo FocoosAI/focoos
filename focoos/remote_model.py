@@ -313,7 +313,7 @@ class RemoteModel:
             image_bytes = buffer.tobytes()
         else:
             image_bytes = image
-        files = {"file": image_bytes}
+        files = {"file": ("image", image_bytes, "image/jpeg")}
         t0 = time.time()
         res = self.api_client.post(
             f"models/{self.model_ref}/inference?confidence_threshold={threshold}",
