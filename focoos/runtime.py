@@ -48,7 +48,7 @@ from focoos.ports import (
     TorchscriptRuntimeOpts,
 )
 from focoos.utils.logger import get_logger
-from focoos.utils.system import get_cpu_name, get_gpu_name
+from focoos.utils.system import get_cpu_name, get_gpu_info
 
 GPU_ID = 0
 
@@ -244,7 +244,15 @@ class ONNXRuntime(BaseRuntime):
         Returns:
             LatencyMetrics: Performance metrics including FPS, mean, min, max, and std latencies.
         """
-        self.logger.info("⏱️ [onnxruntime] Benchmarking latency..")
+        gpu_info = get_gpu_info()
+        device_name = "CPU"
+        if gpu_info.devices is not None and len(gpu_info.devices) > 0:
+            device_name = gpu_info.devices[0].gpu_name
+        else:
+            device_name = get_cpu_name()
+            self.logger.warning(f"No GPU found, using CPU {device_name}.")
+
+        self.logger.info(f"⏱️ [onnxruntime] Benchmarking latency on {device_name}..")
         size = size if isinstance(size, (tuple, list)) else (size, size)
 
         np_input = (255 * np.random.random((1, 3, size[0], size[1]))).astype(self.dtype)
@@ -262,9 +270,6 @@ class ONNXRuntime(BaseRuntime):
 
         durations = np.array(durations)
         provider = self.active_providers[0]
-        device = (
-            get_gpu_name() if provider in ["CUDAExecutionProvider", "TensorrtExecutionProvider"] else get_cpu_name()
-        )
 
         metrics = LatencyMetrics(
             fps=int(1000 / durations.mean()),
@@ -274,7 +279,7 @@ class ONNXRuntime(BaseRuntime):
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
             im_size=size[0],
-            device=str(device),
+            device=str(device_name),
         )
         self.logger.info(f"🔥 FPS: {metrics.fps}")
         return metrics
@@ -347,6 +352,13 @@ class TorchscriptRuntime(BaseRuntime):
         Returns:
             LatencyMetrics: Performance metrics including FPS, mean, min, max, and std latencies.
         """
+        gpu_info = get_gpu_info()
+        device_name = "CPU"
+        if gpu_info.devices is not None and len(gpu_info.devices) > 0:
+            device_name = gpu_info.devices[0].gpu_name
+        else:
+            device_name = get_cpu_name()
+            self.logger.warning(f"No GPU found, using CPU {device_name}.")
         self.logger.info("⏱️ [torchscript] Benchmarking latency..")
         size = size if isinstance(size, (tuple, list)) else (size, size)
 
@@ -363,7 +375,6 @@ class TorchscriptRuntime(BaseRuntime):
                     durations.append((end - start) * 1000)
 
         durations = np.array(durations)
-        device = get_gpu_name() if torch.cuda.is_available() else get_cpu_name()
 
         metrics = LatencyMetrics(
             fps=int(1000 / durations.mean().astype(float)),
@@ -373,7 +384,7 @@ class TorchscriptRuntime(BaseRuntime):
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
             im_size=size[0],
-            device=str(device),
+            device=str(device_name),
         )
         self.logger.info(f"🔥 FPS: {metrics.fps}")
         return metrics

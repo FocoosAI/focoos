@@ -2,12 +2,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from focoos.ports import SystemInfo
+from focoos.ports import GPUDevice, GPUInfo, SystemInfo
 from focoos.utils.api_client import ApiClient
 from focoos.utils.system import (
     get_cpu_name,
     get_cuda_version,
-    get_gpu_name,
     get_system_info,
 )
 
@@ -31,27 +30,6 @@ def test_get_cuda_version():
         assert get_cuda_version() is None
 
 
-def test_get_gpu_name():
-    with patch("subprocess.run") as mock_run:
-        # Simulate GPU available
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="Tesla T4",
-        )
-        assert get_gpu_name() == "Tesla T4"
-
-        # Simulate empty response
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="",
-        )
-        assert get_gpu_name() is None
-
-        # Simulate nvidia-smi command not found
-        mock_run.side_effect = FileNotFoundError
-        assert get_gpu_name() is None
-
-
 def test_get_cpu_name():
     with patch("platform.processor", return_value="Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz"):
         assert get_cpu_name() == "Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz"
@@ -60,12 +38,24 @@ def test_get_cpu_name():
 def test_get_system_info():
     with (
         patch("focoos.utils.system.get_gpu_info") as mock_get_gpu_info,
-        patch("focoos.utils.system.get_gpu_driver") as mock_get_gpu_driver,
         patch("focoos.utils.system.get_cuda_version") as mock_get_cuda_version,
     ):
         # Mock the GPU-related functions to avoid real nvidia-smi calls
-        mock_get_gpu_info.return_value = []
-        mock_get_gpu_driver.return_value = None
+        mock_get_gpu_info.return_value = GPUInfo(
+            gpu_count=0,
+            gpu_driver="533.104.00",
+            gpu_cuda_version="12.1",
+            devices=[
+                GPUDevice(
+                    gpu_id=0,
+                    gpu_name="NVIDIA RTX 4090",
+                    gpu_memory_total_gb=24.0,
+                    gpu_memory_used_percentage=70.0,
+                    gpu_temperature=65.0,
+                    gpu_load_percentage=80.0,
+                )
+            ],
+        )
         mock_get_cuda_version.return_value = None
 
         system_info = get_system_info()
@@ -73,7 +63,8 @@ def test_get_system_info():
         assert system_info.system is not None
         assert system_info.cpu_cores is not None
         assert system_info.cpu_cores > 0
-        assert system_info.gpu_count == 0
+        assert system_info.gpu_info is not None
+        assert system_info.gpu_info.gpu_count == 0
 
 
 def test_api_client_get_external_url():
