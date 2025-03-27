@@ -129,7 +129,6 @@ class ONNXRuntime(BaseRuntime):
         self.logger = get_logger()
 
         self.logger.debug(f"🔧 [onnxruntime device] {ort.get_device()}")
-        self.logger.debug(f"🔧 [onnxruntime available providers] {ort.get_available_providers()}")
 
         self.name = Path(model_path).stem
         self.opts = opts
@@ -141,13 +140,16 @@ class ONNXRuntime(BaseRuntime):
         options.enable_profiling = opts.verbose
 
         # Setup providers
-        providers = self._setup_providers(model_dir=Path(model_path).parent)
-
+        self.providers = self._setup_providers(model_dir=Path(model_path).parent)
+        self.active_provider = self.providers[0][0]
+        self.logger.info(f"[onnxruntime] using: {self.active_provider}")
         # Create session
-        self.ort_sess = ort.InferenceSession(model_path, options, providers=providers)
-        self.active_providers = self.ort_sess.get_providers()
-        self.logger.info(f"[onnxruntime] Active providers:{self.active_providers}")
+        self.ort_sess = ort.InferenceSession(model_path, options, providers=self.providers)
 
+        if self.opts.trt and self.providers[0][0] == "TensorrtExecutionProvider":
+            self.logger.info(
+                "🟢 [onnxruntime] TensorRT enabled. First execution may take longer as it builds the TRT engine."
+            )
         # Set input type
         self.dtype = np.uint8 if self.ort_sess.get_inputs()[0].type == "tensor(uint8)" else np.float32
 
@@ -158,7 +160,9 @@ class ONNXRuntime(BaseRuntime):
     def _setup_providers(self, model_dir: str):
         providers = []
         available = ort.get_available_providers()
-
+        self.logger.info(f"[onnxruntime] available providers:{available}")
+        _dir = Path(model_dir)
+        models_root = _dir.parent
         # Check and add providers in order of preference
         provider_configs = [
             (
@@ -168,12 +172,12 @@ class ONNXRuntime(BaseRuntime):
                     "device_id": GPU_ID,
                     "trt_fp16_enable": self.opts.fp16,
                     "trt_force_sequential_engine_build": False,
-                    # "trt_cuda_graph_enable": True,
                     "trt_engine_cache_enable": True,
-                    "trt_engine_cache_path": str(model_dir / "trt_cache"),
-                    # "trt_dump_ep_context_model": True,
-                    "trt_ep_context_file_path": str(model_dir),
-                    "trt_timing_cache_enable": True,
+                    "trt_engine_cache_path": str(_dir / ".trt_cache"),
+                    "trt_ep_context_file_path": str(_dir),
+                    "trt_timing_cache_enable": True,  # Timing cache can be shared across multiple models if layers are the same
+                    "trt_builder_optimization_level": 3,
+                    "trt_timing_cache_path": str(models_root / ".trt_timing_cache"),
                 },
             ),
             (
@@ -201,7 +205,7 @@ class ONNXRuntime(BaseRuntime):
             elif enabled:
                 self.logger.warning(f"{provider} not found.")
 
-        providers.append("CPUExecutionProvider")
+        providers.append(("CPUExecutionProvider", {}))
         return providers
 
     def _warmup(self):
@@ -269,11 +273,10 @@ class ONNXRuntime(BaseRuntime):
                 durations.append((end - start) * 1000)
 
         durations = np.array(durations)
-        provider = self.active_providers[0]
 
         metrics = LatencyMetrics(
             fps=int(1000 / durations.mean()),
-            engine=f"onnx.{provider}",
+            engine=f"onnx.{self.active_provider}",
             mean=round(durations.mean().astype(float), 3),
             max=round(durations.max().astype(float), 3),
             min=round(durations.min().astype(float), 3),
@@ -281,7 +284,7 @@ class ONNXRuntime(BaseRuntime):
             im_size=size[0],
             device=str(device_name),
         )
-        self.logger.info(f"🔥 FPS: {metrics.fps}")
+        self.logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")
         return metrics
 
 
@@ -386,7 +389,7 @@ class TorchscriptRuntime(BaseRuntime):
             im_size=size[0],
             device=str(device_name),
         )
-        self.logger.info(f"🔥 FPS: {metrics.fps}")
+        self.logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")
         return metrics
 
 
