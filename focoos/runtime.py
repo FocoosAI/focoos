@@ -48,7 +48,7 @@ from focoos.ports import (
     TorchscriptRuntimeOpts,
 )
 from focoos.utils.logger import get_logger
-from focoos.utils.system import get_cpu_name, get_gpu_name
+from focoos.utils.system import get_cpu_name, get_gpu_info
 
 GPU_ID = 0
 
@@ -129,7 +129,6 @@ class ONNXRuntime(BaseRuntime):
         self.logger = get_logger()
 
         self.logger.debug(f"🔧 [onnxruntime device] {ort.get_device()}")
-        self.logger.debug(f"🔧 [onnxruntime available providers] {ort.get_available_providers()}")
 
         self.name = Path(model_path).stem
         self.opts = opts
@@ -141,13 +140,16 @@ class ONNXRuntime(BaseRuntime):
         options.enable_profiling = opts.verbose
 
         # Setup providers
-        providers = self._setup_providers()
-
+        self.providers = self._setup_providers(model_dir=Path(model_path).parent)
+        self.active_provider = self.providers[0][0]
+        self.logger.info(f"[onnxruntime] using: {self.active_provider}")
         # Create session
-        self.ort_sess = ort.InferenceSession(model_path, options, providers=providers)
-        self.active_providers = self.ort_sess.get_providers()
-        self.logger.info(f"[onnxruntime] Active providers:{self.active_providers}")
+        self.ort_sess = ort.InferenceSession(model_path, options, providers=self.providers)
 
+        if self.opts.trt and self.providers[0][0] == "TensorrtExecutionProvider":
+            self.logger.info(
+                "🟢 [onnxruntime] TensorRT enabled. First execution may take longer as it builds the TRT engine."
+            )
         # Set input type
         self.dtype = np.uint8 if self.ort_sess.get_inputs()[0].type == "tensor(uint8)" else np.float32
 
@@ -155,16 +157,28 @@ class ONNXRuntime(BaseRuntime):
         if self.opts.warmup_iter > 0:
             self._warmup()
 
-    def _setup_providers(self):
+    def _setup_providers(self, model_dir: str):
         providers = []
         available = ort.get_available_providers()
-
+        self.logger.info(f"[onnxruntime] available providers:{available}")
+        _dir = Path(model_dir)
+        models_root = _dir.parent
         # Check and add providers in order of preference
         provider_configs = [
             (
                 "TensorrtExecutionProvider",
                 self.opts.trt,
-                {"device_id": 0, "trt_fp16_enable": self.opts.fp16, "trt_force_sequential_engine_build": False},
+                {
+                    "device_id": GPU_ID,
+                    "trt_fp16_enable": self.opts.fp16,
+                    "trt_force_sequential_engine_build": False,
+                    "trt_engine_cache_enable": True,
+                    "trt_engine_cache_path": str(_dir / ".trt_cache"),
+                    "trt_ep_context_file_path": str(_dir),
+                    "trt_timing_cache_enable": True,  # Timing cache can be shared across multiple models if layers are the same
+                    "trt_builder_optimization_level": 3,
+                    "trt_timing_cache_path": str(models_root / ".trt_timing_cache"),
+                },
             ),
             (
                 "OpenVINOExecutionProvider",
@@ -191,7 +205,7 @@ class ONNXRuntime(BaseRuntime):
             elif enabled:
                 self.logger.warning(f"{provider} not found.")
 
-        providers.append("CPUExecutionProvider")
+        providers.append(("CPUExecutionProvider", {}))
         return providers
 
     def _warmup(self):
@@ -234,7 +248,15 @@ class ONNXRuntime(BaseRuntime):
         Returns:
             LatencyMetrics: Performance metrics including FPS, mean, min, max, and std latencies.
         """
-        self.logger.info("⏱️ [onnxruntime] Benchmarking latency..")
+        gpu_info = get_gpu_info()
+        device_name = "CPU"
+        if gpu_info.devices is not None and len(gpu_info.devices) > 0:
+            device_name = gpu_info.devices[0].gpu_name
+        else:
+            device_name = get_cpu_name()
+            self.logger.warning(f"No GPU found, using CPU {device_name}.")
+
+        self.logger.info(f"⏱️ [onnxruntime] Benchmarking latency on {device_name}..")
         size = size if isinstance(size, (tuple, list)) else (size, size)
 
         np_input = (255 * np.random.random((1, 3, size[0], size[1]))).astype(self.dtype)
@@ -251,22 +273,18 @@ class ONNXRuntime(BaseRuntime):
                 durations.append((end - start) * 1000)
 
         durations = np.array(durations)
-        provider = self.active_providers[0]
-        device = (
-            get_gpu_name() if provider in ["CUDAExecutionProvider", "TensorrtExecutionProvider"] else get_cpu_name()
-        )
 
         metrics = LatencyMetrics(
             fps=int(1000 / durations.mean()),
-            engine=f"onnx.{provider}",
+            engine=f"onnx.{self.active_provider}",
             mean=round(durations.mean().astype(float), 3),
             max=round(durations.max().astype(float), 3),
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
             im_size=size[0],
-            device=str(device),
+            device=str(device_name),
         )
-        self.logger.info(f"🔥 FPS: {metrics.fps}")
+        self.logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")
         return metrics
 
 
@@ -337,6 +355,13 @@ class TorchscriptRuntime(BaseRuntime):
         Returns:
             LatencyMetrics: Performance metrics including FPS, mean, min, max, and std latencies.
         """
+        gpu_info = get_gpu_info()
+        device_name = "CPU"
+        if gpu_info.devices is not None and len(gpu_info.devices) > 0:
+            device_name = gpu_info.devices[0].gpu_name
+        else:
+            device_name = get_cpu_name()
+            self.logger.warning(f"No GPU found, using CPU {device_name}.")
         self.logger.info("⏱️ [torchscript] Benchmarking latency..")
         size = size if isinstance(size, (tuple, list)) else (size, size)
 
@@ -353,7 +378,6 @@ class TorchscriptRuntime(BaseRuntime):
                     durations.append((end - start) * 1000)
 
         durations = np.array(durations)
-        device = get_gpu_name() if torch.cuda.is_available() else get_cpu_name()
 
         metrics = LatencyMetrics(
             fps=int(1000 / durations.mean().astype(float)),
@@ -363,9 +387,9 @@ class TorchscriptRuntime(BaseRuntime):
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
             im_size=size[0],
-            device=str(device),
+            device=str(device_name),
         )
-        self.logger.info(f"🔥 FPS: {metrics.fps}")
+        self.logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")
         return metrics
 
 

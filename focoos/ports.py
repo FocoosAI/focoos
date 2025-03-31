@@ -588,7 +588,7 @@ class ModelFormat(str, Enum):
             raise ValueError(f"Invalid runtime type: {runtime_type}")
 
 
-class GPUInfo(FocoosBaseModel):
+class GPUDevice(FocoosBaseModel):
     """Information about a GPU device."""
 
     gpu_id: Optional[int] = None
@@ -597,6 +597,15 @@ class GPUInfo(FocoosBaseModel):
     gpu_memory_used_percentage: Optional[float] = None
     gpu_temperature: Optional[float] = None
     gpu_load_percentage: Optional[float] = None
+
+
+class GPUInfo(FocoosBaseModel):
+    """Information about a GPU driver."""
+
+    gpu_count: Optional[int] = None
+    gpu_driver: Optional[str] = None
+    gpu_cuda_version: Optional[str] = None
+    devices: Optional[list[GPUDevice]] = None
 
 
 class SystemInfo(FocoosBaseModel):
@@ -612,28 +621,29 @@ class SystemInfo(FocoosBaseModel):
     available_providers: Optional[list[str]] = None
     disk_space_total_gb: Optional[float] = None
     disk_space_used_percentage: Optional[float] = None
-    gpu_count: Optional[int] = None
-    gpu_driver: Optional[str] = None
-    gpu_cuda_version: Optional[str] = None
-    gpus_info: Optional[list[GPUInfo]] = None
+    gpu_info: Optional[GPUInfo] = None
     packages_versions: Optional[dict[str, str]] = None
     environment: Optional[dict[str, str]] = None
 
     def pretty_print(self):
         print("================ SYSTEM INFO ====================")
         for key, value in self.model_dump().items():
-            if isinstance(value, list):
+            if key == "gpu_info" and value is not None:
                 print(f"{key}:")
-                if key == "gpus_info":  # Special formatting for gpus_info.
-                    for item in value:
-                        print(f"- id: {item['gpu_id']}")
-                        for sub_key, sub_value in item.items():
-                            if sub_key != "gpu_id" and sub_value is not None:
-                                formatted_key = sub_key.replace("_", "-")
-                                print(f"    - {formatted_key}: {sub_value}")
-                else:
-                    for item in value:
-                        print(f"  - {item}")
+                print(f"  - gpu_count: {value.get('gpu_count')}")
+                print(f"  - gpu_driver: {value.get('gpu_driver')}")
+                print(f"  - gpu_cuda_version: {value.get('gpu_cuda_version')}")
+                if value.get("devices"):
+                    print("  - devices:")
+                    for device in value.get("devices", []):
+                        print(f"    - GPU {device.get('gpu_id')}:")
+                        for device_key, device_value in device.items():
+                            if device_key != "gpu_id":
+                                print(f"      - {device_key}: {device_value}")
+            elif isinstance(value, list):
+                print(f"{key}:")
+                for item in value:
+                    print(f"  - {item}")
             elif isinstance(value, dict) and key == "packages_versions":  # Special formatting for packages_versions
                 print(f"{key}:")
                 for pkg_name, pkg_version in value.items():

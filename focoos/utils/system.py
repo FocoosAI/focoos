@@ -4,7 +4,7 @@ import platform
 import subprocess
 from typing import Optional
 
-import GPUtil
+from focoos.ports import GPUInfo
 
 try:
     import onnxruntime as ort
@@ -13,7 +13,7 @@ except ImportError:
 import psutil
 
 from focoos.config import FOCOOS_CONFIG
-from focoos.ports import GPUInfo, SystemInfo
+from focoos.ports import GPUDevice, SystemInfo
 from focoos.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -45,20 +45,88 @@ def get_cuda_version() -> Optional[str]:
         logger.warning("nvidia-smi command not found: %s", err)
 
 
-def get_gpu_name() -> Optional[str]:
+def get_gpu_info() -> GPUInfo:
     """
-    Retrieve the name of the first available GPU.
+    Retrieve detailed information about all available GPUs using nvidia-smi.
 
-    This function uses the GPUtil library to get the name of the first GPU detected.
-    If no GPUs are available, it returns None.
+    This function runs a single `nvidia-smi` command to fetch GPU information including
+    ID, name, memory usage, temperature, utilization, driver version and CUDA version.
 
     Returns:
-        Optional[str]: The name of the first GPU if available, otherwise None.
+        GPUInfo: An object containing comprehensive GPU information including devices list,
+                driver version, CUDA version and GPU count.
     """
+    gpu_info = GPUInfo()
+    gpus_device = []
     try:
-        return GPUtil.getGPUs()[0].name
-    except IndexError:
-        return None
+        # Get all GPU information in a single query
+        result = subprocess.run(
+            [
+                "nvidia-smi",
+                "--query-gpu=index,name,memory.total,memory.used,temperature.gpu,utilization.gpu,driver_version",
+                "--format=csv,noheader",
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        if result.returncode == 0:
+            driver_version = None
+
+            for line in result.stdout.strip().split("\n"):
+                if not line.strip():
+                    continue
+
+                parts = line.split(",")
+                if len(parts) == 7:
+                    try:
+                        idx = int(parts[0].strip())
+                        name = parts[1].strip()
+
+                        # Handle memory values
+                        total_mem = None
+                        used_mem = None
+                        memory_used_percentage = None
+                        if "[N/A]" not in parts[2] and "[N/A]" not in parts[3]:
+                            total_mem = float(parts[2].strip().split()[0]) / 1024  # Convert MiB to GB
+                            used_mem = float(parts[3].strip().split()[0]) / 1024
+                            if total_mem > 0:
+                                memory_used_percentage = round(used_mem / total_mem * 100, 3)
+
+                        # Handle temperature and utilization
+                        temp = None if "[N/A]" in parts[4] else float(parts[4].strip())
+                        util = None if "[N/A]" in parts[5] else float(parts[5].strip().rstrip("%"))
+
+                        # Store driver and CUDA version from first GPU (they're the same for all GPUs)
+                        if driver_version is None:
+                            driver_version = parts[6].strip()
+
+                        gpus_device.append(
+                            GPUDevice(
+                                gpu_id=idx,
+                                gpu_name=name,
+                                gpu_memory_total_gb=round(total_mem, 3) if total_mem is not None else None,
+                                gpu_memory_used_percentage=memory_used_percentage,
+                                gpu_temperature=temp,
+                                gpu_load_percentage=util,
+                            )
+                        )
+                    except (ValueError, IndexError) as e:
+                        logger.warning(f"Failed to parse GPU info: {line.strip()} - {e}")
+
+            # Set all GPUInfo fields
+            gpu_info.devices = gpus_device
+            gpu_info.gpu_count = len(gpus_device)
+            gpu_info.gpu_driver = driver_version
+            gpu_info.gpu_cuda_version = get_cuda_version()
+
+    except FileNotFoundError as err:
+        logger.warning("nvidia-smi command not found: %s", err)
+    except Exception as err:
+        logger.warning("Error parsing nvidia-smi output: %s", err)
+
+    return gpu_info
 
 
 def get_cpu_name() -> Optional[str]:
@@ -97,26 +165,10 @@ def get_system_info() -> SystemInfo:
     system_info = platform.uname()
     memory_info = psutil.virtual_memory()
     disk_info = psutil.disk_usage("/")
-    gpu_info = GPUtil.getGPUs()
-    if len(gpu_info) == 0:
-        gpu_count = 0
-        gpu_driver = None
-        gpus_info = None
-    else:
-        gpu_count = len(gpu_info)
-        gpu_driver = gpu_info[0].driver
-        gpus_info = []
-        for i, gpu in enumerate(gpu_info):
-            gpus_info.append(
-                GPUInfo(
-                    gpu_id=i,
-                    gpu_name=gpu.name,
-                    gpu_memory_total_gb=round(gpu.memoryTotal / 1024, 3),
-                    gpu_memory_used_percentage=round(gpu.memoryUsed / 1024, 3),
-                    gpu_temperature=gpu.temperature,
-                    gpu_load_percentage=gpu.load * 100,
-                )
-            )
+
+    # Get GPU information using nvidia-smi
+    gpu_info = get_gpu_info()
+
     packages = [
         "focoos",
         "tensorrt",
@@ -162,10 +214,7 @@ def get_system_info() -> SystemInfo:
         memory_used_percentage=round(memory_info.percent, 3),
         disk_space_total_gb=round(disk_info.total / (1024**3), 3),
         disk_space_used_percentage=round(disk_info.percent, 3),
-        gpu_count=gpu_count,
-        gpu_driver=gpu_driver,
-        gpu_cuda_version=get_cuda_version(),
-        gpus_info=gpus_info,
+        gpu_info=gpu_info,
         packages_versions=versions,
         environment=environments,
     )

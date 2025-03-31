@@ -10,6 +10,7 @@ from .ports import (
     FocoosDet,
     FocoosDetections,
     FocoosTask,
+    GPUDevice,
     GPUInfo,
     Hyperparameters,
     LatencyMetrics,
@@ -26,7 +27,7 @@ from .remote_model import RemoteModel
 from .runtime import ONNXRuntime, load_runtime
 from .utils.api_client import ApiClient
 from .utils.logger import get_logger
-from .utils.system import get_system_info
+from .utils.system import get_cuda_version, get_system_info
 from .utils.vision import (
     base64mask_to_mask,
     binary_mask_to_base64,
@@ -50,6 +51,7 @@ __all__ = [
     "ModelStatus",
     "DatasetLayout",
     "DatasetPreview",
+    "GPUDevice",
     "GPUInfo",
     "Hyperparameters",
     "LatencyMetrics",
@@ -60,6 +62,7 @@ __all__ = [
     "TrainingInfo",
     "TrainInstance",
     "get_system_info",
+    "get_cuda_version",
     "ONNXRuntime",
     "load_runtime",
     "DEV_API_URL",

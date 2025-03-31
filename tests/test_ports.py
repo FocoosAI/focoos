@@ -3,6 +3,7 @@ from pydantic import ValidationError
 from pytest_mock import MockerFixture
 
 from focoos.ports import (
+    GPUDevice,
     GPUInfo,
     Hyperparameters,
     ModelFormat,
@@ -30,15 +31,20 @@ def test_validate_wandb_project_invalid():
         assert "Wandb project name must only contain characters, dashes, underscores, and dots." in str(exc_info.value)
 
 
-def test_pretty_print_with_gpus_info(mocker: MockerFixture):
-    gpu_info = GPUInfo(
-        gpu_id=0,
-        gpu_name="NVIDIA GTX 1080",
-        gpu_memory_total_gb=8.0,
-        gpu_memory_used_percentage=70.0,
-        gpu_temperature=65.0,
-        gpu_load_percentage=80.0,
-    )
+def test_pretty_print_with_system_info(mocker: MockerFixture):
+    """Verifica che pretty_print formatti correttamente tutte le informazioni di sistema"""
+
+    gpu_devices = [
+        GPUDevice(
+            gpu_id=0,
+            gpu_name="NVIDIA GTX 1080",
+            gpu_memory_total_gb=8.0,
+            gpu_memory_used_percentage=70.0,
+            gpu_temperature=65.0,
+            gpu_load_percentage=80.0,
+        )
+    ]
+    gpu_info = GPUInfo(gpu_count=1, gpu_driver="NVIDIA", gpu_cuda_version="11.2", devices=gpu_devices)
 
     system_info = SystemInfo(
         focoos_host="localhost",
@@ -48,14 +54,11 @@ def test_pretty_print_with_gpus_info(mocker: MockerFixture):
         cpu_cores=8,
         memory_gb=16.0,
         memory_used_percentage=50.0,
-        available_providers=["provider1"],
+        available_providers=["provider1", "provider2"],
         disk_space_total_gb=500.0,
         disk_space_used_percentage=60.0,
-        gpu_count=1,
-        gpu_driver="NVIDIA",
-        gpu_cuda_version="11.2",
         packages_versions={"pytest": "6.2.4", "pydantic": "1.8.2"},
-        gpus_info=[gpu_info],
+        gpu_info=gpu_info,
         environment={"FOCOOS_LOG_LEVEL": "DEBUG", "LD_LIBRARY_PATH": "/usr/local/cuda/lib64"},
     )
 
@@ -72,32 +75,37 @@ def test_pretty_print_with_gpus_info(mocker: MockerFixture):
         "memory_used_percentage: 50.0",
         "available_providers:",
         "  - provider1",
+        "  - provider2",
         "disk_space_total_gb: 500.0",
         "disk_space_used_percentage: 60.0",
-        "gpu_count: 1",
-        "gpu_driver: NVIDIA",
-        "gpu_cuda_version: 11.2",
+        "gpu_info:",
+        "  - gpu_count: 1",
+        "  - gpu_driver: NVIDIA",
+        "  - gpu_cuda_version: 11.2",
+        "  - devices:",
+        "    - GPU 0:",
+        "      - gpu_name: NVIDIA GTX 1080",
+        "      - gpu_memory_total_gb: 8.0",
+        "      - gpu_memory_used_percentage: 70.0",
+        "      - gpu_temperature: 65.0",
+        "      - gpu_load_percentage: 80.0",
         "packages_versions:",
         "  - pytest: 6.2.4",
         "  - pydantic: 1.8.2",
-        "gpus_info:",
-        "- id: 0",
-        "    - gpu-name: NVIDIA GTX 1080",
-        "    - gpu-memory-total-gb: 8.0",
-        "    - gpu-memory-used-percentage: 70.0",
-        "    - gpu-temperature: 65.0",
-        "    - gpu-load-percentage: 80.0",
         "environment:",
-        "  - LD_LIBRARY_PATH: /usr/local/cuda/lib64",
         "  - FOCOOS_LOG_LEVEL: DEBUG",
+        "  - LD_LIBRARY_PATH: /usr/local/cuda/lib64",
         "================================================",
     ]
 
     system_info.pretty_print()
 
-    # Validate that all expected calls were made
+    # Verifica che tutte le chiamate attese siano state effettuate
     for call in expected_calls:
         mock_print.assert_any_call(call)
+
+    # Verifica che il numero totale di chiamate sia corretto
+    assert mock_print.call_count == len(expected_calls)
 
 
 @pytest.mark.parametrize(
