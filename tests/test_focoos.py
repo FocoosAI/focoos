@@ -8,9 +8,9 @@ from pytest_mock import MockerFixture
 
 from focoos import Focoos
 from focoos.config import FOCOOS_CONFIG
-from focoos.local_model import LocalModel
+from focoos.infer.infer_model import InferModel
 from focoos.ports import ModelNotFound, ModelPreview
-from focoos.remote_model import RemoteModel
+from focoos.remote.remote_model import RemoteModel
 
 
 @pytest.fixture
@@ -93,7 +93,7 @@ def mock_remote_model():
 
 @pytest.fixture
 def mock_local_model():
-    return MagicMock(spec=LocalModel, name="model1", model_ref="ref1")
+    return MagicMock(spec=InferModel, name="model1", model_ref="ref1")
 
 
 def test_focoos_initialization_no_api_key(focoos_instance: Focoos):
@@ -255,7 +255,7 @@ def test_get_model_by_name_local(
     model = focoos_instance.get_model_by_name(name=model_name, remote=False)
     assert model is not None
     assert model.model_ref == "ref1"
-    assert isinstance(model, LocalModel)
+    assert isinstance(model, InferModel)
 
 
 def test_get_model_by_name_model_not_found(focoos_instance: Focoos, mock_list_models):
@@ -297,7 +297,7 @@ def test_get_local_model(mocker: MockerFixture, focoos_instance: Focoos, mock_lo
         assert model is not None
         assert model.model_ref == model_ref
         mock_local_model_class.assert_called_once_with(str(model_path.parent), FOCOOS_CONFIG.runtime_type)
-        assert isinstance(model, LocalModel)
+        assert isinstance(model, InferModel)
 
         # Assert _download_model was not called
         download_model_spy.assert_not_called()
@@ -326,7 +326,7 @@ def test_get_local_model_with_download(mocker: MockerFixture, focoos_instance: F
         assert model is not None
         assert model.model_ref == model_ref
         mock_local_model_class.assert_called_once_with(str(model_path.parent), FOCOOS_CONFIG.runtime_type)
-        assert isinstance(model, LocalModel)
+        assert isinstance(model, InferModel)
 
         # Assert _download_model was not called
         mock_download_model.assert_called()

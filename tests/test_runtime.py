@@ -4,14 +4,10 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
+from focoos.infer.runtimes.load_runtime import ORT_AVAILABLE, TORCH_AVAILABLE, load_runtime
+from focoos.infer.runtimes.onnx import ONNXRuntime
+from focoos.infer.runtimes.torchscript import TorchscriptRuntime
 from focoos.ports import OnnxRuntimeOpts, RemoteModelInfo, RuntimeTypes, TorchscriptRuntimeOpts
-from focoos.runtime import (
-    ORT_AVAILABLE,
-    TORCH_AVAILABLE,
-    ONNXRuntime,
-    TorchscriptRuntime,
-    load_runtime,
-)
 
 
 def test_runtime_availability():

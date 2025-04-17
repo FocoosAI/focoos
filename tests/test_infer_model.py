@@ -5,7 +5,9 @@ import pytest
 import supervision as sv
 from pytest_mock import MockerFixture
 
-from focoos.local_model import LocalModel
+from focoos.infer.infer_model import InferModel
+from focoos.infer.runtimes.onnx import ONNXRuntime
+from focoos.infer.runtimes.torchscript import TorchscriptRuntime
 from focoos.ports import (
     FocoosDet,
     FocoosDetections,
@@ -14,7 +16,6 @@ from focoos.ports import (
     RuntimeTypes,
     Task,
 )
-from focoos.runtime import ONNXRuntime, TorchscriptRuntime
 
 
 @pytest.fixture
@@ -34,7 +35,7 @@ def mock_local_model_onnx(mocker: MockerFixture, mock_model_dir, image_ndarray):
     mock_get_runtime = mocker.patch("focoos.local_model.load_runtime", mock_runtime)
     mock_get_runtime.return_value = mock_runtime
     mocker.patch("focoos.local_model.os.path.exists", return_value=True)
-    model = LocalModel(model_dir=mock_model_dir, runtime_type=RuntimeTypes.ONNX_CPU)
+    model = InferModel(model_dir=mock_model_dir, runtime_type=RuntimeTypes.ONNX_CPU)
 
     # Mock BoxAnnotator
     mock_box_annotator = mocker.patch("focoos.local_model.sv.BoxAnnotator", autospec=True)
@@ -62,7 +63,7 @@ def mock_local_model_torch(mocker: MockerFixture, mock_model_dir, image_ndarray)
     mock_get_runtime = mocker.patch("focoos.local_model.load_runtime", mock_runtime)
     mock_get_runtime.return_value = mock_runtime
     mocker.patch("focoos.local_model.os.path.exists", return_value=True)
-    model = LocalModel(model_dir=mock_model_dir, runtime_type=RuntimeTypes.TORCHSCRIPT_32)
+    model = InferModel(model_dir=mock_model_dir, runtime_type=RuntimeTypes.TORCHSCRIPT_32)
 
     # Mock BoxAnnotator
     mock_box_annotator = mocker.patch("focoos.local_model.sv.BoxAnnotator", autospec=True)
@@ -85,28 +86,28 @@ def mock_local_model_torch(mocker: MockerFixture, mock_model_dir, image_ndarray)
 
 def test_initialization_fail_no_model_dir():
     with pytest.raises(FileNotFoundError):
-        LocalModel(model_dir="fakedir", runtime_type=RuntimeTypes.ONNX_CPU)
+        InferModel(model_dir="fakedir", runtime_type=RuntimeTypes.ONNX_CPU)
 
 
 def test_init_file_not_found(mocker: MockerFixture):
     mocker.patch("focoos.local_model.os.path.exists", return_value=False)
     with pytest.raises(FileNotFoundError):
-        LocalModel(model_dir="fakedir", runtime_type=RuntimeTypes.ONNX_CPU)
+        InferModel(model_dir="fakedir", runtime_type=RuntimeTypes.ONNX_CPU)
 
 
-def test_initialization_onnx(mock_local_model_onnx: LocalModel, mock_model_dir, mock_metadata):
+def test_initialization_onnx(mock_local_model_onnx: InferModel, mock_model_dir, mock_metadata):
     assert mock_local_model_onnx.model_dir == mock_model_dir
     assert mock_local_model_onnx.metadata == mock_metadata
     assert isinstance(mock_local_model_onnx.runtime, ONNXRuntime)
 
 
-def test_initialization_torch(mock_local_model_torch: LocalModel, mock_model_dir, mock_metadata):
+def test_initialization_torch(mock_local_model_torch: InferModel, mock_model_dir, mock_metadata):
     assert mock_local_model_torch.model_dir == mock_model_dir
     assert mock_local_model_torch.metadata == mock_metadata
     assert isinstance(mock_local_model_torch.runtime, TorchscriptRuntime)
 
 
-def test_benchmark(mock_local_model_onnx: LocalModel):
+def test_benchmark(mock_local_model_onnx: InferModel):
     mock_local_model_onnx.runtime.benchmark.return_value = MagicMock(spec=LatencyMetrics)
     iterations, size = 10, 1000
 
@@ -145,7 +146,7 @@ def mock_runtime_detections() -> list[np.ndarray]:
 
 
 def test_annotate_detection_metadata_classes_none(
-    image_ndarray: np.ndarray, mock_local_model_onnx: LocalModel, mock_sv_detections
+    image_ndarray: np.ndarray, mock_local_model_onnx: InferModel, mock_sv_detections
 ):
     mock_local_model_onnx.metadata.classes = None
     annotated_im = mock_local_model_onnx._annotate(image_ndarray, mock_sv_detections)
@@ -156,7 +157,7 @@ def test_annotate_detection_metadata_classes_none(
     mock_local_model_onnx.mask_annotator.annotate.assert_not_called()
 
 
-def test_annotate_detection(image_ndarray: np.ndarray, mock_local_model_onnx: LocalModel, mock_sv_detections):
+def test_annotate_detection(image_ndarray: np.ndarray, mock_local_model_onnx: InferModel, mock_sv_detections):
     annotated_im = mock_local_model_onnx._annotate(image_ndarray, mock_sv_detections)
     assert annotated_im is not None
     assert isinstance(annotated_im, np.ndarray)
@@ -165,7 +166,7 @@ def test_annotate_detection(image_ndarray: np.ndarray, mock_local_model_onnx: Lo
     mock_local_model_onnx.mask_annotator.annotate.assert_not_called()
 
 
-def test_annotate_semseg(image_ndarray: np.ndarray, mock_local_model_onnx: LocalModel, mock_sv_detections):
+def test_annotate_semseg(image_ndarray: np.ndarray, mock_local_model_onnx: InferModel, mock_sv_detections):
     mock_local_model_onnx.metadata.task = Task.SEMSEG
     annotated_im = mock_local_model_onnx._annotate(image_ndarray, mock_sv_detections)
     assert annotated_im is not None
@@ -177,7 +178,7 @@ def test_annotate_semseg(image_ndarray: np.ndarray, mock_local_model_onnx: Local
 
 def mock_infer_setup(
     mocker: MockerFixture,
-    mock_local_model: LocalModel,
+    mock_local_model: InferModel,
     image_ndarray: np.ndarray,
     mock_sv_detections: sv.Detections,
     mock_runtime_detections: list[np.ndarray],

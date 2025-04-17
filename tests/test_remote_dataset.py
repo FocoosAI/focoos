@@ -3,7 +3,7 @@ from unittest.mock import Mock, mock_open, patch
 import pytest
 
 from focoos.ports import DatasetLayout, DatasetPreview, Task
-from focoos.remote_dataset import RemoteDataset
+from focoos.remote.remote_dataset import RemoteDataset
 
 
 @pytest.fixture

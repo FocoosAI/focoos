@@ -1,6 +1,8 @@
 from .config import FOCOOS_CONFIG
 from .focoos import Focoos
-from .local_model import LocalModel
+from .infer.infer_model import InferModel
+from .infer.runtimes.load_runtime import load_runtime
+from .infer.runtimes.onnx import ONNXRuntime
 from .ports import (
     DEV_API_URL,
     LOCAL_API_URL,
@@ -23,8 +25,7 @@ from .ports import (
     TrainingInfo,
     TrainInstance,
 )
-from .remote_model import RemoteModel
-from .runtime import ONNXRuntime, load_runtime
+from .remote.remote_model import RemoteModel
 from .utils.api_client import ApiClient
 from .utils.logger import get_logger
 from .utils.system import get_cuda_version, get_system_info
@@ -42,7 +43,7 @@ from .utils.vision import (
 __all__ = [
     "FOCOOS_CONFIG",
     "Focoos",
-    "LocalModel",
+    "InferModel",
     "RemoteModel",
     "FocoosDetections",
     "FocoosDet",

@@ -17,7 +17,7 @@ import os
 from typing import Optional, Union
 
 from focoos.config import FOCOOS_CONFIG
-from focoos.local_model import LocalModel
+from focoos.infer_model import InferModel
 from focoos.ports import (
     DatasetLayout,
     DatasetPreview,
@@ -224,7 +224,7 @@ class Focoos:
         self,
         model_ref: str,
         runtime_type: Optional[RuntimeTypes] = RuntimeTypes.ONNX_CUDA32,
-    ) -> LocalModel:
+    ) -> InferModel:
         """
         Retrieves a local model for the specified reference.
 
@@ -261,7 +261,7 @@ class Focoos:
                 model_ref,
                 format=format,
             )
-        return LocalModel(model_dir, runtime_type)
+        return InferModel(model_dir, runtime_type)
 
     def get_remote_model(self, model_ref: str) -> RemoteModel:
         """
@@ -395,7 +395,7 @@ class Focoos:
 
         return model_path
 
-    def get_model_by_name(self, name: str, remote: bool = True) -> Union[RemoteModel, LocalModel]:
+    def get_model_by_name(self, name: str, remote: bool = True) -> Union[RemoteModel, InferModel]:
         """
         Retrieves a model by its name.
 

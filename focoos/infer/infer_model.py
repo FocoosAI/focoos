@@ -1,15 +1,16 @@
 """
-LocalModel Module
+InferModel Module
 
-This module provides the `LocalModel` class that allows loading, inference,
+This module provides the `InferModel` class that allows loading, inference,
 and benchmark testing of models in a local environment. It supports detection
-and segmentation tasks, and utilizes ONNXRuntime for model execution.
+and segmentation tasks, and utilizes various runtime backends including ONNXRuntime
+and TorchScript for model execution.
 
 Classes:
-    LocalModel: A class for managing and interacting with local models.
+    InferModel: A class for managing and interacting with local models.
 
 Methods:
-    __init__: Initializes the LocalModel instance, loading the model, metadata,
+    __init__: Initializes the InferModel instance, loading the model, metadata,
               and setting up the runtime.
     _read_metadata: Reads the model metadata from a JSON file.
     _annotate: Annotates the input image with detection or segmentation results.
@@ -28,6 +29,8 @@ import supervision as sv
 from PIL import Image
 
 from focoos.config import FOCOOS_CONFIG
+from focoos.infer.runtimes.base import BaseRuntime
+from focoos.infer.runtimes.load_runtime import load_runtime
 from focoos.ports import (
     FocoosDetections,
     LatencyMetrics,
@@ -36,7 +39,6 @@ from focoos.ports import (
     RuntimeTypes,
     Task,
 )
-from focoos.runtime import BaseRuntime, load_runtime
 from focoos.utils.logger import get_logger
 from focoos.utils.vision import (
     get_postprocess_fn,
@@ -47,7 +49,7 @@ from focoos.utils.vision import (
 logger = get_logger(__name__)
 
 
-class LocalModel:
+class InferModel:
     def __init__(
         self,
         model_dir: Union[str, Path],
