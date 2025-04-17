@@ -32,7 +32,7 @@ from focoos.ports import (
     FocoosDetections,
     LatencyMetrics,
     ModelFormat,
-    ModelInfo,
+    RemoteModelInfo,
     RuntimeTypes,
     Task,
 )
@@ -97,7 +97,7 @@ class LocalModel:
             raise FileNotFoundError(f"Model path not found: {self.model_path}")
 
         # Load metadata and set model reference
-        self.metadata: ModelInfo = self._read_metadata()
+        self.metadata: RemoteModelInfo = self._read_metadata()
         self.model_ref = self.metadata.ref
         self.postprocess_fn = get_postprocess_fn(self.metadata.task)
 
@@ -114,7 +114,7 @@ class LocalModel:
             FOCOOS_CONFIG.warmup_iter,
         )
 
-    def _read_metadata(self) -> ModelInfo:
+    def _read_metadata(self) -> RemoteModelInfo:
         """
         Reads the model metadata from a JSON file.
 
@@ -125,7 +125,7 @@ class LocalModel:
             FileNotFoundError: If the metadata file does not exist in the model directory.
         """
         metadata_path = os.path.join(self.model_dir, "focoos_metadata.json")
-        return ModelInfo.from_json(metadata_path)
+        return RemoteModelInfo.from_json(metadata_path)
 
     def _annotate(self, im: np.ndarray, detections: sv.Detections) -> np.ndarray:
         """

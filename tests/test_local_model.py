@@ -10,7 +10,7 @@ from focoos.ports import (
     FocoosDet,
     FocoosDetections,
     LatencyMetrics,
-    ModelInfo,
+    RemoteModelInfo,
     RuntimeTypes,
     Task,
 )
@@ -18,7 +18,7 @@ from focoos.runtime import ONNXRuntime, TorchscriptRuntime
 
 
 @pytest.fixture
-def mock_model_dir(tmp_path, mock_metadata: ModelInfo):
+def mock_model_dir(tmp_path, mock_metadata: RemoteModelInfo):
     model_dir = tmp_path / "model"
     model_dir.mkdir()
     metadata_path = model_dir / "focoos_metadata.json"

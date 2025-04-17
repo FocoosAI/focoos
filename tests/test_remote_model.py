@@ -5,11 +5,11 @@ import pytest
 from pytest_mock import MockerFixture
 
 import tests
-from focoos.ports import Hyperparameters, Metrics, ModelInfo, ModelStatus, Task, TrainingInfo, TrainInstance
+from focoos.ports import Hyperparameters, Metrics, ModelStatus, RemoteModelInfo, Task, TrainingInfo, TrainInstance
 from focoos.remote_model import RemoteModel
 
 
-def _get_mock_remote_model(mocker: MockerFixture, mock_api_client, image_ndarray, mock_metadata: ModelInfo):
+def _get_mock_remote_model(mocker: MockerFixture, mock_api_client, image_ndarray, mock_metadata: RemoteModelInfo):
     mock_api_client.get = MagicMock(return_value=MagicMock(status_code=200, json=lambda: mock_metadata.model_dump()))
     model = RemoteModel(model_ref="test_model_ref", api_client=mock_api_client)
 
@@ -29,7 +29,7 @@ def _get_mock_remote_model(mocker: MockerFixture, mock_api_client, image_ndarray
 
 
 @pytest.fixture
-def mock_remote_model(mocker: MockerFixture, mock_api_client, image_ndarray, mock_metadata: ModelInfo):
+def mock_remote_model(mocker: MockerFixture, mock_api_client, image_ndarray, mock_metadata: RemoteModelInfo):
     return _get_mock_remote_model(
         mocker=mocker,
         mock_api_client=mock_api_client,
@@ -45,7 +45,7 @@ def test_remote_model_initialization_fail_to_fetch_model_info(mock_api_client):
 
 
 def test_remote_model_initialization_ok(
-    mocker: MockerFixture, mock_api_client, image_ndarray, mock_metadata: ModelInfo
+    mocker: MockerFixture, mock_api_client, image_ndarray, mock_metadata: RemoteModelInfo
 ):
     with tests.not_raises(Exception):
         _get_mock_remote_model(

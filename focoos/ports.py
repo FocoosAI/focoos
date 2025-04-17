@@ -348,7 +348,7 @@ class DatasetPreview(FocoosBaseModel):
     spec: Optional[DatasetSpec] = None
 
 
-class ModelInfo(FocoosBaseModel):
+class RemoteModelInfo(FocoosBaseModel):
     """Complete metadata for a Focoos model.
 
     This class contains comprehensive information about a model in the Focoos platform,

@@ -22,9 +22,9 @@ from focoos.ports import (
     DatasetLayout,
     DatasetPreview,
     ModelFormat,
-    ModelInfo,
     ModelNotFound,
     ModelPreview,
+    RemoteModelInfo,
     RuntimeTypes,
     Task,
     User,
@@ -145,7 +145,7 @@ class Focoos:
             raise ValueError(f"Failed to get user info: {res.status_code} {res.text}")
         return User.from_json(res.json())
 
-    def get_model_info(self, model_ref: str) -> ModelInfo:
+    def get_model_info(self, model_ref: str) -> RemoteModelInfo:
         """
         Retrieves metadata for a specific model.
 
@@ -170,7 +170,7 @@ class Focoos:
         if res.status_code != 200:
             logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
-        return ModelInfo.from_json(res.json())
+        return RemoteModelInfo.from_json(res.json())
 
     def list_models(self) -> list[ModelPreview]:
         """
@@ -382,7 +382,7 @@ class Focoos:
         logger.info("📥 Downloading model from Focoos Cloud.. ")
         try:
             model_path = self.api_client.download_file(download_uri, model_dir)
-            metadata = ModelInfo.from_json(download_data["model_metadata"])
+            metadata = RemoteModelInfo.from_json(download_data["model_metadata"])
             with open(metadata_path, "w") as f:
                 f.write(metadata.model_dump_json())
             logger.debug(f"Dumped metadata to {metadata_path}")

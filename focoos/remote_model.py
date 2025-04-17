@@ -32,8 +32,8 @@ from focoos.ports import (
     FocoosDetections,
     Hyperparameters,
     Metrics,
-    ModelInfo,
     ModelStatus,
+    RemoteModelInfo,
     Task,
     TrainingInfo,
     TrainInstance,
@@ -77,7 +77,7 @@ class RemoteModel:
         """
         self.model_ref = model_ref
         self.api_client = api_client
-        self.metadata: ModelInfo = self.get_info()
+        self.metadata: RemoteModelInfo = self.get_info()
 
         self.label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
         self.box_annotator = sv.BoxAnnotator()
@@ -86,7 +86,7 @@ class RemoteModel:
             f"[RemoteModel]: ref: {self.model_ref} name: {self.metadata.name} description: {self.metadata.description} status: {self.metadata.status}"
         )
 
-    def get_info(self) -> ModelInfo:
+    def get_info(self) -> RemoteModelInfo:
         """
         Retrieve model metadata.
 
@@ -109,7 +109,7 @@ class RemoteModel:
         if res.status_code != 200:
             logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
-        self.metadata = ModelInfo(**res.json())
+        self.metadata = RemoteModelInfo(**res.json())
         return self.metadata
 
     def train(
