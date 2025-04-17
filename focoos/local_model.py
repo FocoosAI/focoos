@@ -30,11 +30,11 @@ from PIL import Image
 from focoos.config import FOCOOS_CONFIG
 from focoos.ports import (
     FocoosDetections,
-    FocoosTask,
     LatencyMetrics,
     ModelFormat,
-    ModelMetadata,
+    ModelInfo,
     RuntimeTypes,
+    Task,
 )
 from focoos.runtime import BaseRuntime, load_runtime
 from focoos.utils.logger import get_logger
@@ -97,7 +97,7 @@ class LocalModel:
             raise FileNotFoundError(f"Model path not found: {self.model_path}")
 
         # Load metadata and set model reference
-        self.metadata: ModelMetadata = self._read_metadata()
+        self.metadata: ModelInfo = self._read_metadata()
         self.model_ref = self.metadata.ref
         self.postprocess_fn = get_postprocess_fn(self.metadata.task)
 
@@ -114,7 +114,7 @@ class LocalModel:
             FOCOOS_CONFIG.warmup_iter,
         )
 
-    def _read_metadata(self) -> ModelMetadata:
+    def _read_metadata(self) -> ModelInfo:
         """
         Reads the model metadata from a JSON file.
 
@@ -125,7 +125,7 @@ class LocalModel:
             FileNotFoundError: If the metadata file does not exist in the model directory.
         """
         metadata_path = os.path.join(self.model_dir, "focoos_metadata.json")
-        return ModelMetadata.from_json(metadata_path)
+        return ModelInfo.from_json(metadata_path)
 
     def _annotate(self, im: np.ndarray, detections: sv.Detections) -> np.ndarray:
         """
@@ -146,13 +146,13 @@ class LocalModel:
             f"{classes[int(class_id)] if classes is not None else str(class_id)}: {confid * 100:.0f}%"
             for class_id, confid in zip(detections.class_id, detections.confidence)  # type: ignore
         ]
-        if self.metadata.task == FocoosTask.DETECTION:
+        if self.metadata.task == Task.DETECTION:
             annotated_im = self.box_annotator.annotate(scene=im.copy(), detections=detections)
 
             annotated_im = self.label_annotator.annotate(scene=annotated_im, detections=detections, labels=labels)
         elif self.metadata.task in [
-            FocoosTask.SEMSEG,
-            FocoosTask.INSTANCE_SEGMENTATION,
+            Task.SEMSEG,
+            Task.INSTANCE_SEGMENTATION,
         ]:
             annotated_im = self.mask_annotator.annotate(scene=im.copy(), detections=detections)
         return annotated_im
@@ -196,7 +196,7 @@ class LocalModel:
         """
         assert self.runtime is not None, "Model is not deployed (locally)"
         resize = None  #!TODO  check for segmentation
-        if self.metadata.task == FocoosTask.DETECTION:
+        if self.metadata.task == Task.DETECTION:
             resize = 640 if not self.metadata.im_size else self.metadata.im_size
 
         t0 = perf_counter()

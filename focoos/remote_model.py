@@ -30,11 +30,11 @@ import supervision as sv
 from focoos.ports import (
     FocoosDet,
     FocoosDetections,
-    FocoosTask,
     Hyperparameters,
     Metrics,
-    ModelMetadata,
+    ModelInfo,
     ModelStatus,
+    Task,
     TrainingInfo,
     TrainInstance,
 )
@@ -77,7 +77,7 @@ class RemoteModel:
         """
         self.model_ref = model_ref
         self.api_client = api_client
-        self.metadata: ModelMetadata = self.get_info()
+        self.metadata: ModelInfo = self.get_info()
 
         self.label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
         self.box_annotator = sv.BoxAnnotator()
@@ -86,7 +86,7 @@ class RemoteModel:
             f"[RemoteModel]: ref: {self.model_ref} name: {self.metadata.name} description: {self.metadata.description} status: {self.metadata.status}"
         )
 
-    def get_info(self) -> ModelMetadata:
+    def get_info(self) -> ModelInfo:
         """
         Retrieve model metadata.
 
@@ -109,7 +109,7 @@ class RemoteModel:
         if res.status_code != 200:
             logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
-        self.metadata = ModelMetadata(**res.json())
+        self.metadata = ModelInfo(**res.json())
         return self.metadata
 
     def train(
@@ -243,13 +243,13 @@ class RemoteModel:
                 f"{str(class_id)}: {confid * 100:.0f}%"
                 for class_id, confid in zip(detections.class_id, detections.confidence)
             ]
-        if self.metadata.task == FocoosTask.DETECTION:
+        if self.metadata.task == Task.DETECTION:
             annotated_im = self.box_annotator.annotate(scene=im.copy(), detections=detections)
 
             annotated_im = self.label_annotator.annotate(scene=annotated_im, detections=detections, labels=labels)
         elif self.metadata.task in [
-            FocoosTask.SEMSEG,
-            FocoosTask.INSTANCE_SEGMENTATION,
+            Task.SEMSEG,
+            Task.INSTANCE_SEGMENTATION,
         ]:
             annotated_im = self.mask_annotator.annotate(scene=im.copy(), detections=detections)
         return annotated_im

@@ -21,12 +21,12 @@ from focoos.local_model import LocalModel
 from focoos.ports import (
     DatasetLayout,
     DatasetPreview,
-    FocoosTask,
     ModelFormat,
-    ModelMetadata,
+    ModelInfo,
     ModelNotFound,
     ModelPreview,
     RuntimeTypes,
+    Task,
     User,
 )
 from focoos.remote_dataset import RemoteDataset
@@ -145,7 +145,7 @@ class Focoos:
             raise ValueError(f"Failed to get user info: {res.status_code} {res.text}")
         return User.from_json(res.json())
 
-    def get_model_info(self, model_ref: str) -> ModelMetadata:
+    def get_model_info(self, model_ref: str) -> ModelInfo:
         """
         Retrieves metadata for a specific model.
 
@@ -170,7 +170,7 @@ class Focoos:
         if res.status_code != 200:
             logger.error(f"Failed to get model info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
-        return ModelMetadata.from_json(res.json())
+        return ModelInfo.from_json(res.json())
 
     def list_models(self) -> list[ModelPreview]:
         """
@@ -382,7 +382,7 @@ class Focoos:
         logger.info("📥 Downloading model from Focoos Cloud.. ")
         try:
             model_path = self.api_client.download_file(download_uri, model_dir)
-            metadata = ModelMetadata.from_json(download_data["model_metadata"])
+            metadata = ModelInfo.from_json(download_data["model_metadata"])
             with open(metadata_path, "w") as f:
                 f.write(metadata.model_dump_json())
             logger.debug(f"Dumped metadata to {metadata_path}")
@@ -462,7 +462,7 @@ class Focoos:
             datasets.extend([DatasetPreview.from_json(sh_dataset) for sh_dataset in res.json()])
         return datasets
 
-    def add_remote_dataset(self, name: str, description: str, layout: DatasetLayout, task: FocoosTask) -> RemoteDataset:
+    def add_remote_dataset(self, name: str, description: str, layout: DatasetLayout, task: Task) -> RemoteDataset:
         """
         Creates a new user dataset with the specified parameters.
 

@@ -9,16 +9,16 @@ from focoos.local_model import LocalModel
 from focoos.ports import (
     FocoosDet,
     FocoosDetections,
-    FocoosTask,
     LatencyMetrics,
-    ModelMetadata,
+    ModelInfo,
     RuntimeTypes,
+    Task,
 )
 from focoos.runtime import ONNXRuntime, TorchscriptRuntime
 
 
 @pytest.fixture
-def mock_model_dir(tmp_path, mock_metadata: ModelMetadata):
+def mock_model_dir(tmp_path, mock_metadata: ModelInfo):
     model_dir = tmp_path / "model"
     model_dir.mkdir()
     metadata_path = model_dir / "focoos_metadata.json"
@@ -166,7 +166,7 @@ def test_annotate_detection(image_ndarray: np.ndarray, mock_local_model_onnx: Lo
 
 
 def test_annotate_semseg(image_ndarray: np.ndarray, mock_local_model_onnx: LocalModel, mock_sv_detections):
-    mock_local_model_onnx.metadata.task = FocoosTask.SEMSEG
+    mock_local_model_onnx.metadata.task = Task.SEMSEG
     annotated_im = mock_local_model_onnx._annotate(image_ndarray, mock_sv_detections)
     assert annotated_im is not None
     assert isinstance(annotated_im, np.ndarray)

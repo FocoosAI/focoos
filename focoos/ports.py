@@ -115,7 +115,7 @@ class DatasetLayout(str, Enum):
     SUPERVISELY = "supervisely"
 
 
-class FocoosTask(str, Enum):
+class Task(str, Enum):
     """Types of computer vision tasks supported by Focoos.
 
     Values:
@@ -302,7 +302,7 @@ class ModelPreview(FocoosBaseModel):
 
     ref: str
     name: str
-    task: FocoosTask
+    task: Task
     description: Optional[str] = None
     status: ModelStatus
     focoos_model: str
@@ -342,13 +342,13 @@ class DatasetPreview(FocoosBaseModel):
 
     ref: str
     name: str
-    task: FocoosTask
+    task: Task
     layout: DatasetLayout
     description: Optional[str] = None
     spec: Optional[DatasetSpec] = None
 
 
-class ModelMetadata(FocoosBaseModel):
+class ModelInfo(FocoosBaseModel):
     """Complete metadata for a Focoos model.
 
     This class contains comprehensive information about a model in the Focoos platform,
@@ -379,7 +379,7 @@ class ModelMetadata(FocoosBaseModel):
     description: Optional[str] = None
     owner_ref: str
     focoos_model: str
-    task: FocoosTask
+    task: Task
     created_at: datetime
     updated_at: datetime
     status: ModelStatus

@@ -2,7 +2,7 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
-from focoos.ports import DatasetLayout, DatasetPreview, FocoosTask
+from focoos.ports import DatasetLayout, DatasetPreview, Task
 from focoos.remote_dataset import RemoteDataset
 
 
@@ -20,7 +20,7 @@ def dataset_preview_data():
         "ref": "test-dataset",
         "name": "Test Dataset",
         "layout": DatasetLayout.ROBOFLOW_COCO,
-        "task": FocoosTask.DETECTION,
+        "task": Task.DETECTION,
         "description": "Test dataset description",
         "spec": {"train_length": 100, "valid_length": 20, "size_mb": 256.0},
     }

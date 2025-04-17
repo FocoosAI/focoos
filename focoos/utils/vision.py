@@ -9,7 +9,7 @@ import supervision as sv
 from scipy.ndimage import zoom
 from typing_extensions import Buffer
 
-from focoos.ports import FocoosDet, FocoosDetections, FocoosTask
+from focoos.ports import FocoosDet, FocoosDetections, Task
 
 
 def index_to_class(class_ids: list[int], classes: list[str]) -> list[str]:
@@ -273,10 +273,10 @@ def masks_to_xyxy(masks: np.ndarray) -> np.ndarray:
     return xyxy
 
 
-def get_postprocess_fn(task: FocoosTask):
-    if task == FocoosTask.INSTANCE_SEGMENTATION:
+def get_postprocess_fn(task: Task):
+    if task == Task.INSTANCE_SEGMENTATION:
         return instance_postprocess
-    elif task == FocoosTask.SEMSEG:
+    elif task == Task.SEMSEG:
         return semseg_postprocess
     else:
         return det_postprocess

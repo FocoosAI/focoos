@@ -42,7 +42,7 @@ except ImportError:
 # from supervision.detection.utils import mask_to_xyxy
 from focoos.ports import (
     LatencyMetrics,
-    ModelMetadata,
+    ModelInfo,
     OnnxRuntimeOpts,
     RuntimeTypes,
     TorchscriptRuntimeOpts,
@@ -68,7 +68,7 @@ class BaseRuntime:
         model_metadata (ModelMetadata): Metadata about the model.
     """
 
-    def __init__(self, model_path: str, opts: Any, model_metadata: ModelMetadata):
+    def __init__(self, model_path: str, opts: Any, model_metadata: ModelInfo):
         """
         Initialize the runtime with model path, options and metadata.
 
@@ -125,7 +125,7 @@ class ONNXRuntime(BaseRuntime):
         dtype (np.dtype): Input data type for the model.
     """
 
-    def __init__(self, model_path: str, opts: OnnxRuntimeOpts, model_metadata: ModelMetadata):
+    def __init__(self, model_path: str, opts: OnnxRuntimeOpts, model_metadata: ModelInfo):
         self.logger = get_logger()
 
         self.logger.debug(f"🔧 [onnxruntime device] {ort.get_device()}")
@@ -306,7 +306,7 @@ class TorchscriptRuntime(BaseRuntime):
         self,
         model_path: str,
         opts: TorchscriptRuntimeOpts,
-        model_metadata: ModelMetadata,
+        model_metadata: ModelInfo,
     ):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.logger = get_logger(name="TorchscriptEngine")
@@ -396,7 +396,7 @@ class TorchscriptRuntime(BaseRuntime):
 def load_runtime(
     runtime_type: RuntimeTypes,
     model_path: str,
-    model_metadata: ModelMetadata,
+    model_metadata: ModelInfo,
     warmup_iter: int = 0,
 ) -> BaseRuntime:
     """

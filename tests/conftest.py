@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from focoos.ports import FocoosTask, ModelMetadata, ModelStatus
+from focoos.ports import ModelInfo, ModelStatus, Task
 
 
 @pytest.fixture
@@ -49,13 +49,13 @@ def image_ndarray(pil_image: Image.Image) -> np.ndarray:
 
 @pytest.fixture
 def mock_metadata():
-    return ModelMetadata(
+    return ModelInfo(
         ref="test_model_ref",
         name="Test Model",
         description="A test model for unit tests",
         owner_ref="test_owner",
         focoos_model="test_focoos_model",
-        task=FocoosTask.DETECTION,
+        task=Task.DETECTION,
         created_at=datetime.datetime.now(),
         updated_at=datetime.datetime.now(),
         status=ModelStatus.DEPLOYED,

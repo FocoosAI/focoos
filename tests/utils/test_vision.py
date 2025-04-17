@@ -4,7 +4,7 @@ import math
 import numpy as np
 import supervision as sv
 
-from focoos.ports import FocoosDet, FocoosTask
+from focoos.ports import FocoosDet, Task
 from focoos.utils.vision import (
     base64mask_to_mask,
     binary_mask_to_base64,
@@ -277,19 +277,19 @@ def test_get_postprocess_fn():
     the correct postprocessing function for each task.
     """
     # Test detection task
-    det_fn = get_postprocess_fn(FocoosTask.DETECTION)
+    det_fn = get_postprocess_fn(Task.DETECTION)
     assert det_fn == det_postprocess, "Detection task should return det_postprocess function"
 
     # Test instance segmentation task
-    instance_fn = get_postprocess_fn(FocoosTask.INSTANCE_SEGMENTATION)
+    instance_fn = get_postprocess_fn(Task.INSTANCE_SEGMENTATION)
     assert instance_fn == instance_postprocess, "Instance segmentation task should return instance_postprocess function"
 
     # Test semantic segmentation task
-    semseg_fn = get_postprocess_fn(FocoosTask.SEMSEG)
+    semseg_fn = get_postprocess_fn(Task.SEMSEG)
     assert semseg_fn == semseg_postprocess, "Semantic segmentation task should return semseg_postprocess function"
 
     # Test all FocoosTask values to ensure no exceptions
-    for task in FocoosTask:
+    for task in Task:
         fn = get_postprocess_fn(task)
         assert callable(fn), f"Postprocess function for {task} should be callable"
 
