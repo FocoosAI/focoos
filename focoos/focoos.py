@@ -17,7 +17,7 @@ import os
 from typing import Optional, Union
 
 from focoos.config import FOCOOS_CONFIG
-from focoos.infer_model import InferModel
+from focoos.infer.infer_model import InferModel
 from focoos.ports import (
     DatasetLayout,
     DatasetPreview,
@@ -29,8 +29,8 @@ from focoos.ports import (
     Task,
     User,
 )
-from focoos.remote_dataset import RemoteDataset
-from focoos.remote_model import RemoteModel
+from focoos.remote.remote_dataset import RemoteDataset
+from focoos.remote.remote_model import RemoteModel
 from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import setup_logging
 
@@ -220,7 +220,7 @@ class Focoos:
             raise ValueError(f"Failed to list focoos models: {res.status_code} {res.text}")
         return [ModelPreview.from_json(r) for r in res.json()]
 
-    def get_local_model(
+    def get_infer_model(
         self,
         model_ref: str,
         runtime_type: Optional[RuntimeTypes] = RuntimeTypes.ONNX_CUDA32,
@@ -319,8 +319,9 @@ class Focoos:
             return RemoteModel(res.json()["ref"], self.api_client)
         if res.status_code == 409:
             logger.warning(f"Model already exists: {name}")
-            return self.get_model_by_name(name, remote=True)
+            return self.get_model_by_name(name, remote=True)  # type: ignore
         logger.warning(f"Failed to create new model: {res.status_code} {res.text}")
+        raise ValueError(f"Failed to create new model: {res.status_code} {res.text}")
 
     def list_shared_datasets(self) -> list[DatasetPreview]:
         """
@@ -413,7 +414,7 @@ class Focoos:
                 if remote:
                     return self.get_remote_model(model.ref)
                 else:
-                    return self.get_local_model(model.ref)
+                    return self.get_infer_model(model.ref)
         raise ModelNotFound(f"Model not found: {name}")
 
     def list_datasets(self, include_shared: bool = False) -> list[DatasetPreview]:

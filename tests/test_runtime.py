@@ -126,12 +126,12 @@ def test_load_runtime(mocker: MockerFixture, tmp_path, runtime_type, expected_op
 
     # mock opts
     if runtime_type == RuntimeTypes.TORCHSCRIPT_32:
-        mocker.patch("focoos.runtime.TORCH_AVAILABLE", True)
-        mock_runtime_class = mocker.patch("focoos.runtime.TorchscriptRuntime", autospec=True)
+        mocker.patch("focoos.infer.runtimes.load_runtime.TORCH_AVAILABLE", True)
+        mock_runtime_class = mocker.patch("focoos.infer.runtimes.torchscript.TorchscriptRuntime", autospec=True)
         mock_runtime_class.return_value = MagicMock(spec=TorchscriptRuntime, opts=expected_opts)
     else:
-        mocker.patch("focoos.runtime.ORT_AVAILABLE", True)
-        mock_runtime_class = mocker.patch("focoos.runtime.ONNXRuntime", autospec=True)
+        mocker.patch("focoos.infer.runtimes.load_runtime.ORT_AVAILABLE", True)
+        mock_runtime_class = mocker.patch("focoos.infer.runtimes.onnx.ONNXRuntime", autospec=True)
         mock_runtime_class.return_value = MagicMock(spec=ONNXRuntime, opts=expected_opts)
 
     # warmup_iter
@@ -155,8 +155,8 @@ def test_load_runtime(mocker: MockerFixture, tmp_path, runtime_type, expected_op
 
 
 def test_load_unavailable_runtime(mocker: MockerFixture):
-    mocker.patch("focoos.runtime.ORT_AVAILABLE", False)
-    mocker.patch("focoos.runtime.TORCH_AVAILABLE", False)
+    mocker.patch("focoos.infer.runtimes.load_runtime.ORT_AVAILABLE", False)
+    mocker.patch("focoos.infer.runtimes.load_runtime.TORCH_AVAILABLE", False)
     with pytest.raises(ImportError):
         load_runtime(RuntimeTypes.TORCHSCRIPT_32, "fake_model_path", MagicMock(spec=RemoteModelInfo), 2)
     with pytest.raises(ImportError):

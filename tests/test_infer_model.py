@@ -32,21 +32,21 @@ def mock_model_dir(tmp_path, mock_metadata: RemoteModelInfo):
 def mock_local_model_onnx(mocker: MockerFixture, mock_model_dir, image_ndarray):
     # Mock get_runtime
     mock_runtime = MagicMock(spec=ONNXRuntime)
-    mock_get_runtime = mocker.patch("focoos.local_model.load_runtime", mock_runtime)
+    mock_get_runtime = mocker.patch("focoos.infer.runtimes.load_runtime.load_runtime", mock_runtime)
     mock_get_runtime.return_value = mock_runtime
-    mocker.patch("focoos.local_model.os.path.exists", return_value=True)
+    mocker.patch("focoos.infer.runtimes.load_runtime.os.path.exists", return_value=True)
     model = InferModel(model_dir=mock_model_dir, runtime_type=RuntimeTypes.ONNX_CPU)
 
     # Mock BoxAnnotator
-    mock_box_annotator = mocker.patch("focoos.local_model.sv.BoxAnnotator", autospec=True)
+    mock_box_annotator = mocker.patch("focoos.infer.runtimes.sv.BoxAnnotator", autospec=True)
     mock_box_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
 
     # Mock LabelAnnotator
-    mock_label_annotator = mocker.patch("focoos.local_model.sv.LabelAnnotator", autospec=True)
+    mock_label_annotator = mocker.patch("focoos.infer.runtimes.sv.LabelAnnotator", autospec=True)
     mock_label_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
 
     # Mock MaskAnnotator
-    mock_mask_annotator = mocker.patch("focoos.local_model.sv.MaskAnnotator", autospec=True)
+    mock_mask_annotator = mocker.patch("focoos.infer.runtimes.sv.MaskAnnotator", autospec=True)
     mock_mask_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
 
     # Inject mock annotators into the local model
@@ -60,9 +60,9 @@ def mock_local_model_onnx(mocker: MockerFixture, mock_model_dir, image_ndarray):
 def mock_local_model_torch(mocker: MockerFixture, mock_model_dir, image_ndarray):
     # Mock get_runtime
     mock_runtime = MagicMock(spec=TorchscriptRuntime)
-    mock_get_runtime = mocker.patch("focoos.local_model.load_runtime", mock_runtime)
+    mock_get_runtime = mocker.patch("focoos.infer.runtimes.load_runtime.load_runtime", mock_runtime)
     mock_get_runtime.return_value = mock_runtime
-    mocker.patch("focoos.local_model.os.path.exists", return_value=True)
+    mocker.patch("focoos.infer.runtimes.load_runtime.os.path.exists", return_value=True)
     model = InferModel(model_dir=mock_model_dir, runtime_type=RuntimeTypes.TORCHSCRIPT_32)
 
     # Mock BoxAnnotator

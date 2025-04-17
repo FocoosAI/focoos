@@ -251,7 +251,7 @@ def test_get_model_by_name_local(
     model_name,
 ):
     focoos_instance.list_models = MagicMock(return_value=mock_list_models_as_base_models)
-    focoos_instance.get_local_model = MagicMock(return_value=mock_local_model)
+    focoos_instance.get_infer_model = MagicMock(return_value=mock_local_model)
     model = focoos_instance.get_model_by_name(name=model_name, remote=False)
     assert model is not None
     assert model.model_ref == "ref1"
@@ -275,9 +275,9 @@ def test_get_remote_model(mocker: MockerFixture, focoos_instance: Focoos, mock_r
     assert isinstance(model, RemoteModel)
 
 
-def test_get_local_model(mocker: MockerFixture, focoos_instance: Focoos, mock_local_model):
+def test_get_infer_model(mocker: MockerFixture, focoos_instance: Focoos, mock_local_model):
     # Mock the LocalModel class
-    mock_local_model_class = mocker.patch("focoos.focoos.LocalModel", autospec=True)
+    mock_local_model_class = mocker.patch("focoos.infer.infer_model.InferModel", autospec=True)
     mock_local_model_class.return_value = mock_local_model
 
     # Spy on the _download_model method
@@ -291,7 +291,7 @@ def test_get_local_model(mocker: MockerFixture, focoos_instance: Focoos, mock_lo
         model_path.mkdir(parents=True, exist_ok=True)
 
         # Call the method under test
-        model = focoos_instance.get_local_model(model_ref)
+        model = focoos_instance.get_infer_model(model_ref)
 
         # Assertions
         assert model is not None
@@ -320,7 +320,7 @@ def test_get_local_model_with_download(mocker: MockerFixture, focoos_instance: F
         model_path = model_path / "model.onnx"
 
         # Call the method under test
-        model = focoos_instance.get_local_model(model_ref)
+        model = focoos_instance.get_infer_model(model_ref)
 
         # Assertions
         assert model is not None
