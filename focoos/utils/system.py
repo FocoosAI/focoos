@@ -2,9 +2,14 @@ import importlib.metadata as metadata
 import os
 import platform
 import subprocess
-from typing import Optional
+import tarfile
+import time
+import zipfile
+from pathlib import Path
+from typing import List, Optional, Union
 
 from focoos.ports import GPUInfo
+from focoos.utils.distributed import comm
 
 try:
     import onnxruntime as ort
@@ -218,3 +223,161 @@ def get_system_info() -> SystemInfo:
         packages_versions=versions,
         environment=environments,
     )
+
+
+def check_folder_exists(folder_path: Union[str, Path]) -> bool:
+    """
+    Check if a specified folder exists.
+
+    Parameters:
+        folder_path (Union[str, Path]): The path to the folder to check.
+
+    Returns:
+        bool: True if the folder exists, False otherwise.
+    """
+    folder_path = Path(folder_path)
+    return folder_path.is_dir()
+
+
+def is_inside_sagemaker():
+    res = os.environ.get("SM_HOSTS") is not None
+    return res
+
+
+def list_dir(base_directory: Union[str, Path]) -> List[Path]:
+    """
+    A function that lists directories within a base directory.
+
+    Parameters:
+    - base_directory: A Union of str or Path, the base directory to list directories from.
+
+    Returns:
+    - List[Path]: A list of Path objects representing directories within the base directory.
+    """
+    base_directory = Path(base_directory)
+    directories = [child for child in base_directory.iterdir() if child.is_dir()]
+    return directories
+
+
+def extract_archive(
+    archive_path: str, destination: Optional[str] = None, delete_original: bool = False
+) -> Union[str, Path]:
+    """
+    Extract an archive to a specified destination or the same folder.
+
+    This function supports extracting .zip, .tar.gz, and .tar files.
+
+    Args:
+        archive_path (str): The path to the archive file to be extracted.
+        destination (Optional[str]): The path where the archive should be extracted.
+            If None, the archive will be extracted to its current directory.
+            Defaults to None.
+        delete_original (bool): If True, deletes the original archive file after extraction.
+            Defaults to False.
+
+    Returns:
+        str: The path to the directory where the archive was extracted.
+
+    Raises:
+        ValueError: If the archive format is not supported.
+
+    Note:
+        The function logs the start and end of the extraction process, including the time taken.
+    """
+
+    # Determine the extraction path
+    t0 = time.time()
+    base_dir = os.path.dirname(archive_path)
+    if destination is not None:
+        extracted_dir = os.path.join(base_dir, destination)
+    else:
+        extracted_dir = base_dir
+
+    if comm.is_main_process():
+        logger.info(f"Extracting archive: {archive_path} to {extracted_dir}")
+
+        # Create the extracted directory
+        os.makedirs(extracted_dir, exist_ok=True)
+
+        # Get the file extension
+        file_extension = get_file_extension(archive_path)
+
+        # Extract the archive
+        if file_extension == "application/zip":
+            with zipfile.ZipFile(archive_path, "r") as zip_ref:
+                zip_ref.extractall(extracted_dir)
+        elif file_extension == "application/gzip":
+            with tarfile.open(archive_path, "r:gz") as tar_ref:
+                tar_ref.extractall(extracted_dir)
+        elif file_extension == "application/x-tar":
+            with tarfile.open(archive_path, "r:") as tar_ref:
+                tar_ref.extractall(extracted_dir)
+        else:
+            raise ValueError("Unsupported archive format. Only .zip and .tar.gz are supported.")
+        t1 = time.time()
+        logger.info(f"[elapsed {t1 - t0:.3f} ] Extracted archive to: {extracted_dir}")
+
+    comm.synchronize()
+    if len(list_dir(extracted_dir)) == 1:
+        extracted_dir = list_dir(extracted_dir)[0]
+
+    # Optionally delete the original archive
+    if delete_original:
+        os.remove(archive_path)
+
+    return extracted_dir
+
+
+def get_file_extension(file_path):
+    """
+    Determine the MIME type of a file based on its extension.
+
+    Args:
+        file_path (str): Path to the file
+
+    Returns:
+        str: MIME type of the file
+    """
+    extension = os.path.splitext(file_path)[1].lower()
+
+    # Map common extensions to MIME types
+    mime_types = {
+        ".zip": "application/zip",
+        ".gz": "application/gzip",
+        ".tar": "application/x-tar",
+        ".tar.gz": "application/gzip",
+        ".tgz": "application/gzip",
+    }
+
+    # Check for .tar.gz extension first
+    if file_path.lower().endswith(".tar.gz") or file_path.lower().endswith(".tgz"):
+        mime_type = "application/gzip"
+    else:
+        mime_type = mime_types.get(extension, "application/octet-stream")
+
+    logger.info(f"Supposed file extension: {mime_type}")
+    return mime_type
+
+
+def list_files_with_extensions(base_dir: Union[str, Path], extensions: Optional[List[str]] = None) -> List[Path]:
+    """
+    A function that lists files in a directory based on the provided extensions.
+
+    Parameters:
+    - base_dir: Union[str, Path] - The base directory where the files will be listed.
+    - extensions: Optional[List[str]] - A list of file extensions to filter the files by.
+
+    Returns:
+    - List[Path]: A list of Path objects representing the files in the directory matching the provided extensions.
+    """
+    base_dir = Path(base_dir)
+    if extensions:
+        files = []
+        for ext in extensions:
+            if ext.startswith("."):
+                ext = ext[1:]
+            _glob = f"*.{ext}"
+            files.extend(base_dir.glob(_glob))
+    else:
+        files = base_dir.glob("*")
+    return [file for file in files if file.is_file()]

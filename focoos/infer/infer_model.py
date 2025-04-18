@@ -210,7 +210,9 @@ class InferModel:
         t2 = perf_counter()
 
         detections = self.postprocess_fn(
-            out=detections, im0_shape=(im0.shape[0], im0.shape[1]), conf_threshold=threshold
+            out=detections,
+            im0_shape=(im0.shape[0], im0.shape[1]),
+            conf_threshold=threshold,  # type: ignore
         )
         out = sv_to_fai_detections(detections, classes=self.metadata.classes)
         t3 = perf_counter()

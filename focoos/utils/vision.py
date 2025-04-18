@@ -156,7 +156,7 @@ def fai_detections_to_sv(inference_output: FocoosDetections, im0_shape: tuple) -
                 mask = base64mask_to_mask(det.mask)
                 if det.bbox is not None and not np.array_equal(det.bbox, [0, 0, 0, 0]):
                     x1, y1, x2, y2 = map(int, det.bbox)
-                    y2, x2 = min(y2, _masks[i].shape[0]), min(x2, _masks[i].shape[1])
+                    y2, x2 = min(y2, _masks[i].shape[0]), min(x2, _masks[i].shape[1])  # type: ignore
                     _masks[i][y1:y2, x1:x2] = mask[: y2 - y1, : x2 - x1]
                 else:
                     _masks[i] = mask

@@ -42,9 +42,14 @@ dependencies = [
     "scipy~=1.14.1",
     "psutil~=6.1.1",
     "setuptools~=75.7.0",
-    "matplotlib~=3.10.0",
+    "matplotlib~=3.10.1",
     "colorama~=0.4.6",
-    "ipython"
+    "ipython",
+    "fvcore~=0.1.4",
+    "pycocotools~=2.0.8",
+    "faster_coco_eval~=1.6.5",
+    "timm~=0.9.16",
+    "tensorboard~=2.19.0",
 ]
 
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]

@@ -1,17 +1,27 @@
+import inspect
 import json
+import os
 import re
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Annotated, Literal, Optional, Union
+from pathlib import Path
+from typing import Annotated, List, Literal, Optional, Tuple, Type, Union
 
 from pydantic import BaseModel, Field, field_validator
+
+from focoos.structures import Instances
 
 S3_URL_REGEX = re.compile(r"^s3://" r"(?P<bucket>[a-zA-Z0-9.-]+)/" r"(?P<path>.+(\.tar\.gz|\.zip)?)$")
 
 DEV_API_URL = "https://api.dev.focoos.ai/v0"
 PROD_API_URL = "https://api.focoos.ai/v0"
 LOCAL_API_URL = "http://localhost:8501/v0"
+
+ROOT_DIR = Path.home() / ".cache" / "focoos"
+ROOT_DIR = str(ROOT_DIR) if os.name == "nt" else ROOT_DIR
+MODELS_ROOT = os.path.join(ROOT_DIR, "models")
+DATASETS_ROOT = os.path.join(ROOT_DIR, "datasets")
 
 
 class FocoosBaseModel(BaseModel):
@@ -732,3 +742,286 @@ class Metrics(FocoosBaseModel):
     iterations: Optional[int] = None
     best_valid_metric: Optional[dict] = None
     updated_at: Optional[datetime] = None
+
+
+class ModelFamily(str, Enum):
+    """Enumerazione delle famiglie di modelli disponibili"""
+
+    RTDETR = "fai_rtdetr"
+    M2F = "fai_m2f"
+    PEM = "fai_pem"
+    BF = "fai_bf"
+
+
+@dataclass
+class ModelConfig:
+    num_classes: int
+    # other parameters are model-specific
+
+
+@dataclass
+class ModelOutput:
+    def to_instances(self) -> Optional[Instances]:
+        pass
+
+
+class DatasetSplitType(str, Enum):
+    TRAIN = "train"
+    VAL = "val"
+    TEST = "test"
+
+
+@dataclass
+class ModelInfo:
+    """Detailed information about a specific model.
+
+    This class stores all the necessary information to identify, configure, and evaluate a model.
+
+    Attributes:
+        name: Unique identifier for the model.
+        model_family: The family/architecture the model belongs to (e.g., RTDETR, M2F).
+        config_class: The configuration class type used to instantiate the model.
+        classes: List of class names the model can detect/segment.
+        im_size: Input image size (typically square dimensions).
+        task: The task the model performs (detection, segmentation, etc.).
+        config: Configuration instance with model-specific parameters.
+        description: Optional human-readable description of the model.
+        weights_uri: Optional path or URI to the model weights.
+        val_dataset: Optional name of the validation dataset used.
+        val_metrics: Optional dictionary containing validation metrics.
+        latency: Optional list of latency measurements across different runtimes.
+    """
+
+    name: str
+    model_family: ModelFamily
+    config_class: Type[ModelConfig]
+    classes: list[str]
+    im_size: int
+    task: Task
+    config: ModelConfig
+    description: Optional[str] = None
+    weights_uri: Optional[str] = None
+    val_dataset: Optional[str] = None
+    val_metrics: Optional[dict] = None  # todo: make them explicit
+    latency: Optional[list[LatencyMetrics]] = None
+
+    @classmethod
+    def from_json(cls, path: str):
+        with open(path, encoding="utf-8") as f:
+            model_info = json.load(f)
+        return cls(**model_info)
+
+    def dump_json(self, path: str):
+        data = asdict(self)
+        # Convert config_class to string
+        data["config_class"] = self.config_class.__name__
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+
+
+@dataclass
+class DatasetMetadata:
+    """Dataclass for storing dataset metadata."""
+
+    num_classes: int
+    task: Task
+    count: Optional[int] = None
+    name: Optional[str] = None
+    image_root: Optional[str] = None
+    thing_classes: Optional[List[str]] = None
+    _thing_colors: Optional[List[Tuple]] = None
+    stuff_classes: Optional[List[str]] = None
+    _stuff_colors: Optional[List[Tuple]] = None
+    sem_seg_root: Optional[str] = None
+    panoptic_root: Optional[str] = None
+    ignore_label: Optional[int] = None
+    thing_dataset_id_to_contiguous_id: Optional[dict] = None
+    stuff_dataset_id_to_contiguous_id: Optional[dict] = None
+    json_file: Optional[str] = None
+
+    @property
+    def classes(self):  #!TODO: check if this is correct
+        if self.task == Task.DET or self.task == Task.INSTSEG:
+            return self.thing_classes
+        if self.task == Task.SEMSEG or self.task == Task.PANSEG:
+            # fixme: not sure for panoptic
+            return self.stuff_classes
+
+    @property
+    def stuff_colors(self):
+        if self._stuff_colors is not None:
+            return self._stuff_colors
+        if self.stuff_classes is None:
+            return []
+        return [((i * 64) % 255, (i * 128) % 255, (i * 32) % 255) for i in range(len(self.stuff_classes))]
+
+    @stuff_colors.setter
+    def stuff_colors(self, colors):
+        self._stuff_colors = colors
+
+    @property
+    def thing_colors(self):
+        if self._thing_colors is not None:
+            return self._thing_colors
+        if self.thing_classes is None:
+            return []
+        return [((i * 64) % 255, (i * 128) % 255, (i * 32) % 255) for i in range(1, len(self.thing_classes) + 1)]
+
+    @thing_colors.setter
+    def thing_colors(self, colors):
+        self._thing_colors = colors
+
+    @classmethod
+    def from_dict(cls, metadata: dict):
+        """Create DatasetMetadata from a dictionary.
+
+        Args:
+            metadata (dict): Dictionary containing metadata.
+
+        Returns:
+            DatasetMetadata: Instance of DatasetMetadata.
+        """
+        metadata = {k: v for k, v in metadata.items() if k in inspect.signature(cls).parameters}
+        metadata["task"] = Task(metadata["task"])
+        return cls(**metadata)
+
+    @classmethod
+    def from_json(cls, path: str):
+        """Create DatasetMetadata from a json file.
+
+        Args:
+            path (str): Path to json file.
+
+        Returns:
+            DatasetMetadata: Instance of DatasetMetadata.
+        """
+        with open(path, encoding="utf-8") as f:
+            metadata = json.load(f)
+        metadata["task"] = Task(metadata["task"])
+        return cls(**metadata)
+
+    def dump_json(self, path: str):
+        """Dump DatasetMetadata to a json file.
+
+        Args:
+            path (str): Path to json file.
+        """
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(asdict(self), f, ensure_ascii=False, indent=4)
+
+    def get(self, attr, default=None):
+        if hasattr(self, attr):
+            return getattr(self, attr)
+        else:
+            return default
+
+
+@dataclass
+class TrainerArgs:
+    """Configuration class for unified model training.
+
+    Attributes:
+        run_name (str): Name of the training run
+        output_dir (str): Directory to save outputs
+        ckpt_dir (Optional[str]): Directory for checkpoints
+        init_checkpoint (Optional[str]): Initial checkpoint to load
+        resume (bool): Whether to resume from checkpoint
+        num_gpus (int): Number of GPUs to use
+        device (str): Device to use (cuda/cpu)
+        workers (int): Number of data loading workers
+        amp_enabled (bool): Whether to use automatic mixed precision
+        ddp_broadcast_buffers (bool): Whether to broadcast buffers in DDP
+        ddp_find_unused (bool): Whether to find unused parameters in DDP
+        checkpointer_period (int): How often to save checkpoints
+        checkpointer_max_to_keep (int): Maximum checkpoints to keep
+        eval_period (int): How often to evaluate
+        log_period (int): How often to log
+        vis_period (int): How often to visualize
+        samples (int): Number of samples for visualization
+        seed (int): Random seed
+        early_stop (bool): Whether to use early stopping
+        patience (int): Early stopping patience
+        ema_enabled (bool): Whether to use EMA
+        ema_decay (float): EMA decay rate
+        ema_warmup (int): EMA warmup period
+        learning_rate (float): Base learning rate
+        weight_decay (float): Weight decay
+        max_iters (int): Maximum training iterations
+        batch_size (int): Batch size
+        scheduler (str): Learning rate scheduler type
+        scheduler_extra (Optional[dict]): Extra scheduler parameters
+        optimizer (str): Optimizer type
+        optimizer_extra (Optional[dict]): Extra optimizer parameters
+        weight_decay_norm (float): Weight decay for normalization layers
+        weight_decay_embed (float): Weight decay for embeddings
+        backbone_multiplier (float): Learning rate multiplier for backbone
+        decoder_multiplier (float): Learning rate multiplier for decoder
+        head_multiplier (float): Learning rate multiplier for head
+        freeze_bn (bool): Whether to freeze batch norm
+        freeze_bn_bkb (bool): Whether to freeze backbone batch norm
+        reset_classifier (bool): Whether to reset classifier
+        clip_gradients (float): Gradient clipping value
+        size_divisibility (int): Input size divisibility requirement
+        gather_metric_period (int): How often to gather metrics
+        zero_grad_before_forward (bool): Whether to zero gradients before forward pass
+    """
+
+    run_name: str
+    output_dir: str
+    ckpt_dir: Optional[str] = None
+    init_checkpoint: Optional[str] = None
+    resume: bool = False
+    # Logistics params
+    num_gpus: Optional[int] = 0
+    device: str = "cuda"
+    workers: int = 4
+    amp_enabled: bool = True
+    ddp_broadcast_buffers: bool = False
+    ddp_find_unused: bool = True
+    checkpointer_period: int = 1000
+    checkpointer_max_to_keep: int = 1
+    eval_period: int = 50
+    log_period: int = 20
+    vis_period: int = 5000
+    samples: int = 4
+    seed: int = 42
+    early_stop: bool = False
+    patience: int = 10
+    # EMA
+    ema_enabled: bool = False
+    ema_decay: float = 0.999
+    ema_warmup: int = 2000
+    # Hyperparameters
+    learning_rate: float = 5e-4
+    weight_decay: float = 0.02
+    max_iters: int = 3000
+    batch_size: int = 16
+    scheduler: str = "POLY"
+    scheduler_extra: Optional[dict] = None
+    optimizer: str = "AdamW"
+    optimizer_extra: Optional[dict] = None
+    weight_decay_norm: float = 0.0
+    weight_decay_embed: float = 0.0
+    backbone_multiplier: float = 0.1
+    decoder_multiplier: float = 1.0
+    head_multiplier: float = 1.0
+    freeze_bn: bool = False
+    freeze_bn_bkb: bool = False
+    reset_classifier: bool = False
+    clip_gradients: float = 0.1
+    size_divisibility: int = 0
+    # Training specific
+    gather_metric_period: int = 1
+    zero_grad_before_forward: bool = False
+
+
+@dataclass
+class DetectronDict:
+    file_name: str
+    height: Optional[int] = None
+    width: Optional[int] = None
+    image_id: Optional[Union[str, int]] = None
+    sem_seg_file_name: Optional[str] = None
+    pan_seg_file_name: Optional[str] = None
+    annotations: Optional[list[dict]] = None
+    segments_info: Optional[list[dict]] = None

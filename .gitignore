@@ -91,4 +91,5 @@ notebooks/.data
 /data
 tests/junit.xml
 notebooks/datasets
+notebooks/experiments
 site/

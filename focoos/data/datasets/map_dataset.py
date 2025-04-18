@@ -1,0 +1,64 @@
+import logging
+import random
+
+import torch.utils.data as data
+
+from focoos.data.datasets.dict_dataset import DictDataset
+from focoos.data.mappers.mapper import DatasetMapper
+
+
+class MapDataset(data.Dataset):
+    """
+    Map a function over the elements in a dataset.
+    """
+
+    def __init__(self, dataset: DictDataset, mapper: DatasetMapper):
+        """
+        Args:
+            dataset: a dataset where map function is applied. Can be either
+                map-style or iterable dataset. When given an iterable dataset,
+                the returned object will also be an iterable dataset.
+            map_func: a callable which maps the element in dataset. map_func can
+                return None to skip the data (e.g. in case of errors).
+                How None is handled depends on the style of `dataset`.
+                If `dataset` is map-style, it randomly tries other elements.
+                If `dataset` is iterable, it skips the data and tries the next.
+        """
+        self.dataset = dataset
+        self.mapper = mapper  # wrap so that a lambda will work
+        self.logger = logging.getLogger(__name__)
+
+        self._rng = random.Random(42)
+        self._fallback_candidates = set(range(len(dataset)))
+
+    def __getnewargs__(self):
+        return self.dataset, self.mapper
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        retry_count = 0
+        cur_idx = int(idx)
+
+        while True:
+            try:
+                data = self.mapper(self.dataset[cur_idx])
+            except Exception as e:
+                self.logger.warning(f"Error mapping item {cur_idx}: {e}")
+                data = None
+                if retry_count >= 10:
+                    raise e
+
+            if data is not None and (data.instances is None or len(data.instances) > 0):
+                # if it has annotations, it must more than 1 instance, otherwise it is not a valid training data
+                self._fallback_candidates.add(cur_idx)
+                return data
+
+            # _map_func fails for this idx, use a random new index from the pool
+            retry_count += 1
+            self._fallback_candidates.discard(cur_idx)
+            cur_idx = self._rng.sample(sorted(self._fallback_candidates), k=1)[0]
+
+            if retry_count >= 3:
+                self.logger.warning("Failed to apply `_map_func` for idx: {}, retry count: {}".format(idx, retry_count))
