@@ -1,6 +1,5 @@
 import copy
 import itertools
-import logging
 from typing import Any, Dict, List, Optional
 
 import torch
@@ -65,7 +64,6 @@ def get_optimizer_params(
         torch.nn.LocalResponseNorm,
         ConvNextLayerNorm,
     )
-    logger = logging.getLogger(__name__)
     params = []
     memo = set()
     for module_name, module in model.named_modules():
@@ -98,7 +96,6 @@ def get_optimizer_params(
                 hyperparams["weight_decay"] = weight_decay_embed
             if "relative_position_bias_table" in module_param_name:  # Swin (or attention in general)
                 hyperparams["weight_decay"] = 0.0
-            logger.debug(f"{module_name}.{module_param_name}: {hyperparams}")
             params.append({"params": [value], **hyperparams})
 
     return params

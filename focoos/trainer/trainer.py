@@ -116,9 +116,6 @@ class FocoosTrainer:
         self.num_classes = data_val.dataset.metadata.num_classes
         self.task = data_val.dataset.metadata.task
 
-        # Setup post-processor based on task
-        self.logger.debug("Model:\n{}".format(self.model))
-
         # Apply model modifications
         if self.args.freeze_bn:
             self.model = FrozenBatchNorm2d.convert_frozen_batchnorm(self.model)
@@ -142,14 +139,18 @@ class FocoosTrainer:
         # Setup evaluator
         self.data_evaluator = get_evaluator(dataset_dict=self.data_val.dataset, task=self.task)
 
-        # Log dataset info
-        self.logger.info(f"[NUM CLASSES] {data_val.dataset.metadata.num_classes} ")
         if data_train:
-            self.logger.info(f"[TRAIN DATASET {len(data_train)}] {str(data_train.dataset.metadata)}")
-            self.logger.info(f"[Train augmentations] {data_train.mapper.augmentations}")
-        self.logger.info(f"[VALID DATASET {len(data_val)}] {str(data_val.dataset.metadata)} ")
-        self.logger.info(f"[Valid augmentations] {data_val.mapper.augmentations}")
-        self.logger.info(f"[Evaluator] {type(self.data_evaluator)}")
+            self.logger.info(
+                f"📊 [TRAIN DATASET {len(data_train)}] {str(data_train.dataset.metadata)} | "
+                f"[Train augmentations] {data_train.mapper.augmentations}"
+            )
+        # Log dataset info
+        self.logger.info(
+            f"📊 [VALIDATION INFO] Classes: {data_val.dataset.metadata.num_classes} | "
+            f"Dataset: {len(data_val)} {str(data_val.dataset.metadata)} | "
+            f"Augmentations: {data_val.mapper.augmentations} | "
+            f"Evaluator: {type(self.data_evaluator)} 🔍"
+        )
 
         # Save metadata
         if comm.get_rank() == 0:
