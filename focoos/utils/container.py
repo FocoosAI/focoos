@@ -3,7 +3,7 @@ from dataclasses import fields
 from typing import Any
 
 
-class BasicContainer(OrderedDict):
+class BaseContainer(OrderedDict):
     def to_tuple(self) -> tuple[Any]:
         """
         Convert self to a tuple containing all the attributes/keys that are not `None`.

@@ -1,6 +1,9 @@
 ## List of things to do
 
-- [ ] Implement the model wrapper that will offer high-level API (such as train, predict, export - as in figma)
+- [-] Implement the model wrapper that will offer high-level API (such as train, predict, export - as in figma)
+  - [x] Train/Predict/Test
+  - [ ] Missing export function
+- [ ] Simplify DataProcessing and Classes (MapDataset become just DatasetDict with the mapper included)
 - [ ] Introduce additional models from anyma
   - [x] RTDETR
   - [ ] Maskformer

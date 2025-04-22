@@ -10,7 +10,7 @@ from typing import Annotated, List, Literal, Optional, Tuple, Union
 
 from pydantic import BaseModel, Field, field_validator
 
-from focoos.utils.container import BasicContainer
+from focoos.utils.container import BaseContainer
 
 S3_URL_REGEX = re.compile(r"^s3://" r"(?P<bucket>[a-zA-Z0-9.-]+)/" r"(?P<path>.+(\.tar\.gz|\.zip)?)$")
 
@@ -754,13 +754,13 @@ class ModelFamily(str, Enum):
 
 
 @dataclass
-class ModelConfig:
+class ModelConfig(BaseContainer):
     num_classes: int
     # other parameters are model-specific
 
 
 @dataclass
-class ModelOutput(BasicContainer):
+class ModelOutput(BaseContainer):
     """Model output base container."""
 
     pass
@@ -1019,7 +1019,7 @@ class ModelInfo:
     classes: list[str]
     im_size: int
     task: Task
-    config: ModelConfig
+    config: dict
     description: Optional[str] = None
     train_args: Optional[TrainerArgs] = None
     weights_uri: Optional[str] = None
@@ -1038,9 +1038,11 @@ class ModelInfo:
             classes=model_info_json["classes"],
             im_size=int(model_info_json["im_size"]),
             task=Task(model_info_json["task"]),
-            config=ModelConfig(**model_info_json["config"]),
+            config=model_info_json["config"],
             description=model_info_json.get("description", None),
-            train_args=TrainerArgs(**model_info_json["train_args"]) if "train_args" in model_info_json else None,
+            train_args=TrainerArgs(**model_info_json["train_args"])
+            if "train_args" in model_info_json and model_info_json["train_args"] is not None
+            else None,
             weights_uri=model_info_json.get("weights_uri", None),
             val_dataset=model_info_json.get("val_dataset", None),
             val_metrics=model_info_json.get("val_metrics", None),

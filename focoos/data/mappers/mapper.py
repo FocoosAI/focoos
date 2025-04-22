@@ -7,12 +7,12 @@ import torch
 from focoos.data.transforms import augmentation as A
 from focoos.data.transforms import transform as T
 from focoos.structures import Instances
-from focoos.utils.container import BasicContainer
+from focoos.utils.container import BaseContainer
 from focoos.utils.logger import log_first_n
 
 
 @dataclass
-class DatasetEntry(BasicContainer):
+class DatasetEntry(BaseContainer):
     image: Optional[torch.Tensor] = None
     height: Optional[int] = None
     width: Optional[int] = None

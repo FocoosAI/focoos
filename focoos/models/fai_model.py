@@ -7,7 +7,7 @@ from PIL import Image
 from torch import nn
 
 from focoos.data.datasets.map_dataset import MapDataset
-from focoos.ports import ModelConfig, ModelInfo, TrainerArgs
+from focoos.ports import ModelConfig, ModelInfo, ModelOutput, TrainerArgs
 from focoos.structures import Instances
 from focoos.utils.distributed.dist import launch
 from focoos.utils.logger import get_logger
@@ -111,7 +111,7 @@ class FocoosModel:
         self.model_info.val_dataset = data_val.dataset.metadata.name
         self.model_info.val_metrics = None
         self.model_info.classes = data_val.dataset.metadata.classes
-        self.model_info.config.num_classes = data_val.dataset.metadata.num_classes
+        self.model_info.config["num_classes"] = data_val.dataset.metadata.num_classes
         assert self.model_info.task == data_val.dataset.metadata.task, "Task mismatch between model and dataset."
 
         assert args.num_gpus, "Training without GPUs is not supported. num_gpus must be greater than 0"
@@ -149,7 +149,7 @@ class FocoosModel:
         self.model_info.val_dataset = data_test.dataset.metadata.name
         self.model_info.val_metrics = None
         self.model_info.classes = data_test.dataset.metadata.classes
-        self.model_info.config.num_classes = data_test.dataset.metadata.num_classes
+        self.model_info.config["num_classes"] = data_test.dataset.metadata.num_classes
         assert self.model_info.task == data_test.dataset.metadata.task, "Task mismatch between model and dataset."
 
         assert args.num_gpus, "Testing without GPUs is not supported. num_gpus must be greater than 0"
@@ -257,8 +257,13 @@ class FocoosModel:
             list[torch.Tensor],
         ],
         **kwargs,
-    ):
-        return self.model(inputs, **kwargs)
+    ) -> ModelOutput:
+        model = self.model.eval()
+        try:
+            model = model.cuda()
+        except Exception:
+            logger.warning("Unable to use CUDA")
+        return model(inputs, **kwargs)
 
     def load_weights(self, weights: dict):
         checkpoint_state_dict = weights

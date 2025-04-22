@@ -1,6 +1,5 @@
 import importlib
 import os
-from dataclasses import fields
 from typing import Callable, Dict, Optional, Type
 
 from focoos.model_registry import ModelRegistry
@@ -31,41 +30,17 @@ class AutoConfig:
         cls._REGISTERED_MODELS.add(model_family.value)
 
     @classmethod
-    def from_pretrained(cls, pretrained_model_name: str, **kwargs) -> ModelConfig:
+    def from_dict(cls, model_family: ModelFamily, config_dict: dict, **kwargs) -> ModelConfig:
         """
-        Create a configuration for a pretrained model
-
-        Args:
-            pretrained_model_name: Name of the pretrained model
-            **kwargs: Configuration parameters to override
-
-        Returns:
-            ModelConfig: Model configuration
-
-        Raises:
-            ValueError: If the model doesn't exist or the parameters are invalid
+        Create a configuration from a dictionary
         """
-        model_info = ModelRegistry.get_model_info(pretrained_model_name)
-        if model_info is None:
-            raise ValueError(
-                f"Model {pretrained_model_name} not supported. Available models: {ModelRegistry.list_models()}"
-            )
-        if model_info.model_family not in cls._MODEL_MAPPING:
-            raise ValueError(f"Model {pretrained_model_name} not supported")
-        config_class = cls._MODEL_MAPPING[model_info.model_family.value]()  # this return the config class
+        if model_family not in cls._MODEL_MAPPING:
+            raise ValueError(f"Model {model_family} not supported")
+        config_class = cls._MODEL_MAPPING[model_family.value]()  # this return the config class
 
-        # Validate the parameters kwargs
-        valid_fields = {f.name for f in fields(config_class)}
-        invalid_kwargs = set(kwargs.keys()) - valid_fields
-        if invalid_kwargs:
-            raise ValueError(
-                f"Invalid parameters for {config_class.__name__}: {invalid_kwargs}\nValid parameters: {valid_fields}"
-            )
-
-        config_dict = {field.name: getattr(model_info.config, field.name) for field in fields(model_info.config)}
-
-        # Update the config with the kwargs
-        config_dict.update(kwargs)
+        # Convert the input dict to the actual config type
+        if "backbone_config" in config_dict and config_dict["backbone_config"] is not None:
+            config_dict["backbone_config"] = AutoConfigBackbone.from_dict(config_dict["backbone_config"])
 
         return config_class(**config_dict)
 
@@ -134,15 +109,17 @@ class AutoModel:
             raise ValueError(f"Model {pretrained_model_name} not supported")
 
         if config is None:
-            config = AutoConfig.from_pretrained(pretrained_model_name, **kwargs)
+            config = AutoConfig.from_dict(model_info.model_family, model_info.config, **kwargs)
+
+        model_info.config = config
 
         try:
             model_class = cls._MODEL_MAPPING[model_info.model_family.value]()
             model = model_class(config)
             focoos_model = FocoosModel(model, model_info)
 
-            if pretrained_model_name:
-                weights = PretrainedWeightsManager.get_weights_dict(pretrained_model_name)
+            if model_info.weights_uri:
+                weights = PretrainedWeightsManager.get_weights_dict(model_info.weights_uri)
                 if weights:
                     focoos_model.load_weights(weights)
                     logger.info(f"✅ Weights loaded for model {pretrained_model_name}")
@@ -153,6 +130,34 @@ class AutoModel:
 
         except Exception as e:
             raise RuntimeError(f"Error loading model {pretrained_model_name}: {str(e)}")
+
+
+class AutoConfigBackbone:
+    """Automatic backbone configuration manager with lazy loading"""
+
+    _BACKBONE_MAPPING: Dict[str, str] = {
+        "resnet": "presnet.PResnetConfig",
+        "stdc": "stdc.STDCConfig",
+    }
+
+    @classmethod
+    def get_model_class(cls, model_type: str):
+        """Get the model class based on the model type"""
+        import importlib
+
+        module_path, class_name = cls._BACKBONE_MAPPING[model_type].split(".")
+        module = importlib.import_module(f".{module_path}", package="focoos.nn.backbone")
+        return getattr(module, class_name)
+
+    @classmethod
+    def from_dict(cls, config_dict: dict) -> BackboneConfig:
+        """Load a backbone from a configuration"""
+        if config_dict["model_type"] not in cls._BACKBONE_MAPPING:
+            raise ValueError(f"Backbone {config_dict['model_type']} not supported")
+
+        config_class = cls.get_model_class(config_dict["model_type"])
+
+        return config_class(**config_dict)
 
 
 class AutoBackbone:
@@ -185,12 +190,12 @@ class PretrainedWeightsManager:
     """Manager for pretrained model weights"""
 
     @staticmethod
-    def get_weights_dict(model_name: str) -> Optional[dict]:
+    def get_weights_dict(weights_uri: str) -> Optional[dict]:
         """
         Load weights for a given model
 
         Args:
-            model_name: Model name
+            weights_uri: Model name
 
         Returns:
             Optional[dict]: Dictionary of weights or None if not available
@@ -198,22 +203,14 @@ class PretrainedWeightsManager:
         Raises:
             ValueError: If the model doesn't exist
         """
-        model_info = ModelRegistry.get_model_info(model_name)
-        if model_info is None:
-            raise ValueError(f"Model {model_name} not found")
-
         try:
             import torch
 
-            if model_info.weights_uri is None:
-                logger.warning(f"⚠️ Model {model_name} has no pretrained weights")
-                return None
-            weights_path = model_info.weights_uri
-            if not os.path.exists(weights_path):
-                raise FileNotFoundError(f"Weights file not found: {weights_path}")
+            if not os.path.exists(weights_uri):
+                raise FileNotFoundError(f"Weights file not found: {weights_uri}")
 
             # Load weights from file
-            state_dict = torch.load(weights_path, map_location="cpu")
+            state_dict = torch.load(weights_uri, map_location="cpu")
 
             # If the file contains a dictionary with a 'model' key, extract only that part
             if isinstance(state_dict, dict) and "model" in state_dict:
@@ -222,7 +219,7 @@ class PretrainedWeightsManager:
             return state_dict
 
         except Exception as e:
-            logger.error(f"Error loading weights for {model_name}: {str(e)}")
+            logger.error(f"Error loading weights for {weights_uri}: {str(e)}")
             return None
 
     @staticmethod
