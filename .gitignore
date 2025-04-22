@@ -93,3 +93,4 @@ tests/junit.xml
 notebooks/datasets
 notebooks/experiments
 site/
+/datasets/

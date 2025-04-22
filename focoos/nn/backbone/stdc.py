@@ -1,10 +1,12 @@
 import math
+from dataclasses import dataclass, field
+from typing import List
 
 import torch
 import torch.nn as nn
 from torch.nn import init
 
-from .base import Backbone
+from .base import BackboneConfig, BaseBackbone
 
 
 class ConvX(nn.Module):
@@ -166,32 +168,37 @@ class CatBottleneck(nn.Module):
         return out
 
 
-class STDCNet(nn.Module):
-    def __init__(
-        self,
-        base=64,
-        layers=[2, 2, 2],
-        block_num=4,
-        block_type="cat",
-        use_conv_last=False,
-    ):
-        super().__init__()
-        if block_type == "cat":
-            block = CatBottleneck
-        elif block_type == "add":
-            block = AddBottleneck
-        self.use_conv_last = use_conv_last
-        self.features = self._make_layers(base, layers, block_num, block)
+@dataclass
+class STDCConfig(BackboneConfig):
+    base: int = 64  # from json: "base": 64
+    layers: List[int] = field(default_factory=lambda: [4, 5, 3])  # from json: "layers": [4, 5, 3]
+    out_features: List[str] = field(default_factory=lambda: ["res2", "res3", "res4", "res5"])  # from json
+    model_type: str = "stdc"
+    block_num: int = 4
+    block_type: str = "cat"
+    use_conv_last: bool = False
 
-        if layers != [2, 2, 2] and layers != [4, 5, 3]:
-            layers = [4, 5, 3]
-        if layers == [2, 2, 2]:
+
+class STDC(BaseBackbone):
+    def __init__(self, config: STDCConfig):
+        super().__init__(config)
+
+        if config.block_type == "cat":
+            block = CatBottleneck
+        elif config.block_type == "add":
+            block = AddBottleneck
+        self.use_conv_last = config.use_conv_last
+        self.features = self._make_layers(config.base, config.layers, config.block_num, block)
+
+        if config.layers != [2, 2, 2] and config.layers != [4, 5, 3]:
+            config.layers = [4, 5, 3]
+        if config.layers == [2, 2, 2]:
             self.x2 = nn.Sequential(self.features[:1])
             self.x4 = nn.Sequential(self.features[1:2])
             self.x8 = nn.Sequential(self.features[2:4])
             self.x16 = nn.Sequential(self.features[4:6])
             self.x32 = nn.Sequential(self.features[6:])
-        elif layers == [4, 5, 3]:
+        elif config.layers == [4, 5, 3]:
             self.x2 = nn.Sequential(self.features[:1])
             self.x4 = nn.Sequential(self.features[1:2])
             self.x8 = nn.Sequential(self.features[2:6])
@@ -199,7 +206,22 @@ class STDCNet(nn.Module):
             self.x32 = nn.Sequential(self.features[11:])
 
         if self.use_conv_last:
-            self.conv_last = ConvX(base * 16, max(1024, base * 16), 1, 1)
+            self.conv_last = ConvX(config.base * 16, max(1024, config.base * 16), 1, 1)
+
+        self._out_features = config.out_features
+
+        self._out_feature_strides = {
+            "res2": 4,
+            "res3": 8,
+            "res4": 16,
+            "res5": 32,
+        }
+        self._out_feature_channels = {
+            "res2": config.base,
+            "res3": config.base * 4,
+            "res4": config.base * 8,
+            "res5": config.base * 16,
+        }
 
     def init_params(self):
         for m in self.modules():
@@ -245,6 +267,14 @@ class STDCNet(nn.Module):
 
         return nn.Sequential(*features)
 
+    @classmethod
+    def from_config(cls, cfg):
+        return {
+            "base": cfg.MODEL.BACKBONE.EMBED_DIM[0],
+            "layers": cfg.MODEL.BACKBONE.DEPTHS,
+            "out_features": cfg.MODEL.BACKBONE.OUT_FEATURES,
+        }
+
     def forward(self, x):
         outs = {}
         feat2 = self.x2(x)
@@ -265,31 +295,3 @@ class STDCNet(nn.Module):
             outs["res5"] = feat32
 
         return outs
-
-
-class D2STDCnet(STDCNet, Backbone):
-    def __init__(self, base, layers, out_features):
-        super().__init__(base=base, layers=layers, block_num=4, block_type="cat", use_conv_last=False)
-
-        self._out_features = out_features
-
-        self._out_feature_strides = {
-            "res2": 4,
-            "res3": 8,
-            "res4": 16,
-            "res5": 32,
-        }
-        self._out_feature_channels = {
-            "res2": base,
-            "res3": base * 4,
-            "res4": base * 8,
-            "res5": base * 16,
-        }
-
-    @classmethod
-    def from_config(cls, cfg):
-        return {
-            "base": cfg.MODEL.BACKBONE.EMBED_DIM[0],
-            "layers": cfg.MODEL.BACKBONE.DEPTHS,
-            "out_features": cfg.MODEL.BACKBONE.OUT_FEATURES,
-        }

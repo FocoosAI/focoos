@@ -1,8 +1,8 @@
 import copy
+import logging
 import math
 from collections import OrderedDict
-from dataclasses import dataclass
-from typing import Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 import fvcore.nn.weight_init as weight_init
 import numpy as np
@@ -15,24 +15,23 @@ from scipy.optimize import linear_sum_assignment
 
 from focoos.data.mappers.detection_dataset_mapper import DetectionDatasetDict
 from focoos.models.fai_model import BaseModelNN
-from focoos.models.fai_rtdetr.config_rtdetr_resnet import RTDetrResnetConfig
-from focoos.models.fai_rtdetr.processor import detector_postprocess
-from focoos.nn.backbone.base import Backbone
-from focoos.nn.backbone.presnet import D2Presnet
-from focoos.nn.decoder.base import PixelDecoder
+from focoos.models.fai_rtdetr.config import RTDetrConfig
+from focoos.models.fai_rtdetr.processor import RTDetrProcessor
+from focoos.models.fai_rtdetr.rtdetr_ports import RTDETRModelOutput, RTDETRTargets
+from focoos.nn.backbone.base import BaseBackbone
+from focoos.nn.backbone.build import load_backbone
 from focoos.nn.layers.base import MLP
 from focoos.nn.layers.conv import Conv2d
 from focoos.nn.layers.deformable import ms_deform_attn_core_pytorch
 from focoos.nn.layers.functional import inverse_sigmoid
 from focoos.nn.layers.transformer import TransformerEncoder, TransformerEncoderLayer
-from focoos.ports import ModelInfo, ModelOutput
-from focoos.structures import Boxes, ImageList, Instances
-from focoos.utils.box import box_cxcywh_to_xyxy, box_iou, box_xyxy_to_cxcywh, generalized_box_iou
+from focoos.ports import ModelInfo
+from focoos.structures import Instances
+from focoos.utils.box import box_cxcywh_to_xyxy, box_iou, generalized_box_iou
 from focoos.utils.distributed.comm import get_world_size
 from focoos.utils.distributed.dist import is_dist_available_and_initialized
-from focoos.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def get_activation(act: str, inpace: bool = True):
@@ -67,12 +66,6 @@ def get_activation(act: str, inpace: bool = True):
         m.inplace = inpace  # type: ignore
 
     return m
-
-
-@dataclass
-class RTDETRTargets:
-    labels: torch.Tensor
-    boxes: torch.Tensor
 
 
 class ConvNormLayer(nn.Module):
@@ -176,10 +169,10 @@ class CSPRepLayer(nn.Module):
         return self.conv3(x_1 + x_2)
 
 
-class HybridEncoder(PixelDecoder):
+class HybridEncoder(nn.Module):
     def __init__(
         self,
-        backbone: Backbone,
+        backbone: BaseBackbone,
         feat_dim: int,
         out_dim: int,
         nhead=8,
@@ -194,8 +187,15 @@ class HybridEncoder(PixelDecoder):
         act="silu",
         resolution=640,
     ):
-        super().__init__(backbone, feat_dim, out_dim)
+        super().__init__()
 
+        self.backbone = backbone
+        self.input_shape = sorted(backbone.output_shape().items(), key=lambda x: x[1].stride)  # type: ignore
+
+        # starting from "res2" to "res5"
+        self.in_channels = [v.channels for k, v in self.input_shape]
+        self.in_strides = [v.stride for k, v in self.input_shape]
+        self.out_dim = out_dim
         self.feat_dim = feat_dim
         self.use_encoder_idx = use_encoder_idx
         self.num_encoder_layers = num_encoder_layers
@@ -207,6 +207,7 @@ class HybridEncoder(PixelDecoder):
                 self.eval_spatial_size = resolution
         else:
             self.eval_spatial_size = None
+
         self.in_features = ["res3", "res4", "res5"]
         self.in_channels = self.in_channels[1:]
         self.in_strides = self.in_strides[1:]
@@ -276,6 +277,10 @@ class HybridEncoder(PixelDecoder):
 
         self._reset_parameters()
 
+    @property
+    def padding_constraints(self) -> Dict[str, int]:
+        return self.backbone.padding_constraints
+
     def _reset_parameters(self):
         if self.eval_spatial_size:
             for idx in self.use_encoder_idx:
@@ -310,7 +315,9 @@ class HybridEncoder(PixelDecoder):
 
         return torch.concat([out_w.sin(), out_w.cos(), out_h.sin(), out_h.cos()], dim=1)[None, :, :]
 
-    def forward_features(self, features):
+    def forward(self, images: torch.Tensor):
+        features = self.backbone(images)
+
         feats = [features[f] for f in self.in_features]
         assert len(feats) == len(self.in_channels)
         proj_feats = [self.input_proj[i](feat) for i, feat in enumerate(feats)]
@@ -387,9 +394,6 @@ class DETRHead(nn.Module):
 
         self.num_classes = num_classes
         self.mask_on = mask_on
-
-    def reset_classifier(self, num_classes: Optional[int] = None):
-        self.predictor.reset_classifier(num_classes if num_classes else self.num_classes)
 
     def layers(self, features, targets: list[RTDETRTargets] = []):
         _, multi_scale_features = features
@@ -1299,28 +1303,26 @@ class RTDETRTransformerPredictor(nn.Module):
         return [{"pred_logits": a, "pred_boxes": b} for a, b in zip(outputs_class, outputs_coord)]
 
 
-class FAIRTDetrResnet(BaseModelNN):
-    def __init__(self, config: RTDetrResnetConfig, model_info: ModelInfo):
+class FAIRTDetr(BaseModelNN):
+    def __init__(self, config: RTDetrConfig, model_info: ModelInfo):
         super().__init__(config, model_info)
         self._export = False
         self.config = config
+
+        backbone = load_backbone(self.config.backbone_config)
+
         self.pixel_decoder = HybridEncoder(
-            backbone=D2Presnet(
-                depth=self.config.backbone_depth,
-                variant=self.config.backbone_variant,
-                freeze_at=self.config.backbone_freeze_at,
-                num_stages=self.config.backbone_num_stages,
-                freeze_norm=self.config.backbone_freeze_norm,
-            ),
+            backbone=backbone,
             feat_dim=self.config.pixel_decoder_feat_dim,
             out_dim=self.config.pixel_decoder_out_dim,
             dropout=self.config.pixel_decoder_dropout,
             nhead=self.config.pixel_decoder_nhead,
             dim_feedforward=self.config.pixel_decoder_dim_feedforward,
             num_encoder_layers=self.config.pixel_decoder_num_encoder_layers,
+            resolution=self.config.resolution,
         )
         self.head = DETRHead(
-            in_channels=self.config.head_in_channels,
+            in_channels=self.config.transformer_predictor_out_dim,
             out_dim=self.config.head_out_dim,
             num_classes=self.config.num_classes,
             criterion=SetCriterion(
@@ -1345,153 +1347,68 @@ class FAIRTDetrResnet(BaseModelNN):
                 focal_gamma=self.config.criterion_focal_gamma,
             ),
             transformer_predictor=RTDETRTransformerPredictor(
-                in_channels=self.config.head_in_channels,
-                out_dim=self.config.head_out_dim,
+                in_channels=self.config.pixel_decoder_out_dim,
+                out_dim=self.config.transformer_predictor_out_dim,
                 num_classes=self.config.num_classes,
                 hidden_dim=self.config.transformer_predictor_hidden_dim,
-                mask_on=self.config.transformer_predictor_mask_on,
-                sigmoid=self.config.transformer_predictor_sigmoid,
-                num_queries=self.config.transformer_predictor_num_queries,
+                mask_on=False,
+                sigmoid=True,
+                num_queries=self.config.num_queries,
                 nhead=self.config.transformer_predictor_nhead,
                 dec_layers=self.config.transformer_predictor_dec_layers,
                 dim_feedforward=self.config.transformer_predictor_dim_feedforward,
-                resolution=self.config.transformer_predictor_resolution,
+                resolution=self.config.resolution,
             ),
-            mask_on=self.config.head_mask_on,
-            cls_sigmoid=self.config.head_cls_sigmoid,
+            mask_on=False,
+            cls_sigmoid=True,
         )
-
-        self.top_k_masks = self.config.transformer_predictor_num_queries
+        self.resolution = self.config.resolution
+        self.top_k_masks = self.config.num_queries
         self.register_buffer("pixel_mean", torch.Tensor(self.config.pixel_mean).view(-1, 1, 1), False)
         self.register_buffer("pixel_std", torch.Tensor(self.config.pixel_std).view(-1, 1, 1), False)
         self.size_divisibility = self.config.size_divisibility
-        self.ignore_value = self.config.ignore_value
-        self.mask_on = self.config.mask_on
         self.num_classes = self.config.num_classes
-
-    def forward(self, inputs: list[DetectionDatasetDict]):
-        images = [x.image.to(self.device) for x in inputs]
-        images = [(x - self.pixel_mean) / self.pixel_std for x in images]
-        images = ImageList.from_tensors(
-            tensors=images,
-            # FIXME using size_divisibility in eval make detection break due to padding issue (in scaling bboxes)
-            size_divisibility=self.size_divisibility if self.training else 0,
-            padding_constraints=self.pixel_decoder.padding_constraints,
-        )
-
-        targets = []
-        if self.training:
-            # mask classification target
-            gt_instances = [x.instances.to(self.device) for x in inputs]
-            targets = self._prepare_targets(gt_instances, images)
-
-        features = self.pixel_decoder(images.tensor)
-        outputs, losses = self.head(features, targets)
-
-        if self.training:
-            return losses
-        else:
-            return outputs
+        self.processor = RTDetrProcessor()
 
     @property
     def device(self):
         return self.pixel_mean.device
 
-    def predict(
+    def forward(
         self,
-        inputs: Union[torch.Tensor, np.ndarray, Image.Image, list[Image.Image], list[np.ndarray], list[torch.Tensor]],
+        inputs: Union[
+            torch.Tensor,
+            np.ndarray,
+            Image.Image,
+            list[Image.Image],
+            list[np.ndarray],
+            list[torch.Tensor],
+            list[DetectionDatasetDict],
+        ],
     ):
-        # Convert single instances to lists for uniform processing
-        if isinstance(inputs, (Image.Image, np.ndarray, torch.Tensor)):
-            inputs = [inputs]
+        images, targets = self.processor.preprocess(
+            inputs,
+            training=self.training,
+            device=self.device,  # type: ignore
+            dtype=self.pixel_mean.dtype,  # type: ignore
+            size_divisibility=self.size_divisibility,
+            padding_constraints=self.pixel_decoder.padding_constraints,
+            resolution=self.resolution,
+        )
+        images = (images - self.pixel_mean) / self.pixel_std  # type: ignore
 
-        # Process each input based on its type
-        processed_inputs = []
-        for inp in inputs:
-            if isinstance(inp, Image.Image):
-                inp = np.array(inp)
-            if isinstance(inp, np.ndarray):
-                inp = torch.from_numpy(inp).to(self.device)
-            elif isinstance(inp, torch.Tensor):
-                inp = inp.to(self.device)
+        features = self.pixel_decoder(images)
+        outputs, losses = self.head(features, targets)
 
-            # Ensure input has correct shape and type
-            if inp.dim() == 3:  # Add batch dimension if missing
-                inp = inp.unsqueeze(0)
-            if inp.shape[1] != 3 and inp.shape[-1] == 3:  # Convert HWC to CHW if needed
-                inp = inp.permute(0, 3, 1, 2)
+        if self.training:
+            assert targets is not None and len(targets) > 0, "targets should not be None or empty - training mode"
+            return losses
+        else:
+            return RTDETRModelOutput(logits=outputs[0], boxes=outputs[1])
 
-            processed_inputs.append(inp)
-
-        # Stack all inputs into a single batch tensor
-        # use pixel mean to get dtype -> If fp16, pixel_mean is fp16, so inputs will be fp16
-        inputs = torch.cat(processed_inputs, dim=0).to(self.device, self.pixel_mean.dtype)
-        print(inputs.shape)
-        # Normalize the inputs
-        inputs = (inputs - self.pixel_mean) / self.pixel_std
-
-        features = self.pixel_decoder(inputs)
-        output, _ = self.head(features, None)
-        box_cls, box_pred = output
-
-        return box_cls, box_pred
-
-    def _prepare_targets(self, targets, images) -> list[RTDETRTargets]:
-        h, w = images.tensor.shape[-2:]
-        new_targets = []
-        for targets_per_image in targets:
-            image_size_xyxy = torch.as_tensor([w, h, w, h], dtype=torch.float, device=self.device)
-            gt_classes = targets_per_image.gt_classes
-            gt_boxes = targets_per_image.gt_boxes.tensor / image_size_xyxy
-            gt_boxes = box_xyxy_to_cxcywh(gt_boxes)
-            new_targets.append(RTDETRTargets(labels=gt_classes, boxes=gt_boxes))
-
-        return new_targets
-
-    def post_process(self, outputs, batched_inputs) -> list[Instances]:
+    def post_process(self, outputs, batched_inputs) -> list[dict[str, Instances]]:
         """
         Post-process the outputs of the model.
         This function is used in the evaluation phase to convert raw outputs to Instances.
         """
-        results = []
-        box_cls, box_pred = outputs
-
-        for i in range(len(batched_inputs)):
-            size = batched_inputs[i].image.shape[-2:]  # reshaped image size
-            h = batched_inputs[i].height
-            w = batched_inputs[i].width
-            out_sizes = (h, w)  # original image size
-
-            # Process results directly within the loop
-            scores = box_cls[i]
-            # Use dim instead of axis for torch.topk
-            scores, index = torch.topk(scores.flatten(0), self.top_k_masks, axis=-1)
-            labels = index % self.num_classes
-            index = index // self.num_classes
-            processed_box_pred = box_pred[i].gather(dim=0, index=index.unsqueeze(-1).repeat(1, box_pred[i].shape[-1]))
-
-            result = Instances(size)
-            result.pred_boxes = Boxes(processed_box_pred)
-            result.pred_boxes.scale(scale_x=size[1], scale_y=size[0])
-            result.scores = scores
-            result.pred_classes = labels
-
-            result = detector_postprocess(result, output_height=out_sizes[0], output_width=out_sizes[1])
-
-            results.append({"instances": result})
-
-        return results
-
-
-@dataclass
-class RTDETRModelOutput(ModelOutput):
-    logits: torch.Tensor
-    scores: torch.Tensor
-    boxes: torch.Tensor
-    cls_ids: Optional[torch.Tensor]
-    loss_bbox: Optional[torch.Tensor]
-    loss_giou: Optional[torch.Tensor]
-    loss_vfl: Optional[torch.Tensor]
-
-    def to_instances(self):
-        return Instances()
+        return self.processor.eval_postprocess(outputs, batched_inputs, top_k_masks=self.top_k_masks)

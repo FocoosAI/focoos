@@ -5,7 +5,7 @@ from typing import Dict, Optional
 
 import torch.nn as nn
 
-__all__ = ["Backbone", "ShapeSpec"]
+__all__ = ["BaseBackbone", "ShapeSpec"]
 
 
 @dataclass
@@ -22,16 +22,24 @@ class ShapeSpec:
     stride: Optional[int] = None
 
 
-class Backbone(nn.Module, metaclass=ABCMeta):
+@dataclass
+class BackboneConfig:
+    use_pretrained: bool = False
+    backbone_url: Optional[str] = None  # only used if use_pretrained is True
+    model_type: str = ""
+
+
+class BaseBackbone(nn.Module, metaclass=ABCMeta):
     """
     Abstract base class for network backbones.
     """
 
-    def __init__(self):
+    def __init__(self, config: BackboneConfig):
         """
         The `__init__` method of any subclass can specify its own set of arguments.
         """
         super().__init__()
+        self.config = config
 
     @abstractmethod
     def forward(self):

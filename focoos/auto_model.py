@@ -5,6 +5,7 @@ from typing import Callable, Dict, Optional, Type
 
 from focoos.model_registry import ModelRegistry
 from focoos.models.fai_model import BaseModelNN, ModelConfig
+from focoos.nn.backbone.base import BackboneConfig, BaseBackbone
 from focoos.ports import ModelFamily
 from focoos.utils.logger import get_logger
 
@@ -134,8 +135,33 @@ class AutoModel:
             return model
 
         except Exception as e:
-            logger.error(f"❌ Error loading model {pretrained_model_name}: {str(e)}")
             raise RuntimeError(f"Error loading model {pretrained_model_name}: {str(e)}")
+
+
+class AutoBackbone:
+    """Automatic backbone manager with lazy loading"""
+
+    _BACKBONE_MAPPING: Dict[str, str] = {
+        "resnet": "presnet.PResNet",
+        "stdc": "stdc.STDC",
+    }
+
+    @classmethod
+    def from_config(cls, config: BackboneConfig) -> BaseBackbone:
+        """Load a backbone from a configuration"""
+        if config.model_type not in cls._BACKBONE_MAPPING:
+            raise ValueError(f"Backbone {config.model_type} not supported")
+        backbone_class = cls.get_model_class(config.model_type)
+        return backbone_class(config)
+
+    @classmethod
+    def get_model_class(cls, model_type: str):
+        """Get the model class based on the model type"""
+        import importlib
+
+        module_path, class_name = cls._BACKBONE_MAPPING[model_type].split(".")
+        module = importlib.import_module(f".{module_path}", package="focoos.nn.backbone")
+        return getattr(module, class_name)
 
 
 class PretrainedWeightsManager:

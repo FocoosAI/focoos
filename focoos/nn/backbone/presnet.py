@@ -1,6 +1,5 @@
-"""by lyuwenyu"""
-
 from collections import OrderedDict
+from dataclasses import dataclass
 
 import torch
 import torch.nn as nn
@@ -9,7 +8,7 @@ import torch.nn.functional as F
 from focoos.nn.layers.base import _get_activation_fn as get_activation
 from focoos.nn.layers.norm import FrozenBatchNorm2d
 
-from .base import Backbone
+from .base import BackboneConfig, BaseBackbone
 
 ResNet_cfg = {
     18: [2, 2, 2, 2],
@@ -163,19 +162,32 @@ class Blocks(nn.Module):
         return out
 
 
-class PResNet(nn.Module):
+@dataclass
+class PResnetConfig(BackboneConfig):
+    depth: int = 50
+    variant: str = "d"
+    freeze_at: int = -1
+    num_stages: int = 4
+    freeze_norm: bool = True
+    model_type: str = "resnet"
+    act: str = "relu"
+    pretrained: bool = False
+
+
+class PResNet(BaseBackbone):
     def __init__(
         self,
-        depth,
-        variant="d",
-        num_stages=4,
-        return_idx=[0, 1, 2, 3],
-        act="relu",
-        freeze_at=-1,
-        freeze_norm=True,
-        pretrained=False,
+        config: PResnetConfig,
     ):
-        super().__init__()
+        super().__init__(config)
+
+        depth = config.depth
+        variant = config.variant
+        num_stages = config.num_stages
+        act = config.act
+        freeze_at = config.freeze_at
+        freeze_norm = config.freeze_norm
+        pretrained = config.pretrained
 
         block_nums = ResNet_cfg[depth]
         ch_in = 64
@@ -214,9 +226,9 @@ class PResNet(nn.Module):
             )
             ch_in = _out_channels[i]
 
-        self.return_idx = return_idx
-        self.out_channels = [_out_channels[_i] for _i in return_idx]
-        self.out_strides = [_out_strides[_i] for _i in return_idx]
+        self.return_idx = [0, 1, 2, 3]
+        self.out_channels = [_out_channels[_i] for _i in self.return_idx]
+        self.out_strides = [_out_strides[_i] for _i in self.return_idx]
 
         if freeze_at >= 0:
             self._freeze_parameters(self.conv1)
@@ -230,6 +242,10 @@ class PResNet(nn.Module):
             state = torch.hub.load_state_dict_from_url(donwload_url[depth])
             self.load_state_dict(state)
             print(f"Load PResNet{depth} state_dict")
+
+        self._out_features = ["res2", "res3", "res4", "res5"]
+        self._out_feature_strides = {self._out_features[j]: self.out_strides[j] for j in range(4)}
+        self._out_feature_channels = {self._out_features[j]: self.out_channels[j] for j in range(4)}
 
     def _freeze_parameters(self, m: nn.Module):
         for p in m.parameters():
@@ -253,37 +269,7 @@ class PResNet(nn.Module):
             x = stage(x)
             if idx in self.return_idx:
                 outs.append(x)
-        return outs
 
-
-class D2Presnet(PResNet, Backbone):
-    def __init__(
-        self,
-        depth,
-        variant="d",
-        num_stages=4,
-        act="relu",
-        freeze_at=-1,
-        freeze_norm=True,
-        pretrained=False,
-    ):
-        super().__init__(
-            depth,
-            variant,
-            num_stages,
-            [0, 1, 2, 3],
-            act,
-            freeze_at,
-            freeze_norm,
-            pretrained,
-        )
-
-        self._out_features = ["res2", "res3", "res4", "res5"]
-        self._out_feature_strides = {self._out_features[j]: self.out_strides[j] for j in range(4)}
-        self._out_feature_channels = {self._out_features[j]: self.out_channels[j] for j in range(4)}
-
-    def forward(self, x):
-        outs = super().forward(x)
         return {
             "res2": outs[0],
             "res3": outs[1],
