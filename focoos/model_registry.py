@@ -118,6 +118,35 @@ class ModelRegistry:
             val_dataset="coco",
             im_size=640,
         ),
+        "fai-rtdetr-s-coco": ModelInfo(
+            name="rtdetr-s-coco",
+            description="RTDETR Small model (COCO)",
+            model_family=ModelFamily.RTDETR,
+            config_class=RTDetrConfig,
+            weights_uri="/home/ubuntu/anyma/pretrained_models/models/fai-rtdetr-s-coco/model_final.pth",
+            config=RTDetrConfig(
+                backbone_config=STDCConfig(
+                    base=64,
+                    layers=[4, 5, 3],  # STDC-2
+                ),
+                pixel_decoder_out_dim=128,
+                pixel_decoder_feat_dim=128,
+                pixel_decoder_expansion=0.5,
+                pixel_decoder_num_encoder_layers=0,
+                pixel_decoder_dim_feedforward=512,
+                transformer_predictor_out_dim=128,
+                transformer_predictor_hidden_dim=128,
+                transformer_predictor_dec_layers=3,
+                transformer_predictor_dim_feedforward=512,
+                head_out_dim=128,
+                num_queries=300,
+                num_classes=80,
+            ),
+            task=Task.DETECTION,
+            classes=coco_classes,
+            val_dataset="coco",
+            im_size=640,
+        ),
     }
 
     _user_models: Dict[str, ModelInfo] = {}

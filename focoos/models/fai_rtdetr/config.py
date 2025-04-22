@@ -22,6 +22,7 @@ class RTDetrConfig(ModelConfig):
     pixel_decoder_out_dim: int = 256
     pixel_decoder_feat_dim: int = 256
     pixel_decoder_num_encoder_layers: int = 1
+    pixel_decoder_expansion: float = 1.0
     pixel_decoder_dim_feedforward: int = 1024
     # Transformer decoder
     transformer_predictor_out_dim: int = 256

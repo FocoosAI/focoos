@@ -1315,6 +1315,7 @@ class FAIRTDetr(BaseModelNN):
             backbone=backbone,
             feat_dim=self.config.pixel_decoder_feat_dim,
             out_dim=self.config.pixel_decoder_out_dim,
+            expansion=self.config.pixel_decoder_expansion,
             dropout=self.config.pixel_decoder_dropout,
             nhead=self.config.pixel_decoder_nhead,
             dim_feedforward=self.config.pixel_decoder_dim_feedforward,

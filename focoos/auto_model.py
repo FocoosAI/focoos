@@ -61,16 +61,16 @@ class AutoModel:
     _REGISTERED_MODELS: set = set()
 
     @classmethod
-    def register_model(cls, model_name: str, model_loader: Callable[[], Type[BaseModelNN]]):
+    def register_model(cls, model_family: ModelFamily, model_loader: Callable[[], Type[BaseModelNN]]):
         """
         Register a loader for a specific model
 
         Args:
-            model_name: Model name
+            model_family: Model family
             model_loader: Function that loads the model
         """
-        cls._MODEL_MAPPING[model_name] = model_loader
-        cls._REGISTERED_MODELS.add(model_name)
+        cls._MODEL_MAPPING[model_family.value] = model_loader
+        cls._REGISTERED_MODELS.add(model_family.value)
 
     @classmethod
     def _import_model_family(cls, model_family: ModelFamily):
@@ -103,7 +103,7 @@ class AutoModel:
             raise ValueError(f"Model {pretrained_model_name} not found")
 
         # Import the family module only if not already registered
-        if pretrained_model_name not in cls._REGISTERED_MODELS:
+        if model_info.model_family not in cls._REGISTERED_MODELS:
             # Import the family module
             family_module = importlib.import_module(f"focoos.models.{model_info.model_family.value}")
 
@@ -114,14 +114,14 @@ class AutoModel:
                     if callable(register_func):
                         register_func()
 
-        if pretrained_model_name not in cls._MODEL_MAPPING:
+        if model_info.model_family not in cls._MODEL_MAPPING:
             raise ValueError(f"Model {pretrained_model_name} not supported")
 
         if config is None:
             config = AutoConfig.from_pretrained(pretrained_model_name, **kwargs)
 
         try:
-            model_class = cls._MODEL_MAPPING[pretrained_model_name]()
+            model_class = cls._MODEL_MAPPING[model_info.model_family.value]()
             model = model_class(config, model_info)
 
             if pretrained_model_name:

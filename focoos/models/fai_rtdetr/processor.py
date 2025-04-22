@@ -258,6 +258,8 @@ class RTDetrProcessor:
             # Multiply boxes by image size
             box_pred[:, 0::2] = box_pred[:, 0::2] * image_sizes[i][0]
             box_pred[:, 1::2] = box_pred[:, 1::2] * image_sizes[i][1]
+            # Convert box coordinates to integers for pixel-precise bounding boxes
+            box_pred = box_pred.round().to(torch.int32)
 
             # Convert tensor outputs to Python lists of floats
             py_box_pred = box_pred.detach().cpu().tolist()
