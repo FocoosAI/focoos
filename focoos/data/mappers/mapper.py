@@ -1,9 +1,22 @@
 import logging
-from typing import List, Union
+from dataclasses import dataclass
+from typing import List, Optional, Union
+
+import torch
 
 from focoos.data.transforms import augmentation as A
 from focoos.data.transforms import transform as T
+from focoos.structures import Instances
+from focoos.utils.container import BasicContainer
 from focoos.utils.logger import log_first_n
+
+
+@dataclass
+class DatasetEntry(BasicContainer):
+    image: Optional[torch.Tensor] = None
+    height: Optional[int] = None
+    width: Optional[int] = None
+    instances: Optional[Instances] = None
 
 
 class DatasetMapper:
@@ -33,13 +46,12 @@ class DatasetMapper:
             dataset_dict["width"] = image.shape[1]
             dataset_dict["height"] = image.shape[0]
 
-    def __call__(self, dataset_dic: dict):
+    def __call__(self, dataset_dic: dict) -> DatasetEntry:
         """
         Args:
             dataset_dict (DetectronDict): Metadata of one image, in Detectron2 Dataset format.
 
         Returns:
-            dict: a format that builtin models in detectron2 accept
+            DatasetEntry: an object containing the image, annotations and metadata
         """
         raise NotImplementedError("This is an abstract class, never use DatasetMapper directly")
-        return dataset_dic

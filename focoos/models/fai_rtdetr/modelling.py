@@ -25,7 +25,6 @@ from focoos.nn.layers.conv import Conv2d
 from focoos.nn.layers.deformable import ms_deform_attn_core_pytorch
 from focoos.nn.layers.functional import inverse_sigmoid
 from focoos.nn.layers.transformer import TransformerEncoder, TransformerEncoderLayer
-from focoos.ports import ModelInfo
 from focoos.structures import Instances
 from focoos.utils.box import box_cxcywh_to_xyxy, box_iou, generalized_box_iou
 from focoos.utils.distributed.comm import get_world_size
@@ -1304,8 +1303,8 @@ class RTDETRTransformerPredictor(nn.Module):
 
 
 class FAIRTDetr(BaseModelNN):
-    def __init__(self, config: RTDetrConfig, model_info: ModelInfo):
-        super().__init__(config, model_info)
+    def __init__(self, config: RTDetrConfig):
+        super().__init__(config)
         self._export = False
         self.config = config
 

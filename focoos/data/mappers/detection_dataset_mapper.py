@@ -9,6 +9,7 @@ import numpy as np
 import torch
 
 from focoos.data import utils
+from focoos.data.mappers.mapper import DatasetEntry
 from focoos.data.transforms import augmentation as A
 from focoos.data.transforms import transform as T
 from focoos.structures import BoxMode, Instances
@@ -17,13 +18,9 @@ from .mapper import DatasetMapper
 
 
 @dataclass
-class DetectionDatasetDict:
-    image: torch.Tensor
-    height: int
-    width: int
-    file_name: str
-    image_id: int
-    instances: Optional[Instances] = None
+class DetectionDatasetDict(DatasetEntry):
+    file_name: Optional[str] = None
+    image_id: Optional[int] = None
 
 
 class DetectionDatasetMapper(DatasetMapper):

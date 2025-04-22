@@ -2,14 +2,15 @@ import inspect
 import json
 import os
 import re
-from collections import OrderedDict
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Annotated, Any, List, Literal, Optional, Tuple, Type, Union
+from typing import Annotated, List, Literal, Optional, Tuple, Union
 
 from pydantic import BaseModel, Field, field_validator
+
+from focoos.utils.container import BasicContainer
 
 S3_URL_REGEX = re.compile(r"^s3://" r"(?P<bucket>[a-zA-Z0-9.-]+)/" r"(?P<path>.+(\.tar\.gz|\.zip)?)$")
 
@@ -758,47 +759,11 @@ class ModelConfig:
     # other parameters are model-specific
 
 
-class ModelOutput(OrderedDict):
-    def to_tuple(self) -> tuple[Any]:
-        """
-        Convert self to a tuple containing all the attributes/keys that are not `None`.
-        """
-        return tuple(self[k] for k in self.keys())
+@dataclass
+class ModelOutput(BasicContainer):
+    """Model output base container."""
 
-    def __getitem__(self, k):
-        if isinstance(k, str):
-            inner_dict = dict(self.items())
-            return inner_dict[k]
-        else:
-            return self.to_tuple()[k]
-
-    def __setattr__(self, name, value):
-        if name in self.keys() and value is not None:
-            # Don't call self.__setitem__ to avoid recursion errors
-            super().__setitem__(name, value)
-        super().__setattr__(name, value)
-
-    def __setitem__(self, key, value):
-        # Will raise a KeyException if needed
-        super().__setitem__(key, value)
-        # Don't call self.__setattr__ to avoid recursion errors
-        super().__setattr__(key, value)
-
-    def __post_init__(self):
-        """Check the ModelOutput dataclass.
-
-        Only occurs if @dataclass decorator has been used.
-        """
-        class_fields = fields(self)
-
-        # Safety and consistency checks
-        if not len(class_fields):
-            raise ValueError(f"{self.__class__.__name__} has no fields.")
-
-        for field in class_fields:
-            v = getattr(self, field.name)
-            if v is not None:
-                self[field.name] = v
+    pass
 
 
 class DatasetSplitType(str, Enum):
@@ -807,52 +772,112 @@ class DatasetSplitType(str, Enum):
     TEST = "test"
 
 
-@dataclass
-class ModelInfo:
-    """Detailed information about a specific model.
+def get_gpus():
+    try:
+        import torch.cuda
 
-    This class stores all the necessary information to identify, configure, and evaluate a model.
+        return torch.cuda.device_count()
+    except ImportError:
+        return 0
+
+
+@dataclass
+class TrainerArgs:
+    """Configuration class for unified model training.
 
     Attributes:
-        name: Unique identifier for the model.
-        model_family: The family/architecture the model belongs to (e.g., RTDETR, M2F).
-        config_class: The configuration class type used to instantiate the model.
-        classes: List of class names the model can detect/segment.
-        im_size: Input image size (typically square dimensions).
-        task: The task the model performs (detection, segmentation, etc.).
-        config: Configuration instance with model-specific parameters.
-        description: Optional human-readable description of the model.
-        weights_uri: Optional path or URI to the model weights.
-        val_dataset: Optional name of the validation dataset used.
-        val_metrics: Optional dictionary containing validation metrics.
-        latency: Optional list of latency measurements across different runtimes.
+        run_name (str): Name of the training run
+        output_dir (str): Directory to save outputs
+        ckpt_dir (Optional[str]): Directory for checkpoints
+        init_checkpoint (Optional[str]): Initial checkpoint to load
+        resume (bool): Whether to resume from checkpoint
+        num_gpus (int): Number of GPUs to use
+        device (str): Device to use (cuda/cpu)
+        workers (int): Number of data loading workers
+        amp_enabled (bool): Whether to use automatic mixed precision
+        ddp_broadcast_buffers (bool): Whether to broadcast buffers in DDP
+        ddp_find_unused (bool): Whether to find unused parameters in DDP
+        checkpointer_period (int): How often to save checkpoints
+        checkpointer_max_to_keep (int): Maximum checkpoints to keep
+        eval_period (int): How often to evaluate
+        log_period (int): How often to log
+        vis_period (int): How often to visualize
+        samples (int): Number of samples for visualization
+        seed (int): Random seed
+        early_stop (bool): Whether to use early stopping
+        patience (int): Early stopping patience
+        ema_enabled (bool): Whether to use EMA
+        ema_decay (float): EMA decay rate
+        ema_warmup (int): EMA warmup period
+        learning_rate (float): Base learning rate
+        weight_decay (float): Weight decay
+        max_iters (int): Maximum training iterations
+        batch_size (int): Batch size
+        scheduler (str): Learning rate scheduler type
+        scheduler_extra (Optional[dict]): Extra scheduler parameters
+        optimizer (str): Optimizer type
+        optimizer_extra (Optional[dict]): Extra optimizer parameters
+        weight_decay_norm (float): Weight decay for normalization layers
+        weight_decay_embed (float): Weight decay for embeddings
+        backbone_multiplier (float): Learning rate multiplier for backbone
+        decoder_multiplier (float): Learning rate multiplier for decoder
+        head_multiplier (float): Learning rate multiplier for head
+        freeze_bn (bool): Whether to freeze batch norm
+        freeze_bn_bkb (bool): Whether to freeze backbone batch norm
+        reset_classifier (bool): Whether to reset classifier
+        clip_gradients (float): Gradient clipping value
+        size_divisibility (int): Input size divisibility requirement
+        gather_metric_period (int): How often to gather metrics
+        zero_grad_before_forward (bool): Whether to zero gradients before forward pass
     """
 
-    name: str
-    model_family: ModelFamily
-    config_class: Type[ModelConfig]
-    classes: list[str]
-    im_size: int
-    task: Task
-    config: ModelConfig
-    description: Optional[str] = None
-    weights_uri: Optional[str] = None
-    val_dataset: Optional[str] = None
-    val_metrics: Optional[dict] = None  # todo: make them explicit
-    latency: Optional[list[LatencyMetrics]] = None
-
-    @classmethod
-    def from_json(cls, path: str):
-        with open(path, encoding="utf-8") as f:
-            model_info = json.load(f)
-        return cls(**model_info)
-
-    def dump_json(self, path: str):
-        data = asdict(self)
-        # Convert config_class to string
-        data["config_class"] = self.config_class.__name__
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+    run_name: str
+    output_dir: str
+    ckpt_dir: Optional[str] = None
+    init_checkpoint: Optional[str] = None
+    resume: bool = False
+    # Logistics params
+    num_gpus: int = get_gpus()
+    device: str = "cuda"
+    workers: int = 4
+    amp_enabled: bool = True
+    ddp_broadcast_buffers: bool = False
+    ddp_find_unused: bool = True
+    checkpointer_period: int = 1000
+    checkpointer_max_to_keep: int = 1
+    eval_period: int = 50
+    log_period: int = 20
+    vis_period: int = 5000
+    samples: int = 4
+    seed: int = 42
+    early_stop: bool = False
+    patience: int = 10
+    # EMA
+    ema_enabled: bool = False
+    ema_decay: float = 0.999
+    ema_warmup: int = 2000
+    # Hyperparameters
+    learning_rate: float = 5e-4
+    weight_decay: float = 0.02
+    max_iters: int = 3000
+    batch_size: int = 16
+    scheduler: str = "POLY"
+    scheduler_extra: Optional[dict] = None
+    optimizer: str = "AdamW"
+    optimizer_extra: Optional[dict] = None
+    weight_decay_norm: float = 0.0
+    weight_decay_embed: float = 0.0
+    backbone_multiplier: float = 0.1
+    decoder_multiplier: float = 1.0
+    head_multiplier: float = 1.0
+    freeze_bn: bool = False
+    freeze_bn_bkb: bool = False
+    reset_classifier: bool = False
+    clip_gradients: float = 0.1
+    size_divisibility: int = 0
+    # Training specific
+    gather_metric_period: int = 1
+    zero_grad_before_forward: bool = False
 
 
 @dataclass
@@ -876,12 +901,15 @@ class DatasetMetadata:
     json_file: Optional[str] = None
 
     @property
-    def classes(self):  #!TODO: check if this is correct
-        if self.task == Task.DET or self.task == Task.INSTSEG:
+    def classes(self) -> List[str]:  #!TODO: check if this is correct
+        if self.task == Task.DETECTION or self.task == Task.INSTANCE_SEGMENTATION:
+            assert self.thing_classes is not None, "thing_classes is required for detection and instance segmentation"
             return self.thing_classes
-        if self.task == Task.SEMSEG or self.task == Task.PANSEG:
+        if self.task == Task.SEMSEG:
             # fixme: not sure for panoptic
+            assert self.stuff_classes is not None, "stuff_classes is required for semantic segmentation"
             return self.stuff_classes
+        raise ValueError(f"Task {self.task} not supported")
 
     @property
     def stuff_colors(self):
@@ -953,105 +981,6 @@ class DatasetMetadata:
 
 
 @dataclass
-class TrainerArgs:
-    """Configuration class for unified model training.
-
-    Attributes:
-        run_name (str): Name of the training run
-        output_dir (str): Directory to save outputs
-        ckpt_dir (Optional[str]): Directory for checkpoints
-        init_checkpoint (Optional[str]): Initial checkpoint to load
-        resume (bool): Whether to resume from checkpoint
-        num_gpus (int): Number of GPUs to use
-        device (str): Device to use (cuda/cpu)
-        workers (int): Number of data loading workers
-        amp_enabled (bool): Whether to use automatic mixed precision
-        ddp_broadcast_buffers (bool): Whether to broadcast buffers in DDP
-        ddp_find_unused (bool): Whether to find unused parameters in DDP
-        checkpointer_period (int): How often to save checkpoints
-        checkpointer_max_to_keep (int): Maximum checkpoints to keep
-        eval_period (int): How often to evaluate
-        log_period (int): How often to log
-        vis_period (int): How often to visualize
-        samples (int): Number of samples for visualization
-        seed (int): Random seed
-        early_stop (bool): Whether to use early stopping
-        patience (int): Early stopping patience
-        ema_enabled (bool): Whether to use EMA
-        ema_decay (float): EMA decay rate
-        ema_warmup (int): EMA warmup period
-        learning_rate (float): Base learning rate
-        weight_decay (float): Weight decay
-        max_iters (int): Maximum training iterations
-        batch_size (int): Batch size
-        scheduler (str): Learning rate scheduler type
-        scheduler_extra (Optional[dict]): Extra scheduler parameters
-        optimizer (str): Optimizer type
-        optimizer_extra (Optional[dict]): Extra optimizer parameters
-        weight_decay_norm (float): Weight decay for normalization layers
-        weight_decay_embed (float): Weight decay for embeddings
-        backbone_multiplier (float): Learning rate multiplier for backbone
-        decoder_multiplier (float): Learning rate multiplier for decoder
-        head_multiplier (float): Learning rate multiplier for head
-        freeze_bn (bool): Whether to freeze batch norm
-        freeze_bn_bkb (bool): Whether to freeze backbone batch norm
-        reset_classifier (bool): Whether to reset classifier
-        clip_gradients (float): Gradient clipping value
-        size_divisibility (int): Input size divisibility requirement
-        gather_metric_period (int): How often to gather metrics
-        zero_grad_before_forward (bool): Whether to zero gradients before forward pass
-    """
-
-    run_name: str
-    output_dir: str
-    ckpt_dir: Optional[str] = None
-    init_checkpoint: Optional[str] = None
-    resume: bool = False
-    # Logistics params
-    num_gpus: Optional[int] = 0
-    device: str = "cuda"
-    workers: int = 4
-    amp_enabled: bool = True
-    ddp_broadcast_buffers: bool = False
-    ddp_find_unused: bool = True
-    checkpointer_period: int = 1000
-    checkpointer_max_to_keep: int = 1
-    eval_period: int = 50
-    log_period: int = 20
-    vis_period: int = 5000
-    samples: int = 4
-    seed: int = 42
-    early_stop: bool = False
-    patience: int = 10
-    # EMA
-    ema_enabled: bool = False
-    ema_decay: float = 0.999
-    ema_warmup: int = 2000
-    # Hyperparameters
-    learning_rate: float = 5e-4
-    weight_decay: float = 0.02
-    max_iters: int = 3000
-    batch_size: int = 16
-    scheduler: str = "POLY"
-    scheduler_extra: Optional[dict] = None
-    optimizer: str = "AdamW"
-    optimizer_extra: Optional[dict] = None
-    weight_decay_norm: float = 0.0
-    weight_decay_embed: float = 0.0
-    backbone_multiplier: float = 0.1
-    decoder_multiplier: float = 1.0
-    head_multiplier: float = 1.0
-    freeze_bn: bool = False
-    freeze_bn_bkb: bool = False
-    reset_classifier: bool = False
-    clip_gradients: float = 0.1
-    size_divisibility: int = 0
-    # Training specific
-    gather_metric_period: int = 1
-    zero_grad_before_forward: bool = False
-
-
-@dataclass
 class DetectronDict:
     file_name: str
     height: Optional[int] = None
@@ -1061,3 +990,70 @@ class DetectronDict:
     pan_seg_file_name: Optional[str] = None
     annotations: Optional[list[dict]] = None
     segments_info: Optional[list[dict]] = None
+
+
+@dataclass
+class ModelInfo:
+    """Detailed information about a specific model.
+
+    This class stores all the necessary information to identify, configure, and evaluate a model.
+
+    Attributes:
+        name: Unique identifier for the model.
+        model_family: The family/architecture the model belongs to (e.g., RTDETR, M2F).
+        config_class: The configuration class type used to instantiate the model.
+        classes: List of class names the model can detect/segment.
+        im_size: Input image size (typically square dimensions).
+        task: The task the model performs (detection, segmentation, etc.).
+        config: Configuration instance with model-specific parameters.
+        description: Optional human-readable description of the model.
+        weights_uri: Optional path or URI to the model weights.
+        val_dataset: Optional name of the validation dataset used.
+        val_metrics: Optional dictionary containing validation metrics.
+        latency: Optional list of latency measurements across different runtimes.
+    """
+
+    name: str
+    model_family: ModelFamily
+    # config_class: Type[ModelConfig]
+    classes: list[str]
+    im_size: int
+    task: Task
+    config: ModelConfig
+    description: Optional[str] = None
+    train_args: Optional[TrainerArgs] = None
+    weights_uri: Optional[str] = None
+    val_dataset: Optional[str] = None
+    val_metrics: Optional[dict] = None  # todo: make them explicit
+    latency: Optional[list[LatencyMetrics]] = None
+
+    @classmethod
+    def from_json(cls, path: str):
+        with open(path, encoding="utf-8") as f:
+            model_info_json = json.load(f)
+        model_info = cls(
+            name=model_info_json["name"],
+            model_family=ModelFamily(model_info_json["model_family"]),
+            # config_class=model_info_json["config_class"],
+            classes=model_info_json["classes"],
+            im_size=int(model_info_json["im_size"]),
+            task=Task(model_info_json["task"]),
+            config=ModelConfig(**model_info_json["config"]),
+            description=model_info_json.get("description", None),
+            train_args=TrainerArgs(**model_info_json["train_args"]) if "train_args" in model_info_json else None,
+            weights_uri=model_info_json.get("weights_uri", None),
+            val_dataset=model_info_json.get("val_dataset", None),
+            val_metrics=model_info_json.get("val_metrics", None),
+            latency=[LatencyMetrics(**latency) for latency in model_info_json.get("latency", [])]
+            if "latency" in model_info_json and model_info_json["latency"] is not None
+            else None,
+        )
+
+        return model_info
+
+    def dump_json(self, path: str):
+        data = asdict(self)
+        # Convert config_class to string
+        # data["config_class"] = self.config_class.__name__
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)

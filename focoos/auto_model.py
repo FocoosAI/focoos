@@ -4,7 +4,7 @@ from dataclasses import fields
 from typing import Callable, Dict, Optional, Type
 
 from focoos.model_registry import ModelRegistry
-from focoos.models.fai_model import BaseModelNN, ModelConfig
+from focoos.models.fai_model import BaseModelNN, FocoosModel, ModelConfig
 from focoos.nn.backbone.base import BackboneConfig, BaseBackbone
 from focoos.ports import ModelFamily
 from focoos.utils.logger import get_logger
@@ -14,6 +14,21 @@ logger = get_logger(__name__)
 
 class AutoConfig:
     """Automatic model configuration management"""
+
+    _MODEL_MAPPING: Dict[str, Callable[[], Type[ModelConfig]]] = {}
+    _REGISTERED_MODELS: set = set()
+
+    @classmethod
+    def register_model(cls, model_family: ModelFamily, model_config_loader: Callable[[], Type[ModelConfig]]):
+        """
+        Register a loader for a specific model
+
+        Args:
+            model_family: Model family
+            model_loader: Function that loads the model
+        """
+        cls._MODEL_MAPPING[model_family.value] = model_config_loader
+        cls._REGISTERED_MODELS.add(model_family.value)
 
     @classmethod
     def from_pretrained(cls, pretrained_model_name: str, **kwargs) -> ModelConfig:
@@ -35,23 +50,24 @@ class AutoConfig:
             raise ValueError(
                 f"Model {pretrained_model_name} not supported. Available models: {ModelRegistry.list_models()}"
             )
+        if model_info.model_family not in cls._MODEL_MAPPING:
+            raise ValueError(f"Model {pretrained_model_name} not supported")
+        config_class = cls._MODEL_MAPPING[model_info.model_family.value]()  # this return the config class
 
-        base_config = model_info.config
-
-        # Validazione dei parametri
-        valid_fields = {f.name for f in fields(model_info.config_class)}
+        # Validate the parameters kwargs
+        valid_fields = {f.name for f in fields(config_class)}
         invalid_kwargs = set(kwargs.keys()) - valid_fields
         if invalid_kwargs:
             raise ValueError(
-                f"Invalid parameters for {model_info.config_class.__name__}: {invalid_kwargs}"
-                f"\nValid parameters: {valid_fields}"
+                f"Invalid parameters for {config_class.__name__}: {invalid_kwargs}\nValid parameters: {valid_fields}"
             )
 
-        # Creazione configurazione
-        config_dict = {field.name: getattr(base_config, field.name) for field in fields(base_config)}
+        config_dict = {field.name: getattr(model_info.config, field.name) for field in fields(model_info.config)}
+
+        # Update the config with the kwargs
         config_dict.update(kwargs)
 
-        return model_info.config_class(**config_dict)
+        return config_class(**config_dict)
 
 
 class AutoModel:
@@ -82,7 +98,7 @@ class AutoModel:
             raise ImportError(f"Unable to import model family {model_family}. Error: {str(e)}")
 
     @classmethod
-    def from_pretrained(cls, pretrained_model_name: str, config: Optional[ModelConfig] = None, **kwargs) -> BaseModelNN:
+    def from_pretrained(cls, pretrained_model_name: str, config: Optional[ModelConfig] = None, **kwargs) -> FocoosModel:
         """
         Load a pretrained model
 
@@ -92,7 +108,7 @@ class AutoModel:
             **kwargs: Configuration parameters to override
 
         Returns:
-            BaseNNModel: Loaded model
+            FocoosModel: Loaded model
 
         Raises:
             ValueError: If the model doesn't exist or is not supported
@@ -122,17 +138,18 @@ class AutoModel:
 
         try:
             model_class = cls._MODEL_MAPPING[model_info.model_family.value]()
-            model = model_class(config, model_info)
+            model = model_class(config)
+            focoos_model = FocoosModel(model, model_info)
 
             if pretrained_model_name:
                 weights = PretrainedWeightsManager.get_weights_dict(pretrained_model_name)
                 if weights:
-                    model.load_weights(weights)
+                    focoos_model.load_weights(weights)
                     logger.info(f"✅ Weights loaded for model {pretrained_model_name}")
             else:
                 logger.warning(f"⚠️ Model {pretrained_model_name} has no pretrained weights")
 
-            return model
+            return focoos_model
 
         except Exception as e:
             raise RuntimeError(f"Error loading model {pretrained_model_name}: {str(e)}")

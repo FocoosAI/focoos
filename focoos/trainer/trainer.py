@@ -22,7 +22,7 @@ from focoos.evaluation.get_eval import get_evaluator
 from focoos.evaluation.utils import print_csv_format
 from focoos.models.fai_model import BaseModelNN
 from focoos.nn.layers.norm import FrozenBatchNorm2d
-from focoos.ports import Task, TrainerArgs
+from focoos.ports import ModelInfo, Task, TrainerArgs
 from focoos.trainer.checkpointer import DetectionCheckpointer
 from focoos.trainer.hooks import hook
 from focoos.trainer.hooks.early_stop import EarlyStoppingHook
@@ -50,6 +50,7 @@ class FocoosTrainer:
         self,
         args: TrainerArgs,
         model: BaseModelNN,
+        model_info: ModelInfo,
         data_val: MapDataset,
         data_train: Optional[MapDataset] = None,
     ):
@@ -70,7 +71,7 @@ class FocoosTrainer:
         self._setup_logging()
 
         # Setup model and data
-        self._setup_model_and_data(model, data_train, data_val)
+        self._setup_model_and_data(model, model_info, data_train, data_val)
 
         # Setup training components
         self._setup_training_components()
@@ -98,11 +99,11 @@ class FocoosTrainer:
         else:
             self.ckpt_dir = self.output_dir
 
-    def _setup_model_and_data(self, model, data_train, data_val):
+    def _setup_model_and_data(self, model, model_info, data_train, data_val):
         """Setup model and data."""
         # Setup Model
         self.model = model
-        self.model_info = model.model_info
+        self.model_info = model_info
         self.checkpoint = self.args.init_checkpoint
 
         self.metric = None
@@ -154,9 +155,7 @@ class FocoosTrainer:
 
         # Save metadata
         if comm.get_rank() == 0:
-            # TODO: restore
-            # self.model_cfg.dump_json(os.path.join(self.output_dir, "focoos_metadata.json"))
-            pass
+            self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
 
     def _setup_training_components(self):
         """Setup training components like optimizer, scheduler, etc."""
@@ -176,6 +175,7 @@ class FocoosTrainer:
         save_file = os.path.join(self.output_dir, save_file)
         self.logger.info("Saving final model to {}".format(save_file))
         torch.save(data, save_file)
+        self.model_info.weights_uri = os.path.abspath(save_file)
 
     def _restore_best_model(self, name: str = "model_best.pth"):
         """Restore best model from checkpoint.
@@ -200,7 +200,6 @@ class FocoosTrainer:
         if comm.get_rank() == 0:
             self.logger.info("Finishing.")
             # save model to model_final.pth - if EMA, store it.
-            # self.model_cfg.dump_json(os.path.join(self.output_dir, "focoos_metadata.json"))
 
             if self.finished:
                 restored = self._restore_best_model()
@@ -210,6 +209,8 @@ class FocoosTrainer:
                         ema.apply_model_ema(self.model, save_current=True)
                     os.remove(os.path.join(self.ckpt_dir, "model_best.pth"))
                 self._store_model("model_final.pth")
+
+            self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
 
     def _do_eval(self, model):
         """Internal method to evaluate model.

@@ -32,7 +32,6 @@ class ModelRegistry:
             name="fai-rtdetr-l-obj365",
             description="RTDETR Large model (Object365)",
             model_family=ModelFamily.RTDETR,
-            config_class=RTDetrConfig,
             weights_uri="/home/ubuntu/anyma/pretrained_models/models/fai-rtdetr-m-obj365/model_final.pth",
             config=RTDetrConfig(
                 backbone_config=PResnetConfig(
@@ -63,7 +62,6 @@ class ModelRegistry:
             name="rtdetr-l-coco",
             description="RTDETR Large model (COCO)",
             model_family=ModelFamily.RTDETR,
-            config_class=RTDetrConfig,
             weights_uri="/home/ubuntu/anyma/pretrained_models/models/fai-rtdetr-l-coco/model_final.pth",
             config=RTDetrConfig(
                 backbone_config=PResnetConfig(
@@ -94,7 +92,6 @@ class ModelRegistry:
             name="rtdetr-m-coco",
             description="RTDETR Medium model (COCO)",
             model_family=ModelFamily.RTDETR,
-            config_class=RTDetrConfig,
             weights_uri="/home/ubuntu/anyma/pretrained_models/models/fai-rtdetr-m-coco/model_final.pth",
             config=RTDetrConfig(
                 backbone_config=STDCConfig(
@@ -122,7 +119,6 @@ class ModelRegistry:
             name="rtdetr-s-coco",
             description="RTDETR Small model (COCO)",
             model_family=ModelFamily.RTDETR,
-            config_class=RTDetrConfig,
             weights_uri="/home/ubuntu/anyma/pretrained_models/models/fai-rtdetr-s-coco/model_final.pth",
             config=RTDetrConfig(
                 backbone_config=STDCConfig(
