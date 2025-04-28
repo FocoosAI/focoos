@@ -1015,11 +1015,11 @@ class ModelInfo:
 
     name: str
     model_family: ModelFamily
-    # config_class: Type[ModelConfig]
     classes: list[str]
     im_size: int
     task: Task
     config: dict
+    focoos_model: Optional[str] = None
     description: Optional[str] = None
     train_args: Optional[TrainerArgs] = None
     weights_uri: Optional[str] = None
@@ -1038,6 +1038,7 @@ class ModelInfo:
             classes=model_info_json["classes"],
             im_size=int(model_info_json["im_size"]),
             task=Task(model_info_json["task"]),
+            focoos_model=model_info_json.get("focoos_model", None),
             config=model_info_json["config"],
             description=model_info_json.get("description", None),
             train_args=TrainerArgs(**model_info_json["train_args"])
@@ -1059,3 +1060,17 @@ class ModelInfo:
         # data["config_class"] = self.config_class.__name__
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
+
+    def pprint(self):
+        from focoos.utils.logger import get_logger
+
+        logger = get_logger("model_info")
+        logger.info(f"""
+                    📋 Name: {self.name}
+                    📝 Description: {self.description}
+                    👪 Family: {self.model_family}
+                    🔗 Focoos Model: {self.focoos_model}
+                    🎯 Task: {self.task}
+                    🏷️ Classes: {self.classes}
+                    🖼️ Im size: {self.im_size}
+                    """)

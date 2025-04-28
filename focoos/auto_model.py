@@ -2,7 +2,7 @@ import importlib
 import os
 from typing import Callable, Dict, Optional, Type
 
-from focoos.model_registry import ModelRegistry
+from focoos.model_registry.model_registry import ModelRegistry
 from focoos.models.fai_model import BaseModelNN, FocoosModel, ModelConfig
 from focoos.nn.backbone.base import BackboneConfig, BaseBackbone
 from focoos.ports import ModelFamily
