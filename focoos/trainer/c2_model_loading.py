@@ -1,11 +1,14 @@
 # Imported and Adapted from Detectron2
 # Copyright (c) Facebook, Inc. and its affiliates.
 import copy
-import logging
 import re
 from typing import Dict, List
 
 import torch
+
+from focoos.utils.logger import get_logger
+
+logger = get_logger("trainer")
 
 
 def convert_basic_c2_names(original_keys):
@@ -75,7 +78,6 @@ def convert_c2_detectron_names(weights):
         dict: detectron2 names -> tensor
         dict: detectron2 names -> C2 names
     """
-    logger = logging.getLogger(__name__)
     logger.info("Renaming Caffe2 weights ......")
     original_keys = sorted(weights.keys())
     layer_keys = copy.deepcopy(original_keys)
@@ -238,7 +240,6 @@ def align_and_update_state_dicts(model_state_dict, ckpt_state_dict, c2_conversio
     # remove indices that correspond to no-match
     idxs[max_match_size == 0] = -1
 
-    logger = logging.getLogger(__name__)
     # matched_pairs (matched checkpoint key --> matched model key)
     matched_keys = {}
     result_state_dict = {}

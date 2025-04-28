@@ -1,7 +1,6 @@
 # Copyright (c) FocoosAI
 import copy
 import itertools
-import logging
 from collections import OrderedDict
 from typing import List
 
@@ -26,9 +25,11 @@ from tabulate import tabulate
 import focoos.utils.distributed.comm as comm
 from focoos.data.datasets.dict_dataset import DictDataset
 from focoos.structures import BoxMode
-from focoos.utils.logger import create_small_table
+from focoos.utils.logger import create_small_table, get_logger
 
 from .evaluator import DatasetEvaluator
+
+logger = get_logger("evaluation")
 
 
 class DetectionEvaluator(DatasetEvaluator):
@@ -63,7 +64,6 @@ class DetectionEvaluator(DatasetEvaluator):
             distributed: If True, evaluation will be distributed across multiple processes.
                        If False, evaluation runs only in the current process.
         """
-        self._logger = logging.getLogger(__name__)
         self._distributed = distributed
         self.dataset_dict = dataset_dict
         self.metadata = self.dataset_dict.metadata
@@ -125,17 +125,17 @@ class DetectionEvaluator(DatasetEvaluator):
             predictions = self._predictions
 
         if len(predictions) == 0:
-            self._logger.warning("[COCOEvaluator] Did not receive valid predictions.")
+            logger.warning("[COCOEvaluator] Did not receive valid predictions.")
             return {}
 
-        self._logger.info("Preparing results for COCO format ...")
+        logger.info("Preparing results for COCO format ...")
         predictions = list(
             itertools.chain(*[x["instances"] for x in predictions])
         )  # this is a list of dicts (see the conversion below)
 
         inputs = []
         images = {}
-        self._logger.info(f"predictions: {len(predictions)}")
+        logger.info(f"predictions: {len(predictions)}")
         for x in predictions:
             if x["image_id"] not in images:
                 in_ = self.dataset_dict[x["image_id"]]
@@ -145,7 +145,7 @@ class DetectionEvaluator(DatasetEvaluator):
                 in_.pop("annotations")
                 in_["id"] = x["image_id"]
                 images[x["image_id"]] = in_
-        self._logger.info(f"inputs: {len(inputs)}")
+        logger.info(f"inputs: {len(inputs)}")
 
         self._results = OrderedDict()
         if len(predictions) > 0:
@@ -238,7 +238,7 @@ class DetectionEvaluator(DatasetEvaluator):
         }[iou_type]
 
         if coco_eval is None:
-            self._logger.warn("No predictions from the model!")
+            logger.warn("No predictions from the model!")
             return {metric: float("nan") for metric in metrics}
 
         # the standard metrics
@@ -246,9 +246,9 @@ class DetectionEvaluator(DatasetEvaluator):
             metric: float(coco_eval.stats[idx] * 100 if coco_eval.stats[idx] >= 0 else "nan")
             for idx, metric in enumerate(metrics)
         }
-        self._logger.info("Evaluation results for {}: \n".format(iou_type) + create_small_table(results))
+        logger.info("Evaluation results for {}: \n".format(iou_type) + create_small_table(results))
         if not np.isfinite(sum(results.values())):
-            self._logger.info("Some metrics cannot be computed and is shown as NaN.")
+            logger.info("Some metrics cannot be computed and is shown as NaN.")
 
         if class_names is None or len(class_names) <= 1:
             return results
@@ -256,7 +256,7 @@ class DetectionEvaluator(DatasetEvaluator):
         # from https://github.com/facebookresearch/Detectron/blob/a6a835f5b8208c45d0dce217ce9bbda915f44df7/detectron/datasets/json_dataset_evaluator.py#L222-L252 # noqa
         precisions = coco_eval.eval["precision"]
         # precision has dims (iou, recall, cls, area range, max dets)
-        self._logger.info(f"precisions: {precisions.shape} class_names: {class_names}")
+        logger.info(f"precisions: {precisions.shape} class_names: {class_names}")
 
         assert len(class_names) == precisions.shape[2], (
             f"Found {len(class_names)} classes, but precision has dimension {precisions.shape[2]}"
@@ -282,7 +282,7 @@ class DetectionEvaluator(DatasetEvaluator):
             headers=["category", "AP"] * (N_COLS // 2),
             numalign="left",
         )
-        self._logger.info("Per-category {} AP: \n".format(iou_type) + table)
+        logger.info("Per-category {} AP: \n".format(iou_type) + table)
 
         results.update({"AP-" + name: ap for name, ap in results_per_category})
         return results

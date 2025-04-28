@@ -1,7 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 import datetime
 import json
-import logging
 import os
 import time
 from collections import defaultdict
@@ -11,6 +10,8 @@ from typing import Optional
 
 import torch
 from fvcore.common.history_buffer import HistoryBuffer
+
+from focoos.utils.logger import get_logger
 
 __all__ = [
     "get_event_storage",
@@ -22,6 +23,9 @@ __all__ = [
 ]
 
 _CURRENT_STORAGE_STACK = []
+
+
+logger = get_logger("trainer")
 
 
 def get_event_storage():
@@ -111,7 +115,6 @@ class JSONWriter(EventWriter):
         self._file_handle = open(json_file, "a")
         self._window_size = window_size
         self._last_write = -1
-        self.logger = logging.getLogger(__name__)
         self._force_close = force_close
 
     def write(self):
@@ -151,7 +154,7 @@ class JSONWriter(EventWriter):
             os.fsync(self._file_handle.fileno())
         except AttributeError:
             # Pass if file handle doesn't support fsync
-            self.logger.warning("File handle doesn't support fsync")
+            logger.warning("File handle doesn't support fsync")
         finally:
             if self._force_close:
                 self._file_handle.close()
@@ -233,7 +236,7 @@ class CommonMetricPrinter(EventWriter):
                 Used to compute ETA. If not given, ETA will not be printed.
             window_size (int): the losses will be median-smoothed by this window size
         """
-        self.logger = logging.getLogger(__name__)
+
         self._max_iter = max_iter
         self._window_size = window_size
         self._last_write = None  # (step, time) of last call to write(). Used to compute ETA
@@ -292,7 +295,7 @@ class CommonMetricPrinter(EventWriter):
             max_mem_mb = None
 
         # NOTE: max_mem is parsed by grep in "dev/parse_results.sh"
-        self.logger.info(
+        logger.info(
             str.format(
                 " {eta}iter: {iter}  {losses}  {non_losses}  {avg_time}{last_time}"
                 + "{avg_data_time}{last_data_time} lr: {lr}  {memory}",

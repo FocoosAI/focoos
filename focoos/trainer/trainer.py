@@ -17,13 +17,14 @@ from torch import GradScaler, autocast
 
 from focoos.data.datasets.map_dataset import MapDataset
 from focoos.data.loaders import build_detection_test_loader, build_detection_train_loader
-from focoos.evaluation.evaluator import inference_on_dataset
-from focoos.evaluation.get_eval import get_evaluator
-from focoos.evaluation.utils import print_csv_format
 from focoos.models.fai_model import BaseModelNN
 from focoos.nn.layers.norm import FrozenBatchNorm2d
 from focoos.ports import ModelInfo, Task, TrainerArgs
 from focoos.trainer.checkpointer import DetectionCheckpointer
+from focoos.trainer.evaluation.evaluator import inference_on_dataset
+from focoos.trainer.evaluation.get_eval import get_evaluator
+from focoos.trainer.evaluation.utils import print_csv_format
+from focoos.trainer.events import CommonMetricPrinter, EventStorage, JSONWriter, TensorboardXWriter, get_event_storage
 from focoos.trainer.hooks import hook
 from focoos.trainer.hooks.early_stop import EarlyStoppingHook
 from focoos.trainer.hooks.visualization import VisualizationHook
@@ -31,7 +32,6 @@ from focoos.trainer.solver import ema
 from focoos.trainer.solver.build import build_lr_scheduler, build_optimizer
 from focoos.utils.distributed.dist import comm, create_ddp_model
 from focoos.utils.env import collect_env_info, seed_all_rng
-from focoos.utils.events import CommonMetricPrinter, EventStorage, JSONWriter, TensorboardXWriter, get_event_storage
 from focoos.utils.logger import add_file_logging, get_logger
 
 # Mapping of task types to their primary evaluation metrics
@@ -42,7 +42,7 @@ task_metrics = {
     # Task.PANOPTIC_SEGMENTATION.value: "panoptic_seg/PQ",
 }
 
-logger = get_logger(__name__)
+logger = get_logger("trainer")
 
 
 class FocoosTrainer:
@@ -83,11 +83,10 @@ class FocoosTrainer:
             os.makedirs(self.output_dir, exist_ok=True)
 
         add_file_logging(logger=logger, verbose=True, output=self.output_dir, rank=comm.get_local_rank())
-        self.logger = logging.getLogger(__name__)
-        self.logger.info(f"Output dir: {self.output_dir}")
+        logger.info(f"Output dir: {self.output_dir}")
 
-        self.logger.info("Rank of current process: {}. World size: {}".format(comm.get_rank(), comm.get_world_size()))
-        self.logger.debug("Environment info:\n" + collect_env_info())
+        logger.info("Rank of current process: {}. World size: {}".format(comm.get_rank(), comm.get_world_size()))
+        logger.debug("Environment info:\n" + collect_env_info())
         seed_all_rng(None if self.args.seed < 0 else self.args.seed + comm.get_rank())
         torch.backends.cudnn.benchmark = False
 
@@ -95,7 +94,7 @@ class FocoosTrainer:
             self.ckpt_dir = self.args.ckpt_dir
             if comm.is_main_process():
                 os.makedirs(self.ckpt_dir, exist_ok=True)
-                self.logger.info(f"[CKPT DIR] {self.ckpt_dir}")
+                logger.info(f"[CKPT DIR] {self.ckpt_dir}")
         else:
             self.ckpt_dir = self.output_dir
 
@@ -141,12 +140,12 @@ class FocoosTrainer:
         self.data_evaluator = get_evaluator(dataset_dict=self.data_val.dataset, task=self.task)
 
         if data_train:
-            self.logger.info(
+            logger.info(
                 f"📊 [TRAIN DATASET {len(data_train)}] {str(data_train.dataset.metadata)} | "
                 f"[Train augmentations] {data_train.mapper.augmentations}"
             )
         # Log dataset info
-        self.logger.info(
+        logger.info(
             f"📊 [VALIDATION INFO] Classes: {data_val.dataset.metadata.num_classes} | "
             f"Dataset: {len(data_val)} {str(data_val.dataset.metadata)} | "
             f"Augmentations: {data_val.mapper.augmentations} | "
@@ -173,7 +172,7 @@ class FocoosTrainer:
             ema.apply_model_ema(self.model)
         data["model"] = self.model.state_dict()
         save_file = os.path.join(self.output_dir, save_file)
-        self.logger.info("Saving final model to {}".format(save_file))
+        logger.info("Saving final model to {}".format(save_file))
         torch.save(data, save_file)
         self.model_info.weights_uri = os.path.abspath(save_file)
 
@@ -198,13 +197,13 @@ class FocoosTrainer:
     def finish(self):
         """Clean up and finalize training/testing."""
         if comm.get_rank() == 0:
-            self.logger.info("Finishing.")
+            logger.info("Finishing.")
             # save model to model_final.pth - if EMA, store it.
 
             if self.finished:
                 restored = self._restore_best_model()
                 if restored:
-                    self.logger.info("Restored best model from checkpoint.")
+                    logger.info("Restored best model from checkpoint.")
                     if self.args.ema_enabled:
                         ema.apply_model_ema(self.model, save_current=True)
                     os.remove(os.path.join(self.ckpt_dir, "model_best.pth"))
@@ -241,11 +240,11 @@ class FocoosTrainer:
             dict: Evaluation metrics
         """
         if self.args.ema_enabled:
-            self.logger.info("Run evaluation with EMA.")
+            logger.info("Run evaluation with EMA.")
             with ema.apply_model_ema_and_restore(self.model):
                 res = self._do_eval(self.model)
         else:
-            self.logger.info("Run evaluation without EMA.")
+            logger.info("Run evaluation without EMA.")
             res = self._do_eval(self.model)
 
         if comm.get_rank() == 0:
@@ -533,7 +532,6 @@ class TrainerLoop:
             start_iter: Starting iteration
             max_iter: Maximum iteration
         """
-        logger = logging.getLogger(__name__)
         logger.info("Starting training from iteration {}".format(start_iter))
 
         self.iter = self.start_iter = start_iter

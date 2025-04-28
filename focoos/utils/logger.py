@@ -198,7 +198,7 @@ def log_every_n(lvl, msg, n=1, *, name=None):
     caller_module, key = _find_caller()  # type: ignore
     _LOG_COUNTER[key] += 1
     if n == 1 or _LOG_COUNTER[key] % n == 1:
-        logging.getLogger(name or caller_module).log(lvl, msg)
+        get_logger(name or caller_module).log(lvl, msg)
 
 
 def log_every_n_seconds(lvl, msg, n=1, *, name=None):
@@ -217,7 +217,7 @@ def log_every_n_seconds(lvl, msg, n=1, *, name=None):
     last_logged = _LOG_TIMER.get(key, None)
     current_time = time.time()
     if last_logged is None or current_time - last_logged >= n:
-        logging.getLogger(name or caller_module).log(lvl, msg)
+        get_logger(name or caller_module).log(lvl, msg)
         _LOG_TIMER[key] = current_time
 
 
@@ -250,6 +250,10 @@ def add_file_logging(
         output = output
     else:
         output = os.path.join(output, "log.txt")
+
+    if os.path.exists(output):
+        os.remove(output)
+
     distributed_rank = rank
     if distributed_rank > 0:
         output = output + ".rank{}".format(distributed_rank)

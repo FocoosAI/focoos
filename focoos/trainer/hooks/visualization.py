@@ -5,7 +5,7 @@ import torch
 
 from focoos.data.datasets.map_dataset import MapDataset
 from focoos.models.fai_model import BaseModelNN
-from focoos.utils.events import get_event_storage
+from focoos.trainer.events import get_event_storage
 from focoos.utils.visualizer import ColorMode, Visualizer
 
 from .base import HookBase

@@ -3,7 +3,6 @@ import contextlib
 import io
 import itertools
 import json
-import logging
 import os
 import tempfile
 from collections import OrderedDict
@@ -15,10 +14,11 @@ from tabulate import tabulate
 
 from focoos.data.datasets.dict_dataset import DictDataset
 from focoos.utils.distributed import comm
+from focoos.utils.logger import get_logger
 
 from .evaluator import DatasetEvaluator
 
-logger = logging.getLogger(__name__)
+logger = get_logger("trainer")
 
 
 class COCOPanopticEvaluator(DatasetEvaluator):

@@ -1,6 +1,5 @@
 import copy
 import itertools
-import logging
 import math
 from contextlib import contextmanager
 from typing import List
@@ -8,6 +7,9 @@ from typing import List
 import torch
 
 from focoos.trainer.hooks import HookBase
+from focoos.utils.logger import get_logger
+
+logger = get_logger("trainer")
 
 
 class EMAState:
@@ -150,7 +152,6 @@ def build_model_ema(model):
     model = _remove_ddp(model)
     assert not hasattr(model, "ema_state"), "Name `ema_state` is reserved for model ema."
     model.ema_state = EMAState()
-    logger = logging.getLogger(__name__)
     logger.info("Using Model EMA.")
 
 

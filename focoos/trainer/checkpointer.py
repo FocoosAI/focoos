@@ -1,6 +1,5 @@
 # Imported and Adapted from Detectron2
 # Copyright (c) Facebook, Inc. and its affiliates
-import logging
 import os
 import pickle
 from urllib.parse import parse_qs, urlparse
@@ -11,6 +10,7 @@ from torch.nn.parallel import DistributedDataParallel
 
 from focoos.trainer.c2_model_loading import align_and_update_state_dicts
 from focoos.utils.distributed import comm
+from focoos.utils.logger import get_logger
 
 
 class DetectionCheckpointer(Checkpointer):
@@ -29,12 +29,12 @@ class DetectionCheckpointer(Checkpointer):
             **checkpointables,
         )
         self._parsed_url_during_load = None
+        self.logger = get_logger("trainer")
 
     def load(self, path, *args, **kwargs):
         assert self._parsed_url_during_load is None
         need_sync = False
-        logger = logging.getLogger(__name__)
-        logger.info("[DetectionCheckpointer] Loading from {} ...".format(path))
+        self.logger.info("[DetectionCheckpointer] Loading from {} ...".format(path))
 
         if path and isinstance(self.model, DistributedDataParallel):
             has_file = os.path.isfile(path)
@@ -42,7 +42,7 @@ class DetectionCheckpointer(Checkpointer):
             if not all_has_file[0]:
                 raise OSError(f"File {path} not found on main worker.")
             if not all(all_has_file):
-                logger.warning(f"Not all workers can read checkpoint {path}. Training may fail to fully resume.")
+                self.logger.warning(f"Not all workers can read checkpoint {path}. Training may fail to fully resume.")
                 # TODO: broadcast the checkpoint file contents from main
                 # worker, and load from it instead.
                 need_sync = True
@@ -56,7 +56,7 @@ class DetectionCheckpointer(Checkpointer):
         ret = super().load(path, *args, **kwargs)  # type: ignore
 
         if need_sync:
-            logger.info("Broadcasting model states from main worker ...")
+            self.logger.info("Broadcasting model states from main worker ...")
             self.model._sync_params_and_buffers()
         self._parsed_url_during_load = None  # reset to None
         return ret

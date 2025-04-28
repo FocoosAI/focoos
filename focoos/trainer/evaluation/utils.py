@@ -1,6 +1,9 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-import logging
 from collections.abc import Mapping
+
+from focoos.utils.logger import get_logger
+
+logger = get_logger("trainer")
 
 
 def print_csv_format(results):
@@ -13,7 +16,6 @@ def print_csv_format(results):
             unordered dict can also be printed, but in arbitrary order
     """
     assert isinstance(results, Mapping) or not len(results), results
-    logger = logging.getLogger(__name__)
     for task, res in results.items():
         if isinstance(res, Mapping):
             # Don't print "AP-category" metrics since they are usually not tracked.

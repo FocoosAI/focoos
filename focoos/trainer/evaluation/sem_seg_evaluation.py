@@ -1,6 +1,5 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 import itertools
-import logging
 from collections import OrderedDict
 from typing import Optional, Union
 
@@ -10,8 +9,9 @@ import torch
 from PIL import Image
 
 from focoos.data.datasets.dict_dataset import DictDataset
-from focoos.evaluation.evaluator import DatasetEvaluator
+from focoos.trainer.evaluation.evaluator import DatasetEvaluator
 from focoos.utils.distributed.comm import all_gather, is_main_process, synchronize
+from focoos.utils.logger import get_logger
 
 _CV2_IMPORTED = True
 try:
@@ -19,6 +19,9 @@ try:
 except ImportError:
     # OpenCV is an optional dependency at the moment
     _CV2_IMPORTED = False
+
+
+logger = get_logger("trainer")
 
 
 def load_image_into_numpy_array(
@@ -54,7 +57,6 @@ class SemSegEvaluator(DatasetEvaluator):
             sem_seg_loading_fn: function to read sem seg file and load into numpy array.
                 Default provided, but projects can customize.
         """
-        self._logger = logging.getLogger(__name__)
         self.dataset_dict = dataset_dict
         self.metadata = self.dataset_dict.metadata
 
@@ -84,13 +86,13 @@ class SemSegEvaluator(DatasetEvaluator):
         self._compute_boundary_iou = boundary_iou
         if not _CV2_IMPORTED:
             self._compute_boundary_iou = False
-            self._logger.warn(
+            logger.warn(
                 """Boundary IoU calculation requires OpenCV. B-IoU metrics are
                 not going to be computed because OpenCV is not available to import."""
             )
         if self._num_classes >= np.iinfo(np.uint8).max:
             self._compute_boundary_iou = False
-            self._logger.warn(
+            logger.warn(
                 f"""SemSegEvaluator(num_classes) is more than supported value for Boundary IoU calculation!
                 B-IoU metrics are not going to be computed. Max allowed value (exclusive)
                 for num_classes for calculating Boundary IoU is {np.iinfo(np.uint8).max}.
@@ -201,7 +203,7 @@ class SemSegEvaluator(DatasetEvaluator):
             res[f"ACC-{name}"] = 100 * acc[i]
 
         results = OrderedDict({"sem_seg": res})
-        self._logger.info(results)
+        logger.info(results)
         return results
 
     def encode_json_sem_seg(self, sem_seg, input_file_name):

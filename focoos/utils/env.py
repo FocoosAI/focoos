@@ -46,11 +46,6 @@ def collect_torch_env():
         return get_pretty_env_info()
 
 
-def get_env_module():
-    var_name = "ANYMA_ENV_MODULE"
-    return var_name, os.environ.get(var_name, "<not set>")
-
-
 def detect_compute_compatibility(CUDA_HOME, so_file):
     try:
         cuobjdump = os.path.join(CUDA_HOME, "bin", "cuobjdump")
@@ -87,7 +82,6 @@ def collect_env_info():
     data.append(("Python", sys.version.replace("\n", "")))
     data.append(("numpy", np.__version__))
 
-    data.append(get_env_module())
     data.append(("PyTorch", torch_version + " @" + os.path.dirname(torch.__file__)))
     data.append(("PyTorch debug build", torch.version.debug))
     try:

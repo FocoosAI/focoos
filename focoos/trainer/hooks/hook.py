@@ -1,8 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-
 import datetime
 import itertools
-import logging
 import math
 import operator
 import os
@@ -24,8 +22,9 @@ from fvcore.common.checkpoint import PeriodicCheckpointer as _PeriodicCheckpoint
 from fvcore.common.timer import Timer
 from fvcore.nn.precise_bn import get_bn_modules, update_bn_stats
 
+from focoos.trainer.events import EventStorage, EventWriter
 from focoos.utils.distributed import comm
-from focoos.utils.events import EventStorage, EventWriter
+from focoos.utils.logger import get_logger
 
 from .base import HookBase
 
@@ -47,6 +46,7 @@ __all__ = [
 """
 Implement some common hooks.
 """
+logger = get_logger("trainer")
 
 
 class CallbackHook(HookBase):
@@ -114,7 +114,6 @@ class IterationTimer(HookBase):
         self._total_timer.pause()
 
     def after_train(self):
-        logger = logging.getLogger(__name__)
         total_time = time.perf_counter() - self._start_time
         total_time_minus_hooks = self._total_timer.seconds()
         hook_time = total_time - total_time_minus_hooks
@@ -233,7 +232,6 @@ class BestCheckpointer(HookBase):
                 maximized or minimized, e.g. for "bbox/AP50" it should be "max"
             file_prefix (str): the prefix of checkpoint's filename, defaults to "model_best"
         """
-        self._logger = logging.getLogger(__name__)
         self._period = eval_period
         self._val_metric = val_metric
         assert mode in [
@@ -259,7 +257,7 @@ class BestCheckpointer(HookBase):
     def _best_checking(self):
         metric_tuple = self.trainer.storage.latest().get(self._val_metric)
         if metric_tuple is None:
-            self._logger.warning(
+            logger.warning(
                 f"Given val metric {self._val_metric} does not seem to be computed/stored."
                 "Will not be checkpointing based on it."
             )
@@ -271,18 +269,18 @@ class BestCheckpointer(HookBase):
             if self._update_best(latest_metric, metric_iter):
                 additional_state = {"iteration": metric_iter}
                 self._checkpointer.save(f"{self._file_prefix}", **additional_state)
-                self._logger.info(f"Saved first model at {self.best_metric:0.5f} @ {self.best_iter} steps")
+                logger.info(f"Saved first model at {self.best_metric:0.5f} @ {self.best_iter} steps")
         elif self._compare(latest_metric, self.best_metric):
             additional_state = {"iteration": metric_iter}
             self._checkpointer.save(f"{self._file_prefix}", **additional_state)
-            self._logger.info(
+            logger.info(
                 f"Saved best model as latest eval score for {self._val_metric} is "
                 f"{latest_metric:0.5f}, better than last best score "
                 f"{self.best_metric:0.5f} @ iteration {self.best_iter}."
             )
             self._update_best(latest_metric, metric_iter)
         else:
-            self._logger.info(
+            logger.info(
                 f"Not saving as latest eval score for {self._val_metric} is {latest_metric:0.5f}, "
                 f"not better than best score {self.best_metric:0.5f} @ iteration {self.best_iter}."
             )
@@ -357,7 +355,6 @@ class LRScheduler(HookBase):
 
     def load_state_dict(self, state_dict):
         if isinstance(self.scheduler, _LRScheduler):
-            logger = logging.getLogger(__name__)
             logger.info("Loading scheduler from state_dict ...")
             self.scheduler.load_state_dict(state_dict)
 
@@ -588,9 +585,9 @@ class PreciseBN(HookBase):
             num_iter (int): number of iterations used to compute the precise
                 statistics.
         """
-        self._logger = logging.getLogger(__name__)
+
         if len(get_bn_modules(model)) == 0:
-            self._logger.info("PreciseBN is disabled because model does not contain BN layers in training mode.")
+            logger.info("PreciseBN is disabled because model does not contain BN layers in training mode.")
             self._disabled = True
             return
 
@@ -621,12 +618,12 @@ class PreciseBN(HookBase):
         def data_loader():
             for num_iter in itertools.count(1):
                 if num_iter % 100 == 0:
-                    self._logger.info("Running precise-BN ... {}/{} iterations.".format(num_iter, self._num_iter))
+                    logger.info("Running precise-BN ... {}/{} iterations.".format(num_iter, self._num_iter))
                 # This way we can reuse the same iterator
                 yield next(self._data_iter)
 
         with EventStorage():  # capture events in a new storage to discard them
-            self._logger.info(
+            logger.info(
                 "Running precise-BN for {} iterations...  ".format(self._num_iter)
                 + "Note that this could produce different statistics every time."
             )
@@ -645,7 +642,6 @@ class TorchMemoryStats(HookBase):
             max_runs (int): Stop the logging after 'max_runs'
         """
 
-        self._logger = logging.getLogger(__name__)
         self._period = period
         self._max_runs = max_runs
         self._runs = 0
@@ -661,7 +657,7 @@ class TorchMemoryStats(HookBase):
                 max_allocated_mb = torch.cuda.max_memory_allocated() / 1024.0 / 1024.0
                 allocated_mb = torch.cuda.memory_allocated() / 1024.0 / 1024.0
 
-                self._logger.info(
+                logger.info(
                     (
                         " iter: {} "
                         " max_reserved_mem: {:.0f}MB "
@@ -680,6 +676,6 @@ class TorchMemoryStats(HookBase):
                 self._runs += 1
                 if self._runs == self._max_runs:
                     mem_summary = torch.cuda.memory_summary()
-                    self._logger.info("\n" + mem_summary)
+                    logger.info("\n" + mem_summary)
 
                 torch.cuda.reset_peak_memory_stats()

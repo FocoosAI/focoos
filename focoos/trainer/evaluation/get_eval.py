@@ -1,7 +1,7 @@
 from focoos.data.datasets.dict_dataset import DictDataset
-from focoos.evaluation.detection_evaluation import DetectionEvaluator, InstanceSegmentationEvaluator
-from focoos.evaluation.sem_seg_evaluation import SemSegEvaluator
 from focoos.ports import Task
+from focoos.trainer.evaluation.detection_evaluation import DetectionEvaluator, InstanceSegmentationEvaluator
+from focoos.trainer.evaluation.sem_seg_evaluation import SemSegEvaluator
 
 evaluators = {
     Task.DETECTION: DetectionEvaluator,

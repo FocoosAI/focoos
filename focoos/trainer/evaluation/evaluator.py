@@ -10,7 +10,9 @@ import torch
 from torch import nn
 
 from focoos.utils.distributed.comm import get_world_size, is_main_process
-from focoos.utils.logger import log_every_n_seconds
+from focoos.utils.logger import get_logger, log_every_n_seconds
+
+logger = get_logger("trainer")
 
 
 class DatasetEvaluator:
@@ -138,7 +140,6 @@ def inference_on_dataset(
         The return value of `evaluator.evaluate()`
     """
     num_devices = get_world_size()
-    logger = logging.getLogger(__name__)
     logger.info(f"Start inference on {len(data_loader)} batches")
 
     total = len(data_loader)  # inference data loader must have a fixed length
