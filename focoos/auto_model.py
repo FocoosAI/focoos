@@ -1,5 +1,6 @@
 import importlib
 import os
+from dataclasses import fields
 from typing import Callable, Dict, Optional, Type
 
 from focoos.model_registry.model_registry import ModelRegistry
@@ -42,7 +43,20 @@ class AutoConfig:
         if "backbone_config" in config_dict and config_dict["backbone_config"] is not None:
             config_dict["backbone_config"] = AutoConfigBackbone.from_dict(config_dict["backbone_config"])
 
-        return config_class(**config_dict)
+            # Validate the parameters kwargs
+        valid_fields = {f.name for f in fields(config_class)}
+        invalid_kwargs = set(kwargs.keys()) - valid_fields
+        if invalid_kwargs:
+            raise ValueError(
+                f"Invalid parameters for {config_class.__name__}: {invalid_kwargs}\nValid parameters: {valid_fields}"
+            )
+
+        config_dict = config_class(**config_dict)
+
+        # Update the config with the kwargs
+        config_dict.update(kwargs)
+
+        return config_dict
 
 
 class AutoModel:

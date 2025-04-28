@@ -107,11 +107,17 @@ class FocoosModel:
             data_train: Training dataset
             data_val: Validation dataset
         """
+        if self.model_info.config["num_classes"] != data_val.dataset.metadata.num_classes:
+            logger.error(
+                f"Number of classes in the model ({self.model_info.config['num_classes']}) does not match the number of classes in the dataset ({data_val.dataset.metadata.num_classes})."
+            )
+            # self.model_info.config["num_classes"] = data_val.dataset.metadata.num_classes
+            return
+
         self.model_info.train_args = args  # type: ignore
         self.model_info.val_dataset = data_val.dataset.metadata.name
         self.model_info.val_metrics = None
         self.model_info.classes = data_val.dataset.metadata.classes
-        self.model_info.config["num_classes"] = data_val.dataset.metadata.num_classes
         assert self.model_info.task == data_val.dataset.metadata.task, "Task mismatch between model and dataset."
 
         assert args.num_gpus, "Training without GPUs is not supported. num_gpus must be greater than 0"
