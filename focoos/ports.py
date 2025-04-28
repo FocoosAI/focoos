@@ -750,6 +750,7 @@ class ModelFamily(str, Enum):
     BF = "fai_bf"
 
 
+@dataclass
 class DictClass(OrderedDict):
     def to_tuple(self) -> tuple[Any]:
         """
@@ -803,7 +804,7 @@ class ModelConfig(DictClass):
 class ModelOutput(DictClass):
     """Model output base container."""
 
-    pass
+    loss: Optional[dict]
 
 
 class DatasetSplitType(str, Enum):

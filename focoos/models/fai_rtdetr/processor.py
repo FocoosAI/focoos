@@ -5,7 +5,7 @@ import torch
 from PIL import Image
 
 from focoos.data.mappers.detection_dataset_mapper import DetectionDatasetDict
-from focoos.models.fai_rtdetr.rtdetr_ports import RTDETRModelOutput, RTDETRTargets
+from focoos.models.fai_rtdetr.ports import RTDETRModelOutput, RTDETRTargets
 from focoos.ports import FocoosDet, FocoosDetections
 from focoos.structures import Boxes, ImageList, Instances
 from focoos.utils.box import box_xyxy_to_cxcywh

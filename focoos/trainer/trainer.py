@@ -592,14 +592,14 @@ class TrainerLoop:
         if self.amp:
             assert torch.cuda.is_available(), "[UnifiedTrainerLoop] CUDA is required for AMP training!"
             with autocast(enabled=self.amp, dtype=self.precision, device_type="cuda"):
-                loss_dict = self.model(data)
+                loss_dict = self.model(data).loss
                 if isinstance(loss_dict, torch.Tensor):
                     losses = loss_dict
                     loss_dict = {"total_loss": loss_dict}
                 else:
                     losses = sum(loss_dict.values())
         else:
-            loss_dict = self.model(data)
+            loss_dict = self.model(data).loss
             if isinstance(loss_dict, torch.Tensor):
                 losses = loss_dict
                 loss_dict = {"total_loss": loss_dict}

@@ -1,5 +1,4 @@
 import copy
-import logging
 import math
 from collections import OrderedDict
 from typing import Dict, Optional, Tuple, Union
@@ -16,8 +15,8 @@ from scipy.optimize import linear_sum_assignment
 from focoos.data.mappers.detection_dataset_mapper import DetectionDatasetDict
 from focoos.models.fai_model import BaseModelNN
 from focoos.models.fai_rtdetr.config import RTDetrConfig
+from focoos.models.fai_rtdetr.ports import RTDETRModelOutput, RTDETRTargets
 from focoos.models.fai_rtdetr.processor import RTDetrProcessor
-from focoos.models.fai_rtdetr.rtdetr_ports import RTDETRModelOutput, RTDETRTargets
 from focoos.nn.backbone.base import BaseBackbone
 from focoos.nn.backbone.build import load_backbone
 from focoos.nn.layers.base import MLP
@@ -29,8 +28,9 @@ from focoos.structures import Instances
 from focoos.utils.box import box_cxcywh_to_xyxy, box_iou, generalized_box_iou
 from focoos.utils.distributed.comm import get_world_size
 from focoos.utils.distributed.dist import is_dist_available_and_initialized
+from focoos.utils.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def get_activation(act: str, inpace: bool = True):
@@ -1385,7 +1385,7 @@ class FAIRTDetr(BaseModelNN):
             list[torch.Tensor],
             list[DetectionDatasetDict],
         ],
-    ):
+    ) -> RTDETRModelOutput:
         images, targets = self.processor.preprocess(
             inputs,
             training=self.training,
@@ -1402,9 +1402,9 @@ class FAIRTDetr(BaseModelNN):
 
         if self.training:
             assert targets is not None and len(targets) > 0, "targets should not be None or empty - training mode"
-            return losses
-        else:
-            return RTDETRModelOutput(logits=outputs[0], boxes=outputs[1])
+            return RTDETRModelOutput(logits=torch.zeros(0, 0, 0), boxes=torch.zeros(0, 0, 4), loss=losses)
+
+        return RTDETRModelOutput(logits=outputs[0], boxes=outputs[1], loss=None)
 
     def post_process(self, outputs, batched_inputs) -> list[dict[str, Instances]]:
         """
