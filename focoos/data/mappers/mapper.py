@@ -6,13 +6,13 @@ import torch
 
 from focoos.data.transforms import augmentation as A
 from focoos.data.transforms import transform as T
+from focoos.ports import DictClass
 from focoos.structures import Instances
-from focoos.utils.container import BaseContainer
 from focoos.utils.logger import log_first_n
 
 
 @dataclass
-class DatasetEntry(BaseContainer):
+class DatasetEntry(DictClass):
     image: Optional[torch.Tensor] = None
     height: Optional[int] = None
     width: Optional[int] = None

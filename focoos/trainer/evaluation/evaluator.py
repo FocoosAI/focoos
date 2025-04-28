@@ -201,6 +201,7 @@ def inference_on_dataset(
                         f"ETA={eta}"
                     ),
                     n=5,
+                    name="trainer",
                 )
             start_data_time = time.perf_counter()
         dict.get(callbacks or {}, "on_end", lambda: None)()

@@ -29,7 +29,7 @@ from focoos.utils.logger import create_small_table, get_logger
 
 from .evaluator import DatasetEvaluator
 
-logger = get_logger("evaluation")
+logger = get_logger("trainer")
 
 
 class DetectionEvaluator(DatasetEvaluator):

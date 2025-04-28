@@ -1363,7 +1363,7 @@ class FAIRTDetr(BaseModelNN):
             cls_sigmoid=True,
         )
         self.resolution = self.config.resolution
-        self.top_k_masks = self.config.num_queries
+        self.top_k = self.config.num_queries
         self.register_buffer("pixel_mean", torch.Tensor(self.config.pixel_mean).view(-1, 1, 1), False)
         self.register_buffer("pixel_std", torch.Tensor(self.config.pixel_std).view(-1, 1, 1), False)
         self.size_divisibility = self.config.size_divisibility
@@ -1411,4 +1411,4 @@ class FAIRTDetr(BaseModelNN):
         Post-process the outputs of the model.
         This function is used in the evaluation phase to convert raw outputs to Instances.
         """
-        return self.processor.eval_postprocess(outputs, batched_inputs, top_k_masks=self.top_k_masks)
+        return self.processor.eval_postprocess(outputs, batched_inputs, top_k=self.top_k)

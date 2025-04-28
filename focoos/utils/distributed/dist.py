@@ -131,17 +131,6 @@ def _distributed_worker(
     # See: https://github.com/facebookresearch/maskrcnn-benchmark/issues/172
     comm.synchronize()
 
-    # clean and setup logger
-    # TODO: remove this
-    # if comm.get_local_rank() != 0:
-    #     from anyma.utils.logger import EXT_LOGGER, LOGGER_NAME
-
-    #     logger = logging.getLogger(LOGGER_NAME)
-    #     logger.setLevel(logging.INFO)
-    #     for logger_name in EXT_LOGGER:
-    #         logger = logging.getLogger(logger_name)
-    #         logger.setLevel(logging.INFO)
-
     main_func(*args)
     comm.synchronize()
 

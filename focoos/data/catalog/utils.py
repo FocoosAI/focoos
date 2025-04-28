@@ -1,15 +1,16 @@
 import contextlib
 import io
 import json
-import logging
 import os
 
 import pycocotools.mask as mask_util
-from anyma.ports import DatasetMetadata, DetectronDict, FocoosTasks
-from anyma.structures import BoxMode
 from fvcore.common.timer import Timer
 
-logger = logging.getLogger(__name__)
+from focoos.ports import DatasetMetadata, DetectronDict, Task
+from focoos.structures import BoxMode
+from focoos.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def load_sem_seg(
@@ -158,7 +159,7 @@ def load_coco_json(
                 )
 
             segm = anno.get("segmentation", None)
-            if segm is not None and task == FocoosTasks.INSTSEG:  # either list[list[float]] or dict(RLE)
+            if segm is not None and task == Task.INSTANCE_SEGMENTATION:  # either list[list[float]] or dict(RLE)
                 if isinstance(segm, dict):
                     if isinstance(segm["counts"], list):
                         # convert to compressed RLE

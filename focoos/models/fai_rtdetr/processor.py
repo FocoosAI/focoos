@@ -16,7 +16,6 @@ def detector_postprocess(
     results: Instances,
     output_height: int,
     output_width: int,
-    mask_threshold: float = 0.5,
 ):
     """
     Resize the output instances.
@@ -153,7 +152,7 @@ class RTDetrProcessor:
         self,
         output: RTDETRModelOutput,
         batched_inputs: list[DetectionDatasetDict],
-        top_k_masks: int = 300,
+        top_k: int = 300,
     ) -> list[dict[str, Instances]]:
         results = []
         box_cls, box_pred = output.logits, output.boxes
@@ -162,9 +161,7 @@ class RTDetrProcessor:
 
         for i in range(batch_size):
             # Process results directly within the loop
-            scores, labels, processed_box_pred = self._get_predictions(
-                box_cls[i], box_pred[i], top_k_masks, num_classes
-            )
+            scores, labels, processed_box_pred = self._get_predictions(box_cls[i], box_pred[i], top_k, num_classes)
 
             result = Instances(image_size=(1, 1))  # we are using normalized boxes
             result.pred_boxes = Boxes(processed_box_pred)
@@ -210,10 +207,8 @@ class RTDetrProcessor:
             raise ValueError(f"Unsupported input type: {type(inputs)}")
         return image_sizes
 
-    def _get_predictions(
-        self, scores, boxes, top_k_masks, num_classes
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        scores, index = torch.topk(scores.flatten(0), top_k_masks, dim=-1)
+    def _get_predictions(self, scores, boxes, top_k, num_classes) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        scores, index = torch.topk(scores.flatten(0), top_k, dim=-1)
         labels = index % num_classes
         index = index // num_classes
         box_pred = boxes.gather(dim=0, index=index.unsqueeze(-1).repeat(1, boxes.shape[-1]))
@@ -230,7 +225,7 @@ class RTDetrProcessor:
             list[np.ndarray],
             list[torch.Tensor],
         ],
-        top_k_masks: int = 300,
+        top_k: int = 300,
         threshold: float = 0.5,
     ) -> list[FocoosDetections]:
         # Extract image sizes from inputs
@@ -245,9 +240,7 @@ class RTDetrProcessor:
 
         for i in range(batch_size):
             # Process results directly within the loop
-            scores, labels, box_pred = self._get_predictions(
-                output.logits[i], output.boxes[i], top_k_masks, num_classes
-            )
+            scores, labels, box_pred = self._get_predictions(output.logits[i], output.boxes[i], top_k, num_classes)
 
             # Apply threshold to filter out low-confidence predictions
             mask = scores > threshold

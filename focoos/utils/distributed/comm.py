@@ -40,7 +40,7 @@ def create_local_process_group(num_workers_per_machine: int) -> None:
     """
     Create a process group that contains ranks within the same machine.
 
-    Anyma's launch() in engine/launch.py will call this function. If you start
+    launch() in trainer/trainer.py will call this function. If you start
     workers without launch(), you'll have to also call this. Otherwise utilities
     like `get_local_rank()` will not work.
 
