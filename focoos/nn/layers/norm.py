@@ -112,10 +112,13 @@ class FrozenBatchNorm2d(nn.Module):
             if module.affine:
                 res.weight.data = module.weight.data.clone().detach()
                 res.bias.data = module.bias.data.clone().detach()
-            res.running_mean.data = module.running_mean.data
-            res.running_var.data = module.running_var.data
+            if module.running_mean is not None:
+                res.running_mean.data = module.running_mean.data
+            if module.running_var is not None:
+                res.running_var.data = module.running_var.data
             res.eps = module.eps
-            res.num_batches_tracked = module.num_batches_tracked
+            if module.num_batches_tracked is not None:
+                res.num_batches_tracked = module.num_batches_tracked
         else:
             for name, child in module.named_children():
                 new_child = cls.convert_frozen_batchnorm(child)
@@ -145,8 +148,10 @@ class FrozenBatchNorm2d(nn.Module):
 
             res.weight.data = module.weight.data.clone().detach()
             res.bias.data = module.bias.data.clone().detach()
-            res.running_mean.data = module.running_mean.data.clone().detach()
-            res.running_var.data = module.running_var.data.clone().detach()
+            if module.running_mean is not None and res.running_mean is not None:
+                res.running_mean.data = module.running_mean.data.clone().detach()
+            if module.running_var is not None and res.running_var is not None:
+                res.running_var.data = module.running_var.data.clone().detach()
             res.eps = module.eps
             res.num_batches_tracked = module.num_batches_tracked
         else:

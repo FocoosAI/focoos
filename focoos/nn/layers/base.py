@@ -3,8 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-def _get_activation_fn(activation=None, inplace=False):
+def _get_activation_fn(activation=None):
     """Return an activation function given a string"""
+    if activation is None:
+        return nn.Identity()
     activation = activation.lower()
     if activation == "relu":
         return F.relu
@@ -16,13 +18,8 @@ def _get_activation_fn(activation=None, inplace=False):
         return F.silu
     if activation == "leaky_relu":
         return F.leaky_relu
-    if activation is None:
-        return nn.Identity()
 
-    # if hasattr(m, "inplace"):
-    #     m.inplace = inplace
-
-    raise RuntimeError(f"activation should be relu/gelu, not {activation}.")
+    raise RuntimeError(f"activation should be [relu/gelu/glu/silu/leaky_relu], not {activation}.")
 
 
 class MLP(nn.Module):
@@ -38,7 +35,7 @@ class MLP(nn.Module):
         num_layer (int): The number of FC layer used in MLPs.
     """
 
-    def __init__(self, input_dim: int, hidden_dim: int, output_dim: int, num_layers: int) -> torch.Tensor:
+    def __init__(self, input_dim: int, hidden_dim: int, output_dim: int, num_layers: int):
         super().__init__()
         self.num_layers = num_layers
         h = [hidden_dim] * (num_layers - 1)

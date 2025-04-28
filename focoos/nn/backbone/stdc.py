@@ -150,7 +150,7 @@ class CatBottleneck(nn.Module):
         out_list = []
         out1 = self.conv_list[0](x)
 
-        for idx, conv in enumerate(self.conv_list[1:]):
+        for idx, conv in enumerate(self.conv_list[1:]):  # type: ignore
             if idx == 0:
                 if self.stride == 2:
                     out = conv(self.avd_layer(out1))
@@ -170,6 +170,7 @@ class CatBottleneck(nn.Module):
 
 @dataclass
 class STDCConfig(BackboneConfig):
+    in_chans: int = 3
     base: int = 64  # from json: "base": 64
     layers: List[int] = field(default_factory=lambda: [4, 5, 3])  # from json: "layers": [4, 5, 3]
     out_features: List[str] = field(default_factory=lambda: ["res2", "res3", "res4", "res5"])  # from json
@@ -187,6 +188,7 @@ class STDC(BaseBackbone):
             block = CatBottleneck
         elif config.block_type == "add":
             block = AddBottleneck
+        self.in_chans = config.in_chans
         self.use_conv_last = config.use_conv_last
         self.features = self._make_layers(config.base, config.layers, config.block_num, block)
 
@@ -239,7 +241,7 @@ class STDC(BaseBackbone):
 
     def _make_layers(self, base, layers, block_num, block):
         features = []
-        features += [ConvX(3, base // 2, 3, 2)]
+        features += [ConvX(self.in_chans, base // 2, 3, 2)]
         features += [ConvX(base // 2, base, 3, 2)]
 
         for i, layer in enumerate(layers):
@@ -266,14 +268,6 @@ class STDC(BaseBackbone):
                     )
 
         return nn.Sequential(*features)
-
-    @classmethod
-    def from_config(cls, cfg):
-        return {
-            "base": cfg.MODEL.BACKBONE.EMBED_DIM[0],
-            "layers": cfg.MODEL.BACKBONE.DEPTHS,
-            "out_features": cfg.MODEL.BACKBONE.OUT_FEATURES,
-        }
 
     def forward(self, x):
         outs = {}

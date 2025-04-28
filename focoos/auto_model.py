@@ -150,8 +150,13 @@ class AutoConfigBackbone:
     """Automatic backbone configuration manager with lazy loading"""
 
     _BACKBONE_MAPPING: Dict[str, str] = {
-        "resnet": "presnet.PResnetConfig",
+        "resnet": "resnet.ResnetConfig",
         "stdc": "stdc.STDCConfig",
+        "swin": "swin.SwinConfig",
+        "timm": "timmbackbone.TimmBackboneConfig",
+        "mobilenet_v2": "mobilenet_v2.MobileNetV2Config",
+        "mit": "mit.MITConfig",
+        "convnextv2": "convnextv2.ConvNeXtV2Config",
     }
 
     @classmethod
@@ -178,8 +183,13 @@ class AutoBackbone:
     """Automatic backbone manager with lazy loading"""
 
     _BACKBONE_MAPPING: Dict[str, str] = {
-        "resnet": "presnet.PResNet",
+        "resnet": "resnet.ResNet",
         "stdc": "stdc.STDC",
+        "swin": "swin.Swin",
+        "timm": "timmbackbone.TimmBackbone",
+        "mobilenet_v2": "mobilenet_v2.MobileNetV2",
+        "mit": "mit.MIT",
+        "convnextv2": "convnextv2.ConvNeXtV2",
     }
 
     @classmethod

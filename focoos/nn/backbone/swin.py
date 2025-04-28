@@ -1,4 +1,6 @@
 # Copyright (c) Focoos AI S.r.L.
+from typing import List, Optional, Tuple
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -6,12 +8,41 @@ import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
-from focoos.nn.layers.window import window_partition, window_reverse
+from .base import BackboneConfig, BaseBackbone, ShapeSpec
 
-from .base import Backbone, ShapeSpec
+
+def window_partition(x, window_size):
+    """
+    Args:
+        x: (B, H, W, C)
+        window_size (int): window size
+    Returns:
+        windows: (num_windows*B, window_size, window_size, C)
+    """
+    B, H, W, C = x.shape
+    x = x.view(B, H // window_size, window_size, W // window_size, window_size, C)
+    windows = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(-1, window_size, window_size, C)
+    return windows
+
+
+def window_reverse(windows, window_size, H, W):
+    """
+    Args:
+        windows: (num_windows*B, window_size, window_size, C)
+        window_size (int): Window size
+        H (int): Height of image
+        W (int): Width of image
+    Returns:
+        x: (B, H, W, C)
+    """
+    B = int(windows.shape[0] / (H * W / window_size / window_size))
+    x = windows.view(B, H // window_size, W // window_size, window_size, window_size, -1)
+    x = x.permute(0, 1, 3, 2, 4, 5).contiguous().view(B, H, W, -1)
+    return x
 
 
 class Mlp(nn.Module):
+    # todo: substitute with nn.layer.base.MLP
     """Multilayer perceptron."""
 
     def __init__(
@@ -208,6 +239,7 @@ class SwinTransformerBlock(nn.Module):
             mask_matrix: Attention mask for cyclic shift.
         """
         B, L, C = x.shape
+        assert self.H is not None and self.W is not None, "H and W must be set before forward"
         H, W = self.H, self.W
         assert L == H * W, "input feature has wrong size"
 
@@ -430,7 +462,7 @@ class PatchEmbed(nn.Module):
         self.in_chans = in_chans
         self.embed_dim = embed_dim
 
-        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size)
+        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size, stride=patch_size)  # type: ignore
         if norm_layer is not None:
             self.norm = norm_layer(embed_dim)
         else:
@@ -455,10 +487,8 @@ class PatchEmbed(nn.Module):
         return x
 
 
-class SwinTransformer(nn.Module):
-    """Swin Transformer backbone.
-        A PyTorch impl of : `Swin Transformer: Hierarchical Vision Transformer using Shifted Windows`  -
-          https://arxiv.org/pdf/2103.14030
+class SwinConfig(BackboneConfig):
+    """
     Args:
         pretrain_img_size (int): Input image size for training the pretrained model,
             used in absolute postion embedding. Default 224.
@@ -483,53 +513,63 @@ class SwinTransformer(nn.Module):
         use_checkpoint (bool): Whether to use checkpointing to save memory. Default: False.
     """
 
+    model_type: str = "swin"
+    pretrain_img_size: int = 224
+    patch_size: int = 4
+    in_chans: int = 3
+    embed_dim: int = 96
+    depths: List[int] = [2, 2, 6, 2]
+    num_heads: List[int] = [3, 6, 12, 24]
+    window_size: int = 7
+    mlp_ratio: float = 4.0
+    qkv_bias: bool = True
+    qk_scale: Optional[float] = None
+    drop_rate: float = 0.0
+    attn_drop_rate: float = 0.0
+    drop_path_rate: float = 0.2
+    ape: bool = False
+    patch_norm: bool = True
+    out_indices: Tuple[int, int, int, int] = (0, 1, 2, 3)
+    frozen_stages: int = -1
+    use_checkpoint: bool = False
+
+
+class Swin(BaseBackbone):
+    """Swin Transformer backbone.
+    A PyTorch impl of : `Swin Transformer: Hierarchical Vision Transformer using Shifted Windows`  -
+      https://arxiv.org/pdf/2103.14030
+    """
+
     def __init__(
         self,
-        pretrain_img_size=224,
-        patch_size=4,
-        in_chans=3,
-        embed_dim=96,
-        depths=[2, 2, 6, 2],
-        num_heads=[3, 6, 12, 24],
-        window_size=7,
-        mlp_ratio=[4],
-        qkv_bias=True,
-        qk_scale=None,
-        drop_rate=0.0,
-        attn_drop_rate=0.0,
-        drop_path_rate=0.2,
-        norm_layer=nn.LayerNorm,
-        ape=False,
-        patch_norm=True,
-        out_indices=(0, 1, 2, 3),
-        frozen_stages=-1,
-        use_checkpoint=False,
+        config: SwinConfig,
     ):
-        super().__init__()
+        super().__init__(config)
 
-        self.pretrain_img_size = pretrain_img_size
-        self.num_layers = len(depths)
-        self.embed_dim = embed_dim
-        self.ape = ape
-        self.patch_norm = patch_norm
-        self.out_indices = out_indices
-        self.frozen_stages = frozen_stages
+        self.pretrain_img_size = config.pretrain_img_size
+        self.num_layers = len(config.depths)
+        self.embed_dim = config.embed_dim
+        self.ape = config.ape
+        self.patch_norm = config.patch_norm
+        self.out_indices = config.out_indices
+        self.frozen_stages = config.frozen_stages
+        self.use_checkpoint = config.use_checkpoint
 
         # split image into non-overlapping patches
         self.patch_embed = PatchEmbed(
-            patch_size=patch_size,
-            in_chans=in_chans,
+            patch_size=config.patch_size,
+            in_chans=config.in_chans,
             embed_dim=self.embed_dim,
-            norm_layer=norm_layer if self.patch_norm else None,
+            norm_layer=nn.LayerNorm if self.patch_norm else None,
         )
 
         # absolute position embedding
         if self.ape:
-            pretrain_img_size = to_2tuple(pretrain_img_size)
-            patch_size = to_2tuple(patch_size)
+            pretrain_img_size = to_2tuple(config.pretrain_img_size)
+            patch_size = to_2tuple(config.patch_size)
             patches_resolution = [
-                pretrain_img_size[0] // patch_size[0],
-                pretrain_img_size[1] // patch_size[1],
+                pretrain_img_size[0] // patch_size[0],  # type: ignore
+                pretrain_img_size[1] // patch_size[1],  # type: ignore
             ]
 
             self.absolute_pos_embed = nn.Parameter(
@@ -537,28 +577,30 @@ class SwinTransformer(nn.Module):
             )
             trunc_normal_(self.absolute_pos_embed, std=0.02)
 
-        self.pos_drop = nn.Dropout(p=drop_rate)
+        self.pos_drop = nn.Dropout(p=config.drop_rate)
 
         # stochastic depth
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]  # stochastic depth decay rule
+        dpr = [
+            x.item() for x in torch.linspace(0, config.drop_path_rate, sum(config.depths))
+        ]  # stochastic depth decay rule
 
         # build layers
         self.layers = nn.ModuleList()
         for i_layer in range(self.num_layers):
             layer = BasicLayer(
                 dim=int(self.embed_dim * 2**i_layer),
-                depth=depths[i_layer],
-                num_heads=num_heads[i_layer],
-                window_size=window_size,
-                mlp_ratio=mlp_ratio[0],
-                qkv_bias=qkv_bias,
-                qk_scale=qk_scale,
-                drop=drop_rate,
-                attn_drop=attn_drop_rate,
-                drop_path=dpr[sum(depths[:i_layer]) : sum(depths[: i_layer + 1])],
-                norm_layer=norm_layer,
+                depth=config.depths[i_layer],
+                num_heads=config.num_heads[i_layer],
+                window_size=config.window_size,
+                mlp_ratio=config.mlp_ratio if isinstance(config.mlp_ratio, float) else config.mlp_ratio,
+                qkv_bias=config.qkv_bias,
+                qk_scale=config.qk_scale,
+                drop=config.drop_rate,
+                attn_drop=config.attn_drop_rate,
+                drop_path=dpr[sum(config.depths[:i_layer]) : sum(config.depths[: i_layer + 1])],  # type: ignore
+                norm_layer=nn.LayerNorm,
                 downsample=PatchMerging if (i_layer < self.num_layers - 1) else None,
-                use_checkpoint=use_checkpoint,
+                use_checkpoint=config.use_checkpoint,
             )
             self.layers.append(layer)
 
@@ -566,10 +608,25 @@ class SwinTransformer(nn.Module):
         self.num_features = num_features
 
         # add a norm layer for each output
-        for i_layer in out_indices:
-            layer = norm_layer(num_features[i_layer])
+        for i_layer in config.out_indices:
+            layer = nn.LayerNorm(num_features[i_layer])
             layer_name = f"norm{i_layer}"
             self.add_module(layer_name, layer)
+
+        # Set output features
+        self._out_features = ["res2", "res3", "res4", "res5"]
+        self._out_feature_strides = {
+            "res2": 4,
+            "res3": 8,
+            "res4": 16,
+            "res5": 32,
+        }
+        self._out_feature_channels = {
+            "res2": self.num_features[0],
+            "res3": self.num_features[1],
+            "res4": self.num_features[2],
+            "res5": self.num_features[3],
+        }
 
         self._freeze_stages()
 
@@ -608,6 +665,8 @@ class SwinTransformer(nn.Module):
 
     def forward(self, x):
         """Forward function."""
+        assert x.dim() == 4, f"SwinTransformer takes an input of shape (N, C, H, W). Got {x.shape} instead!"
+
         x = self.patch_embed(x)
 
         Wh, Ww = x.size(2), x.size(3)
@@ -619,7 +678,7 @@ class SwinTransformer(nn.Module):
             x = x.flatten(2).transpose(1, 2)
         x = self.pos_drop(x)
 
-        outs = {}
+        outputs = {}
         for i in range(self.num_layers):
             layer = self.layers[i]
             x_out, H, W, x, Wh, Ww = layer(x, Wh, Ww)
@@ -629,89 +688,9 @@ class SwinTransformer(nn.Module):
                 x_out = norm_layer(x_out)
 
                 out = x_out.view(-1, H, W, self.num_features[i]).permute(0, 3, 1, 2).contiguous()
-                outs["res{}".format(i + 2)] = out
+                outputs[f"res{i + 2}"] = out
 
-        return outs
-
-    def train(self, mode=True):
-        """Convert the model into training mode while keep layers freezed."""
-        super().train(mode)
-        self._freeze_stages()
-
-
-class D2SwinTransformer(SwinTransformer, Backbone):
-    def __init__(
-        self,
-        patch_size,
-        pretr_image_size,
-        embed_dims,
-        depths,
-        num_heads,
-        window_size,
-        mlp_ratios,
-        qkv_bias,
-        qk_scale,
-        drop_rate,
-        attn_drop_rate,
-        drop_path_rate,
-        out_features,
-    ):
-        in_chans = 3
-        norm_layer = nn.LayerNorm
-
-        ape = False
-        patch_norm = True
-        use_checkpoint = False
-
-        super().__init__(
-            pretr_image_size,
-            patch_size,
-            in_chans,
-            embed_dims,
-            depths,
-            num_heads,
-            window_size,
-            mlp_ratios,
-            qkv_bias,
-            qk_scale,
-            drop_rate,
-            attn_drop_rate,
-            drop_path_rate,
-            norm_layer,
-            ape,
-            patch_norm,
-            use_checkpoint=use_checkpoint,
-        )
-
-        self._out_features = out_features
-
-        self._out_feature_strides = {
-            "res2": 4,
-            "res3": 8,
-            "res4": 16,
-            "res5": 32,
-        }
-        self._out_feature_channels = {
-            "res2": self.num_features[0],
-            "res3": self.num_features[1],
-            "res4": self.num_features[2],
-            "res5": self.num_features[3],
-        }
-
-    def forward(self, x):
-        """
-        Args:
-            x: Tensor of shape (N,C,H,W). H, W must be a multiple of ``self.size_divisibility``.
-        Returns:
-            dict[str->Tensor]: names and the corresponding features
-        """
-        assert x.dim() == 4, f"SwinTransformer takes an input of shape (N, C, H, W). Got {x.shape} instead!"
-        outputs = {}
-        y = super().forward(x)
-        for k in y.keys():
-            if k in self._out_features:
-                outputs[k] = y[k]
-        return outputs
+        return {name: outputs[name] for name in self._out_features if name in outputs}
 
     def output_shape(self):
         return {
@@ -726,20 +705,7 @@ class D2SwinTransformer(SwinTransformer, Backbone):
     def size_divisibility(self):
         return 32
 
-    @classmethod
-    def from_config(cls, cfg):
-        return {
-            "patch_size": cfg.MODEL.BACKBONE.PATCH_SIZE,
-            "img_size": cfg.MODEL.BACKBONE.PRETRAIN_IMG_SIZE,
-            "embed_dims": cfg.MODEL.BACKBONE.EMBED_DIM,
-            "num_heads": cfg.MODEL.BACKBONE.NUM_HEADS,
-            "window_size": cfg.MODEL.BACKBONE.WINDOW_SIZE,
-            "mlp_ratios": cfg.MODEL.BACKBONE.MLP_RATIOS,
-            "qkv_bias": cfg.MODEL.BACKBONE.QKV_BIAS,
-            "qk_scale": cfg.MODEL.BACKBONE.QK_SCALE,
-            "drop_rate": cfg.MODEL.BACKBONE.DROP_RATE,
-            "attn_drop_rate": cfg.MODEL.BACKBONE.ATTN_DROP_RATE,
-            "drop_path_rate": cfg.MODEL.BACKBONE.DROP_PATH_RATE,
-            "depths": cfg.MODEL.BACKBONE.DEPTHS,
-            "out_features": cfg.MODEL.BACKBONE.OUT_FEATURES,
-        }
+    def train(self, mode=True):
+        """Convert the model into training mode while keep layers freezed."""
+        super().train(mode)
+        self._freeze_stages()

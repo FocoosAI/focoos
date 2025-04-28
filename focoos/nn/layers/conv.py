@@ -7,7 +7,8 @@ from fvcore.nn import weight_init
 
 from focoos.utils.env import TORCH_VERSION
 
-from .norm import FrozenBatchNorm2d, get_norm
+from .base import _get_activation_fn as get_activation
+from .norm import get_norm
 
 
 def check_if_dynamo_compiling():
@@ -75,46 +76,27 @@ class Conv2d(torch.nn.Conv2d):
         return x
 
 
-class CNNBlockBase(nn.Module):
-    """
-    A CNN block is assumed to have input channels, output channels and a stride.
-    The input and output of `forward()` method must be NCHW tensors.
-    The method can perform arbitrary computation but must match the given
-    channels and stride specification.
-
-    Attribute:
-        in_channels (int):
-        out_channels (int):
-        stride (int):
-    """
-
-    def __init__(self, in_channels, out_channels, stride):
-        """
-        The `__init__` method of any subclass should also contain these arguments.
-
-        Args:
-            in_channels (int):
-            out_channels (int):
-            stride (int):
-        """
+class ConvNormLayer(nn.Module):
+    def __init__(self, ch_in, ch_out, kernel_size, stride, padding=None, bias=False, norm="BN", act=None):
         super().__init__()
-        self.in_channels = in_channels
-        self.out_channels = out_channels
-        self.stride = stride
+        self.conv = nn.Conv2d(
+            ch_in,
+            ch_out,
+            kernel_size,
+            stride,
+            padding=(kernel_size - 1) // 2 if padding is None else padding,
+            bias=bias,
+        )
+        self.norm = get_norm(norm, ch_out)
+        self.act = nn.Identity() if act is None else get_activation(act)
 
-    def freeze(self):
-        """
-        Make this block not trainable.
-        This method sets all parameters to `requires_grad=False`,
-        and convert all BatchNorm layers to FrozenBatchNorm
-
-        Returns:
-            the block itself
-        """
-        for p in self.parameters():
-            p.requires_grad = False
-        FrozenBatchNorm2d.convert_frozen_batchnorm(self)
-        return self
+    def forward(self, x):
+        x = self.conv(x)
+        if self.norm is not None:
+            x = self.norm(x)
+        if self.act is not None:
+            x = self.act(x)
+        return x
 
 
 class DepthwiseSeparableConv2d(nn.Module):

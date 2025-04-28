@@ -1,10 +1,12 @@
+from typing import Tuple
+
 import torch
 import torch.nn as nn
 from timm.models.layers import DropPath, trunc_normal_
 
 from focoos.nn.layers.norm import LayerNorm
 
-from .base import Backbone
+from .base import BackboneConfig, BaseBackbone, ShapeSpec
 
 
 class GRN(nn.Module):
@@ -54,28 +56,30 @@ class Block(nn.Module):
         return x
 
 
-class ConvNeXtV2(nn.Module):
+class ConvNeXtV2Config(BackboneConfig):
+    """ConvNeXt V2 configuration"""
+
+    in_chans: int = 3
+    depths: Tuple[int, ...] = (3, 3, 9, 3)
+    embed_dims: Tuple[int, ...] = (96, 192, 384, 768)
+    drop_path_rate: float = 0.0
+
+
+class ConvNeXtV2(BaseBackbone):
     """ConvNeXt V2
 
     Args:
-        in_chans (int): Number of input image channels. Default: 3
-        num_classes (int): Number of classes for classification head. Default: 1000
-        depths (tuple(int)): Number of blocks at each stage. Default: [3, 3, 9, 3]
-        dims (int): Feature dimension at each stage. Default: [96, 192, 384, 768]
-        drop_path_rate (float): Stochastic depth rate. Default: 0.
-        head_init_scale (float): Init scaling value for classifier weights and biases. Default: 1.
+        config: Configuration object containing model parameters
     """
 
-    def __init__(
-        self,
-        in_chans=3,
-        num_classes=1000,
-        depths=[3, 3, 9, 3],
-        dims=[96, 192, 384, 768],
-        drop_path_rate=0.0,
-        head_init_scale=1.0,
-    ):
-        super().__init__()
+    def __init__(self, config: ConvNeXtV2Config):
+        super().__init__(config)
+
+        in_chans = config.in_chans
+        depths = config.depths
+        dims = config.embed_dims
+        drop_path_rate = config.drop_path_rate
+
         self.depths = depths
         self.downsample_layers = nn.ModuleList()  # stem and 3 intermediate downsampling conv layers
         stem = nn.Sequential(
@@ -98,45 +102,7 @@ class ConvNeXtV2(nn.Module):
             self.stages.append(stage)
             cur += depths[i]
 
-        # self.norm = nn.LayerNorm(dims[-1], eps=1e-6)  # final norm layer
-        # self.head = nn.Linear(dims[-1], num_classes)
-
-        self.apply(self._init_weights)
-        # self.head.weight.data.mul_(head_init_scale)
-        # self.head.bias.data.mul_(head_init_scale)
-
-    def _init_weights(self, m):
-        if isinstance(m, (nn.Conv2d, nn.Linear)):
-            trunc_normal_(m.weight, std=0.02)
-            nn.init.constant_(m.bias, 0)
-
-    def forward_features(self, x):
-        outs = {}
-        for i in range(4):
-            x = self.downsample_layers[i](x)
-            x = self.stages[i](x)
-            outs["res{}".format(i + 2)] = x
-        # return self.norm(x.mean([-2, -1]))  # global average pooling, (N, C, H, W) -> (N, C)
-        return outs
-
-    def forward(self, x):
-        x = self.forward_features(x)
-        # x = self.head(x)
-        return x
-
-
-class D2ConvNextV2(ConvNeXtV2, Backbone):
-    def __init__(self, depths, embed_dims, drop_path_rate, out_features):
-        in_chans = 3
-
-        super().__init__(
-            in_chans=in_chans,
-            depths=depths,
-            dims=embed_dims,
-            drop_path_rate=drop_path_rate,
-        )
-
-        self._out_features = out_features
+        self._out_features = ["res2", "res3", "res4", "res5"]
 
         self._out_feature_strides = {
             "res2": 4,
@@ -145,17 +111,33 @@ class D2ConvNextV2(ConvNeXtV2, Backbone):
             "res5": 32,
         }
         self._out_feature_channels = {
-            "res2": embed_dims[0],
-            "res3": embed_dims[1],
-            "res4": embed_dims[2],
-            "res5": embed_dims[3],
+            "res2": dims[0],
+            "res3": dims[1],
+            "res4": dims[2],
+            "res5": dims[3],
         }
 
-    @classmethod
-    def from_config(cls, cfg):
+        self.apply(self._init_weights)
+
+    def _init_weights(self, m):
+        if isinstance(m, (nn.Conv2d, nn.Linear)):
+            trunc_normal_(m.weight, std=0.02)
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+
+    def forward(self, x):
+        outs = {}
+        for i in range(4):
+            x = self.downsample_layers[i](x)
+            x = self.stages[i](x)
+            outs["res{}".format(i + 2)] = x
+        return outs
+
+    def output_shape(self):
         return {
-            "depths": cfg.MODEL.BACKBONE.DEPTHS,
-            "embed_dims": cfg.MODEL.BACKBONE.EMBED_DIM,
-            "drop_path_rate": cfg.MODEL.BACKBONE.DROP_PATH_RATE,  # put in config.py
-            "out_features": cfg.MODEL.BACKBONE.OUT_FEATURES,
+            name: ShapeSpec(
+                channels=self._out_feature_channels[name],
+                stride=self._out_feature_strides[name],
+            )
+            for name in self._out_features
         }

@@ -1,9 +1,11 @@
+from typing import Tuple
+
 import torch.nn as nn
 
 from focoos.nn.layers.conv import Conv2d
 from focoos.nn.layers.norm import get_norm
 
-from .base import Backbone
+from .base import BackboneConfig, BaseBackbone
 
 
 class InvertedResidual(nn.Module):
@@ -88,7 +90,19 @@ class InvertedResidual(nn.Module):
             return self.conv(x)
 
 
-class D2MobileNetV2(Backbone):
+class MobileNetV2Config(BackboneConfig):
+    """MobileNetV2 configuration"""
+
+    in_chans: int = 3
+    widen_factor: float = 1.0
+    strides: Tuple[int, ...] = (1, 2, 2, 2, 1, 2, 1)
+    dilations: Tuple[int, ...] = (1, 1, 1, 1, 1, 1, 1)
+    frozen_stages: int = -1
+    norm: str = "BN"
+    model_type: str = "mobilenet_v2"
+
+
+class MobileNetV2(BaseBackbone):
     """MobileNetV2 backbone.
 
     This backbone is the implementation of
@@ -122,39 +136,34 @@ class D2MobileNetV2(Backbone):
 
     def __init__(
         self,
-        widen_factor=1.0,
-        strides=(1, 2, 2, 2, 1, 2, 1),
-        dilations=(1, 1, 1, 1, 1, 1, 1),
-        frozen_stages=-1,
-        norm="BN",
-        out_features=("res2", "res3", "res4", "res5"),
+        config: MobileNetV2Config,
     ):
-        super().__init__()
-        self.widen_factor = widen_factor
-        self.strides = strides
-        self.dilations = dilations
-        assert len(strides) == len(dilations) == len(self.arch_settings)
+        super().__init__(config)
+        self.widen_factor = config.widen_factor
+        self.strides = config.strides
+        self.dilations = config.dilations
+        assert len(config.strides) == len(config.dilations) == len(self.arch_settings)
 
-        if frozen_stages not in range(-1, 7):
-            raise ValueError(f"frozen_stages must be in range(-1, 7). But received {frozen_stages}")
-        self.frozen_stages = frozen_stages
-        self.norm = norm
+        if config.frozen_stages not in range(-1, 7):
+            raise ValueError(f"frozen_stages must be in range(-1, 7). But received {config.frozen_stages}")
+        self.frozen_stages = config.frozen_stages
+        self.norm = config.norm
         self.act = nn.functional.relu6
 
-        self.in_channels = int(32 * widen_factor)
+        self.in_channels = int(32 * config.widen_factor)
 
         self._out_feature_strides = {}
         self._out_feature_channels = {}
-        self._out_features = out_features
+        self._out_features = ["res2", "res3", "res4", "res5"]
 
         self.conv1 = Conv2d(
-            in_channels=3,
+            in_channels=config.in_chans,
             out_channels=self.in_channels,
             kernel_size=3,
             stride=2,
             padding=1,
             bias="",
-            norm=get_norm(norm, self.in_channels),
+            norm=get_norm(config.norm, self.in_channels),
             activation=self.act,
         )
 
@@ -172,7 +181,7 @@ class D2MobileNetV2(Backbone):
             stride = self.strides[i]
             tot_stride = tot_stride * stride
             dilation = self.dilations[i]
-            out_channels = int(channel * widen_factor)
+            out_channels = int(channel * self.widen_factor)
             inverted_res_layer = self.make_layer(
                 out_channels=out_channels,
                 num_blocks=num_blocks,
