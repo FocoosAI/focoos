@@ -1,13 +1,11 @@
-import logging
 import os
-from typing import List, Union
+from typing import List
 
 from focoos.data.datasets.dict_dataset import DictDataset
 from focoos.data.datasets.map_dataset import MapDataset
 from focoos.data.mappers.detection_dataset_mapper import DetectionDatasetMapper
 from focoos.data.mappers.mapper import DatasetMapper
 from focoos.data.mappers.semantic_dataset_mapper import SemanticDatasetMapper
-from focoos.data.transforms import augmentation as A
 from focoos.data.transforms import transform as T
 from focoos.ports import (
     DATASETS_ROOT,
@@ -15,11 +13,14 @@ from focoos.ports import (
     DatasetSplitType,
     Task,
 )
+from focoos.utils.logger import get_logger
 from focoos.utils.system import (
     check_folder_exists,
     extract_archive,
     is_inside_sagemaker,
 )
+
+logger = get_logger(__name__)
 
 
 class AutoDataset:
@@ -30,13 +31,11 @@ class AutoDataset:
         layout: DatasetLayout,
         datasets_root_dir: str = DATASETS_ROOT,
     ):
-        self.logger = logger = logging.getLogger(__name__)
         self.task = task
         self.layout = layout
         self.datasets_root_dir = datasets_root_dir
         self.dataset_name = dataset_name
 
-        # # Gestione ambiente SageMaker
         # if is_inside_sagemaker():
         #     # non compressed path: /opt/ml/input/data/dataset (there's not dataset name)
         #     # compressed path: /opt/ml/input/data/dataset_compressed/{dataset_name}.zip
@@ -71,7 +70,7 @@ class AutoDataset:
                 dataset_path = extract_archive(dataset_path, _dest_path)
                 logger.info(f"Extracted archive: {dataset_path}, {os.listdir(dataset_path)}")
 
-        self.dataset_path = dataset_path
+        self.dataset_path = str(dataset_path)
         self.dataset_name = dataset_name
         logger.info(
             f"✅ Dataset name: {self.dataset_name}, Dataset Path: {self.dataset_path}, Dataset Layout: {self.layout}"
@@ -96,7 +95,7 @@ class AutoDataset:
 
     def _load_mapper(
         self,
-        augs: List[Union[T.Transform, A.Augmentation]],
+        augs: List[T.Transform],
         is_validation_split: bool,
     ) -> DatasetMapper:
         if self.task == Task.SEMSEG:
@@ -149,7 +148,7 @@ class AutoDataset:
 
     def get_split(
         self,
-        augs: List[T.Transform | A.Augmentation],
+        augs: List[T.Transform],
         split: DatasetSplitType = DatasetSplitType.TRAIN,
     ) -> MapDataset:
         """

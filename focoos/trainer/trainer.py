@@ -197,7 +197,7 @@ class FocoosTrainer:
     def finish(self):
         """Clean up and finalize training/testing."""
         if comm.get_rank() == 0:
-            logger.info("Finishing.")
+            logger.info("🏁 End of training.")
             # save model to model_final.pth - if EMA, store it.
 
             if self.finished:
@@ -240,11 +240,11 @@ class FocoosTrainer:
             dict: Evaluation metrics
         """
         if self.args.ema_enabled:
-            logger.info("Run evaluation with EMA.")
+            logger.info("🔍 Run evaluation with EMA.")
             with ema.apply_model_ema_and_restore(self.model):
                 res = self._do_eval(self.model)
         else:
-            logger.info("Run evaluation without EMA.")
+            logger.info("🔍 Run evaluation without EMA.")
             res = self._do_eval(self.model)
 
         if comm.get_rank() == 0:
@@ -409,7 +409,7 @@ class FocoosTrainer:
         else:
             start_iter = 0
 
-        trainer.train(start_iter, max_iter=args.max_iters)
+        trainer.train(start_iter=start_iter, max_iter=args.max_iters)
         self.finished = True
         self.finish()
 
@@ -532,7 +532,7 @@ class TrainerLoop:
             start_iter: Starting iteration
             max_iter: Maximum iteration
         """
-        logger.info("Starting training from iteration {}".format(start_iter))
+        logger.info("🚀 Starting training from iteration {}".format(start_iter))
 
         self.iter = self.start_iter = start_iter
         self.max_iter = max_iter
@@ -546,7 +546,7 @@ class TrainerLoop:
                     self.after_step()
                 self.iter += 1
             except Exception as e:
-                logger.exception(f"Exception during training: {e}")
+                logger.error(f"Exception during training: {e}")
                 raise e
             finally:
                 self.after_train()
@@ -745,7 +745,6 @@ class TrainerLoop:
         Args:
             state_dict: State dict to load
         """
-        logger = logging.getLogger(__name__)
         self.iter = state_dict["iteration"]
         for key, value in state_dict.get("hooks", {}).items():
             for h in self._hooks:
