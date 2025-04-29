@@ -138,10 +138,91 @@ class DictDataset(Dataset):
 
     @classmethod
     def from_catalog(cls, ds_name: str, split: DatasetSplitType, root: str):
-        from focoos.data.catalog import get_dataset_split
+        from focoos.data.catalog.catalog import get_dataset_split
 
         # importing catalog here is the only way to avoid circular input
         return get_dataset_split(name=ds_name, split=split, datasets_root=root)
+
+    @classmethod
+    def from_folder(cls, root_dir: str, split: Optional[DatasetSplitType] = None):
+        """
+        Create a dataset from a folder structure where categories are subfolders
+        and images belonging to each category are inside these subfolders.
+
+        Args:
+            root_dir (str): Path to the root directory containing category subfolders
+            split (Optional[DatasetSplitType]): Dataset split type (train, val, test)
+                If provided, looks for the split in the root_dir/split directory
+
+        Returns:
+            ClassificationDataset: A dataset containing the images and their class labels
+        """
+        logger = logging.getLogger(__name__)
+
+        # If split is provided, update the root directory to include the split
+        if split is not None:
+            root_dir = os.path.join(root_dir, split.value)
+            if not os.path.exists(root_dir):
+                raise ValueError(f"Split directory {root_dir} does not exist")
+
+        # Get all category directories
+        category_dirs = [
+            d for d in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, d)) and not d.startswith(".")
+        ]
+
+        if not category_dirs:
+            raise ValueError(f"No category directories found in {root_dir}")
+
+        # Sort categories for deterministic ordering
+        category_dirs.sort()
+
+        # Create a mapping from category name to class ID
+        class_to_idx = {cls_name: i for i, cls_name in enumerate(category_dirs)}
+
+        # Initialize lists to store dataset entries
+        dataset_dicts = []
+
+        # Process each category
+        for category in category_dirs:
+            category_path = os.path.join(root_dir, category)
+            class_id = class_to_idx[category]
+
+            # Find all image files in the category folder
+            image_extensions = ["jpg", "jpeg", "png", "bmp", "tiff", "tif"]
+            image_files = list_files_with_extensions(category_path, image_extensions)
+
+            # Create a dataset entry for each image
+            for img_path in image_files:
+                try:
+                    # Open image to get dimensions
+                    with Image.open(img_path) as img:
+                        width, height = img.size
+
+                    # Create dataset entry
+                    entry = DetectronDict(
+                        file_name=str(img_path),
+                        height=height,
+                        width=width,
+                        # Store the class label as an annotation for compatibility with the DictDataset structure
+                        annotations=[{"category_id": class_id, "iscrowd": 0}],
+                    )
+                    dataset_dicts.append(entry)
+                except (IOError, OSError) as e:
+                    logger.warning(f"Error loading image {img_path}: {e}")
+
+        # Create dataset metadata
+        metadata = DatasetMetadata(
+            num_classes=len(category_dirs),
+            thing_classes=category_dirs,  # Use thing_classes for classification
+            task=Task.CLASSIFICATION,
+            count=len(dataset_dicts),
+            name=Path(root_dir).name,
+            image_root=root_dir,
+        )
+
+        logger.info(f"Created classification dataset with {len(dataset_dicts)} images and {len(category_dirs)} classes")
+
+        return cls(dicts=dataset_dicts, task=Task.CLASSIFICATION, metadata=metadata)
 
     @classmethod
     def from_roboflow_coco(cls, ds_dir: str, task: Task):
@@ -303,86 +384,6 @@ class DictDataset(Dataset):
         )
 
         return cls(dicts=dicts, task=task, metadata=metadata)
-
-    # !TODO: reimplement this without using supervisely
-    # @classmethod
-    # def from_supervisely(cls, ds_dir: str, task: Task):
-    #     """
-    #     A method to create an instance of the class from supervisely metadata.
-
-    #     Args:
-    #         ds_dir (str): The directory of the supervisely dataset.
-    #         task (FocoosTasks): The task type.
-
-    #     Returns:
-    #         An instance of the class created from the supervisely metadata.
-    #     """
-    #     # check if exist supervisely metadata in parent directory (supervisely project)
-    #     logger = logging.getLogger(__name__)
-    #     im_path = os.path.join(ds_dir, "img")
-
-    #     # supervisely json annotation
-    #     ann_path = os.path.join(ds_dir, "ann")
-    #     mask_path = os.path.join(ds_dir, "mask")
-    #     im_files = []
-    #     mask_files = []
-    #     classes = []
-    #     dicts = []
-    #     # load project meta
-    #     sly_meta = None
-    #     parent_dir = os.path.dirname(ds_dir)
-    #     meta_path = os.path.join(parent_dir, "meta.json")
-    #     if not os.path.exists(meta_path):
-    #         # check in ds directory
-    #         meta_path = os.path.join(ds_dir, "meta.json")
-
-    #         if not os.path.exists(meta_path):
-    #             raise ValueError("Supervisely metadata not found")
-
-    #     with open(meta_path) as _meta:
-    #         sly_meta = ProjectMeta.from_json(json.load(_meta))
-    #         classes = [obj_cls.name for obj_cls in sly_meta.obj_classes]
-    #         logger.info(f"Loaded supervisely metadata, classes: {classes}")
-
-    #         # ann = SlyAnnotation.from_json(meta_dict)
-    #     for im in list_files_with_extensions(base_dir=im_path, extensions=["jpg", "jpeg", "png"]):
-    #         im_files.append(im)
-    #     logger.info(f"{len(im_files)} images")
-    #     for mask in list_files_with_extensions(base_dir=mask_path, extensions=["png"]):
-    #         mask_files.append(mask)
-
-    #     logger.info(f"{len(mask_files)} masks")
-    #     if len(mask_files) == 0:
-    #         logger.info("No png mask found...generating from supervisely annotation..")
-    #         # pool = Pool(processes=30)
-    #         pool = concurrent.futures.ThreadPoolExecutor(max_workers=150)
-
-    #         os.makedirs(mask_path, exist_ok=True)
-    #         for ann in tqdm.tqdm(list_files_with_extensions(base_dir=ann_path, extensions=["json"])):
-    #             name = f"{Path(ann).stem}.mask.png"
-    #             _path = os.path.join(mask_path, name)
-    #             ann = Annotation.from_json(json.load(open(ann)), project_meta=sly_meta)
-    #             pool.submit(sly_ann_to_bitmap_mask, ann, _path, sly_meta, 256)
-    #             mask_files.append(_path)
-    #         pool.shutdown(wait=True)
-    #         # pool.close()
-    #     im_files.sort()
-    #     mask_files.sort()
-    #     for im, mask in tqdm.tqdm(zip(im_files, mask_files)):
-    #         if not Path(mask).stem.replace(".mask", "").startswith(Path(im).stem):
-    #             raise ValueError(f" {Path(im).stem} and {Path(mask).stem.replace('.mask', '')} mismatch")
-    #         dicts.append(DetectronDict(file_name=im, sem_seg_file_name=mask))
-
-    #     metadata = DatasetMetadata(
-    #         stuff_classes=classes,
-    #         num_classes=len(classes),
-    #         task=task,
-    #         name=Path(ds_dir).parent.stem,
-    #         count=len(im_files),
-    #         image_root=ds_dir,
-    #     )
-
-    #     return cls(dicts=dicts, task=task, metadata=metadata)
 
     def clone_resize_shortest_length(self, new_dir: str, new_shortest_length: int = 1024, max_size=2048):
         """

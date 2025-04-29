@@ -7,6 +7,8 @@ from typing import Dict, Optional
 
 import torch.nn as nn
 
+from focoos.ports import DictClass
+
 __all__ = ["BaseBackbone", "ShapeSpec"]
 
 
@@ -25,7 +27,7 @@ class ShapeSpec:
 
 
 @dataclass
-class BackboneConfig:
+class BackboneConfig(DictClass):
     use_pretrained: bool = False
     backbone_url: Optional[str] = None  # only used if use_pretrained is True
     model_type: str = ""

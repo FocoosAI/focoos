@@ -129,11 +129,13 @@ class Task(str, Enum):
         - DETECTION: Object detection
         - SEMSEG: Semantic segmentation
         - INSTANCE_SEGMENTATION: Instance segmentation
+        - CLASSIFICATION: Image classification
     """
 
     DETECTION = "detection"
     SEMSEG = "semseg"
     INSTANCE_SEGMENTATION = "instseg"
+    CLASSIFICATION = "classification"
 
 
 class Hyperparameters(FocoosBaseModel):
@@ -748,9 +750,10 @@ class ModelFamily(str, Enum):
     M2F = "fai_m2f"
     PEM = "fai_pem"
     BF = "fai_bf"
+    CLS = "fai_cls"
 
 
-@dataclass
+# This should not be a dataclass, but their child must be
 class DictClass(OrderedDict):
     def to_tuple(self) -> tuple[Any]:
         """
@@ -950,6 +953,9 @@ class DatasetMetadata:
             # fixme: not sure for panoptic
             assert self.stuff_classes is not None, "stuff_classes is required for semantic segmentation"
             return self.stuff_classes
+        if self.task == Task.CLASSIFICATION:
+            assert self.thing_classes is not None, "thing_classes is required for classification"
+            return self.thing_classes
         raise ValueError(f"Task {self.task} not supported")
 
     @property

@@ -28,7 +28,7 @@ class DatasetMapper:
         image_format: str,
     ):
         self.is_train = is_train
-        self.augmentations = augmentations
+        self.augmentations = A.AugmentationList(augmentations)
         self.image_format = image_format
 
     def check_image_size(self, dataset_dict, image):

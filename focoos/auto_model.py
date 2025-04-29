@@ -6,7 +6,7 @@ from typing import Callable, Dict, Optional, Type
 from focoos.model_registry.model_registry import ModelRegistry
 from focoos.models.fai_model import BaseModelNN, FocoosModel, ModelConfig
 from focoos.nn.backbone.base import BackboneConfig, BaseBackbone
-from focoos.ports import ModelFamily
+from focoos.ports import ModelFamily, ModelInfo
 from focoos.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -36,7 +36,19 @@ class AutoConfig:
         Create a configuration from a dictionary
         """
         if model_family not in cls._MODEL_MAPPING:
+            # Import the family module
+            family_module = importlib.import_module(f"focoos.models.{model_family.value}")
+
+            # Iteratively register all models in the family
+            for attr_name in dir(family_module):
+                if attr_name.startswith("_register_"):
+                    register_func = getattr(family_module, attr_name)
+                    if callable(register_func):
+                        register_func()
+
+        if model_family not in cls._MODEL_MAPPING:
             raise ValueError(f"Model {model_family} not supported")
+
         config_class = cls._MODEL_MAPPING[model_family.value]()  # this return the config class
 
         # Convert the input dict to the actual config type
@@ -85,6 +97,32 @@ class AutoModel:
             importlib.import_module(module_name)
         except ImportError as e:
             raise ImportError(f"Unable to import model family {model_family}. Error: {str(e)}")
+
+    @classmethod
+    def from_config(cls, model_info: ModelInfo, config: Optional[ModelConfig] = None, **kwargs) -> FocoosModel:
+        """Load a model from a configuration"""
+        # Import the family module only if not already registered
+        if model_info.model_family not in cls._REGISTERED_MODELS:
+            # Import the family module
+            family_module = importlib.import_module(f"focoos.models.{model_info.model_family.value}")
+
+            # Iteratively register all models in the family
+            for attr_name in dir(family_module):
+                if attr_name.startswith("_register_"):
+                    register_func = getattr(family_module, attr_name)
+                    if callable(register_func):
+                        register_func()
+
+        if model_info.model_family not in cls._MODEL_MAPPING:
+            raise ValueError(f"Model {model_info.model_family} not supported")
+
+        model_class = cls._MODEL_MAPPING[model_info.model_family.value]()
+        if config is None:
+            config = AutoConfig.from_dict(model_info.model_family, model_info.config, **kwargs)
+
+        model_info.config = config
+        model = model_class(model_info.config)
+        return FocoosModel(model, model_info)
 
     @classmethod
     def from_pretrained(cls, pretrained_model_name: str, config: Optional[ModelConfig] = None, **kwargs) -> FocoosModel:
@@ -176,10 +214,7 @@ class AutoConfigBackbone:
             raise ValueError(f"Backbone {config_dict['model_type']} not supported")
 
         config_class = cls.get_model_class(config_dict["model_type"])
-        print(config_class)
-        print(config_dict)
         return_config = config_class(**config_dict)
-        print(return_config)
         return return_config
 
 
