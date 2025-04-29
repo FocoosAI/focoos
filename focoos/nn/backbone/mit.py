@@ -1,10 +1,11 @@
 # Copyright (c) Focoos AI S.r.L.
 import math
+from dataclasses import dataclass
 from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
-from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+from timm.layers import DropPath, to_2tuple, trunc_normal_
 
 from .base import BackboneConfig, BaseBackbone, ShapeSpec
 
@@ -246,6 +247,7 @@ class OverlapPatchEmbed(nn.Module):
         return x, H, W
 
 
+@dataclass
 class MITConfig(BackboneConfig):
     """MIT configuration"""
 

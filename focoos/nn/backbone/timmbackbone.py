@@ -1,10 +1,13 @@
-from timm.models.layers import convert_sync_batchnorm
+from dataclasses import dataclass
+
+from timm.layers import convert_sync_batchnorm
 
 from focoos.utils.distributed import comm
 
 from .base import BackboneConfig, BaseBackbone
 
 
+@dataclass
 class TimmBackboneConfig(BackboneConfig):
     model_name: str = ""
     pretrained: bool = False

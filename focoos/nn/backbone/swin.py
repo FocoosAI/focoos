@@ -1,12 +1,12 @@
-# Copyright (c) Focoos AI S.r.L.
-from typing import List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Optional, Tuple
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
-from timm.models.layers import DropPath, to_2tuple, trunc_normal_
+from timm.layers import DropPath, to_2tuple, trunc_normal_
 
 from .base import BackboneConfig, BaseBackbone, ShapeSpec
 
@@ -487,6 +487,7 @@ class PatchEmbed(nn.Module):
         return x
 
 
+@dataclass
 class SwinConfig(BackboneConfig):
     """
     Args:
@@ -518,8 +519,8 @@ class SwinConfig(BackboneConfig):
     patch_size: int = 4
     in_chans: int = 3
     embed_dim: int = 96
-    depths: List[int] = [2, 2, 6, 2]
-    num_heads: List[int] = [3, 6, 12, 24]
+    depths: Tuple[int, ...] = (2, 2, 6, 2)
+    num_heads: Tuple[int, ...] = (3, 6, 12, 24)
     window_size: int = 7
     mlp_ratio: float = 4.0
     qkv_bias: bool = True
@@ -529,7 +530,7 @@ class SwinConfig(BackboneConfig):
     drop_path_rate: float = 0.2
     ape: bool = False
     patch_norm: bool = True
-    out_indices: Tuple[int, int, int, int] = (0, 1, 2, 3)
+    out_indices: Tuple[int, ...] = (0, 1, 2, 3)
     frozen_stages: int = -1
     use_checkpoint: bool = False
 

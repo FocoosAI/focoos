@@ -157,6 +157,7 @@ class AutoConfigBackbone:
         "mobilenet_v2": "mobilenet_v2.MobileNetV2Config",
         "mit": "mit.MITConfig",
         "convnextv2": "convnextv2.ConvNeXtV2Config",
+        "darknet": "darknet.DarkNetConfig",
     }
 
     @classmethod
@@ -175,8 +176,11 @@ class AutoConfigBackbone:
             raise ValueError(f"Backbone {config_dict['model_type']} not supported")
 
         config_class = cls.get_model_class(config_dict["model_type"])
-
-        return config_class(**config_dict)
+        print(config_class)
+        print(config_dict)
+        return_config = config_class(**config_dict)
+        print(return_config)
+        return return_config
 
 
 class AutoBackbone:
@@ -190,6 +194,7 @@ class AutoBackbone:
         "mobilenet_v2": "mobilenet_v2.MobileNetV2",
         "mit": "mit.MIT",
         "convnextv2": "convnextv2.ConvNeXtV2",
+        "darknet": "darknet.DarkNet",
     }
 
     @classmethod

@@ -1,8 +1,9 @@
+from dataclasses import dataclass
 from typing import Tuple
 
 import torch
 import torch.nn as nn
-from timm.models.layers import DropPath, trunc_normal_
+from timm.layers import DropPath, trunc_normal_
 
 from focoos.nn.layers.norm import LayerNorm
 
@@ -56,6 +57,7 @@ class Block(nn.Module):
         return x
 
 
+@dataclass
 class ConvNeXtV2Config(BackboneConfig):
     """ConvNeXt V2 configuration"""
 

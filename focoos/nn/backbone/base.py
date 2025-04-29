@@ -1,4 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
+# From Detectron2
+# Copyright (c) Focoos AI S.r.L.
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
 from typing import Dict, Optional

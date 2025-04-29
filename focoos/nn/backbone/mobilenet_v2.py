@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Tuple
 
 import torch.nn as nn
@@ -90,6 +91,7 @@ class InvertedResidual(nn.Module):
             return self.conv(x)
 
 
+@dataclass
 class MobileNetV2Config(BackboneConfig):
     """MobileNetV2 configuration"""
 
