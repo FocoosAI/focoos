@@ -39,6 +39,7 @@ task_metrics = {
     Task.DETECTION.value: "bbox/AP",
     Task.SEMSEG.value: "sem_seg/mIoU",
     Task.INSTANCE_SEGMENTATION.value: "segm/AP",
+    Task.CLASSIFICATION.value: "classification/Accuracy",
     # Task.PANOPTIC_SEGMENTATION.value: "panoptic_seg/PQ",
 }
 

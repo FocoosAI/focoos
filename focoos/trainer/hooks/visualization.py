@@ -61,18 +61,20 @@ class VisualizationHook(HookBase):
                     vis_output = visualizer.draw_panoptic_seg_predictions(
                         panoptic_seg.to(self.cpu_device), segments_info
                     )
+                elif "sem_seg" in prediction:
+                    vis_output = visualizer.draw_sem_seg(prediction["sem_seg"].argmax(dim=0).to(self.cpu_device))
+                elif "instances" in prediction:
+                    instances = prediction["instances"].to(self.cpu_device)
+                    # filter based on confidence - fixed at 0.5
+                    instances = instances[instances.scores > 0.5]
+                    vis_output = visualizer.draw_instance_predictions(predictions=instances)
                 else:
-                    if "sem_seg" in prediction:
-                        vis_output = visualizer.draw_sem_seg(prediction["sem_seg"].argmax(dim=0).to(self.cpu_device))
-                    if "instances" in prediction:
-                        instances = prediction["instances"].to(self.cpu_device)
-                        # filter based on confidence - fixed at 0.5
-                        instances = instances[instances.scores > 0.5]
-                        vis_output = visualizer.draw_instance_predictions(predictions=instances)
+                    vis_output = None
 
-                pred_img = vis_output.get_image()
-                vis_img = pred_img.transpose(2, 0, 1)
-                storage.put_image(f"Image_{i}", vis_img)
+                if vis_output is not None:
+                    pred_img = vis_output.get_image()
+                    vis_img = pred_img.transpose(2, 0, 1)
+                    storage.put_image(f"Image_{i}", vis_img)
 
         self.model.train(training_mode)
 

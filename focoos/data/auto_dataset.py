@@ -3,6 +3,7 @@ from typing import List
 
 from focoos.data.datasets.dict_dataset import DictDataset
 from focoos.data.datasets.map_dataset import MapDataset
+from focoos.data.mappers.classification_dataset_mapper import ClassificationDatasetMapper
 from focoos.data.mappers.detection_dataset_mapper import DetectionDatasetMapper
 from focoos.data.mappers.mapper import DatasetMapper
 from focoos.data.mappers.semantic_dataset_mapper import SemanticDatasetMapper
@@ -86,6 +87,8 @@ class AutoDataset:
             split_path = self._get_split_path(dataset_root=ds_root, split_type=split)
             if self.layout == DatasetLayout.ROBOFLOW_SEG:
                 return DictDataset.from_roboflow_seg(ds_dir=split_path, task=self.task)
+            elif self.layout == DatasetLayout.CLS_FOLDER:
+                return DictDataset.from_folder(root_dir=split_path)
             # elif self.layout == DatasetLayout.SUPERVISELY:
             #     return DictDataset.from_supervisely(ds_dir=split_path, task=self.task)
             elif self.layout == DatasetLayout.ROBOFLOW_COCO:
@@ -118,13 +121,12 @@ class AutoDataset:
                 augmentations=augs,
                 use_instance_mask=True,
             )
-        # elif self.task == Task.PANOPTIC_SEGMENTATION:
-        #     return PanopticDatasetMapper(
-        #         image_format="RGB",
-        #         ignore_label=255,
-        #         augmentations=augs,
-        #         is_train=not is_validation_split,
-        #     )
+        elif self.task == Task.CLASSIFICATION:
+            return ClassificationDatasetMapper(
+                image_format="RGB",
+                is_train=not is_validation_split,
+                augmentations=augs,
+            )
         else:
             raise NotImplementedError(f"Task {self.task} not found in autodataset _load_mapper()")
 

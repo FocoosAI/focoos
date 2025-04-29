@@ -116,7 +116,7 @@ class ClassificationLoss(nn.Module):
         Returns:
             Dictionary with loss values
         """
-        labels = torch.stack([target.labels for target in targets])
+        labels = torch.stack([target.labels for target in targets]).to(logits.device)
 
         if self.use_focal_loss:
             # Compute focal loss manually
@@ -228,18 +228,18 @@ class FAIClassification(BaseModelNN):
         Returns:
             Classification model output with logits and optional loss
         """
-        # Handle different input types
-        # if isinstance(inputs, (list, tuple)) and inputs and isinstance(inputs[0], ClassificationDatasetDict):
-        #     # Training mode with dataset dictionaries
-        #     images = torch.stack([x.get("image") for x in inputs])
-        #     targets = [ClassificationTargets(labels=x.get("label")) for x in inputs]
-        # else:
-        #     # Inference mode with raw images
-        images, _ = self.processor.preprocess(
-            inputs, training=self.training, device=self.device, dtype=self.dtype, resolution=self.config.resolution
-        )
-        targets = []
 
+        images, targets = self.processor.preprocess(
+            inputs,
+            training=self.training,
+            device=self.device,
+            dtype=self.dtype,
+            resolution=self.config.resolution,
+            size_divisibility=self.backbone.size_divisibility,
+            padding_constraints=self.backbone.padding_constraints,
+        )
+
+        images = (images - self.pixel_mean) / self.pixel_std  # type: ignore
         # Extract features from backbone
         features = self.backbone(images)
 
@@ -264,4 +264,4 @@ class FAIClassification(BaseModelNN):
         Returns:
             Processed results with classification predictions
         """
-        return self.processor.postprocess(outputs.logits, batched_inputs)
+        return self.processor.eval_postprocess(outputs.logits, batched_inputs)

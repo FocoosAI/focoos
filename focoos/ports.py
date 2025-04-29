@@ -120,6 +120,7 @@ class DatasetLayout(str, Enum):
     ROBOFLOW_SEG = "roboflow_seg"
     CATALOG = "catalog"
     SUPERVISELY = "supervisely"
+    CLS_FOLDER = "cls_folder"
 
 
 class Task(str, Enum):

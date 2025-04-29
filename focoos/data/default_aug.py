@@ -225,6 +225,18 @@ segmentation_val_augs = DatasetAugmentations(
     max_size=int(640 * 1.25),
 )
 
+classification_train_augs = DatasetAugmentations(
+    resolution=224,
+    scale_ratio=0.5,
+    crop=True,
+    color_augmentation=1.0,
+    horizontal_flip=0.5,
+)
+
+classification_val_augs = DatasetAugmentations(
+    resolution=224,
+)
+
 
 def get_default_by_task(
     task: Task, resolution: int = 640, advanced: bool = False
@@ -243,6 +255,11 @@ def get_default_by_task(
         train, val = (
             segmentation_train_augs if not advanced else fai_instance_train_augs,
             segmentation_val_augs if not advanced else segmentation_val_augs,
+        )
+    elif task == Task.CLASSIFICATION:
+        train, val = (
+            classification_train_augs,
+            classification_val_augs,
         )
     else:
         raise ValueError(f"Invalid task: {task}")

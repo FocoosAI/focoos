@@ -1,7 +1,7 @@
 import copy
 import logging
 from dataclasses import dataclass
-from typing import List, Optional, Union
+from typing import Optional, Sequence, Union
 
 import numpy as np
 import torch
@@ -39,7 +39,7 @@ class ClassificationDatasetMapper(DatasetMapper):
         self,
         is_train: bool,
         *,
-        augmentations: List[Union[A.Augmentation, T.Transform]],
+        augmentations: Sequence[Union[A.Augmentation, T.Transform]],
         image_format: str = "RGB",
     ):
         """

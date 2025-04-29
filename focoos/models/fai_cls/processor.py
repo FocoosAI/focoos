@@ -5,7 +5,10 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 
+from focoos.data.mappers.classification_dataset_mapper import ClassificationDatasetDict
 from focoos.models.fai_cls.config import ClassificationConfig
+from focoos.models.fai_cls.ports import ClassificationTargets
+from focoos.structures import ImageList
 
 
 class ClassificationProcessor:
@@ -18,15 +21,26 @@ class ClassificationProcessor:
             config: Model configuration
         """
         self.config = config
+        self.multi_label = config.multi_label
 
     def preprocess(
         self,
-        inputs: Union[torch.Tensor, np.ndarray, Image.Image, List[Image.Image], List[np.ndarray], List[torch.Tensor]],
+        inputs: Union[
+            torch.Tensor,
+            np.ndarray,
+            Image.Image,
+            List[Image.Image],
+            List[np.ndarray],
+            List[torch.Tensor],
+            List[ClassificationDatasetDict],
+        ],
         training: bool,
         device: torch.device,
         dtype: torch.dtype,
         resolution: Optional[int] = 640,
-    ) -> Tuple[torch.Tensor, List[Dict]]:
+        size_divisibility: int = 0,
+        padding_constraints: Optional[Dict[str, int]] = None,
+    ) -> Tuple[torch.Tensor, List[ClassificationTargets]]:
         """Process input images for model inference.
 
         Args:
@@ -40,6 +54,20 @@ class ClassificationProcessor:
             Tuple of processed tensors and batch inputs metadata
         """
         targets = []
+        if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], ClassificationDatasetDict):
+            inputs: List[ClassificationDatasetDict]
+            images = [x.image.to(device) for x in inputs]
+            images = ImageList.from_tensors(
+                tensors=images,
+                size_divisibility=size_divisibility if training or size_divisibility else 0,
+                padding_constraints=padding_constraints,
+            )
+            images_torch = images.tensor
+            targets = [
+                ClassificationTargets(labels=torch.tensor(x.label, dtype=torch.int64, device=device)) for x in inputs
+            ]
+            return images_torch, targets
+
         if training:
             raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
         if isinstance(inputs, (Image.Image, np.ndarray, torch.Tensor)):
@@ -73,6 +101,22 @@ class ClassificationProcessor:
                 images_torch, size=resolution, mode="bilinear", align_corners=False
             )
         return images_torch, targets
+
+    def eval_postprocess(self, logits: torch.Tensor, batch_inputs: List[Dict]) -> List[Dict]:
+        """Post-process model outputs.
+
+        Args:
+            logits: Model output logits [N, num_classes]
+            batch_inputs: Batch input metadata
+        """
+        if self.multi_label:
+            probs = F.sigmoid(logits)
+        else:
+            probs = F.softmax(logits, dim=1)
+        results = []
+        for probs_i in probs:
+            results.append({"logits": probs_i})
+        return results
 
     def postprocess(self, logits: torch.Tensor, batch_inputs: List[Dict]) -> List[Dict]:
         """Post-process model outputs.
