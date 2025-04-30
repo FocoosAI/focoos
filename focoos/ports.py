@@ -15,10 +15,11 @@ DEV_API_URL = "https://api.dev.focoos.ai/v0"
 PROD_API_URL = "https://api.focoos.ai/v0"
 LOCAL_API_URL = "http://localhost:8501/v0"
 
-ROOT_DIR = Path.home() / ".cache" / "focoos"
+ROOT_DIR = Path.home() / "FocoosAI"
 ROOT_DIR = str(ROOT_DIR) if os.name == "nt" else ROOT_DIR
 MODELS_ROOT = os.path.join(ROOT_DIR, "models")
 DATASETS_ROOT = os.path.join(ROOT_DIR, "datasets")
+EXPERIMENTS_ROOT = os.path.join(ROOT_DIR, "experiments")
 
 
 class FocoosBaseModel(BaseModel):
