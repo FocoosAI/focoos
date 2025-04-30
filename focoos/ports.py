@@ -799,7 +799,13 @@ class DictClass(OrderedDict):
             if v is not None:
                 self[field.name] = v
 
+    def __reduce__(self):
+        # needed for pickle
+        field_values = tuple(getattr(self, field.name) for field in fields(self))
+        return (self.__class__, field_values)
 
+
+@dataclass
 class ModelConfig(DictClass):
     num_classes: int
     pass
@@ -1042,7 +1048,7 @@ class DetectronDict:
 
 
 @dataclass
-class ModelInfo:
+class ModelInfo(DictClass):
     """Detailed information about a specific model.
 
     This class stores all the necessary information to identify, configure, and evaluate a model.
