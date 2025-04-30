@@ -33,14 +33,14 @@ requires-python = ">=3.10"
 dependencies = [
     "requests",
     "Pillow~=10.2.0",
-    "supervision~=0.26.0rc4",
+    "supervision~=0.26.0rc7",
     "opencv-python~=4.11.0.86",
     "pydantic~=2.11.3",
     "pydantic-settings~=2.8.1",
     "tqdm~=4.67.1",
     "numpy~=2.2.1",
     "scipy~=1.14.1",
-    "psutil~=6.1.1",
+    "psutil~=7.0.0",
     "setuptools~=75.7.0",
     "matplotlib~=3.10.1",
     "colorama~=0.4.6",
@@ -50,6 +50,8 @@ dependencies = [
     "faster_coco_eval~=1.6.5",
     "timm~=0.9.16",
     "tensorboard~=2.19.0",
+    "onnx~=1.17.0",
+    "onnxslim~=0.1.50",
 ]
 
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]

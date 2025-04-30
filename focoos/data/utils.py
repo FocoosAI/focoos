@@ -1,5 +1,3 @@
-import logging
-
 import numpy as np
 import pycocotools.mask as mask_util
 import torch
@@ -15,6 +13,7 @@ from focoos.structures import (
     RotatedBoxes,
     polygons_to_bitmask,
 )
+from focoos.utils.logger import get_logger
 
 # https://en.wikipedia.org/wiki/YUV#SDTV_with_BT.601
 _M_RGB2YUV = [
@@ -64,7 +63,7 @@ def filter_images_with_only_crowd_annotations(dataset_dicts):
 
     dataset_dicts = [x for x in dataset_dicts if valid(x.annotations)]
     num_after = len(dataset_dicts)
-    logger = logging.getLogger(__name__)
+    logger = get_logger(__name__)
     logger.info(
         "Removed {} images with no usable annotations. {} images left.".format(num_before - num_after, num_after)
     )

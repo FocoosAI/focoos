@@ -9,7 +9,7 @@ import torch
 from focoos.trainer.hooks import HookBase
 from focoos.utils.logger import get_logger
 
-logger = get_logger("trainer")
+logger = get_logger(__name__)
 
 
 class EMAState:

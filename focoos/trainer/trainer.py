@@ -4,7 +4,6 @@ This module provides a simplified and unified training implementation that combi
 the functionality of the original FocoosTrainer and the engine Trainer classes.
 """
 
-import logging
 import os
 import time
 import weakref
@@ -32,7 +31,7 @@ from focoos.trainer.solver import ema
 from focoos.trainer.solver.build import build_lr_scheduler, build_optimizer
 from focoos.utils.distributed.dist import comm, create_ddp_model
 from focoos.utils.env import collect_env_info, seed_all_rng
-from focoos.utils.logger import add_file_logging, get_logger
+from focoos.utils.logger import capture_all_output, get_logger
 
 # Mapping of task types to their primary evaluation metrics
 task_metrics = {
@@ -43,7 +42,7 @@ task_metrics = {
     # Task.PANOPTIC_SEGMENTATION.value: "panoptic_seg/PQ",
 }
 
-logger = get_logger("trainer")
+logger = get_logger(__name__)
 
 
 class FocoosTrainer:
@@ -69,7 +68,7 @@ class FocoosTrainer:
         self.finished = False
 
         # Setup logging and environment
-        self._setup_logging()
+        self._setup_environment()
 
         # Setup model and data
         self._setup_model_and_data(model, model_info, data_train, data_val)
@@ -77,14 +76,14 @@ class FocoosTrainer:
         # Setup training components
         self._setup_training_components()
 
-    def _setup_logging(self):
+    def _setup_environment(self):
         """Setup logging and environment variables."""
         self.output_dir = os.path.join(self.args.output_dir, self.args.run_name)
         if comm.is_main_process():
             os.makedirs(self.output_dir, exist_ok=True)
 
-        add_file_logging(logger=logger, verbose=True, output=self.output_dir, rank=comm.get_local_rank())
-        logger.info(f"Output dir: {self.output_dir}")
+        # add_file_logging(logger=logger, verbose=True, output=self.output_dir, rank=comm.get_local_rank())
+        logger.info(f"📁 Experiment Output dir: {self.output_dir}")
 
         logger.info("Rank of current process: {}. World size: {}".format(comm.get_rank(), comm.get_world_size()))
         logger.debug("Environment info:\n" + collect_env_info())
@@ -95,7 +94,7 @@ class FocoosTrainer:
             self.ckpt_dir = self.args.ckpt_dir
             if comm.is_main_process():
                 os.makedirs(self.ckpt_dir, exist_ok=True)
-                logger.info(f"[CKPT DIR] {self.ckpt_dir}")
+                logger.info(f"[Checkpoints directory] {self.ckpt_dir}")
         else:
             self.ckpt_dir = self.output_dir
 
@@ -142,13 +141,12 @@ class FocoosTrainer:
 
         if data_train:
             logger.info(
-                f"📊 [TRAIN DATASET {len(data_train)}] {str(data_train.dataset.metadata)} | "
+                f"📊 [TRAIN DATASET: {len(data_train)} samples] {str(data_train.dataset.metadata)} | "
                 f"[Train augmentations] {data_train.mapper.augmentations}"
             )
         # Log dataset info
         logger.info(
-            f"📊 [VALIDATION INFO] Classes: {data_val.dataset.metadata.num_classes} | "
-            f"Dataset: {len(data_val)} {str(data_val.dataset.metadata)} | "
+            f"📊 [VALIDATION DATASET: {len(data_val)} samples] Classes: {data_val.dataset.metadata.num_classes} | "
             f"Augmentations: {data_val.mapper.augmentations} | "
             f"Evaluator: {type(self.data_evaluator)} 🔍"
         )
@@ -665,7 +663,7 @@ class TrainerLoop:
             prefix: Prefix for metric names
             iter: Current iteration
         """
-        logger = logging.getLogger(__name__)
+        logger = get_logger(__name__)
 
         iter = self.iter if iter is None else iter
         if (iter + 1) % self.gather_metric_period == 0:
@@ -774,3 +772,57 @@ def _add_prefix(metric, key):
         dict: Metric dictionary with prefix
     """
     return {f"{key}/{k}": v for k, v in metric.items()}
+
+
+def run_train(
+    train_args: TrainerArgs,
+    data_train: MapDataset,
+    data_val: MapDataset,
+    image_model: BaseModelNN,
+    model_info: ModelInfo,  # type: ignore  # noqa: F821
+):
+    """Run model training.
+
+    Args:
+        train_args: Training configuration
+        data_train: Training dataset
+        data_val: Validation dataset
+        image_model: Model to train
+        metadata: Model metadata/configuration
+        rank: Rank of the process
+    Returns:
+        tuple: (trained model, updated metadata)
+    """
+    rank = comm.get_local_rank()
+    log_path = os.path.join(train_args.output_dir, train_args.run_name, "log.txt")
+    with capture_all_output(log_path=log_path, rank=rank):
+        trainer = FocoosTrainer(
+            args=train_args,
+            model=image_model,
+            model_info=model_info,
+            data_train=data_train,
+            data_val=data_val,
+        )
+        trainer.train()
+
+        return image_model, model_info
+
+
+def run_test(
+    train_args: TrainerArgs,
+    data_val: MapDataset,
+    image_model: BaseModelNN,
+    model_info: ModelInfo,
+):
+    rank = comm.get_local_rank()
+    log_path = os.path.join(train_args.output_dir, train_args.run_name, "test_log.txt")
+    with capture_all_output(log_path=log_path, rank=rank):
+        trainer = FocoosTrainer(
+            args=train_args,
+            model=image_model,
+            model_info=model_info,
+            data_val=data_val,
+        )
+        trainer.test()
+
+    return image_model, model_info

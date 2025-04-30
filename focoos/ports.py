@@ -798,10 +798,9 @@ class DictClass(OrderedDict):
                 self[field.name] = v
 
 
-@dataclass
 class ModelConfig(DictClass):
     num_classes: int
-    # other parameters are model-specific
+    pass
 
 
 @dataclass
@@ -1122,3 +1121,26 @@ class ModelInfo:
                     🏷️ Classes: {self.classes}
                     🖼️ Im size: {self.im_size}
                     """)
+
+
+@dataclass
+class ExportCfg:
+    """Configuration for model export.
+
+    Args:
+        out_dir: Output directory for exported model
+        onnx_opset: ONNX opset version to use
+        onnx_dynamic: Whether to use dynamic axes in ONNX export
+        onnx_simplify: Whether to simplify ONNX model
+        model_fuse: Whether to fuse model layers
+        format: Export format ("onnx" or "torchscript")
+        device: Device to use for export
+    """
+
+    out_dir: str
+    onnx_opset: int = 17
+    onnx_dynamic: bool = True
+    onnx_simplify: bool = True
+    model_fuse: bool = True
+    format: Literal["onnx", "torchscript"] = "onnx"
+    device: Optional[str] = "cuda"

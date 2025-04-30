@@ -12,7 +12,7 @@ from torch import nn
 from focoos.utils.distributed.comm import get_world_size, is_main_process
 from focoos.utils.logger import get_logger, log_every_n_seconds
 
-logger = get_logger("trainer")
+logger = get_logger(__name__)
 
 
 class DatasetEvaluator:

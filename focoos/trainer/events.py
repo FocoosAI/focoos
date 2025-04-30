@@ -25,7 +25,7 @@ __all__ = [
 _CURRENT_STORAGE_STACK = []
 
 
-logger = get_logger("trainer")
+logger = get_logger(__name__)
 
 
 def get_event_storage():

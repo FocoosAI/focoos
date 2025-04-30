@@ -46,7 +46,7 @@ __all__ = [
 """
 Implement some common hooks.
 """
-logger = get_logger("trainer")
+logger = get_logger(__name__)
 
 
 class CallbackHook(HookBase):

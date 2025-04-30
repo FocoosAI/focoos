@@ -1,10 +1,10 @@
-import logging
 import random
 
 import torch.utils.data as data
 
 from focoos.data.datasets.dict_dataset import DictDataset
 from focoos.data.mappers.mapper import DatasetMapper
+from focoos.utils.logger import get_logger
 
 
 class MapDataset(data.Dataset):
@@ -26,7 +26,7 @@ class MapDataset(data.Dataset):
         """
         self.dataset = dataset
         self.mapper = mapper  # wrap so that a lambda will work
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
 
         self._rng = random.Random(42)
         self._fallback_candidates = set(range(len(dataset)))

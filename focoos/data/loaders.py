@@ -1,4 +1,3 @@
-import logging
 import operator
 from typing import Union
 
@@ -7,6 +6,7 @@ import torch.utils.data as torchdata
 
 from focoos.utils.distributed import comm
 from focoos.utils.env import seed_all_rng
+from focoos.utils.logger import get_logger
 
 from .datasets.common import AspectRatioGroupedDataset, ToIterableDataset
 from .datasets.map_dataset import MapDataset
@@ -63,7 +63,7 @@ def build_batch_data_loader(
         "Total batch size ({}) must be divisible by the number of gpus ({}).".format(total_batch_size, world_size)
     )
     batch_size = total_batch_size // world_size
-    logger = logging.getLogger(__name__)
+    logger = get_logger(__name__)
     logger.info("Making batched data loader with batch_size=%d", batch_size)
 
     dataset = ToIterableDataset(dataset, sampler, shard_chunk_size=batch_size)

@@ -8,7 +8,7 @@ import torch
 
 from focoos.utils.logger import get_logger
 
-logger = get_logger("trainer")
+logger = get_logger(__name__)
 
 
 def convert_basic_c2_names(original_keys):

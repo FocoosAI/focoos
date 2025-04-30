@@ -1,5 +1,4 @@
 import copy
-import logging
 from dataclasses import dataclass
 from typing import Optional, Sequence, Union
 
@@ -10,6 +9,7 @@ from focoos.data import utils
 from focoos.data.mappers.mapper import DatasetEntry, DatasetMapper
 from focoos.data.transforms import augmentation as A
 from focoos.data.transforms import transform as T
+from focoos.utils.logger import get_logger
 
 
 @dataclass
@@ -53,7 +53,7 @@ class ClassificationDatasetMapper(DatasetMapper):
             augmentations=augmentations,
             image_format=image_format,
         )
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
         mode = "training" if is_train else "inference"
         self.logger.info(f"[ClassificationDatasetMapper] Augmentations used in {mode}: {augmentations}")
 

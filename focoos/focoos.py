@@ -32,9 +32,9 @@ from focoos.ports import (
 from focoos.remote.remote_dataset import RemoteDataset
 from focoos.remote.remote_model import RemoteModel
 from focoos.utils.api_client import ApiClient
-from focoos.utils.logger import setup_logging
+from focoos.utils.logger import get_logger
 
-logger = setup_logging()
+logger = get_logger()
 
 
 class Focoos:

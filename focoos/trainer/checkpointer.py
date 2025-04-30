@@ -12,6 +12,8 @@ from focoos.trainer.c2_model_loading import align_and_update_state_dicts
 from focoos.utils.distributed import comm
 from focoos.utils.logger import get_logger
 
+logger = get_logger(__name__)
+
 
 class DetectionCheckpointer(Checkpointer):
     """
@@ -29,12 +31,11 @@ class DetectionCheckpointer(Checkpointer):
             **checkpointables,
         )
         self._parsed_url_during_load = None
-        self.logger = get_logger("trainer")
 
     def load(self, path, *args, **kwargs):
         assert self._parsed_url_during_load is None
         need_sync = False
-        self.logger.info("[DetectionCheckpointer] Loading from {} ...".format(path))
+        logger.info("Loading from {} ...".format(path))
 
         if path and isinstance(self.model, DistributedDataParallel):
             has_file = os.path.isfile(path)
@@ -42,7 +43,7 @@ class DetectionCheckpointer(Checkpointer):
             if not all_has_file[0]:
                 raise OSError(f"File {path} not found on main worker.")
             if not all(all_has_file):
-                self.logger.warning(f"Not all workers can read checkpoint {path}. Training may fail to fully resume.")
+                logger.warning(f"Not all workers can read checkpoint {path}. Training may fail to fully resume.")
                 # TODO: broadcast the checkpoint file contents from main
                 # worker, and load from it instead.
                 need_sync = True
@@ -56,7 +57,7 @@ class DetectionCheckpointer(Checkpointer):
         ret = super().load(path, *args, **kwargs)  # type: ignore
 
         if need_sync:
-            self.logger.info("Broadcasting model states from main worker ...")
+            logger.info("Broadcasting model states from main worker ...")
             self.model._sync_params_and_buffers()
         self._parsed_url_during_load = None  # reset to None
         return ret
@@ -103,6 +104,7 @@ class DetectionCheckpointer(Checkpointer):
         if queries.pop("matching_heuristics", "False") == ["True"]:
             loaded["matching_heuristics"] = True  # type: ignore
         if len(queries) > 0:
+            logger.error(f"Unsupported query remaining: f{queries}, orginal filename: {parsed_url.geturl()}")
             raise ValueError(f"Unsupported query remaining: f{queries}, orginal filename: {parsed_url.geturl()}")
         return loaded
 

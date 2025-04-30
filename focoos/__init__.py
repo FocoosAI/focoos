@@ -27,7 +27,7 @@ from .ports import (
 )
 from .remote.remote_model import RemoteModel
 from .utils.api_client import ApiClient
-from .utils.logger import get_logger
+from .utils.logger import _setup_logging, get_logger
 from .utils.system import get_cuda_version, get_system_info
 from .utils.vision import (
     base64mask_to_mask,
@@ -39,6 +39,8 @@ from .utils.vision import (
     index_to_class,
     sv_to_fai_detections,
 )
+
+_setup_logging()
 
 __all__ = [
     "FOCOOS_CONFIG",

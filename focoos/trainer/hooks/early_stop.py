@@ -1,6 +1,5 @@
-import logging
-
 from focoos.trainer.hooks.base import HookBase
+from focoos.utils.logger import get_logger
 
 
 class EarlyStopException(Exception):
@@ -47,7 +46,7 @@ class EarlyStoppingHook(HookBase):
         self.best_metric = None
         self.num_bad_epochs = 0
         self._period = eval_period
-        self._logger = logging.getLogger(__name__)
+        self._logger = get_logger(__name__)
 
     def after_step(self):
         next_iter = self.trainer.iter + 1

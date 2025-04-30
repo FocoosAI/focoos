@@ -1,7 +1,6 @@
 import concurrent.futures
 import csv
 import json
-import logging
 import os
 import random
 import shutil
@@ -24,6 +23,7 @@ from focoos.ports import (
     Task,
 )
 from focoos.utils.cmap_builder import cmap_builder
+from focoos.utils.logger import get_logger
 from focoos.utils.system import list_files_with_extensions
 
 
@@ -43,7 +43,7 @@ class DictDataset(Dataset):
         self.metadata: DatasetMetadata = metadata
         # self.dicts: list[DetectronDict] = dicts
         # assemble detectron standard dict
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
         self.logger.info(
             f"[Focoos-DictDataset] dataset {self.metadata.name} loaded. len: {self.metadata.count}, classes:{self.metadata.num_classes} ,{self.metadata.image_root}"
         )
@@ -157,7 +157,7 @@ class DictDataset(Dataset):
         Returns:
             ClassificationDataset: A dataset containing the images and their class labels
         """
-        logger = logging.getLogger(__name__)
+        logger = get_logger(__name__)
 
         # If split is provided, update the root directory to include the split
         if split is not None:
@@ -394,7 +394,7 @@ class DictDataset(Dataset):
             new_shortest_length (int, optional): The new shortest length to resize the images and masks to. Defaults to 1024.
             max_size: The maximum size for the resized images and masks. Defaults to 2048.
         """
-        logger = logging.getLogger(__name__)
+        logger = get_logger(__name__)
         logger.info("[START RESIZE] clone_resize_shortest_length ")
         pool = concurrent.futures.ThreadPoolExecutor(max_workers=150)
         os.makedirs(new_dir, exist_ok=True)

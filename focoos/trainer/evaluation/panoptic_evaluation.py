@@ -18,7 +18,7 @@ from focoos.utils.logger import get_logger
 
 from .evaluator import DatasetEvaluator
 
-logger = get_logger("trainer")
+logger = get_logger(__name__)
 
 
 class COCOPanopticEvaluator(DatasetEvaluator):

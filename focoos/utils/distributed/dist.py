@@ -1,5 +1,4 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-import logging
 from datetime import timedelta
 from typing import Optional
 
@@ -73,7 +72,7 @@ def launch(
             port = _find_free_port()
             dist_url = f"tcp://127.0.0.1:{port}"
         if num_machines > 1 and dist_url and dist_url.startswith("file://"):
-            logger = logging.getLogger(__name__)
+            logger = get_logger(__name__)
             logger.warning("file:// is not a reliable init_method in multi-machine jobs. Prefer tcp://")
 
         start_processes(
@@ -118,7 +117,7 @@ def _distributed_worker(
             timeout=timeout,
         )
     except Exception as e:
-        logger = logging.getLogger(__name__)
+        logger = get_logger(__name__)
         logger.error("Process group URL: {}".format(dist_url))
         raise e
 

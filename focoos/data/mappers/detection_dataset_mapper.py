@@ -1,7 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # Modified by Bowen Cheng from https://github.com/facebookresearch/detr/blob/master/d2/detr/dataset_mapper.py
 import copy
-import logging
 from dataclasses import dataclass
 from typing import List, Optional, Sequence, Union
 
@@ -13,6 +12,7 @@ from focoos.data.mappers.mapper import DatasetEntry
 from focoos.data.transforms import augmentation as A
 from focoos.data.transforms import transform as T
 from focoos.structures import BoxMode, Instances
+from focoos.utils.logger import get_logger
 
 from .mapper import DatasetMapper
 
@@ -75,7 +75,7 @@ class DetectionDatasetMapper(DatasetMapper):
         self.keypoint_hflip_indices = keypoint_hflip_indices
         self.recompute_boxes        = recompute_boxes
         # fmt: on
-        logger = logging.getLogger(__name__)
+        logger = get_logger(__name__)
         mode = "training" if is_train else "inference"
         logger.info(f"[DatasetMapper] Augmentations used in {mode}: {augmentations}")
 

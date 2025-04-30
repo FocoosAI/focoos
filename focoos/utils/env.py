@@ -1,5 +1,4 @@
 import importlib
-import logging
 import os
 import random
 import re
@@ -14,6 +13,8 @@ import torch
 import torchvision
 from tabulate import tabulate
 
+from focoos.utils.logger import get_logger
+
 TORCH_VERSION = tuple(int(x) for x in torch.__version__.split(".")[:2])
 
 
@@ -26,7 +27,7 @@ def seed_all_rng(seed=None):
     """
     if seed is None:
         seed = os.getpid() + int(datetime.now().strftime("%S%f")) + int.from_bytes(os.urandom(2), "big")
-        logger = logging.getLogger(__name__)
+        logger = get_logger(__name__)
         logger.info("Using a generated random seed {}".format(seed))
     np.random.seed(seed)
     torch.manual_seed(seed)

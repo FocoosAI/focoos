@@ -1,4 +1,3 @@
-import logging
 from collections import OrderedDict
 
 import torch
@@ -6,8 +5,9 @@ import torch
 from focoos.data.datasets.dict_dataset import DictDataset
 from focoos.trainer.evaluation.evaluator import DatasetEvaluator
 from focoos.utils.distributed.comm import all_gather, is_main_process, synchronize
+from focoos.utils.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class ClassificationEvaluator(DatasetEvaluator):

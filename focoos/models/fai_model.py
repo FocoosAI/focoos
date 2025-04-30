@@ -1,5 +1,5 @@
 import os
-from typing import Union
+from typing import Literal, Union
 
 import numpy as np
 import torch
@@ -7,8 +7,10 @@ from PIL import Image
 from torch import nn
 
 from focoos.data.datasets.map_dataset import MapDataset
-from focoos.ports import ModelConfig, ModelInfo, ModelOutput, TrainerArgs
+from focoos.infer.infer_model import InferModel
+from focoos.ports import ExportCfg, ModelConfig, ModelInfo, ModelOutput, TrainerArgs
 from focoos.structures import Instances
+from focoos.trainer.export.onnx import onnx_export
 from focoos.utils.distributed.dist import launch
 from focoos.utils.logger import get_logger
 
@@ -36,58 +38,6 @@ class BaseModelNN(nn.Module):
         raise NotImplementedError("Post-processing is not implemented for this model.")
 
 
-def run_train(
-    train_args: TrainerArgs,
-    data_train: MapDataset,
-    data_val: MapDataset,
-    image_model: BaseModelNN,
-    model_info: ModelInfo,  # type: ignore  # noqa: F821
-):
-    """Run model training.
-
-    Args:
-        train_args: Training configuration
-        data_train: Training dataset
-        data_val: Validation dataset
-        image_model: Model to train
-        metadata: Model metadata/configuration
-
-    Returns:
-        tuple: (trained model, updated metadata)
-    """
-    from focoos.trainer.trainer import FocoosTrainer
-
-    trainer = FocoosTrainer(
-        args=train_args,
-        model=image_model,
-        model_info=model_info,
-        data_train=data_train,
-        data_val=data_val,
-    )
-    trainer.train()
-
-    return image_model, model_info
-
-
-def run_test(
-    train_args: TrainerArgs,
-    data_val: MapDataset,
-    image_model: BaseModelNN,
-    model_info: ModelInfo,
-):
-    from focoos.trainer.trainer import FocoosTrainer
-
-    trainer = FocoosTrainer(
-        args=train_args,
-        model=image_model,
-        model_info=model_info,
-        data_val=data_val,
-    )
-    trainer.test()
-
-    return image_model, model_info
-
-
 class FocoosModel:
     def __init__(self, model: BaseModelNN, model_info: ModelInfo):
         self.model = model
@@ -100,6 +50,8 @@ class FocoosModel:
         return f"{self.model_info.name} ({self.model_info.model_family.value})"
 
     def train(self, args: TrainerArgs, data_train: MapDataset, data_val: MapDataset):
+        from focoos.trainer.trainer import run_train
+
         """Train the model.
 
         Args:
@@ -146,6 +98,8 @@ class FocoosModel:
             run_train(args, data_train, data_val, self.model, self.model_info)
 
     def test(self, args: TrainerArgs, data_test: MapDataset):
+        from focoos.trainer.trainer import run_test
+
         """Test the model.
 
         Args:
@@ -174,31 +128,41 @@ class FocoosModel:
         else:
             run_test(args, data_test, self.model, self.model_info)
 
-    # def export(
-    #     self,
-    #     export_cfg: ExportCfg,
-    #     quantization_cfg: Optional[QuantizationCfg] = None,
-    #     benchmark: bool = False,
-    #     benchmark_iters: int = 50,
-    #     runtime_type: RuntimeTypes = RuntimeTypes.CUDA,
-    #     store_metadata: bool = True,
-    # ) -> Tuple[str, Optional[LatencyMetrics]]:
-    #     """Export model to different formats.
+    @property
+    def device(self):
+        return self.model.device
 
-    #     Args:
-    #         export_cfg: Export configuration
-    #         quantization_cfg: Optional quantization config
-    #         benchmark: Whether to run benchmarks
-    #         benchmark_iters: Number of benchmark iterations
-    #         runtime_type: Runtime type for benchmarking
-    #         store_metadata: Whether to store model metadata
+    @property
+    def im_size(self):
+        return self.model_info.config["im_size"]
 
-    #     Returns:
-    #         Tuple of (model path, optional latency metrics)
-    #     """
-    #     model_cfg = self.config
-    #     if export_cfg.device is None:
-    #         export_cfg.device = self.model.device
+    @property
+    def config(self) -> dict:
+        return self.model_info.config
+
+    def export(
+        self,
+        export_cfg: ExportCfg,
+        # quantization_cfg: Optional[QuantizationCfg] = None,
+        benchmark: bool = False,
+        benchmark_iters: int = 50,
+        device: Literal["cuda", "cpu"] = "cuda",
+        store_metadata: bool = True,
+    ) -> InferModel:
+        if export_cfg.device is None:
+            export_cfg.device = self.model.device
+        if export_cfg.format == "onnx":
+            model_path = os.path.join(export_cfg.out_dir, "model.onnx")
+            onnx_export(
+                model=self.model,
+                size=(640, 640),
+                device="cuda",
+                opset=export_cfg.onnx_opset,
+                dynamic=export_cfg.onnx_dynamic,
+                simplify=export_cfg.onnx_simplify,
+                model_name=model_path,
+            )
+        pass
 
     #     model_to_export = self.model.exportable_model(
     #         fuse_layers=export_cfg.model_fuse, task=FocoosTasks(model_cfg.task)

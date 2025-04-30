@@ -3,7 +3,7 @@ from collections.abc import Mapping
 
 from focoos.utils.logger import get_logger
 
-logger = get_logger("trainer")
+logger = get_logger(__name__)
 
 
 def print_csv_format(results):

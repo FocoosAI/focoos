@@ -1,6 +1,5 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 import copy
-import logging
 
 import numpy as np
 import torch
@@ -8,6 +7,7 @@ import torch
 from focoos.data import utils
 from focoos.data.transforms import augmentation as A
 from focoos.structures import BitMasks, Instances
+from focoos.utils.logger import get_logger
 
 from .mapper import DatasetMapper
 
@@ -46,7 +46,7 @@ class SemanticDatasetMapper(DatasetMapper):
         self.img_format = image_format
         self.ignore_label = ignore_label
 
-        logger = logging.getLogger(__name__)
+        logger = get_logger(__name__)
         mode = "training" if is_train else "inference"
         logger.info(f"[{self.__class__.__name__}] Augmentations used in {mode}: {augmentations}")
 
