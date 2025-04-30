@@ -174,7 +174,7 @@ class ApiClient:
         """
         return self.post(path, data={"path": file_path, "file_size_bytes": file_size})
 
-    def download_file(self, uri: str, file_dir: str, file_name: Optional[str] = None):
+    def download_file(self, uri: str, file_dir: str, file_name: Optional[str] = None, skip_if_exists: bool = False):
         """
         Download a file from a URI to a local directory.
 
@@ -205,6 +205,9 @@ class ApiClient:
         if not os.path.exists(file_dir):
             os.makedirs(file_dir)
         file_path = os.path.join(file_dir, file_name)
+        if skip_if_exists and os.path.exists(file_path):
+            logger.info(f"📥 File already exists: {file_path}")
+            return file_path
 
         with (
             open(file_path, "wb") as f,

@@ -94,6 +94,18 @@ class RemoteDataset:
         logger.info(f"✅ Dataset validated! => {self.metadata.spec}")
         return self.metadata.spec
 
+    @property
+    def name(self):
+        return self.metadata.name
+
+    @property
+    def task(self):
+        return self.metadata.task
+
+    @property
+    def layout(self):
+        return self.metadata.layout
+
     def download_data(self, path: str = DATASETS_DIR):
         """
         Downloads the dataset data to a local path.
@@ -110,10 +122,9 @@ class RemoteDataset:
         res = self.api_client.get(f"datasets/{self.ref}/download")
         if res.status_code != 200:
             raise ValueError(f"Failed to download dataset data: {res.status_code} {res.text}")
-        logger.info(f"📥 Downloading dataset data to {path}")
         url = res.json()["download_uri"]
 
-        path = self.api_client.download_file(url, path)
+        path = self.api_client.download_file(url, path, skip_if_exists=True)
         logger.info(f"✅ Dataset data downloaded to {path}")
         return path
 
@@ -132,7 +143,7 @@ class RemoteDataset:
             logger.error(f"Failed to delete dataset {self.ref}: {e}")
             raise e
 
-    def delete_data(self):
+    def delete_remote_data(self):
         """
         Deletes only the data content of the dataset while preserving metadata.
 
