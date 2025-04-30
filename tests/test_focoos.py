@@ -284,10 +284,10 @@ def test_get_infer_model(mocker: MockerFixture, focoos_instance: Focoos, mock_lo
     download_model_spy = mocker.spy(focoos_instance, "_download_model")
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        focoos_instance.cache_dir = temp_dir
+        focoos_instance.focoos_dir = temp_dir
         # Setup test data
         model_ref = "ref1"
-        model_path = pathlib.Path(focoos_instance.cache_dir) / model_ref / "model.onnx"
+        model_path = pathlib.Path(focoos_instance.focoos_dir) / model_ref / "model.onnx"
         model_path.mkdir(parents=True, exist_ok=True)
 
         # Call the method under test
@@ -312,10 +312,10 @@ def test_get_local_model_with_download(mocker: MockerFixture, focoos_instance: F
     mock_download_model = mocker.patch.object(focoos_instance, "_download_model", autospec=True)
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        focoos_instance.cache_dir = temp_dir
+        focoos_instance.focoos_dir = temp_dir
         # Setup test data
         model_ref = "ref1"
-        model_path = pathlib.Path(focoos_instance.cache_dir) / model_ref
+        model_path = pathlib.Path(focoos_instance.focoos_dir) / model_ref
         model_path.mkdir(parents=True, exist_ok=True)
         model_path = model_path / "model.onnx"
 
@@ -378,7 +378,7 @@ def test_new_model_fail(focoos_instance: Focoos):
 def test_download_model_already_exists(focoos_instance: Focoos):
     model_ref = "ref1"
     with tempfile.TemporaryDirectory() as model_dir_tmp:
-        focoos_instance.cache_dir = model_dir_tmp
+        focoos_instance.focoos_dir = model_dir_tmp
         model_dir_tmp = pathlib.Path(model_dir_tmp) / model_ref
         model_dir_tmp.mkdir(parents=True, exist_ok=True)
         model_onnx_path = model_dir_tmp / "model.onnx"
@@ -393,10 +393,10 @@ def test_download_model_onnx_fail(focoos_instance: Focoos):
     model_ref = "ref1"
     focoos_instance.api_client.get = MagicMock(return_value=MagicMock(status_code=500))
     with tempfile.TemporaryDirectory() as model_dir_tmp:
-        focoos_instance.cache_dir = model_dir_tmp
+        focoos_instance.focoos_dir = model_dir_tmp
         with pytest.raises(ValueError):
             focoos_instance._download_model(model_ref)
-        assert not (pathlib.Path(focoos_instance.cache_dir) / "model.onnx").exists()
+        assert not (pathlib.Path(focoos_instance.focoos_dir) / "model.onnx").exists()
 
 
 def test_download_model_onnx_ok_but_get_external_fail(mocker: MockerFixture, focoos_instance: Focoos):
@@ -416,7 +416,7 @@ def test_download_model_onnx_ok_but_get_external_fail(mocker: MockerFixture, foc
     mock_model_metadata.return_value = MagicMock(model_dump_json=lambda: "fake_model_dump")
 
     with tempfile.TemporaryDirectory() as model_dir_tmp:
-        focoos_instance.cache_dir = model_dir_tmp
+        focoos_instance.focoos_dir = model_dir_tmp
         # Mock failed download from Focoos Cloud
         focoos_instance.api_client.download_file = MagicMock(side_effect=ValueError("Failed to download model"))
 
@@ -432,7 +432,7 @@ def test_download_model_onnx_ok_but_get_external_fail(mocker: MockerFixture, foc
 
 def test_download_model_onnx(mocker: MockerFixture, focoos_instance: Focoos):
     with tempfile.TemporaryDirectory() as model_dir_tmp:
-        focoos_instance.cache_dir = model_dir_tmp
+        focoos_instance.focoos_dir = model_dir_tmp
         model_ref = "ref1"
         expected_path = str(pathlib.Path(model_dir_tmp) / model_ref / "model.onnx")
         focoos_instance.api_client.get = MagicMock(

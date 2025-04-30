@@ -17,9 +17,9 @@ LOCAL_API_URL = "http://localhost:8501/v0"
 
 ROOT_DIR = Path.home() / "FocoosAI"
 ROOT_DIR = str(ROOT_DIR) if os.name == "nt" else ROOT_DIR
-MODELS_ROOT = os.path.join(ROOT_DIR, "models")
-DATASETS_ROOT = os.path.join(ROOT_DIR, "datasets")
-EXPERIMENTS_ROOT = os.path.join(ROOT_DIR, "experiments")
+MODELS_DIR = os.path.join(ROOT_DIR, "models")
+DATASETS_DIR = os.path.join(ROOT_DIR, "datasets")
+RUNS_DIR = os.path.join(ROOT_DIR, "runs")
 
 
 class FocoosBaseModel(BaseModel):
@@ -817,7 +817,7 @@ class DatasetSplitType(str, Enum):
     TEST = "test"
 
 
-def get_gpus():
+def get_gpus_count():
     try:
         import torch.cuda
 
@@ -877,12 +877,12 @@ class TrainerArgs:
     """
 
     run_name: str
-    output_dir: str
+    output_dir: str = RUNS_DIR
     ckpt_dir: Optional[str] = None
     init_checkpoint: Optional[str] = None
     resume: bool = False
     # Logistics params
-    num_gpus: int = get_gpus()
+    num_gpus: int = get_gpus_count()
     device: str = "cuda"
     workers: int = 4
     amp_enabled: bool = True

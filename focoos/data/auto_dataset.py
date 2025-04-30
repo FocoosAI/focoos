@@ -9,7 +9,7 @@ from focoos.data.mappers.mapper import DatasetMapper
 from focoos.data.mappers.semantic_dataset_mapper import SemanticDatasetMapper
 from focoos.data.transforms import transform as T
 from focoos.ports import (
-    DATASETS_ROOT,
+    DATASETS_DIR,
     DatasetLayout,
     DatasetSplitType,
     Task,
@@ -30,11 +30,11 @@ class AutoDataset:
         dataset_name: str,
         task: Task,
         layout: DatasetLayout,
-        datasets_root_dir: str = DATASETS_ROOT,
+        datasets_dir: str = DATASETS_DIR,
     ):
         self.task = task
         self.layout = layout
-        self.datasets_root_dir = datasets_root_dir
+        self.datasets_dir = datasets_dir
         self.dataset_name = dataset_name
 
         # if is_inside_sagemaker():
@@ -52,9 +52,9 @@ class AutoDataset:
         #     else:
         #         dataset_path = self.datasets_root_dir
         if self.layout is not DatasetLayout.CATALOG:
-            dataset_path = os.path.join(self.datasets_root_dir, dataset_name)
+            dataset_path = os.path.join(self.datasets_dir, dataset_name)
         else:
-            dataset_path = self.datasets_root_dir
+            dataset_path = self.datasets_dir
 
         if dataset_path.endswith(".zip") or dataset_path.endswith(".gz"):
             # compressed path: datasets_root_dir/dataset_compressed/{dataset_name}.zip
@@ -67,7 +67,7 @@ class AutoDataset:
                 logger.info(f"Extracted archive: {dataset_path}, {os.listdir(dataset_path)}")
             else:
                 dataset_name = dataset_name.split(".")[0]
-                _dest_path = os.path.join(self.datasets_root_dir, dataset_name)
+                _dest_path = os.path.join(self.datasets_dir, dataset_name)
                 dataset_path = extract_archive(dataset_path, _dest_path)
                 logger.info(f"Extracted archive: {dataset_path}, {os.listdir(dataset_path)}")
 

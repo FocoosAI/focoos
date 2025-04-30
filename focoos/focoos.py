@@ -19,6 +19,7 @@ from typing import Optional, Union
 from focoos.config import FOCOOS_CONFIG
 from focoos.infer.infer_model import InferModel
 from focoos.ports import (
+    MODELS_DIR,
     DatasetLayout,
     DatasetPreview,
     ModelFormat,
@@ -100,7 +101,6 @@ class Focoos:
 
         self.api_client = ApiClient(api_key=self.api_key, host_url=self.host_url)
         self.user_info = self.get_user_info()
-        self.cache_dir = os.path.join(os.path.expanduser("~"), ".cache", "focoos")
         logger.info(f"Currently logged as: {self.user_info.email} environment: {self.host_url}")
 
     def get_user_info(self) -> User:
@@ -254,7 +254,7 @@ class Focoos:
             ```
         """
         runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
-        model_dir = os.path.join(self.cache_dir, model_ref)
+        model_dir = os.path.join(MODELS_DIR, model_ref)
         format = ModelFormat.from_runtime_type(runtime_type)
         if not os.path.exists(os.path.join(model_dir, f"model.{format.value}")):
             self._download_model(
@@ -360,7 +360,7 @@ class Focoos:
         Raises:
             ValueError: If the API request fails or the download fails.
         """
-        model_dir = os.path.join(self.cache_dir, model_ref)
+        model_dir = os.path.join(MODELS_DIR, model_ref)
         model_path = os.path.join(model_dir, f"model.{format.value}")
         metadata_path = os.path.join(model_dir, "focoos_metadata.json")
         if os.path.exists(model_path) and os.path.exists(metadata_path):

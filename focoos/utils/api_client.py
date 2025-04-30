@@ -174,7 +174,7 @@ class ApiClient:
         """
         return self.post(path, data={"path": file_path, "file_size_bytes": file_size})
 
-    def download_file(self, uri: str, file_dir: str):
+    def download_file(self, uri: str, file_dir: str, file_name: Optional[str] = None):
         """
         Download a file from a URI to a local directory.
 
@@ -194,7 +194,7 @@ class ApiClient:
             logger.info(f"📥 Creating directory: {file_dir}")
             os.makedirs(file_dir)
         parsed_url = urlparse(uri)
-        file_name = os.path.basename(parsed_url.path)
+        file_name = file_name or os.path.basename(parsed_url.path)
         res = self.external_get(uri, stream=True)
         if res.status_code != 200:
             logger.error(f"Failed to download file {file_name}: {res.status_code} {res.text}")

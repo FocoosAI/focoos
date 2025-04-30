@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from focoos.ports import DatasetPreview, DatasetSpec
+from focoos.ports import DATASETS_DIR, DatasetPreview, DatasetSpec
 from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
 
@@ -94,7 +94,7 @@ class RemoteDataset:
         logger.info(f"✅ Dataset validated! => {self.metadata.spec}")
         return self.metadata.spec
 
-    def download_data(self, path: str):
+    def download_data(self, path: str = DATASETS_DIR):
         """
         Downloads the dataset data to a local path.
 
@@ -112,6 +112,7 @@ class RemoteDataset:
             raise ValueError(f"Failed to download dataset data: {res.status_code} {res.text}")
         logger.info(f"📥 Downloading dataset data to {path}")
         url = res.json()["download_uri"]
+
         path = self.api_client.download_file(url, path)
         logger.info(f"✅ Dataset data downloaded to {path}")
         return path
