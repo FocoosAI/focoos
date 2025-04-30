@@ -355,7 +355,7 @@ def get_file_extension(file_path):
     else:
         mime_type = mime_types.get(extension, "application/octet-stream")
 
-    logger.info(f"Supposed file extension: {mime_type}")
+    logger.debug(f"Supposed file extension: {mime_type}")
     return mime_type
 
 

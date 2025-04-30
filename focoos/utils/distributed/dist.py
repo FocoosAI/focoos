@@ -89,6 +89,7 @@ def launch(
             ),
             daemon=False,
         )
+        logger = get_logger(__name__)
         logger.info(f"Distributed training finished with {world_size} processes.")
     else:
         main_func(*args)

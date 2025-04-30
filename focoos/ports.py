@@ -800,9 +800,8 @@ class DictClass(OrderedDict):
                 self[field.name] = v
 
     def __reduce__(self):
-        # needed for pickle
-        field_values = tuple(getattr(self, field.name) for field in fields(self))
-        return (self.__class__, field_values)
+        state_dict = {field.name: getattr(self, field.name) for field in fields(self)}
+        return (self.__class__.__new__, (self.__class__,), state_dict)
 
 
 @dataclass

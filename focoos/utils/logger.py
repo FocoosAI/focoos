@@ -329,7 +329,6 @@ def capture_all_output(log_path="output.txt", rank=0):
     # Remove file if it already exists
     if os.path.exists(output):
         os.remove(output)
-    print(f"LOG OUTPUT: {output}")
     # Open file for stdout/stderr
     log_file = open(output, "a", buffering=1)  # line-buffered
 
