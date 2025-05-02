@@ -163,13 +163,21 @@ class FrozenBatchNorm2d(nn.Module):
 
 
 class LayerNorm(nn.Module):
-    r"""LayerNorm that supports two data formats: channels_last (default) or channels_first.
+    """LayerNorm that supports two data formats: channels_last (default) or channels_first.
+
     The ordering of the dimensions in the inputs. channels_last corresponds to inputs with
     shape (batch_size, height, width, channels) while channels_first corresponds to inputs
     with shape (batch_size, channels, height, width).
     """
 
     def __init__(self, normalized_shape, eps=1e-6, data_format="channels_last"):
+        """Initialize LayerNorm module.
+
+        Args:
+            normalized_shape: Shape of the tensor to be normalized
+            eps: Small constant for numerical stability
+            data_format: Format of input tensor ('channels_last' or 'channels_first')
+        """
         super().__init__()
         self.weight = nn.Parameter(torch.ones(normalized_shape))
         self.bias = nn.Parameter(torch.zeros(normalized_shape))
@@ -180,6 +188,14 @@ class LayerNorm(nn.Module):
         self.normalized_shape = (normalized_shape,)
 
     def forward(self, x):
+        """Apply layer normalization to input tensor.
+
+        Args:
+            x: Input tensor
+
+        Returns:
+            Normalized tensor
+        """
         if self.data_format == "channels_last":
             return F.layer_norm(x, self.normalized_shape, self.weight, self.bias, self.eps)
         elif self.data_format == "channels_first":

@@ -1,214 +1,412 @@
 import copy
-import warnings
-from typing import List, Optional
+from typing import Optional
 
 import torch
 import torch.nn as nn
 from torch import Tensor
 
+from focoos.utils.logger import get_logger
+
 from .base import _get_activation_fn
+from .misc import DropPath
+from .norm import LayerNorm
+
+logger = get_logger(__name__)
 
 
-class BaseTransformerLayer(nn.Module):
-    # TODO: add more tutorials about BaseTransformerLayer
-    """The implementation of Base `TransformerLayer` used in Transformer. Modified
-    from `mmcv <https://github.com/open-mmlab/mmcv/blob/master/mmcv/cnn/bricks/transformer.py>`_.
+class SelfAttentionLayer(nn.Module):
+    """Self-attention layer for transformer architectures."""
 
-    It can be built by directly passing the `Attentions`, `FFNs`, `Norms`
-    module, which support more flexible cusomization combined with
-    `LazyConfig` system. The `BaseTransformerLayer` also supports `prenorm`
-    when you specifying the `norm` as the first element of `operation_order`.
-    More details about the `prenorm`: `On Layer Normalization in the
-    Transformer Architecture <https://arxiv.org/abs/2002.04745>`_ .
+    def __init__(self, d_model, nhead, dropout=0.0, normalize_before=False):
+        """Initialize self-attention layer.
 
-    Args:
-        attn (list[nn.Module] | nn.Module): nn.Module or a list
-            contains the attention module used in TransformerLayer.
-        ffn (nn.Module): FFN module used in TransformerLayer.
-        norm (nn.Module): Normalization layer used in TransformerLayer.
-        operation_order (tuple[str]): The execution order of operation in
-            transformer. Such as ('self_attn', 'norm', 'ffn', 'norm').
-            Support `prenorm` when you specifying the first element as `norm`.
-            Default = None.
-    """
-
-    def __init__(
-        self,
-        attn: List[nn.Module],
-        ffn: nn.Module,
-        norm: nn.Module,
-        operation_order: tuple = None,
-    ):
+        Args:
+            d_model: Dimension of the model
+            nhead: Number of attention heads
+            dropout: Dropout probability
+            normalize_before: Whether to apply normalization before attention
+        """
         super().__init__()
-        assert set(operation_order).issubset({"self_attn", "norm", "cross_attn", "ffn"})
+        self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
 
-        # count attention nums
-        num_attn = operation_order.count("self_attn") + operation_order.count("cross_attn")
+        self.norm = nn.LayerNorm(d_model)
+        self.dropout = nn.Dropout(dropout)
 
-        if isinstance(attn, nn.Module):
-            attn = [copy.deepcopy(attn) for _ in range(num_attn)]
-        else:
-            assert len(attn) == num_attn, (
-                f"The length of attn (nn.Module or List[nn.Module]) {num_attn}"
-                f"is not consistent with the number of attention in "
-                f"operation_order {operation_order}"
-            )
+        self.activation = nn.ReLU()
+        self.normalize_before = normalize_before
 
-        self.num_attn = num_attn
-        self.operation_order = operation_order
-        self.pre_norm = operation_order[0] == "norm"
-        self.attentions = nn.ModuleList()
-        index = 0
-        for operation_name in operation_order:
-            if operation_name in ["self_attn", "cross_attn"]:
-                self.attentions.append(attn[index])
-                index += 1
+        self._reset_parameters()
 
-        self.embed_dim = self.attentions[0].embed_dim
+    def _reset_parameters(self):
+        """Initialize parameters with Xavier uniform distribution."""
+        for p in self.parameters():
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p)
 
-        # count ffn nums
-        self.ffns = nn.ModuleList()
-        num_ffns = operation_order.count("ffn")
-        for _ in range(num_ffns):
-            self.ffns.append(copy.deepcopy(ffn))
+    def with_pos_embed(self, tensor, pos: Optional[Tensor]):
+        """Add positional embeddings to the tensor.
 
-        # count norm nums
-        self.norms = nn.ModuleList()
-        num_norms = operation_order.count("norm")
-        for _ in range(num_norms):
-            self.norms.append(copy.deepcopy(norm))
+        Args:
+            tensor: Input tensor
+            pos: Positional embedding tensor
+
+        Returns:
+            Tensor with positional embeddings added
+        """
+        return tensor if pos is None else tensor + pos
+
+    def forward_post(
+        self,
+        tgt,
+        tgt_mask: Optional[Tensor] = None,
+        tgt_key_padding_mask: Optional[Tensor] = None,
+        query_pos: Optional[Tensor] = None,
+    ):
+        """Apply self-attention with post-normalization.
+
+        Args:
+            tgt: Target tensor
+            tgt_mask: Attention mask
+            tgt_key_padding_mask: Key padding mask
+            query_pos: Query positional embedding
+
+        Returns:
+            Output tensor after self-attention
+        """
+        q = k = self.with_pos_embed(tgt, query_pos)
+        tgt2 = self.self_attn(q, k, value=tgt, attn_mask=tgt_mask, key_padding_mask=tgt_key_padding_mask)[0]
+        tgt = tgt + self.dropout(tgt2)
+        tgt = self.norm(tgt)
+
+        return tgt
+
+    def forward_pre(
+        self,
+        tgt,
+        tgt_mask: Optional[Tensor] = None,
+        tgt_key_padding_mask: Optional[Tensor] = None,
+        query_pos: Optional[Tensor] = None,
+    ):
+        """Apply self-attention with pre-normalization.
+
+        Args:
+            tgt: Target tensor
+            tgt_mask: Attention mask
+            tgt_key_padding_mask: Key padding mask
+            query_pos: Query positional embedding
+
+        Returns:
+            Output tensor after self-attention
+        """
+        tgt2 = self.norm(tgt)
+        q = k = self.with_pos_embed(tgt2, query_pos)
+        tgt2 = self.self_attn(q, k, value=tgt2, attn_mask=tgt_mask, key_padding_mask=tgt_key_padding_mask)[0]
+        tgt = tgt + self.dropout(tgt2)
+
+        return tgt
 
     def forward(
         self,
-        query: torch.Tensor,
-        key: torch.Tensor = None,
-        value: torch.Tensor = None,
-        query_pos: torch.Tensor = None,
-        key_pos: torch.Tensor = None,
-        attn_masks: List[torch.Tensor] = None,
-        query_key_padding_mask: torch.Tensor = None,
-        key_padding_mask: torch.Tensor = None,
-        **kwargs,
+        tgt,
+        tgt_mask: Optional[Tensor] = None,
+        tgt_key_padding_mask: Optional[Tensor] = None,
+        query_pos: Optional[Tensor] = None,
     ):
-        """Forward function for `BaseTransformerLayer`.
-
-        **kwargs contains the specific arguments of attentions.
+        """Apply self-attention based on normalization preference.
 
         Args:
-            query (torch.Tensor): Query embeddings with shape
-                `(num_query, bs, embed_dim)` or `(bs, num_query, embed_dim)`
-                which should be specified follows the attention module used in
-                `BaseTransformerLayer`.
-            key (torch.Tensor): Key embeddings used in `Attention`.
-            value (torch.Tensor): Value embeddings with the same shape as `key`.
-            query_pos (torch.Tensor): The position embedding for `query`.
-                Default: None.
-            key_pos (torch.Tensor): The position embedding for `key`.
-                Default: None.
-            attn_masks (List[Tensor] | None): A list of 2D ByteTensor used
-                in calculation the corresponding attention. The length of
-                `attn_masks` should be equal to the number of `attention` in
-                `operation_order`. Default: None.
-            query_key_padding_mask (torch.Tensor): ByteTensor for `query`, with
-                shape `(bs, num_query)`. Only used in `self_attn` layer.
-                Defaults to None.
-            key_padding_mask (torch.Tensor): ByteTensor for `key`, with
-                shape `(bs, num_key)`. Default: None.
+            tgt: Target tensor
+            tgt_mask: Attention mask
+            tgt_key_padding_mask: Key padding mask
+            query_pos: Query positional embedding
+
+        Returns:
+            Output tensor after self-attention
         """
-        norm_index = 0
-        attn_index = 0
-        ffn_index = 0
-        identity = query
-        if attn_masks is None:
-            attn_masks = [None for _ in range(self.num_attn)]
-        elif isinstance(attn_masks, torch.Tensor):
-            attn_masks = [copy.deepcopy(attn_masks) for _ in range(self.num_attn)]
-            warnings.warn(f"Use same attn_mask in all attentions in {self.__class__.__name__} ")
-        else:
-            assert len(attn_masks) == self.num_attn, (
-                f"The length of "
-                f"attn_masks {len(attn_masks)} must be equal "
-                f"to the number of attention in "
-                f"operation_order {self.num_attn}"
-            )
-
-        for layer in self.operation_order:
-            if layer == "self_attn":
-                temp_key = temp_value = query
-                query = self.attentions[attn_index](
-                    query,
-                    temp_key,
-                    temp_value,
-                    identity if self.pre_norm else None,
-                    query_pos=query_pos,
-                    key_pos=query_pos,
-                    attn_mask=attn_masks[attn_index],
-                    key_padding_mask=query_key_padding_mask,
-                    **kwargs,
-                )
-                attn_index += 1
-                identity = query
-
-            elif layer == "norm":
-                query = self.norms[norm_index](query)
-                norm_index += 1
-
-            elif layer == "cross_attn":
-                query = self.attentions[attn_index](
-                    query,
-                    key,
-                    value,
-                    identity if self.pre_norm else None,
-                    query_pos=query_pos,
-                    key_pos=key_pos,
-                    attn_mask=attn_masks[attn_index],
-                    key_padding_mask=key_padding_mask,
-                    **kwargs,
-                )
-                attn_index += 1
-                identity = query
-
-            elif layer == "ffn":
-                query = self.ffns[ffn_index](query, identity if self.pre_norm else None)
-                ffn_index += 1
-
-        return query
+        if self.normalize_before:
+            return self.forward_pre(tgt, tgt_mask, tgt_key_padding_mask, query_pos)
+        return self.forward_post(tgt, tgt_mask, tgt_key_padding_mask, query_pos)
 
 
-class TransformerLayerSequence(nn.Module):
-    """Base class for TransformerEncoder and TransformerDecoder, which will copy
-    the passed `transformer_layers` module `num_layers` time or save the passed
-    list of `transformer_layers` as parameters named ``self.layers``
-    which is the type of ``nn.ModuleList``.
-    The users should inherit `TransformerLayerSequence` and implemente their
-    own forward function.
+class CrossAttentionLayer(nn.Module):
+    """Cross-attention layer for transformer architectures."""
 
-    Args:
-        transformer_layers (list[BaseTransformerLayer] | BaseTransformerLayer): A list
-            of BaseTransformerLayer. If it is obj:`BaseTransformerLayer`, it
-            would be repeated `num_layers` times to a list[BaseTransformerLayer]
-        num_layers (int): The number of `TransformerLayer`. Default: None.
-    """
+    def __init__(self, d_model, nhead, dropout=0.0, normalize_before=False):
+        """Initialize cross-attention layer.
+
+        Args:
+            d_model: Dimension of the model
+            nhead: Number of attention heads
+            dropout: Dropout probability
+            normalize_before: Whether to apply normalization before attention
+        """
+        super().__init__()
+        self.multihead_attn = nn.MultiheadAttention(embed_dim=d_model, num_heads=nhead, dropout=dropout)
+
+        self.norm = nn.LayerNorm(d_model)
+        self.dropout = nn.Dropout(dropout)
+
+        self.activation = nn.ReLU()
+        self.normalize_before = normalize_before
+
+        self._reset_parameters()
+
+    def _reset_parameters(self):
+        """Initialize parameters with Xavier uniform distribution."""
+        for p in self.parameters():
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p)
+
+    def with_pos_embed(self, tensor, pos: Optional[Tensor]):
+        """Add positional embeddings to the tensor.
+
+        Args:
+            tensor: Input tensor
+            pos: Positional embedding tensor
+
+        Returns:
+            Tensor with positional embeddings added
+        """
+        return tensor if pos is None else tensor + pos
+
+    def forward_post(
+        self,
+        tgt,
+        memory,
+        memory_mask: Optional[Tensor] = None,
+        memory_key_padding_mask: Optional[Tensor] = None,
+        pos: Optional[Tensor] = None,
+        query_pos: Optional[Tensor] = None,
+    ):
+        """Apply cross-attention with post-normalization.
+
+        Args:
+            tgt: Target tensor
+            memory: Memory tensor (key/value)
+            memory_mask: Attention mask
+            memory_key_padding_mask: Key padding mask
+            pos: Memory positional embedding
+            query_pos: Query positional embedding
+
+        Returns:
+            Output tensor after cross-attention
+        """
+        tgt2 = self.multihead_attn(
+            query=self.with_pos_embed(tgt, query_pos),
+            key=self.with_pos_embed(memory, pos),
+            value=memory,
+            attn_mask=memory_mask,
+            key_padding_mask=memory_key_padding_mask,
+        )[0]
+        tgt = tgt + self.dropout(tgt2)
+        tgt = self.norm(tgt)
+
+        return tgt
+
+    def forward_pre(
+        self,
+        tgt,
+        memory,
+        memory_mask: Optional[Tensor] = None,
+        memory_key_padding_mask: Optional[Tensor] = None,
+        pos: Optional[Tensor] = None,
+        query_pos: Optional[Tensor] = None,
+    ):
+        """Apply cross-attention with pre-normalization.
+
+        Args:
+            tgt: Target tensor
+            memory: Memory tensor (key/value)
+            memory_mask: Attention mask
+            memory_key_padding_mask: Key padding mask
+            pos: Memory positional embedding
+            query_pos: Query positional embedding
+
+        Returns:
+            Output tensor after cross-attention
+        """
+        tgt2 = self.norm(tgt)
+        tgt2 = self.multihead_attn(
+            query=self.with_pos_embed(tgt2, query_pos),
+            key=self.with_pos_embed(memory, pos),
+            value=memory,
+            attn_mask=memory_mask,
+            key_padding_mask=memory_key_padding_mask,
+        )[0]
+        tgt = tgt + self.dropout(tgt2)
+
+        return tgt
+
+    def forward(
+        self,
+        tgt,
+        memory,
+        memory_mask: Optional[Tensor] = None,
+        memory_key_padding_mask: Optional[Tensor] = None,
+        pos: Optional[Tensor] = None,
+        query_pos: Optional[Tensor] = None,
+    ):
+        """Apply cross-attention based on normalization preference.
+
+        Args:
+            tgt: Target tensor
+            memory: Memory tensor (key/value)
+            memory_mask: Attention mask
+            memory_key_padding_mask: Key padding mask
+            pos: Memory positional embedding
+            query_pos: Query positional embedding
+
+        Returns:
+            Output tensor after cross-attention
+        """
+        if self.normalize_before:
+            return self.forward_pre(tgt, memory, memory_mask, memory_key_padding_mask, pos, query_pos)
+        return self.forward_post(tgt, memory, memory_mask, memory_key_padding_mask, pos, query_pos)
+
+
+class FFNLayer(nn.Module):
+    """Feed-forward network layer for transformer architectures."""
 
     def __init__(
         self,
-        transformer_layers=None,
-        num_layers=None,
+        d_model,
+        dim_feedforward=2048,
+        dropout=0.0,
+        activation: Optional[str] = None,
+        normalize_before=False,
+        ffn_type="standard",
     ):
-        super().__init__()
-        self.num_layers = num_layers
-        self.layers = nn.ModuleList()
-        if isinstance(transformer_layers, nn.Module):
-            for _ in range(num_layers):
-                self.layers.append(copy.deepcopy(transformer_layers))
-        else:
-            assert isinstance(transformer_layers, list) and len(transformer_layers) == num_layers
+        """Initialize feed-forward network layer.
 
-    def forward(self):
-        """Forward function of `TransformerLayerSequence`. The users should inherit
-        `TransformerLayerSequence` and implemente their own forward function.
+        Args:
+            d_model: Dimension of the model
+            dim_feedforward: Dimension of the feedforward network
+            dropout: Dropout probability
+            activation: Activation function
+            normalize_before: Whether to apply normalization before FFN
+            ffn_type: Type of FFN ('standard' or 'convnext')
         """
-        raise NotImplementedError()
+        super().__init__()
+
+        assert ffn_type in [
+            "standard",
+            "convnext",
+        ], "FFN can be of 'standard' or 'convnext' type"
+        self.ffn_type = ffn_type
+        self.normalize_before = normalize_before
+
+        if self.ffn_type == "standard":
+            # Implementation of Feedforward model
+            self.linear1 = nn.Linear(d_model, dim_feedforward)
+            self.dropout = nn.Dropout(dropout)
+            self.linear2 = nn.Linear(dim_feedforward, d_model)
+
+            self.norm = nn.LayerNorm(d_model)
+
+            self.activation = _get_activation_fn(activation) if activation is not None else nn.ReLU()
+
+            self._reset_parameters()
+        elif self.ffn_type == "convnext":
+            if not normalize_before:
+                logger.warning(
+                    "Pre-normalizazion is applied by default with convnext FFN layer since "
+                    "it supports only pre-normalization."
+                )
+                self.normalize_before = True
+
+            layer_scale_init_value = 1e-6
+            drop_path = 0.0
+
+            self.dwconv = nn.Conv2d(d_model, d_model, kernel_size=7, padding=3, groups=d_model)  # depthwise conv
+            self.norm = LayerNorm(d_model, eps=1e-6)
+            # pointwise/1x1 convs, implemented with linear layers
+            self.pwconv1 = nn.Linear(d_model, dim_feedforward)
+            self.act = _get_activation_fn(activation) if activation is not None else nn.GELU()
+            self.pwconv2 = nn.Linear(dim_feedforward, d_model)
+            self.gamma = (
+                nn.Parameter(layer_scale_init_value * torch.ones(d_model), requires_grad=True)
+                if layer_scale_init_value > 0
+                else None
+            )
+            self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
+
+    def _reset_parameters(self):
+        """Initialize parameters with Xavier uniform distribution."""
+        for p in self.parameters():
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p)
+
+    def with_pos_embed(self, tensor, pos: Optional[Tensor]):
+        """Add positional embeddings to the tensor.
+
+        Args:
+            tensor: Input tensor
+            pos: Positional embedding tensor
+
+        Returns:
+            Tensor with positional embeddings added
+        """
+        return tensor if pos is None else tensor + pos
+
+    def forward_post(self, tgt):
+        """Apply FFN with post-normalization.
+
+        Args:
+            tgt: Target tensor
+
+        Returns:
+            Output tensor after FFN
+        """
+        tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt))))
+        tgt = tgt + self.dropout(tgt2)
+        tgt = self.norm(tgt)
+        return tgt
+
+    def forward_pre(self, tgt):
+        """Apply FFN with pre-normalization.
+
+        Args:
+            tgt: Target tensor
+
+        Returns:
+            Output tensor after FFN
+        """
+        if self.ffn_type == "standard":
+            tgt2 = self.norm(tgt)
+            tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt2))))
+            tgt = tgt + self.dropout(tgt2)
+            return tgt
+        elif self.ffn_type == "convnext":
+            # tgt shape is -> QxNxC (Q: num. of query - N: batch size - C: num. of channels)
+            Q, N, C = tgt.shape
+            H = W = int(Q**0.5)
+            x = tgt.permute(1, 2, 0).reshape(N, C, H, W)
+
+            tgt2 = self.dwconv(x)
+            tgt2 = tgt2.permute(0, 2, 3, 1)  # (N, C, H, W) -> (N, H, W, C)
+            tgt2 = self.norm(tgt2)
+            tgt2 = self.pwconv1(tgt2)
+            tgt2 = self.act(tgt2)
+            tgt2 = self.pwconv2(tgt2)
+            if self.gamma is not None:
+                tgt2 = self.gamma * tgt2
+            tgt2 = tgt2.permute(0, 3, 1, 2)  # (N, H, W, C) -> (N, C, H, W)
+
+            tgt = tgt + self.drop_path(torch.flatten(tgt2, 2, 3).permute(2, 0, 1))
+            return tgt
+
+    def forward(self, tgt):
+        """Apply FFN based on normalization preference.
+
+        Args:
+            tgt: Target tensor
+
+        Returns:
+            Output tensor after FFN
+        """
+        if self.normalize_before:
+            return self.forward_pre(tgt)
+        return self.forward_post(tgt)
 
 
 class Transformer(nn.Module):

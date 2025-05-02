@@ -21,6 +21,10 @@ class MaskFormerConfig(ModelConfig):
     # Sizing configuration
     pixel_decoder_out_dim: int = 256
     pixel_decoder_feat_dim: int = 256
+    pixel_decoder_transformer_layers: int = 0
+    pixel_decoder_transformer_dropout: float = 0.0
+    pixel_decoder_transformer_nheads: int = 8
+    pixel_decoder_transformer_dim_feedforward: int = 1024
 
     # Transformer decoder
     transformer_predictor_out_dim: int = 256

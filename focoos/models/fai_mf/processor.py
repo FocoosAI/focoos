@@ -1,5 +1,7 @@
+import base64
 from typing import Dict, Optional, Union
 
+import cv2
 import numpy as np
 import torch
 from PIL import Image
@@ -10,6 +12,61 @@ from focoos.models.fai_model import BaseProcessor
 from focoos.ports import DatasetEntry, FocoosDet, FocoosDetections
 from focoos.structures import BitMasks, ImageList, Instances
 from focoos.utils.memory import retry_if_cuda_oom
+
+
+def binary_mask_to_base64(binary_mask: np.ndarray) -> str:
+    """
+    Converts a binary mask (NumPy array) to a base64-encoded PNG image using OpenCV.
+
+    This function takes a binary mask, where values of `True` represent the areas of interest (usually 1s)
+    and `False` represents the background (usually 0s). The binary mask is then converted to an image,
+    and this image is saved in PNG format and encoded into a base64 string.
+
+    Args:
+        binary_mask (np.ndarray): A 2D NumPy array with boolean values (`True`/`False`).
+
+    Returns:
+        str: A base64-encoded string representing the PNG image of the binary mask.
+    """
+    # Directly convert the binary mask to uint8 and multiply by 255 in one step
+    binary_mask = (binary_mask * 255).astype(np.uint8)
+
+    # Use OpenCV to encode the image as PNG
+    success, encoded_image = cv2.imencode(".png", binary_mask)
+    if not success:
+        raise ValueError("Failed to encode image")
+
+    # Encode the image to base64
+    return base64.b64encode(encoded_image).decode("utf-8")
+
+
+def masks_to_xyxy(masks: np.ndarray) -> np.ndarray:
+    """
+    Converts a 3D `np.array` of 2D bool masks into a 2D `np.array` of bounding boxes.
+
+    Parameters:
+        masks (np.ndarray): A 3D `np.array` of shape `(N, W, H)`
+            containing 2D bool masks
+
+    Returns:
+        np.ndarray: A 2D `np.array` of shape `(N, 4)` containing the bounding boxes
+            `(x_min, y_min, x_max, y_max)` for each mask
+    """
+    # Vectorized approach to find bounding boxes
+    n = masks.shape[0]
+    xyxy = np.zeros((n, 4), dtype=int)
+
+    # Use np.any to quickly find rows and columns with True values
+    for i, mask in enumerate(masks):
+        rows = np.any(mask, axis=1)
+        cols = np.any(mask, axis=0)
+
+        if np.any(rows) and np.any(cols):
+            y_min, y_max = np.where(rows)[0][[0, -1]]
+            x_min, x_max = np.where(cols)[0][[0, -1]]
+            xyxy[i, :] = [x_min, y_min, x_max, y_max]
+
+    return xyxy
 
 
 class MaskFormerProcessor(BaseProcessor):
@@ -46,7 +103,6 @@ class MaskFormerProcessor(BaseProcessor):
         dtype: torch.dtype,
         size_divisibility: int = 0,
         padding_constraints: Optional[Dict[str, int]] = None,
-        resolution: Optional[int] = 640,
     ) -> tuple[torch.Tensor, list[MaskFormerTargets]]:
         targets = []
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DatasetEntry):
@@ -80,10 +136,7 @@ class MaskFormerProcessor(BaseProcessor):
             if training:
                 raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
             images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
-            if resolution is not None:
-                images_torch = torch.nn.functional.interpolate(
-                    images_torch, size=resolution, mode="bilinear", align_corners=False
-                )
+
             # Normalize the inputs
         return images_torch, targets
 
@@ -177,37 +230,108 @@ class MaskFormerProcessor(BaseProcessor):
         ],
         top_k: int = 300,
         threshold: float = 0.5,
+        use_mask_score: bool = True,
+        filter_empty_masks: bool = True,
+        predict_all_pixels: bool = False,
     ) -> list[FocoosDetections]:
         # Extract image sizes from inputs
         image_sizes = self.get_image_sizes(inputs)
-
+        batch_size = output.logits.shape[0]
         results = []
-        batch_size = output.boxes.shape[0]
-        num_classes = output.logits.shape[-1]
         assert len(image_sizes) == batch_size, (
             f"Expected image sizes {len(image_sizes)} to match batch size {batch_size}"
         )
 
+        cls_pred, mask_pred = (
+            output.logits,
+            output.masks,
+        )  # B x Q; B x Q x H/out_stride x W/out_stride
+        # softmax done before. # B x Q; B x Q
+        scores, labels = cls_pred.max(-1)
+
+        # # let's binarize the mask
+        if predict_all_pixels:
+            b, q, h, w = mask_pred.shape
+            p = scores.view(b, q, 1, 1) * mask_pred
+            out = p.argmax(dim=1)  # Shape: [b, h, w]
+
+            # Initialize an empty tensor for bin_mask_pred
+            bin_mask_pred = torch.zeros((b, q, h, w), dtype=torch.bool, device=mask_pred.device)
+
+            # Process each batch instance separately
+            for batch_idx in range(b):
+                # Create a mask for each class in this batch
+                for class_idx in range(q):
+                    # Set True where the argmax equals this class index
+                    bin_mask_pred[batch_idx, class_idx] = out[batch_idx] == class_idx
+
+        else:
+            bin_mask_pred = mask_pred >= self.mask_threshold  # B x Q x H x W
+
+        if use_mask_score:
+            bin_mask_pred = bin_mask_pred.int()
+            # Quickfix to avoid num. instability.
+            bin_mask_pred = bin_mask_pred * 1e-3
+            mask_score = (bin_mask_pred * mask_pred).sum(-1).sum(-1) / (
+                (bin_mask_pred).sum(-1).sum(-1) + 1e-5
+            )  # add EPS to avoid division by 0
+            # Multiply mask scores to class scores for final score
+            scores = scores * mask_score  # B x Q
+
+        if scores.shape[1] > top_k:
+            scores, index = torch.topk(scores, top_k, dim=-1)
+            labels = torch.gather(labels, dim=1, index=index)  # B x top_k_masks
+            bin_mask_pred = torch.gather(
+                bin_mask_pred,
+                dim=1,
+                index=index.unsqueeze(-1).unsqueeze(-1).tile(1, 1, *mask_pred.shape[-2:]),
+            )  # B x top_k_masks x H x W
+
+        # Filter based on the scores greather than threshold
+        if threshold > 0:
+            filter_mask = scores > threshold
+            filter_mask = filter_mask.nonzero(as_tuple=True)
+            scores = torch.gather(scores, dim=1, index=filter_mask[1].unsqueeze(0))
+            labels = torch.gather(labels, dim=1, index=filter_mask[1].unsqueeze(0))
+            bin_mask_pred = torch.gather(
+                bin_mask_pred,
+                dim=1,
+                index=filter_mask[1].unsqueeze(0).unsqueeze(-1).unsqueeze(-1).expand(-1, -1, *bin_mask_pred.shape[-2:]),
+            )  # B x top_k_masks x H x W
+
+        # Find masks with zero sum
+        if filter_empty_masks:
+            non_zero_masks = bin_mask_pred.sum(dim=(-2, -1)) > 1  # B x top_k_masks
+            # Set scores and labels to 0 for empty masks
+            # Get indices of non-zero masks
+            non_zero_indices = (non_zero_masks).nonzero(as_tuple=True)
+            # Filter scores, labels and bin_mask_pred to only keep non-zero masks
+            scores = torch.gather(scores, dim=1, index=non_zero_indices[1].unsqueeze(0))
+            labels = torch.gather(labels, dim=1, index=non_zero_indices[1].unsqueeze(0))
+            bin_mask_pred = torch.gather(
+                bin_mask_pred,
+                dim=1,
+                index=non_zero_indices[1]
+                .unsqueeze(0)
+                .unsqueeze(-1)
+                .unsqueeze(-1)
+                .expand(-1, -1, *bin_mask_pred.shape[-2:]),
+            )
+
+        bin_mask_pred = bin_mask_pred.detach().cpu()
+        scores = scores.detach().cpu()
+        labels = labels.detach().cpu()
+
         for i in range(batch_size):
-            # Process results directly within the loop
-            scores, labels, box_pred = self._get_predictions(output.logits[i], output.boxes[i], top_k, num_classes)
+            if self.config.postprocessing_type == "instance":
+                box_pred = masks_to_xyxy(bin_mask_pred[i].numpy())
+                py_box_pred = box_pred.tolist()
+            else:
+                py_box_pred = [None] * len(scores[i])
 
-            # Apply threshold to filter out low-confidence predictions
-            mask = scores > threshold
-            box_pred = box_pred[mask]
-            scores = scores[mask]
-            labels = labels[mask]
-
-            # Multiply boxes by image size
-            box_pred[:, 0::2] = box_pred[:, 0::2] * image_sizes[i][0]
-            box_pred[:, 1::2] = box_pred[:, 1::2] * image_sizes[i][1]
-            # Convert box coordinates to integers for pixel-precise bounding boxes
-            box_pred = box_pred.round().to(torch.int32)
-
-            # Convert tensor outputs to Python lists of floats
-            py_box_pred = box_pred.detach().cpu().tolist()
-            py_scores = scores.detach().cpu().tolist()
-            py_labels = labels.detach().cpu().tolist()
+            py_scores = scores[i].tolist()
+            py_labels = labels[i].tolist()
+            py_mask_pred = bin_mask_pred[i].numpy()
 
             results.append(
                 FocoosDetections(
@@ -216,8 +340,9 @@ class MaskFormerProcessor(BaseProcessor):
                             bbox=py_bp,
                             conf=py_s,
                             cls_id=py_l,
+                            mask=binary_mask_to_base64(py_mp),
                         )
-                        for py_bp, py_s, py_l in zip(py_box_pred, py_scores, py_labels)
+                        for py_bp, py_s, py_l, py_mp in zip(py_box_pred, py_scores, py_labels, py_mask_pred)
                     ]
                 )
             )

@@ -481,6 +481,9 @@ class FocoosDetections(FocoosBaseModel):
     detections: list[FocoosDet]
     latency: Optional[dict] = None
 
+    def __len__(self):
+        return len(self.detections)
+
 
 @dataclass
 class OnnxRuntimeOpts:

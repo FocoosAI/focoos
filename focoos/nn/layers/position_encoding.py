@@ -5,9 +5,10 @@ from torch import nn
 
 
 class PositionEmbeddingSine(nn.Module):
-    """
-    This is a more standard version of the position embedding, very similar to the one
-    used by the Attention is all you need paper, generalized to work on images.
+    """Sinusoidal positional embedding module.
+
+    This is a standard version of the position embedding, similar to the one
+    used by the 'Attention is all you need' paper, generalized to work on images.
     """
 
     def __init__(
@@ -19,10 +20,20 @@ class PositionEmbeddingSine(nn.Module):
         offset: float = 0.0,
         normalize: bool = False,
     ):
+        """Initialize sinusoidal positional embedding.
+
+        Args:
+            num_pos_feats: Number of positional features
+            temperature: Temperature parameter for the embedding
+            scale: Scale factor for normalized coordinates
+            eps: Small constant for numerical stability
+            offset: Offset for coordinate normalization
+            normalize: Whether to normalize coordinates
+        """
         super().__init__()
         if normalize:
             assert isinstance(scale, (float, int)), (
-                f"when normalize is set,scale should be provided and in float or int type, found {type(scale)}"
+                f"when normalize is set, scale should be provided and in float or int type, found {type(scale)}"
             )
         self.num_pos_feats = num_pos_feats
         self.temperature = temperature
@@ -32,6 +43,15 @@ class PositionEmbeddingSine(nn.Module):
         self.offset = offset
 
     def forward(self, x, mask=None):
+        """Generate positional embeddings for input tensor.
+
+        Args:
+            x: Input tensor
+            mask: Optional mask tensor
+
+        Returns:
+            Positional embedding tensor
+        """
         if mask is None:
             mask = torch.zeros((x.size(0), x.size(2), x.size(3)), device=x.device, dtype=torch.bool)
         not_mask = ~mask
@@ -54,6 +74,7 @@ class PositionEmbeddingSine(nn.Module):
         return pos
 
     def __repr__(self, _repr_indent=4):
+        """Return string representation of the module."""
         head = "Positional encoding " + self.__class__.__name__
         body = [
             "num_pos_feats: {}".format(self.num_pos_feats),

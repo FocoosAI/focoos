@@ -45,6 +45,7 @@ dependencies = [
     "matplotlib~=3.10.1",
     "colorama~=0.4.6",
     "ipython",
+    "shapely~=2.1.0",
     "fvcore~=0.1.4",
     "pycocotools~=2.0.8",
     "faster_coco_eval~=1.6.5",

@@ -19,7 +19,7 @@ from focoos.models.fai_model import BaseModelNN
 from focoos.nn.backbone.base import BaseBackbone
 from focoos.nn.backbone.build import load_backbone
 from focoos.nn.layers.base import MLP
-from focoos.nn.layers.conv import Conv2d
+from focoos.nn.layers.conv import Conv2d, ConvNormLayer
 from focoos.nn.layers.deformable import ms_deform_attn_core_pytorch
 from focoos.nn.layers.functional import inverse_sigmoid
 from focoos.nn.layers.transformer import TransformerEncoder, TransformerEncoderLayer
@@ -33,58 +33,6 @@ from focoos.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-def get_activation(act: str, inpace: bool = True):
-    """get activation"""
-    act = act.lower()
-
-    if act == "silu":
-        m = nn.SiLU()
-
-    elif act == "relu":
-        m = nn.ReLU()
-
-    elif act == "leaky_relu":
-        m = nn.LeakyReLU()
-
-    elif act == "silu":
-        m = nn.SiLU()
-
-    elif act == "gelu":
-        m = nn.GELU()
-
-    elif act is None:
-        m = nn.Identity()
-
-    elif isinstance(act, nn.Module):
-        m = act
-
-    else:
-        raise RuntimeError("")
-
-    if hasattr(m, "inplace"):
-        m.inplace = inpace  # type: ignore
-
-    return m
-
-
-class ConvNormLayer(nn.Module):
-    def __init__(self, ch_in, ch_out, kernel_size, stride, padding=None, bias=False, act=None):
-        super().__init__()
-        self.conv = nn.Conv2d(
-            ch_in,
-            ch_out,
-            kernel_size,
-            stride,
-            padding=(kernel_size - 1) // 2 if padding is None else padding,
-            bias=bias,
-        )
-        self.norm = nn.BatchNorm2d(ch_out)
-        self.act = nn.Identity() if act is None else get_activation(act)
-
-    def forward(self, x):
-        return self.act(self.norm(self.conv(x)))
-
-
 class RepVggBlock(nn.Module):
     def __init__(self, ch_in, ch_out, act="relu"):
         super().__init__()
@@ -92,7 +40,7 @@ class RepVggBlock(nn.Module):
         self.ch_out = ch_out
         self.conv1 = ConvNormLayer(ch_in, ch_out, 3, 1, padding=1, act=None)
         self.conv2 = ConvNormLayer(ch_in, ch_out, 1, 1, padding=0, act=None)
-        self.act = nn.Identity() if act is None else get_activation(act)
+        self.act = nn.SiLU(inplace=True)
 
     def forward(self, x):
         if hasattr(self, "conv"):
@@ -147,17 +95,14 @@ class CSPRepLayer(nn.Module):
         num_blocks=3,
         expansion=1.0,
         bias=False,
-        act="silu",
     ):
         super().__init__()
         hidden_channels = int(out_channels * expansion)
-        self.conv1 = ConvNormLayer(in_channels, hidden_channels, 1, 1, bias=bias, act=act)
-        self.conv2 = ConvNormLayer(in_channels, hidden_channels, 1, 1, bias=bias, act=act)
-        self.bottlenecks = nn.Sequential(
-            *[RepVggBlock(hidden_channels, hidden_channels, act=act) for _ in range(num_blocks)]
-        )
+        self.conv1 = ConvNormLayer(in_channels, hidden_channels, 1, 1, bias=bias, act="silu")
+        self.conv2 = ConvNormLayer(in_channels, hidden_channels, 1, 1, bias=bias, act="silu")
+        self.bottlenecks = nn.Sequential(*[RepVggBlock(hidden_channels, hidden_channels) for _ in range(num_blocks)])
         if hidden_channels != out_channels:
-            self.conv3 = ConvNormLayer(hidden_channels, out_channels, 1, 1, bias=bias, act=act)
+            self.conv3 = ConvNormLayer(hidden_channels, out_channels, 1, 1, bias=bias, act="silu")
         else:
             self.conv3 = nn.Identity()
 
@@ -183,7 +128,6 @@ class Encoder(nn.Module):
         pe_temperature=10000,
         expansion=1.0,
         depth_mult=1.0,
-        act="silu",
         resolution=640,
     ):
         super().__init__()
@@ -238,13 +182,12 @@ class Encoder(nn.Module):
         self.lateral_convs = nn.ModuleList()
         self.fpn_blocks = nn.ModuleList()
         for _ in range(len(self.in_channels) - 1, 0, -1):
-            self.lateral_convs.append(ConvNormLayer(feat_dim, feat_dim, 1, 1, act=act))
+            self.lateral_convs.append(ConvNormLayer(feat_dim, feat_dim, 1, 1, act="silu"))
             self.fpn_blocks.append(
                 CSPRepLayer(
                     feat_dim * 2,
                     feat_dim,
                     round(3 * depth_mult),
-                    act=act,
                     expansion=expansion,
                 )
             )
@@ -253,13 +196,12 @@ class Encoder(nn.Module):
         self.downsample_convs = nn.ModuleList()
         self.pan_blocks = nn.ModuleList()
         for _ in range(len(self.in_channels) - 1):
-            self.downsample_convs.append(ConvNormLayer(feat_dim, feat_dim, 3, 1, act=act))
+            self.downsample_convs.append(ConvNormLayer(feat_dim, feat_dim, 3, 1, act="silu"))
             self.pan_blocks.append(
                 CSPRepLayer(
                     feat_dim * 2,
                     feat_dim,
                     round(3 * depth_mult),
-                    act=act,
                     expansion=expansion,
                 )
             )
@@ -631,7 +573,7 @@ class SetCriterion(nn.Module):
     def __repr__(self):
         head = "Criterion " + self.__class__.__name__
         body = [
-            "matcher: {}".format(self.matcher.__repr__(_repr_indent=8)),
+            "matcher: {}".format(self.matcher),
             "losses: {}".format(self.losses),
             "weight_dict: {}".format(self.weight_dict),
             "num_classes: {}".format(self.num_classes),
@@ -1223,7 +1165,10 @@ class TransformerPredictor(nn.Module):
         if self.training or self.eval_spatial_size is None:
             anchors, valid_mask = self._generate_anchors(spatial_shapes, device=memory.device)
         else:
-            anchors, valid_mask = self.anchors.to(memory.device), self.valid_mask.to(memory.device)
+            anchors, valid_mask = (
+                self.anchors.to(memory.device),
+                self.valid_mask.to(memory.device),
+            )
 
         memory = valid_mask.to(memory.dtype) * memory
 

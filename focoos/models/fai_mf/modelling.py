@@ -1,4 +1,3 @@
-import math
 from typing import Dict, Optional, Union
 
 import fvcore.nn.weight_init as weight_init
@@ -7,7 +6,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from PIL import Image
-from torch import Tensor
 
 from focoos.models.fai_mf.config import MaskFormerConfig
 from focoos.models.fai_mf.loss import MaskHungarianMatcher, SetCriterion
@@ -18,6 +16,14 @@ from focoos.nn.backbone.base import BaseBackbone
 from focoos.nn.backbone.build import load_backbone
 from focoos.nn.layers.base import MLP
 from focoos.nn.layers.conv import Conv2d
+from focoos.nn.layers.position_encoding import PositionEmbeddingSine
+from focoos.nn.layers.transformer import (
+    CrossAttentionLayer,
+    FFNLayer,
+    SelfAttentionLayer,
+    TransformerEncoder,
+    TransformerEncoderLayer,
+)
 from focoos.ports import DatasetEntry
 from focoos.structures import Instances
 from focoos.utils.logger import get_logger
@@ -25,369 +31,9 @@ from focoos.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-def drop_path(x, drop_prob: float = 0.0, training: bool = False, scale_by_keep: bool = True):
-    """Drop paths (Stochastic Depth) per sample (when applied in main path of residual blocks).
-
-    This is the same as the DropConnect impl I created for EfficientNet, etc networks, however,
-    the original name is misleading as 'Drop Connect' is a different form of dropout in a separate paper...
-    See discussion: https://github.com/tensorflow/tpu/issues/494#issuecomment-532968956 ... I've opted for
-    changing the layer and argument names to 'drop path' rather than mix DropConnect as a layer name and use
-    'survival rate' as the argument.
-
-    """
-    if drop_prob == 0.0 or not training:
-        return x
-    keep_prob = 1 - drop_prob
-    shape = (x.shape[0],) + (1,) * (x.ndim - 1)  # work with diff dim tensors, not just 2D ConvNets
-    random_tensor = x.new_empty(shape).bernoulli_(keep_prob)
-    if keep_prob > 0.0 and scale_by_keep:
-        random_tensor.div_(keep_prob)
-    return x * random_tensor
-
-
-class DropPath(nn.Module):
-    """Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks)."""
-
-    def __init__(self, drop_prob: float = 0.0, scale_by_keep: bool = True):
-        super(DropPath, self).__init__()
-        self.drop_prob = drop_prob
-        self.scale_by_keep = scale_by_keep
-
-    def forward(self, x):
-        return drop_path(x, self.drop_prob, self.training, self.scale_by_keep)
-
-    def extra_repr(self):
-        return f"drop_prob={round(self.drop_prob, 3):0.3f}"
-
-
-class LayerNorm(nn.Module):
-    r"""LayerNorm that supports two data formats: channels_last (default) or channels_first.
-    The ordering of the dimensions in the inputs. channels_last corresponds to inputs with
-    shape (batch_size, height, width, channels) while channels_first corresponds to inputs
-    with shape (batch_size, channels, height, width).
-    """
-
-    def __init__(self, normalized_shape, eps=1e-6, data_format="channels_last"):
-        super().__init__()
-        self.weight = nn.Parameter(torch.ones(normalized_shape))
-        self.bias = nn.Parameter(torch.zeros(normalized_shape))
-        self.eps = eps
-        self.data_format = data_format
-        if self.data_format not in ["channels_last", "channels_first"]:
-            raise NotImplementedError
-        self.normalized_shape = (normalized_shape,)
-
-    def forward(self, x):
-        if self.data_format == "channels_last":
-            return F.layer_norm(x, self.normalized_shape, self.weight, self.bias, self.eps)
-        elif self.data_format == "channels_first":
-            u = x.mean(1, keepdim=True)
-            s = (x - u).pow(2).mean(1, keepdim=True)
-            x = (x - u) / torch.sqrt(s + self.eps)
-            x = self.weight[:, None, None] * x + self.bias[:, None, None]
-            return x
-
-
-class PositionEmbeddingSine(nn.Module):
-    """
-    This is a more standard version of the position embedding, very similar to the one
-    used by the Attention is all you need paper, generalized to work on images.
-    """
-
-    def __init__(
-        self,
-        num_pos_feats: int = 64,
-        temperature: int = 10000,
-        scale: float = 2 * math.pi,
-        eps: float = 1e-6,
-        offset: float = 0.0,
-        normalize: bool = False,
-    ):
-        super().__init__()
-        if normalize:
-            assert isinstance(scale, (float, int)), (
-                f"when normalize is set,scale should be provided and in float or int type, found {type(scale)}"
-            )
-        self.num_pos_feats = num_pos_feats
-        self.temperature = temperature
-        self.normalize = normalize
-        self.scale = scale
-        self.eps = eps
-        self.offset = offset
-
-    def forward(self, x, mask=None):
-        if mask is None:
-            mask = torch.zeros((x.size(0), x.size(2), x.size(3)), device=x.device, dtype=torch.bool)
-        not_mask = ~mask
-        y_embed = not_mask.cumsum(1, dtype=torch.float32)
-        x_embed = not_mask.cumsum(2, dtype=torch.float32)
-        if self.normalize:
-            y_embed = (y_embed + self.offset) / (y_embed[:, -1:, :] + self.eps) * self.scale
-            x_embed = (x_embed + self.offset) / (x_embed[:, :, -1:] + self.eps) * self.scale
-
-        dim_t = torch.arange(self.num_pos_feats, dtype=torch.float32, device=mask.device)
-        dim_t = self.temperature ** (2 * torch.div(dim_t, 2, rounding_mode="floor") / self.num_pos_feats)
-        pos_x = x_embed[:, :, :, None] / dim_t
-        pos_y = y_embed[:, :, :, None] / dim_t
-
-        # use view as mmdet instead of flatten for dynamically exporting to ONNX
-        B, H, W = mask.size()
-        pos_x = torch.stack((pos_x[:, :, :, 0::2].sin(), pos_x[:, :, :, 1::2].cos()), dim=4).view(B, H, W, -1)
-        pos_y = torch.stack((pos_y[:, :, :, 0::2].sin(), pos_y[:, :, :, 1::2].cos()), dim=4).view(B, H, W, -1)
-        pos = torch.cat((pos_y, pos_x), dim=3).permute(0, 3, 1, 2)
-        return pos
-
-    def __repr__(self, _repr_indent=4):
-        head = "Positional encoding " + self.__class__.__name__
-        body = [
-            "num_pos_feats: {}".format(self.num_pos_feats),
-            "temperature: {}".format(self.temperature),
-            "normalize: {}".format(self.normalize),
-            "scale: {}".format(self.scale),
-        ]
-        # _repr_indent = 4
-        lines = [head] + [" " * _repr_indent + line for line in body]
-        return "\n".join(lines)
-
-
-class SelfAttentionLayer(nn.Module):
-    def __init__(self, d_model, nhead, dropout=0.0, normalize_before=False):
-        super().__init__()
-        self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
-
-        self.norm = nn.LayerNorm(d_model)
-        self.dropout = nn.Dropout(dropout)
-
-        self.activation = nn.ReLU()
-        self.normalize_before = normalize_before
-
-        self._reset_parameters()
-
-    def _reset_parameters(self):
-        for p in self.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_uniform_(p)
-
-    def with_pos_embed(self, tensor, pos: Optional[Tensor]):
-        return tensor if pos is None else tensor + pos
-
-    def forward_post(
-        self,
-        tgt,
-        tgt_mask: Optional[Tensor] = None,
-        tgt_key_padding_mask: Optional[Tensor] = None,
-        query_pos: Optional[Tensor] = None,
-    ):
-        q = k = self.with_pos_embed(tgt, query_pos)
-        tgt2 = self.self_attn(q, k, value=tgt, attn_mask=tgt_mask, key_padding_mask=tgt_key_padding_mask)[0]
-        tgt = tgt + self.dropout(tgt2)
-        tgt = self.norm(tgt)
-
-        return tgt
-
-    def forward_pre(
-        self,
-        tgt,
-        tgt_mask: Optional[Tensor] = None,
-        tgt_key_padding_mask: Optional[Tensor] = None,
-        query_pos: Optional[Tensor] = None,
-    ):
-        tgt2 = self.norm(tgt)
-        q = k = self.with_pos_embed(tgt2, query_pos)
-        tgt2 = self.self_attn(q, k, value=tgt2, attn_mask=tgt_mask, key_padding_mask=tgt_key_padding_mask)[0]
-        tgt = tgt + self.dropout(tgt2)
-
-        return tgt
-
-    def forward(
-        self,
-        tgt,
-        tgt_mask: Optional[Tensor] = None,
-        tgt_key_padding_mask: Optional[Tensor] = None,
-        query_pos: Optional[Tensor] = None,
-    ):
-        if self.normalize_before:
-            return self.forward_pre(tgt, tgt_mask, tgt_key_padding_mask, query_pos)
-        return self.forward_post(tgt, tgt_mask, tgt_key_padding_mask, query_pos)
-
-
-class CrossAttentionLayer(nn.Module):
-    def __init__(self, d_model, nhead, dropout=0.0, normalize_before=False):
-        super().__init__()
-        self.multihead_attn = nn.MultiheadAttention(embed_dim=d_model, num_heads=nhead, dropout=dropout)
-
-        self.norm = nn.LayerNorm(d_model)
-        self.dropout = nn.Dropout(dropout)
-
-        self.activation = nn.ReLU()
-        self.normalize_before = normalize_before
-
-        self._reset_parameters()
-
-    def _reset_parameters(self):
-        for p in self.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_uniform_(p)
-
-    def with_pos_embed(self, tensor, pos: Optional[Tensor]):
-        return tensor if pos is None else tensor + pos
-
-    def forward_post(
-        self,
-        tgt,
-        memory,
-        memory_mask: Optional[Tensor] = None,
-        memory_key_padding_mask: Optional[Tensor] = None,
-        pos: Optional[Tensor] = None,
-        query_pos: Optional[Tensor] = None,
-    ):
-        tgt2 = self.multihead_attn(
-            query=self.with_pos_embed(tgt, query_pos),
-            key=self.with_pos_embed(memory, pos),
-            value=memory,
-            attn_mask=memory_mask,
-            key_padding_mask=memory_key_padding_mask,
-        )[0]
-        tgt = tgt + self.dropout(tgt2)
-        tgt = self.norm(tgt)
-
-        return tgt
-
-    def forward_pre(
-        self,
-        tgt,
-        memory,
-        memory_mask: Optional[Tensor] = None,
-        memory_key_padding_mask: Optional[Tensor] = None,
-        pos: Optional[Tensor] = None,
-        query_pos: Optional[Tensor] = None,
-    ):
-        tgt2 = self.norm(tgt)
-        tgt2 = self.multihead_attn(
-            query=self.with_pos_embed(tgt2, query_pos),
-            key=self.with_pos_embed(memory, pos),
-            value=memory,
-            attn_mask=memory_mask,
-            key_padding_mask=memory_key_padding_mask,
-        )[0]
-        tgt = tgt + self.dropout(tgt2)
-
-        return tgt
-
-    def forward(
-        self,
-        tgt,
-        memory,
-        memory_mask: Optional[Tensor] = None,
-        memory_key_padding_mask: Optional[Tensor] = None,
-        pos: Optional[Tensor] = None,
-        query_pos: Optional[Tensor] = None,
-    ):
-        if self.normalize_before:
-            return self.forward_pre(tgt, memory, memory_mask, memory_key_padding_mask, pos, query_pos)
-        return self.forward_post(tgt, memory, memory_mask, memory_key_padding_mask, pos, query_pos)
-
-
-class FFNLayer(nn.Module):
-    def __init__(
-        self,
-        d_model,
-        dim_feedforward=2048,
-        dropout=0.0,
-        activation="relu",
-        normalize_before=False,
-        ffn_type="standard",
-    ):
-        super().__init__()
-
-        assert ffn_type in [
-            "standard",
-            "convnext",
-        ], "FFN can be of 'standard' or 'convnext' type"
-        self.ffn_type = ffn_type
-        self.normalize_before = normalize_before
-
-        if self.ffn_type == "standard":
-            # Implementation of Feedforward model
-            self.linear1 = nn.Linear(d_model, dim_feedforward)
-            self.dropout = nn.Dropout(dropout)
-            self.linear2 = nn.Linear(dim_feedforward, d_model)
-
-            self.norm = nn.LayerNorm(d_model)
-
-            self.activation = nn.ReLU()
-
-            self._reset_parameters()
-        elif self.ffn_type == "convnext":
-            if not normalize_before:
-                logger.warning(
-                    "Pre-normalizazion is applied by default with convnext FFN layer since "
-                    "it supports only pre-normalization."
-                )
-                self.normalize_before = True
-
-            layer_scale_init_value = 1e-6
-            drop_path = 0.0
-
-            self.dwconv = nn.Conv2d(d_model, d_model, kernel_size=7, padding=3, groups=d_model)  # depthwise conv
-            self.norm = LayerNorm(d_model, eps=1e-6)
-            # pointwise/1x1 convs, implemented with linear layers
-            self.pwconv1 = nn.Linear(d_model, dim_feedforward)
-            self.act = nn.GELU()
-            self.pwconv2 = nn.Linear(dim_feedforward, d_model)
-            self.gamma = (
-                nn.Parameter(layer_scale_init_value * torch.ones(d_model), requires_grad=True)
-                if layer_scale_init_value > 0
-                else None
-            )
-            self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
-
-    def _reset_parameters(self):
-        for p in self.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_uniform_(p)
-
-    def with_pos_embed(self, tensor, pos: Optional[Tensor]):
-        return tensor if pos is None else tensor + pos
-
-    def forward_post(self, tgt):
-        tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt))))
-        tgt = tgt + self.dropout(tgt2)
-        tgt = self.norm(tgt)
-        return tgt
-
-    def forward_pre(self, tgt):
-        if self.ffn_type == "standard":
-            tgt2 = self.norm(tgt)
-            tgt2 = self.linear2(self.dropout(self.activation(self.linear1(tgt2))))
-            tgt = tgt + self.dropout(tgt2)
-            return tgt
-        elif self.ffn_type == "convnext":
-            # tgt shape is -> QxNxC (Q: num. of query - N: batch size - C: num. of channels)
-            Q, N, C = tgt.shape
-            H = W = int(Q**0.5)
-            x = tgt.permute(1, 2, 0).reshape(N, C, H, W)
-
-            tgt2 = self.dwconv(x)
-            tgt2 = tgt2.permute(0, 2, 3, 1)  # (N, C, H, W) -> (N, H, W, C)
-            tgt2 = self.norm(tgt2)
-            tgt2 = self.pwconv1(tgt2)
-            tgt2 = self.act(tgt2)
-            tgt2 = self.pwconv2(tgt2)
-            if self.gamma is not None:
-                tgt2 = self.gamma * tgt2
-            tgt2 = tgt2.permute(0, 3, 1, 2)  # (N, H, W, C) -> (N, C, H, W)
-
-            tgt = tgt + self.drop_path(torch.flatten(tgt2, 2, 3).permute(2, 0, 1))
-            return tgt
-
-    def forward(self, tgt):
-        if self.normalize_before:
-            return self.forward_pre(tgt)
-        return self.forward_post(tgt)
-
-
 class PredictionHeads(nn.Module):
+    """Prediction heads for mask classification and segmentation."""
+
     def __init__(
         self,
         hidden_dim,
@@ -397,6 +43,16 @@ class PredictionHeads(nn.Module):
         mask_classification,
         use_attn_masks,
     ):
+        """Initialize prediction heads.
+
+        Args:
+            hidden_dim: Dimension of hidden features
+            num_classes: Number of classes to predict
+            mask_dim: Dimension of mask features
+            num_heads: Number of attention heads
+            mask_classification: Whether to perform mask classification
+            use_attn_masks: Whether to use attention masks
+        """
         super().__init__()
         self.decoder_norm = nn.LayerNorm(hidden_dim)
         # output FFNs
@@ -408,10 +64,26 @@ class PredictionHeads(nn.Module):
         self.num_classes = num_classes
 
     def reset_classifier(self, num_classes: Optional[int] = None):
+        """Reset the classifier with a new number of classes.
+
+        Args:
+            num_classes: New number of classes (optional)
+        """
         _num_classes = num_classes if num_classes else self.num_classes
         self.classifier = nn.Linear(self.classifier.in_features, _num_classes + 1).to(self.classifier.weight.device)
 
     def forward(self, x, mask_features, sizes=None, process=True):
+        """Forward pass for prediction heads.
+
+        Args:
+            x: Input features
+            mask_features: Mask features
+            sizes: Target sizes for attention masks
+            process: Whether to process attention masks
+
+        Returns:
+            Class logits, mask predictions, and optionally attention masks
+        """
         decoder_output = self.decoder_norm(x)
         decoder_output = decoder_output.transpose(0, 1)
         # just a linear layer [hidden, n_class + 1]
@@ -446,6 +118,14 @@ class PredictionHeads(nn.Module):
             return outputs_class, outputs_mask
 
     def forward_class_only(self, x):
+        """Forward pass for class prediction only.
+
+        Args:
+            x: Input features
+
+        Returns:
+            Class logits
+        """
         decoder_output = self.decoder_norm(x)
         decoder_output = decoder_output.transpose(0, 1)
         # just a linear layer [hidden, n_class + 1]
@@ -453,16 +133,99 @@ class PredictionHeads(nn.Module):
         return outputs_class
 
 
-class FPN(nn.Module):
+class TransformerEncoderOnly(nn.Module):
+    """Transformer encoder-only architecture."""
+
+    def __init__(
+        self,
+        d_model=512,
+        nhead=8,
+        num_encoder_layers=6,
+        dim_feedforward=2048,
+        dropout=0.1,
+        activation="relu",
+        normalize_before=False,
+    ):
+        """Initialize transformer encoder-only architecture.
+
+        Args:
+            d_model: Dimension of the model
+            nhead: Number of attention heads
+            num_encoder_layers: Number of encoder layers
+            dim_feedforward: Dimension of the feedforward network
+            dropout: Dropout probability
+            activation: Activation function
+            normalize_before: Whether to apply normalization before layers
+        """
+        super().__init__()
+
+        encoder_layer = TransformerEncoderLayer(
+            d_model,
+            nhead,
+            dim_feedforward,
+            dropout,
+            activation,
+            normalize_before,
+            batch_first=False,
+        )
+        encoder_norm = nn.LayerNorm(d_model) if normalize_before else None
+        self.encoder = TransformerEncoder(encoder_layer, num_encoder_layers, encoder_norm)
+
+        self._reset_parameters()
+
+        self.d_model = d_model
+        self.nhead = nhead
+
+    def _reset_parameters(self):
+        """Initialize parameters with Xavier uniform distribution."""
+        for p in self.parameters():
+            if p.dim() > 1:
+                nn.init.xavier_uniform_(p)
+
+    def forward(self, src, mask, pos_embed):
+        """Forward pass for transformer encoder.
+
+        Args:
+            src: Source tensor
+            mask: Attention mask
+            pos_embed: Positional embedding
+
+        Returns:
+            Output tensor after transformer encoding
+        """
+        # flatten NxCxHxW to HWxNxC
+        bs, c, h, w = src.shape
+        src = src.flatten(2).permute(2, 0, 1)
+        pos_embed = pos_embed.flatten(2).permute(2, 0, 1)
+        if mask is not None:
+            mask = mask.flatten(1)
+
+        memory = self.encoder(src, src_key_padding_mask=mask, pos_embed=pos_embed)
+        return memory.permute(1, 2, 0).view(bs, c, h, w)
+
+
+class TransformerFPN(nn.Module):
+    """Feature Pyramid Network with optional transformer layers."""
+
     def __init__(
         self,
         backbone: BaseBackbone,
         feat_dim: int,
         out_dim: int,
-        # norm: str = "BN",
+        transformer_layers: int = 0,
+        transformer_dropout: float = 0.0,
+        transformer_nheads: int = 8,
+        transformer_dim_feedforward: int = 1024,
+        transformer_pre_norm: bool = True,
     ):
-        """
+        """Initialize Transformer Feature Pyramid Network.
+
         Args:
+            backbone: Backbone network to extract features
+            feat_dim: Number of channels for intermediate conv layers
+            out_dim: Number of channels for final conv layer
+            transformer_layers: Number of transformer encoder layers
+            transformer_dropout: Dropout probability for transformer
             backbone: basic backbones to extract features from images
             feat_dim: number of output channels for the intermediate conv layers.
             out_dim: number of output channels for the final conv layer.
@@ -479,8 +242,26 @@ class FPN(nn.Module):
         self.in_strides = [v.stride for k, v in self.input_shape]
         self.out_dim = out_dim
         self.feat_dim = feat_dim
-
         feature_channels = [v.channels for k, v in self.input_shape]
+
+        if transformer_layers > 0:
+            in_channels = feature_channels[len(self.in_features) - 1]
+            self.input_proj = Conv2d(in_channels, feat_dim, kernel_size=1)
+            weight_init.c2_xavier_fill(self.input_proj)
+            self.transformer = TransformerEncoderOnly(
+                d_model=feat_dim,
+                dropout=transformer_dropout,
+                nhead=transformer_nheads,
+                dim_feedforward=transformer_dim_feedforward,
+                num_encoder_layers=transformer_layers,
+                normalize_before=transformer_pre_norm,
+            )
+            N_steps = feat_dim // 2
+            self.pe_layer = PositionEmbeddingSine(N_steps, normalize=True)
+        else:
+            self.input_proj = None
+            self.transformer = None
+            self.pe_layer = None
 
         lateral_convs = []
         output_convs = []
@@ -490,7 +271,7 @@ class FPN(nn.Module):
             if idx == len(self.in_features) - 1:
                 output_norm = nn.BatchNorm2d(feat_dim)
                 output_conv = Conv2d(
-                    in_channels,
+                    feat_dim if transformer_layers > 0 else in_channels,
                     feat_dim,
                     kernel_size=3,
                     stride=1,
@@ -564,6 +345,9 @@ class FPN(nn.Module):
             lateral_conv = self.lateral_convs[idx]
             output_conv = self.output_convs[idx]
             if lateral_conv is None:
+                if self.transformer is not None:
+                    x = self.input_proj(x)
+                    x = self.transformer(x, mask=None, pos_embed=self.pe_layer(x))
                 y = output_conv(x)
             else:
                 cur_fpn = lateral_conv(x)
@@ -847,10 +631,14 @@ class FAIMaskFormer(BaseModelNN):
 
         backbone = load_backbone(self.config.backbone_config)
 
-        self.pixel_decoder = FPN(
+        self.pixel_decoder = TransformerFPN(
             backbone=backbone,
             feat_dim=self.config.pixel_decoder_feat_dim,
             out_dim=self.config.pixel_decoder_out_dim,
+            transformer_layers=self.config.pixel_decoder_transformer_layers,
+            transformer_dropout=self.config.pixel_decoder_transformer_dropout,
+            transformer_nheads=self.config.pixel_decoder_transformer_nheads,
+            transformer_dim_feedforward=self.config.pixel_decoder_transformer_dim_feedforward,
         )
         self.head = MaskFormerHead(
             in_channels=self.config.transformer_predictor_out_dim,
@@ -894,7 +682,7 @@ class FAIMaskFormer(BaseModelNN):
                 enforce_input_project=True,
                 use_attn_masks=True,
             ),
-            cls_sigmoid=True,
+            cls_sigmoid=self.config.cls_sigmoid,
         )
         self.resolution = self.config.resolution
         self.top_k = self.config.num_queries
@@ -927,7 +715,6 @@ class FAIMaskFormer(BaseModelNN):
             dtype=self.pixel_mean.dtype,  # type: ignore
             size_divisibility=self.size_divisibility,
             padding_constraints=self.pixel_decoder.padding_constraints,
-            resolution=self.resolution,
         )
         images = (images - self.pixel_mean) / self.pixel_std  # type: ignore
 
