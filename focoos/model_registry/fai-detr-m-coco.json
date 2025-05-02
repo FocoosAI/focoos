@@ -1,7 +1,7 @@
 {
-    "name": "rtdetr-m-coco",
-    "model_family": "fai_rtdetr",
-    "focoos_model": "fai-rtdetr-m-coco",
+    "name": "fai-detr-m-coco",
+    "model_family": "fai_detr",
+    "focoos_model": "fai-detr-m-coco",
     "classes": [
         "person",
         "bicycle",

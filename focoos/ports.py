@@ -9,7 +9,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Annotated, Any, List, Literal, Optional, Tuple, Union
 
+import torch
 from pydantic import BaseModel, Field, field_validator
+
+from focoos.structures import Instances
 
 DEV_API_URL = "https://api.dev.focoos.ai/v0"
 PROD_API_URL = "https://api.focoos.ai/v0"
@@ -749,8 +752,8 @@ class Metrics(FocoosBaseModel):
 class ModelFamily(str, Enum):
     """Enumerazione delle famiglie di modelli disponibili"""
 
-    RTDETR = "fai_rtdetr"
-    M2F = "fai_m2f"
+    DETR = "fai_detr"
+    M2F = "fai_mf"
     PEM = "fai_pem"
     BF = "fai_bf"
     CLS = "fai_cls"
@@ -815,6 +818,16 @@ class ModelOutput(DictClass):
     """Model output base container."""
 
     loss: Optional[dict]
+
+
+@dataclass
+class DatasetEntry(DictClass):
+    image: Optional[torch.Tensor] = None
+    height: Optional[int] = None
+    width: Optional[int] = None
+    instances: Optional[Instances] = None
+    file_name: Optional[str] = None
+    image_id: Optional[int] = None
 
 
 class DatasetSplitType(str, Enum):

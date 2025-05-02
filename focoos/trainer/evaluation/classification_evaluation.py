@@ -1,8 +1,11 @@
 from collections import OrderedDict
+from typing import List
 
 import torch
 
 from focoos.data.datasets.dict_dataset import DictDataset
+from focoos.data.mappers.classification_dataset_mapper import ClassificationDatasetDict
+from focoos.models.fai_cls.ports import ClassificationModelOutput
 from focoos.trainer.evaluation.evaluator import DatasetEvaluator
 from focoos.utils.distributed.comm import all_gather, is_main_process, synchronize
 from focoos.utils.logger import get_logger
@@ -44,7 +47,7 @@ class ClassificationEvaluator(DatasetEvaluator):
         self._predictions = []
         self._targets = []
 
-    def process(self, inputs, outputs):
+    def process(self, inputs: List[ClassificationDatasetDict], outputs: List[ClassificationModelOutput]):
         """
         Process the pair of inputs and outputs.
 
@@ -58,12 +61,14 @@ class ClassificationEvaluator(DatasetEvaluator):
             label = None
             if "label" in input_item:
                 label = input_item["label"]
+            elif hasattr(input_item, "label"):
+                label = input_item.label
             elif "annotations" in input_item and len(input_item["annotations"]) > 0:
                 # Handle label from annotations format
                 label = input_item["annotations"][0].get("category_id", None)
 
             if label is None:
-                logger.warning("Could not find label in input item")
+                logger.warning(f"Could not find label in input item: {input_item}")
                 continue
 
             # Get model predictions from output
@@ -75,7 +80,7 @@ class ClassificationEvaluator(DatasetEvaluator):
                 logits = output_item.logits
 
             if logits is None:
-                logger.warning("Could not find logits in output item")
+                logger.warning(f"Could not find logits in output item: {output_item}")
                 continue
 
             # Move tensors to CPU for evaluation

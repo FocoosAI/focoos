@@ -12,11 +12,10 @@ import torch.nn.init as init
 from PIL import Image
 from scipy.optimize import linear_sum_assignment
 
-from focoos.data.mappers.detection_dataset_mapper import DetectionDatasetDict
+from focoos.models.fai_detr.config import DETRConfig
+from focoos.models.fai_detr.ports import DETRModelOutput, DETRTargets
+from focoos.models.fai_detr.processor import DETRProcessor
 from focoos.models.fai_model import BaseModelNN
-from focoos.models.fai_rtdetr.config import RTDetrConfig
-from focoos.models.fai_rtdetr.ports import RTDETRModelOutput, RTDETRTargets
-from focoos.models.fai_rtdetr.processor import RTDetrProcessor
 from focoos.nn.backbone.base import BaseBackbone
 from focoos.nn.backbone.build import load_backbone
 from focoos.nn.layers.base import MLP
@@ -24,6 +23,7 @@ from focoos.nn.layers.conv import Conv2d
 from focoos.nn.layers.deformable import ms_deform_attn_core_pytorch
 from focoos.nn.layers.functional import inverse_sigmoid
 from focoos.nn.layers.transformer import TransformerEncoder, TransformerEncoderLayer
+from focoos.ports import DatasetEntry
 from focoos.structures import Instances
 from focoos.utils.box import box_cxcywh_to_xyxy, box_iou, generalized_box_iou
 from focoos.utils.distributed.comm import get_world_size
@@ -168,7 +168,7 @@ class CSPRepLayer(nn.Module):
         return self.conv3(x_1 + x_2)
 
 
-class HybridEncoder(nn.Module):
+class Encoder(nn.Module):
     def __init__(
         self,
         backbone: BaseBackbone,
@@ -394,30 +394,30 @@ class DETRHead(nn.Module):
         self.num_classes = num_classes
         self.mask_on = mask_on
 
-    def layers(self, features, targets: list[RTDETRTargets] = []):
+    def layers(self, features, targets: list[DETRTargets] = []):
         _, multi_scale_features = features
         predictions = self.predictor(feats=multi_scale_features, targets=targets)
 
         return predictions
 
-    def forward(self, features, targets: list[RTDETRTargets] = []):
+    def forward(self, features, targets: list[DETRTargets] = []):
         outputs = self.layers(features, targets)
 
-        if self.training:
-            return None, self.losses(outputs, targets)
+        loss = None
+        if targets is not None and len(targets) > 0:
+            loss = self.losses(outputs, targets)
+        boxes = outputs["pred_boxes"]
+        boxes = box_cxcywh_to_xyxy(boxes)
+
+        logits = outputs["pred_logits"]
+        if self.cls_sigmoid:
+            logits = F.sigmoid(logits)
         else:
-            boxes = outputs["pred_boxes"]
-            boxes = box_cxcywh_to_xyxy(boxes)
+            logits = F.softmax(logits, -1)[:, :, :-1]
 
-            logits = outputs["pred_logits"]
-            if self.cls_sigmoid:
-                logits = F.sigmoid(logits)
-            else:
-                logits = F.softmax(logits, -1)[:, :, :-1]
+        return (logits, boxes), loss
 
-            return (logits, boxes), {}
-
-    def losses(self, predictions, targets: list[RTDETRTargets]):
+    def losses(self, predictions, targets: list[DETRTargets]):
         losses = self.criterion(predictions, targets)
 
         return losses
@@ -478,7 +478,7 @@ class SetCriterion(nn.Module):
         self.focal_gamma = focal_gamma
         self.cls_sigmoid = cls_sigmoid
 
-    def loss_labels_vfl(self, outputs, targets: list[RTDETRTargets], indices, num_boxes):
+    def loss_labels_vfl(self, outputs, targets: list[DETRTargets], indices, num_boxes):
         assert "pred_boxes" in outputs
         idx = self._get_src_permutation_idx(indices)
 
@@ -514,7 +514,7 @@ class SetCriterion(nn.Module):
         return losses
 
     @torch.no_grad()
-    def loss_cardinality(self, outputs, targets: list[RTDETRTargets], indices, num_boxes):
+    def loss_cardinality(self, outputs, targets: list[DETRTargets], indices, num_boxes):
         """Compute the cardinality error, ie the absolute error in the number of predicted non-empty boxes
         This is not really a loss, it is intended for logging purposes only. It doesn't propagate gradients
         """
@@ -527,7 +527,7 @@ class SetCriterion(nn.Module):
         losses = {"cardinality_error": card_err}
         return losses
 
-    def loss_boxes(self, outputs, targets: list[RTDETRTargets], indices, num_boxes):
+    def loss_boxes(self, outputs, targets: list[DETRTargets], indices, num_boxes):
         """Compute the losses related to the bounding boxes, the L1 regression loss and the GIoU loss
         targets dicts must contain the key "boxes" containing a tensor of dim [nb_target_boxes, 4]
         The target boxes are expected in format (center_x, center_y, w, h), normalized by the image size.
@@ -558,7 +558,7 @@ class SetCriterion(nn.Module):
         tgt_idx = torch.cat([tgt for (_, tgt) in indices])
         return batch_idx, tgt_idx
 
-    def get_loss(self, loss, outputs, targets: list[RTDETRTargets], indices, num_masks, **kwargs):
+    def get_loss(self, loss, outputs, targets: list[DETRTargets], indices, num_masks, **kwargs):
         loss_map = {
             "cardinality": self.loss_cardinality,
             "boxes": self.loss_boxes,
@@ -567,7 +567,7 @@ class SetCriterion(nn.Module):
         assert loss in loss_map, f"do you really want to compute {loss} loss?"
         return loss_map[loss](outputs, targets, indices, num_masks, **kwargs)
 
-    def forward(self, outputs, targets: list[RTDETRTargets]):
+    def forward(self, outputs, targets: list[DETRTargets]):
         """This performs the loss computation.
         Parameters:
              outputs: dict of tensors, see the output specification of the model for the format
@@ -708,7 +708,7 @@ class BoxHungarianMatcher(nn.Module):
         self.gamma = gamma
 
     @torch.no_grad()
-    def forward(self, outputs, targets: list[RTDETRTargets]):
+    def forward(self, outputs, targets: list[DETRTargets]):
         """Performs the matching
 
         Params:
@@ -952,12 +952,6 @@ class TransformerDecoderLayer(nn.Module):
         # self attention
         q = k = self.with_pos_embed(tgt, query_pos_embed)
 
-        # if attn_mask is not None:
-        #     attn_mask = torch.where(
-        #         attn_mask.to(torch.bool),
-        #         torch.zeros_like(attn_mask),
-        #         torch.full_like(attn_mask, float('-inf'), dtype=tgt.dtype))
-
         tgt2, _ = self.self_attn(q, k, value=tgt, attn_mask=attn_mask)
         tgt = tgt + self.dropout1(tgt2)
         tgt = self.norm1(tgt)
@@ -1043,7 +1037,7 @@ class TransformerDecoder(nn.Module):
         return torch.stack(dec_out_bboxes), torch.stack(dec_out_logits)
 
 
-class RTDETRTransformerPredictor(nn.Module):
+class TransformerPredictor(nn.Module):
     def __init__(
         self,
         in_channels,
@@ -1263,7 +1257,7 @@ class RTDETRTransformerPredictor(nn.Module):
 
         return target, reference_points_unact.detach(), enc_topk_bboxes, enc_topk_logits
 
-    def forward(self, feats, targets: list[RTDETRTargets] = []):
+    def forward(self, feats, targets: list[DETRTargets] = []):
         # input projection and embedding
         (memory, spatial_shapes, level_start_index) = self._get_encoder_input(feats)
 
@@ -1302,15 +1296,15 @@ class RTDETRTransformerPredictor(nn.Module):
         return [{"pred_logits": a, "pred_boxes": b} for a, b in zip(outputs_class, outputs_coord)]
 
 
-class FAIRTDetr(BaseModelNN):
-    def __init__(self, config: RTDetrConfig):
+class FAIDetr(BaseModelNN):
+    def __init__(self, config: DETRConfig):
         super().__init__(config)
         self._export = False
         self.config = config
 
         backbone = load_backbone(self.config.backbone_config)
 
-        self.pixel_decoder = HybridEncoder(
+        self.pixel_decoder = Encoder(
             backbone=backbone,
             feat_dim=self.config.pixel_decoder_feat_dim,
             out_dim=self.config.pixel_decoder_out_dim,
@@ -1346,7 +1340,7 @@ class FAIRTDetr(BaseModelNN):
                 focal_alpha=self.config.criterion_focal_alpha,
                 focal_gamma=self.config.criterion_focal_gamma,
             ),
-            transformer_predictor=RTDETRTransformerPredictor(
+            transformer_predictor=TransformerPredictor(
                 in_channels=self.config.pixel_decoder_out_dim,
                 out_dim=self.config.transformer_predictor_out_dim,
                 num_classes=self.config.num_classes,
@@ -1368,7 +1362,7 @@ class FAIRTDetr(BaseModelNN):
         self.register_buffer("pixel_std", torch.Tensor(self.config.pixel_std).view(-1, 1, 1), False)
         self.size_divisibility = self.config.size_divisibility
         self.num_classes = self.config.num_classes
-        self.processor = RTDetrProcessor()
+        self.processor = DETRProcessor(self.config)
 
     @property
     def device(self):
@@ -1383,9 +1377,9 @@ class FAIRTDetr(BaseModelNN):
             list[Image.Image],
             list[np.ndarray],
             list[torch.Tensor],
-            list[DetectionDatasetDict],
+            list[DatasetEntry],
         ],
-    ) -> RTDETRModelOutput:
+    ) -> DETRModelOutput:
         images, targets = self.processor.preprocess(
             inputs,
             training=self.training,
@@ -1402,9 +1396,9 @@ class FAIRTDetr(BaseModelNN):
 
         if self.training:
             assert targets is not None and len(targets) > 0, "targets should not be None or empty - training mode"
-            return RTDETRModelOutput(logits=torch.zeros(0, 0, 0), boxes=torch.zeros(0, 0, 4), loss=losses)
+            return DETRModelOutput(logits=torch.zeros(0, 0, 0), boxes=torch.zeros(0, 0, 4), loss=losses)
 
-        return RTDETRModelOutput(logits=outputs[0], boxes=outputs[1], loss=None)
+        return DETRModelOutput(logits=outputs[0], boxes=outputs[1], loss=None)
 
     def post_process(self, outputs, batched_inputs) -> list[dict[str, Instances]]:
         """

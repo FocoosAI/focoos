@@ -1,15 +1,27 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 import copy
+from dataclasses import dataclass
+from typing import Optional
 
 import numpy as np
 import torch
 
 from focoos.data import utils
 from focoos.data.transforms import augmentation as A
+from focoos.ports import DatasetEntry
 from focoos.structures import BitMasks, Instances
 from focoos.utils.logger import get_logger
 
 from .mapper import DatasetMapper
+
+
+@dataclass
+class SemanticSegmentationDatasetEntry(DatasetEntry):
+    """
+    Dataset entry for semantic segmentation evaluation.
+    """
+
+    sem_seg_file_name: Optional[str] = None
 
 
 class SemanticDatasetMapper(DatasetMapper):
@@ -50,7 +62,7 @@ class SemanticDatasetMapper(DatasetMapper):
         mode = "training" if is_train else "inference"
         logger.info(f"[{self.__class__.__name__}] Augmentations used in {mode}: {augmentations}")
 
-    def __call__(self, dataset_dict: dict):
+    def __call__(self, dataset_dict: dict) -> SemanticSegmentationDatasetEntry:
         dataset_dict = copy.deepcopy(dataset_dict)  # it will be modified by code below
         image = utils.read_image(dataset_dict["file_name"], format=self.img_format)
         self.check_image_size(dataset_dict, image)
@@ -113,4 +125,12 @@ class SemanticDatasetMapper(DatasetMapper):
 
             dataset_dict["instances"] = instances
 
-        return dataset_dict
+        return SemanticSegmentationDatasetEntry(
+            image=dataset_dict["image"],
+            height=dataset_dict["height"],
+            width=dataset_dict["width"],
+            file_name=dataset_dict["file_name"],
+            image_id=dataset_dict["image_id"],
+            instances=dataset_dict.get("instances", None),
+            sem_seg_file_name=dataset_dict.get("sem_seg_file_name", None),
+        )

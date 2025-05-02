@@ -152,7 +152,7 @@ class AutoModel:
 
             # Iteratively register all models in the family
             for attr_name in dir(family_module):
-                if attr_name.startswith("_register_"):
+                if attr_name.startswith("_register"):
                     register_func = getattr(family_module, attr_name)
                     if callable(register_func):
                         register_func()
@@ -274,7 +274,7 @@ class PretrainedWeightsManager:
                 raise FileNotFoundError(f"Weights file not found: {weights_uri}")
 
             # Load weights from file
-            state_dict = torch.load(weights_uri, map_location="cpu")
+            state_dict = torch.load(weights_uri, map_location="cpu", weights_only=True)
 
             # If the file contains a dictionary with a 'model' key, extract only that part
             if isinstance(state_dict, dict) and "model" in state_dict:

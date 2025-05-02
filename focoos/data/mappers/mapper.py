@@ -1,22 +1,10 @@
 import logging
-from dataclasses import dataclass
-from typing import List, Optional, Union
-
-import torch
+from typing import List, Union
 
 from focoos.data.transforms import augmentation as A
 from focoos.data.transforms import transform as T
-from focoos.ports import DictClass
-from focoos.structures import Instances
+from focoos.ports import DatasetEntry
 from focoos.utils.logger import log_first_n
-
-
-@dataclass
-class DatasetEntry(DictClass):
-    image: Optional[torch.Tensor] = None
-    height: Optional[int] = None
-    width: Optional[int] = None
-    instances: Optional[Instances] = None
 
 
 class DatasetMapper:

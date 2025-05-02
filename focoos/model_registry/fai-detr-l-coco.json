@@ -1,7 +1,7 @@
 {
-    "name": "rtdetr-s-coco",
-    "model_family": "fai_rtdetr",
-    "focoos_model": "fai-rtdetr-s-coco",
+    "name": "fai-detr-l-coco",
+    "model_family": "fai_detr",
+    "focoos_model": "fai-detr-l-coco",
     "classes": [
         "person",
         "bicycle",
@@ -91,22 +91,14 @@
         "backbone_config": {
             "use_pretrained": false,
             "backbone_url": null,
-            "model_type": "stdc",
-            "base": 64,
-            "layers": [
-                4,
-                5,
-                3
-            ],
-            "out_features": [
-                "res2",
-                "res3",
-                "res4",
-                "res5"
-            ],
-            "block_num": 4,
-            "block_type": "cat",
-            "use_conv_last": false
+            "model_type": "resnet",
+            "depth": 50,
+            "variant": "d",
+            "freeze_at": -1,
+            "num_stages": 4,
+            "freeze_norm": false,
+            "act": "relu",
+            "pretrained": false
         },
         "num_queries": 300,
         "resolution": 640,
@@ -121,16 +113,16 @@
             57.375
         ],
         "size_divisibility": 0,
-        "pixel_decoder_out_dim": 128,
-        "pixel_decoder_feat_dim": 128,
-        "pixel_decoder_num_encoder_layers": 0,
-        "pixel_decoder_expansion": 0.5,
-        "pixel_decoder_dim_feedforward": 512,
-        "transformer_predictor_out_dim": 128,
-        "transformer_predictor_hidden_dim": 128,
-        "transformer_predictor_dec_layers": 3,
-        "transformer_predictor_dim_feedforward": 512,
-        "head_out_dim": 128,
+        "pixel_decoder_out_dim": 256,
+        "pixel_decoder_feat_dim": 256,
+        "pixel_decoder_num_encoder_layers": 1,
+        "pixel_decoder_expansion": 1.0,
+        "pixel_decoder_dim_feedforward": 1024,
+        "transformer_predictor_out_dim": 256,
+        "transformer_predictor_hidden_dim": 256,
+        "transformer_predictor_dec_layers": 6,
+        "transformer_predictor_dim_feedforward": 1024,
+        "head_out_dim": 256,
         "pixel_decoder_dropout": 0.0,
         "pixel_decoder_nhead": 8,
         "transformer_predictor_nhead": 8,
@@ -153,9 +145,9 @@
         "matcher_alpha": 0.25,
         "matcher_gamma": 2.0
     },
-    "description": "RTDETR Small model (COCO)",
+    "description": "RTDETR Large model (COCO)",
     "train_args": null,
-    "weights_uri": "/home/ubuntu/anyma/pretrained_models/models/fai-rtdetr-s-coco/model_final.pth",
+    "weights_uri": "/home/ubuntu/anyma/pretrained_models/models/fai-rtdetr-l-coco/model_final.pth",
     "val_dataset": "coco",
     "val_metrics": null,
     "latency": null

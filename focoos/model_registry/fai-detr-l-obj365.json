@@ -1,7 +1,7 @@
 {
-    "name": "fai-rtdetr-l-obj365",
-    "model_family": "fai_rtdetr",
-    "focoos_model": "fai-rtdetr-l-obj365",
+    "name": "fai-detr-l-obj365",
+    "model_family": "fai_detr",
+    "focoos_model": "fai-detr-l-obj365",
     "classes": [
         "Person",
         "Sneakers",

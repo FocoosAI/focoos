@@ -6,12 +6,13 @@ import torch
 
 from focoos.data import utils
 from focoos.data.transforms import augmentation as A
+from focoos.ports import DatasetEntry
 from focoos.structures import BitMasks, Boxes, Instances
 
-from .semantic_dataset_mapper import SemanticDatasetMapper
+from .mapper import DatasetMapper
 
 
-class PanopticDatasetMapper(SemanticDatasetMapper):
+class PanopticDatasetMapper(DatasetMapper):
     """
     A callable which takes a dataset dict in Detectron2 Dataset format,
     and map it into a format used by MaskFormer for panoptic segmentation.
@@ -46,11 +47,11 @@ class PanopticDatasetMapper(SemanticDatasetMapper):
             is_train,
             augmentations=augmentations,
             image_format=image_format,
-            ignore_label=ignore_label,
         )
         self.bounding_box = bounding_box
+        self.ignore_label = ignore_label
 
-    def __call__(self, dataset_dict: dict):
+    def __call__(self, dataset_dict: dict) -> DatasetEntry:
         dataset_dict = copy.deepcopy(dataset_dict)  # it will be modified by code below
         image = utils.read_image(dataset_dict["file_name"], format=self.img_format)
         self.check_image_size(dataset_dict, image)
@@ -74,7 +75,10 @@ class PanopticDatasetMapper(SemanticDatasetMapper):
 
         # apply the same transformation to panoptic segmentation
         if pan_seg_gt is not None:
-            from panopticapi.utils import rgb2id
+            try:
+                from panopticapi.utils import rgb2id
+            except ImportError:
+                raise ImportError("panopticapi is not installed. Please install it with `pip install panopticapi`.")
 
             pan_seg_gt = transforms.apply_segmentation(pan_seg_gt)
             pan_seg_gt = rgb2id(pan_seg_gt)
@@ -109,4 +113,11 @@ class PanopticDatasetMapper(SemanticDatasetMapper):
 
             dataset_dict["instances"] = instances
 
-        return dataset_dict
+        return DatasetEntry(
+            image=dataset_dict["image"],
+            height=dataset_dict["height"],
+            width=dataset_dict["width"],
+            file_name=dataset_dict["file_name"],
+            image_id=dataset_dict["image_id"],
+            instances=dataset_dict.get("instances", None),
+        )

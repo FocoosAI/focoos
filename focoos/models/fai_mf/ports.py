@@ -7,13 +7,13 @@ from focoos.ports import ModelOutput
 
 
 @dataclass
-class RTDETRModelOutput(ModelOutput):
-    boxes: torch.Tensor  # [N, num_queries, 4], XYXY normalized to [0, 1]
+class MaskFormerModelOutput(ModelOutput):
+    masks: torch.Tensor  # [N, num_queries, H, W]
     logits: torch.Tensor  # [N, num_queries, num_classes]
     loss: Optional[dict]
 
 
 @dataclass
-class RTDETRTargets:
+class MaskFormerTargets:
     labels: torch.Tensor
-    boxes: torch.Tensor
+    masks: torch.Tensor

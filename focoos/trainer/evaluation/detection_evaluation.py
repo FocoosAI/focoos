@@ -8,7 +8,7 @@ import numpy as np
 import pycocotools.mask as mask_util
 import torch
 
-from focoos.data.mappers.detection_dataset_mapper import DetectionDatasetDict
+from focoos.ports import DatasetEntry
 
 try:
     import faster_coco_eval
@@ -84,7 +84,7 @@ class DetectionEvaluator(DatasetEvaluator):
         self._predictions = []
         # self._inputs = []
 
-    def process(self, inputs: List[DetectionDatasetDict], outputs):
+    def process(self, inputs: List[DatasetEntry], outputs):
         """
         Process one batch of model inputs and outputs.
 

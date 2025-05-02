@@ -6,9 +6,10 @@ import numpy as np
 import torch
 
 from focoos.data import utils
-from focoos.data.mappers.mapper import DatasetEntry, DatasetMapper
+from focoos.data.mappers.mapper import DatasetMapper
 from focoos.data.transforms import augmentation as A
 from focoos.data.transforms import transform as T
+from focoos.ports import DatasetEntry
 from focoos.utils.logger import get_logger
 
 
@@ -19,8 +20,6 @@ class ClassificationDatasetDict(DatasetEntry):
     Extends the base DatasetEntry with fields needed for classification.
     """
 
-    file_name: Optional[str] = None
-    image_id: Optional[int] = None
     label: Optional[int] = None
 
 

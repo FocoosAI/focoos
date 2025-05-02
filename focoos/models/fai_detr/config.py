@@ -6,7 +6,7 @@ from focoos.nn.backbone.base import BackboneConfig
 
 
 @dataclass
-class RTDetrConfig(ModelConfig):
+class DETRConfig(ModelConfig):
     backbone_config: BackboneConfig
     num_classes: int
 

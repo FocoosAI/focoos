@@ -254,7 +254,9 @@ class FAIClassification(BaseModelNN):
 
         return ClassificationModelOutput(logits=logits, loss=loss)
 
-    def post_process(self, outputs: ClassificationModelOutput, batched_inputs) -> List[Dict]:
+    def post_process(
+        self, outputs: ClassificationModelOutput, batched_inputs: List[ClassificationDatasetDict]
+    ) -> List[Dict]:
         """Post-process model outputs for inference.
 
         Args:
@@ -264,4 +266,4 @@ class FAIClassification(BaseModelNN):
         Returns:
             Processed results with classification predictions
         """
-        return self.processor.eval_postprocess(outputs.logits, batched_inputs)
+        return self.processor.eval_postprocess(outputs, batched_inputs)

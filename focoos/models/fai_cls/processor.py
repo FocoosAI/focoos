@@ -7,11 +7,13 @@ from PIL import Image
 
 from focoos.data.mappers.classification_dataset_mapper import ClassificationDatasetDict
 from focoos.models.fai_cls.config import ClassificationConfig
-from focoos.models.fai_cls.ports import ClassificationTargets
+from focoos.models.fai_cls.ports import ClassificationModelOutput, ClassificationTargets
+from focoos.models.fai_model import BaseProcessor
+from focoos.ports import DatasetEntry, FocoosDet, FocoosDetections
 from focoos.structures import ImageList
 
 
-class ClassificationProcessor:
+class ClassificationProcessor(BaseProcessor):
     """Processor for image classification model inputs and outputs."""
 
     def __init__(self, config: ClassificationConfig):
@@ -70,78 +72,65 @@ class ClassificationProcessor:
 
         if training:
             raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
-        if isinstance(inputs, (Image.Image, np.ndarray, torch.Tensor)):
-            inputs_list = [inputs]
-        else:
-            inputs_list = inputs
-
-        # Process each input based on its type
-        processed_inputs = []
-        for inp in inputs_list:
-            # todo check for tensor of 4 dimesions.
-            if isinstance(inp, Image.Image):
-                inp = np.array(inp)
-            if isinstance(inp, np.ndarray):
-                inp = torch.from_numpy(inp)
-
-            # Ensure input has correct shape and type
-            if inp.dim() == 3:  # Add batch dimension if missing
-                inp = inp.unsqueeze(0)
-            if inp.shape[1] != 3 and inp.shape[-1] == 3:  # Convert HWC to CHW if needed
-                inp = inp.permute(0, 3, 1, 2)
-
-            processed_inputs.append(inp)
-
-        # Stack all inputs into a single batch tensor
-        # use pixel mean to get dtype -> If fp16, pixel_mean is fp16, so inputs will be fp16
-        # TODO: this will break with different image sizes
-        images_torch = torch.cat(processed_inputs, dim=0).to(device, dtype=dtype)
+        images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
         if resolution is not None:
             images_torch = torch.nn.functional.interpolate(
                 images_torch, size=resolution, mode="bilinear", align_corners=False
             )
         return images_torch, targets
 
-    def eval_postprocess(self, logits: torch.Tensor, batch_inputs: List[Dict]) -> List[Dict]:
+    def eval_postprocess(self, outputs: ClassificationModelOutput, inputs: list[DatasetEntry]) -> List[Dict]:
         """Post-process model outputs.
 
         Args:
-            logits: Model output logits [N, num_classes]
-            batch_inputs: Batch input metadata
+            outputs: Model output
+            inputs: Batch input metadata
         """
         if self.multi_label:
-            probs = F.sigmoid(logits)
+            probs = F.sigmoid(outputs.logits)
         else:
-            probs = F.softmax(logits, dim=1)
+            probs = F.softmax(outputs.logits, dim=1)
         results = []
         for probs_i in probs:
             results.append({"logits": probs_i})
         return results
 
-    def postprocess(self, logits: torch.Tensor, batch_inputs: List[Dict]) -> List[Dict]:
+    def postprocess(
+        self,
+        outputs: ClassificationModelOutput,
+        inputs: Union[
+            torch.Tensor,
+            np.ndarray,
+            Image.Image,
+            list[Image.Image],
+            list[np.ndarray],
+            list[torch.Tensor],
+        ],
+    ) -> List[FocoosDetections]:
         """Post-process model outputs.
 
         Args:
-            logits: Model output logits [N, num_classes]
-            batch_inputs: Batch input metadata
+            outputs: Model output
+            inputs: Batch input metadata
 
         Returns:
             List of processed results with class probabilities and predicted class
         """
-        logits = logits.detach().cpu()
+        logits = outputs.logits.detach().cpu()
         probs = F.softmax(logits, dim=1)
 
         results = []
         for i, probs_i in enumerate(probs):
             top_prob, top_class = torch.max(probs_i, dim=0)
 
-            result = {
-                "probabilities": probs_i.numpy(),
-                "predicted_class": top_class.item(),
-                "confidence": top_prob.item(),
-                "height": batch_inputs[i]["height"],
-                "width": batch_inputs[i]["width"],
-            }
+            result = FocoosDetections(
+                detections=[
+                    FocoosDet(
+                        conf=top_prob.item(),
+                        cls_id=int(top_class.item()),
+                    )
+                ]
+            )
             results.append(result)
 
         return results

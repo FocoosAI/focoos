@@ -1,26 +1,19 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # Modified by Bowen Cheng from https://github.com/facebookresearch/detr/blob/master/d2/detr/dataset_mapper.py
 import copy
-from dataclasses import dataclass
 from typing import List, Optional, Sequence, Union
 
 import numpy as np
 import torch
 
 from focoos.data import utils
-from focoos.data.mappers.mapper import DatasetEntry
 from focoos.data.transforms import augmentation as A
 from focoos.data.transforms import transform as T
+from focoos.ports import DatasetEntry
 from focoos.structures import BoxMode, Instances
 from focoos.utils.logger import get_logger
 
 from .mapper import DatasetMapper
-
-
-@dataclass
-class DetectionDatasetDict(DatasetEntry):
-    file_name: Optional[str] = None
-    image_id: Optional[int] = None
 
 
 class DetectionDatasetMapper(DatasetMapper):
@@ -127,13 +120,13 @@ class DetectionDatasetMapper(DatasetMapper):
 
         dataset_dict["instances"] = instances
 
-    def __call__(self, dataset_dict: dict) -> DetectionDatasetDict:
+    def __call__(self, dataset_dict: dict) -> DatasetEntry:
         """
         Args:
             dataset_dict (dict): Metadata of one image, in Detectron2 Dataset format.
 
         Returns:
-            DetectionDatasetDict: a format that builtin models in detectron2 accept
+            DatasetEntry: a format that builtin models accept
         """
         dataset_dict = copy.deepcopy(dataset_dict)  # it will be modified by code below
         # USER: Write your own image loading if it's not from a file
@@ -177,7 +170,7 @@ class DetectionDatasetMapper(DatasetMapper):
             # there is a problem here with image_shape (annotations are not transformed)
             self._transform_annotations(dataset_dict, transforms, image_shape)
 
-        return DetectionDatasetDict(
+        return DatasetEntry(
             image=dataset_dict["image"],
             height=dataset_dict["height"],
             width=dataset_dict["width"],

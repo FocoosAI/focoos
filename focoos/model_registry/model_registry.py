@@ -26,10 +26,13 @@ class ModelRegistry:
     """
 
     _pretrained_models: Dict[str, str] = {
-        "fai-rtdetr-l-obj365": os.path.join(REGISTRY_PATH, "fai-rtdetr-l-obj365.json"),
-        "fai-rtdetr-l-coco": os.path.join(REGISTRY_PATH, "fai-rtdetr-l-coco.json"),
-        "fai-rtdetr-m-coco": os.path.join(REGISTRY_PATH, "fai-rtdetr-m-coco.json"),
-        "fai-rtdetr-s-coco": os.path.join(REGISTRY_PATH, "fai-rtdetr-s-coco.json"),
+        "fai-detr-l-obj365": os.path.join(REGISTRY_PATH, "fai-detr-l-obj365.json"),
+        "fai-detr-l-coco": os.path.join(REGISTRY_PATH, "fai-detr-l-coco.json"),
+        "fai-detr-m-coco": os.path.join(REGISTRY_PATH, "fai-detr-m-coco.json"),
+        "fai-detr-s-coco": os.path.join(REGISTRY_PATH, "fai-detr-s-coco.json"),
+        "fai-mf-l-ade": os.path.join(REGISTRY_PATH, "fai-mf-l-ade.json"),
+        "fai-mf-m-ade": os.path.join(REGISTRY_PATH, "fai-mf-m-ade.json"),
+        "fai-mf-l-ade-ins": os.path.join(REGISTRY_PATH, "fai-mf-l-ade-ins.json"),
     }
 
     # _user_models: Dict[str, ModelInfo] = {}

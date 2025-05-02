@@ -4,9 +4,9 @@ import numpy as np
 import torch
 from PIL import Image
 
-from focoos.data.mappers.detection_dataset_mapper import DetectionDatasetDict
-from focoos.models.fai_rtdetr.ports import RTDETRModelOutput, RTDETRTargets
-from focoos.ports import FocoosDet, FocoosDetections
+from focoos.models.fai_detr.ports import DETRModelOutput, DETRTargets
+from focoos.models.fai_model import BaseProcessor
+from focoos.ports import DatasetEntry, FocoosDet, FocoosDetections
 from focoos.structures import Boxes, ImageList, Instances
 from focoos.utils.box import box_xyxy_to_cxcywh
 
@@ -72,7 +72,7 @@ def detector_postprocess(
     return results
 
 
-class RTDetrProcessor:
+class DETRProcessor(BaseProcessor):
     def preprocess(
         self,
         inputs: Union[
@@ -82,7 +82,7 @@ class RTDetrProcessor:
             list[Image.Image],
             list[np.ndarray],
             list[torch.Tensor],
-            list[DetectionDatasetDict],
+            list[DatasetEntry],
         ],
         training: bool,
         device: torch.device,
@@ -90,9 +90,9 @@ class RTDetrProcessor:
         size_divisibility: int = 0,
         padding_constraints: Optional[Dict[str, int]] = None,
         resolution: Optional[int] = 640,
-    ) -> tuple[torch.Tensor, list[RTDETRTargets]]:
+    ) -> tuple[torch.Tensor, list[DETRTargets]]:
         targets = []
-        if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DetectionDatasetDict):
+        if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DatasetEntry):
             images = [x.image.to(device) for x in inputs]
             images = ImageList.from_tensors(
                 tensors=images,
@@ -111,36 +111,11 @@ class RTDetrProcessor:
                     gt_classes = targets_per_image.gt_classes
                     gt_boxes = targets_per_image.gt_boxes.tensor / image_size_xyxy
                     gt_boxes = box_xyxy_to_cxcywh(gt_boxes)
-                    targets.append(RTDETRTargets(labels=gt_classes, boxes=gt_boxes))
+                    targets.append(DETRTargets(labels=gt_classes, boxes=gt_boxes))
         else:
             if training:
                 raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
-            if isinstance(inputs, (Image.Image, np.ndarray, torch.Tensor)):
-                inputs_list = [inputs]
-            else:
-                inputs_list = inputs
-
-            # Process each input based on its type
-            processed_inputs = []
-            for inp in inputs_list:
-                # todo check for tensor of 4 dimesions.
-                if isinstance(inp, Image.Image):
-                    inp = np.array(inp)
-                if isinstance(inp, np.ndarray):
-                    inp = torch.from_numpy(inp)
-
-                # Ensure input has correct shape and type
-                if inp.dim() == 3:  # Add batch dimension if missing
-                    inp = inp.unsqueeze(0)
-                if inp.shape[1] != 3 and inp.shape[-1] == 3:  # Convert HWC to CHW if needed
-                    inp = inp.permute(0, 3, 1, 2)
-
-                processed_inputs.append(inp)
-
-            # Stack all inputs into a single batch tensor
-            # use pixel mean to get dtype -> If fp16, pixel_mean is fp16, so inputs will be fp16
-            # TODO: this will break with different image sizes
-            images_torch = torch.cat(processed_inputs, dim=0).to(device, dtype=dtype)
+            images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
             if resolution is not None:
                 images_torch = torch.nn.functional.interpolate(
                     images_torch, size=resolution, mode="bilinear", align_corners=False
@@ -150,8 +125,8 @@ class RTDetrProcessor:
 
     def eval_postprocess(
         self,
-        output: RTDETRModelOutput,
-        batched_inputs: list[DetectionDatasetDict],
+        output: DETRModelOutput,
+        batched_inputs: list[DatasetEntry],
         top_k: int = 300,
     ) -> list[dict[str, Instances]]:
         results = []
@@ -174,39 +149,6 @@ class RTDetrProcessor:
 
         return results
 
-    def get_image_sizes(
-        self,
-        inputs: Union[torch.Tensor, np.ndarray, Image.Image, list[Image.Image], list[np.ndarray], list[torch.Tensor]],
-    ):
-        image_sizes = []
-
-        if isinstance(inputs, (torch.Tensor, np.ndarray)):
-            # Single tensor/array input
-            if isinstance(inputs, torch.Tensor):
-                height, width = inputs.shape[-2:]
-            else:  # numpy array
-                height, width = inputs.shape[-3:-1] if inputs.ndim > 3 else inputs.shape[:2]
-            image_sizes.append((height, width))
-        elif isinstance(inputs, Image.Image):
-            # Single PIL image
-            width, height = inputs.size
-            image_sizes.append((height, width))
-        elif isinstance(inputs, list):
-            # List of inputs
-            for img in inputs:
-                if isinstance(img, torch.Tensor):
-                    height, width = img.shape[-2:]
-                elif isinstance(img, np.ndarray):
-                    height, width = img.shape[-3:-1] if img.ndim > 3 else img.shape[:2]
-                elif isinstance(img, Image.Image):
-                    width, height = img.size
-                else:
-                    raise ValueError(f"Unsupported input type in list: {type(img)}")
-                image_sizes.append((height, width))
-        else:
-            raise ValueError(f"Unsupported input type: {type(inputs)}")
-        return image_sizes
-
     def _get_predictions(self, scores, boxes, top_k, num_classes) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         scores, index = torch.topk(scores.flatten(0), top_k, dim=-1)
         labels = index % num_classes
@@ -216,7 +158,7 @@ class RTDetrProcessor:
 
     def postprocess(
         self,
-        output: RTDETRModelOutput,
+        output: DETRModelOutput,
         inputs: Union[
             torch.Tensor,
             np.ndarray,
