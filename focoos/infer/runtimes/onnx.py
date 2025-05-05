@@ -11,6 +11,7 @@ from focoos.ports import (
     LatencyMetrics,
     OnnxRuntimeOpts,
     RemoteModelInfo,
+    Task,
 )
 from focoos.utils.logger import get_logger
 from focoos.utils.system import get_cpu_name, get_gpu_info
@@ -32,18 +33,18 @@ class ONNXRuntime(BaseRuntime):
     Attributes:
         name (str): Name of the model derived from the model path.
         opts (OnnxRuntimeOpts): Configuration options for the ONNX runtime.
-        model_metadata (ModelMetadata): Metadata about the model.
+        model_info (RemoteModelInfo): Metadata about the model.
         ort_sess (ort.InferenceSession): ONNX Runtime inference session.
         active_providers (list): List of active execution providers.
         dtype (np.dtype): Input data type for the model.
     """
 
-    def __init__(self, model_path: Union[str, Path], opts: OnnxRuntimeOpts, model_metadata: RemoteModelInfo):
+    def __init__(self, model_path: Union[str, Path], opts: OnnxRuntimeOpts, model_info: RemoteModelInfo):
         logger.debug(f"🔧 [onnxruntime device] {ort.get_device()}")
 
         self.name = Path(model_path).stem
         self.opts = opts
-        self.model_metadata = model_metadata
+        self.model_info = model_info
 
         # Setup session options
         options = ort.SessionOptions()
@@ -120,8 +121,9 @@ class ONNXRuntime(BaseRuntime):
         return providers
 
     def _warmup(self):
-        logger.info("⏱️ [onnxruntime] Warming up model ..")
-        np_image = np.random.rand(1, 3, 640, 640).astype(self.dtype)
+        size = self.model_info.im_size if self.model_info.task == Task.DETECTION and self.model_info.im_size else 640
+        logger.info(f"⏱️ [onnxruntime] Warming up model {self.name} on {self.active_provider}, size: {size}x{size}..")
+        np_image = np.random.rand(1, 3, size, size).astype(self.dtype)
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
 
@@ -167,7 +169,7 @@ class ONNXRuntime(BaseRuntime):
             device_name = get_cpu_name()
             logger.warning(f"No GPU found, using CPU {device_name}.")
 
-        logger.info(f"⏱️ [onnxruntime] Benchmarking latency on {device_name}..")
+        logger.info(f"⏱️ [onnxruntime] Benchmarking latency on {device_name}, size: {size}x{size}..")
         size = size if isinstance(size, (tuple, list)) else (size, size)
 
         np_input = (255 * np.random.random((1, 3, size[0], size[1]))).astype(self.dtype)

@@ -4,9 +4,6 @@ from typing import Any
 import numpy as np
 
 from focoos.ports import LatencyMetrics, RemoteModelInfo
-from focoos.utils.logger import get_logger
-
-logger = get_logger()
 
 
 class BaseRuntime:
@@ -19,17 +16,17 @@ class BaseRuntime:
     Attributes:
         model_path (str): Path to the model file.
         opts (Any): Runtime-specific options.
-        model_metadata (ModelMetadata): Metadata about the model.
+        model_info (RemoteModelInfo): Metadata about the model.
     """
 
-    def __init__(self, model_path: str, opts: Any, model_metadata: RemoteModelInfo):
+    def __init__(self, model_path: str, opts: Any, model_info: RemoteModelInfo):
         """
         Initialize the runtime with model path, options and metadata.
 
         Args:
             model_path (str): Path to the model file.
             opts (Any): Runtime-specific configuration options.
-            model_metadata (ModelMetadata): Metadata about the model.
+            model_info (RemoteModelInfo): Metadata about the model.
         """
         pass
 
@@ -47,7 +44,7 @@ class BaseRuntime:
         pass
 
     @abstractmethod
-    def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
+    def benchmark(self, iterations=20) -> LatencyMetrics:
         """
         Benchmark the model performance.
 

@@ -4,7 +4,7 @@ import numpy as np
 import torch
 
 from focoos.infer.runtimes.base import BaseRuntime
-from focoos.ports import LatencyMetrics, RemoteModelInfo, TorchscriptRuntimeOpts
+from focoos.ports import LatencyMetrics, RemoteModelInfo, Task, TorchscriptRuntimeOpts
 from focoos.utils.logger import get_logger
 from focoos.utils.system import get_cpu_name, get_gpu_info
 
@@ -23,18 +23,20 @@ class TorchscriptRuntime(BaseRuntime):
         device (torch.device): Device to run inference on (CPU or CUDA).
         opts (TorchscriptRuntimeOpts): Configuration options for the TorchScript runtime.
         model (torch.jit.ScriptModule): Loaded TorchScript model.
+        model_info (RemoteModelInfo): Metadata about the model.
     """
 
     def __init__(
         self,
         model_path: str,
         opts: TorchscriptRuntimeOpts,
-        model_metadata: RemoteModelInfo,
+        model_info: RemoteModelInfo,
     ):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.logger = get_logger(name="TorchscriptEngine")
         self.logger.info(f"🔧 [torchscript] Device: {self.device}")
         self.opts = opts
+        self.model_info = model_info
 
         map_location = None if torch.cuda.is_available() else "cpu"
 
@@ -42,9 +44,14 @@ class TorchscriptRuntime(BaseRuntime):
         self.model = self.model.to(self.device)
 
         if self.opts.warmup_iter > 0:
-            self.logger.info("⏱️ [torchscript] Warming up model..")
+            size = (
+                self.model_info.im_size if self.model_info.task == Task.DETECTION and self.model_info.im_size else 640
+            )
+            self.logger.info(
+                f"⏱️ [torchscript] Warming up model {self.model_info.name} on {self.device}, size: {size}x{size}.."
+            )
             with torch.no_grad():
-                np_image = torch.rand(1, 3, 640, 640, device=self.device)
+                np_image = torch.rand(1, 3, size, size, device=self.device)
                 for _ in range(self.opts.warmup_iter):
                     self.model(np_image)
             self.logger.info("⏱️ [torchscript] WARMUP DONE")
@@ -64,7 +71,7 @@ class TorchscriptRuntime(BaseRuntime):
             res = self.model(torch_image)
             return [r.cpu().numpy() for r in res]
 
-    def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
+    def benchmark(self, iterations=20) -> LatencyMetrics:
         """
         Benchmark the model performance.
 
@@ -73,7 +80,6 @@ class TorchscriptRuntime(BaseRuntime):
 
         Args:
             iterations (int, optional): Number of inference iterations to run. Defaults to 20.
-            size (int or tuple, optional): Input image size for benchmarking. Defaults to 640.
 
         Returns:
             LatencyMetrics: Performance metrics including FPS, mean, min, max, and std latencies.
@@ -85,10 +91,10 @@ class TorchscriptRuntime(BaseRuntime):
         else:
             device_name = get_cpu_name()
             self.logger.warning(f"No GPU found, using CPU {device_name}.")
-        self.logger.info("⏱️ [torchscript] Benchmarking latency..")
-        size = size if isinstance(size, (tuple, list)) else (size, size)
+        size = self.model_info.im_size if self.model_info.task == Task.DETECTION and self.model_info.im_size else 640
+        self.logger.info(f"⏱️ [torchscript] Benchmarking latency on {device_name}, size: {size}x{size}..")
 
-        torch_input = torch.rand(1, 3, size[0], size[1], device=self.device)
+        torch_input = torch.rand(1, 3, size, size, device=self.device)
         durations = []
 
         with torch.no_grad():
@@ -109,7 +115,7 @@ class TorchscriptRuntime(BaseRuntime):
             max=round(durations.max().astype(float), 3),
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
-            im_size=size[0],
+            im_size=size,
             device=str(device_name),
         )
         self.logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")
