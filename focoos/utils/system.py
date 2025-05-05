@@ -2,6 +2,7 @@ import importlib.metadata as metadata
 import os
 import platform
 import subprocess
+import sys
 import tarfile
 import time
 import zipfile
@@ -125,7 +126,7 @@ def get_gpu_info() -> GPUInfo:
             gpu_info.gpu_count = len(gpus_device)
             gpu_info.gpu_driver = driver_version
             gpu_info.gpu_cuda_version = get_cuda_version()
-
+            gpu_info.total_gpu_memory_gb = sum(device.gpu_memory_total_gb for device in gpus_device)
     except FileNotFoundError as err:
         logger.warning("nvidia-smi command not found: %s", err)
     except Exception as err:
@@ -145,6 +146,10 @@ def get_cpu_name() -> Optional[str]:
         Optional[str]: The name of the CPU if available, otherwise None.
     """
     return platform.processor()
+
+
+def get_focoos_version() -> str:
+    return metadata.version("focoos")
 
 
 def get_system_info() -> SystemInfo:
@@ -175,7 +180,6 @@ def get_system_info() -> SystemInfo:
     gpu_info = get_gpu_info()
 
     packages = [
-        "focoos",
         "tensorrt",
         "onnxruntime",
         "onnxruntime-gpu",
@@ -188,6 +192,7 @@ def get_system_info() -> SystemInfo:
         "torchvision",
         "nvidia-cuda-runtime-cu12",
         "tensorrt",
+        "fvcore",
     ]
     versions = {}
     for package in packages:
@@ -195,26 +200,38 @@ def get_system_info() -> SystemInfo:
             versions[package] = metadata.version(package)
         except metadata.PackageNotFoundError:
             versions[package] = "unknown"
-
+    focoos_version = get_focoos_version()
     environments_var = [
         "LD_LIBRARY_PATH",
         "LD_PRELOAD",
         "CUDA_HOME",
         "CUDA_VISIBLE_DEVICES",
         "FOCOOS_LOG_LEVEL",
-        "DEFAULT_HOST_URL",
     ]
     environments = {}
     for var in environments_var:
         environments[var] = os.getenv(var, "")
 
+    try:
+        import torch
+        from torch.utils.cpp_extension import CUDA_HOME
+
+        torch_cuda_home = CUDA_HOME
+        torch_cudnn_version = torch.backends.cudnn.version()
+        torch_info = f"{torch.__version__} cudnn: {torch_cudnn_version} cuda home: {torch_cuda_home} root: {os.path.dirname(torch.__file__)}"
+    except Exception as e:
+        logger.warning(f"Error getting torch cuda home: {e}")
+        torch_info = None
     return SystemInfo(
         focoos_host=FOCOOS_CONFIG.default_host_url,
+        focoos_version=focoos_version,
+        python_version=sys.version.replace("\n", ""),
         system=system_info.system,
         system_name=system_info.node,
+        pytorch_info=torch_info,
         cpu_type=system_info.machine,
         cpu_cores=psutil.cpu_count(logical=True),
-        available_providers=ort.get_available_providers() if ort else None,
+        available_onnx_providers=ort.get_available_providers() if ort else None,
         memory_gb=round(memory_info.total / (1024**3), 3),
         memory_used_percentage=round(memory_info.percent, 3),
         disk_space_total_gb=round(disk_info.total / (1024**3), 3),

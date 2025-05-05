@@ -30,8 +30,9 @@ from focoos.trainer.hooks.visualization import VisualizationHook
 from focoos.trainer.solver import ema
 from focoos.trainer.solver.build import build_lr_scheduler, build_optimizer
 from focoos.utils.distributed.dist import comm, create_ddp_model
-from focoos.utils.env import collect_env_info, seed_all_rng
+from focoos.utils.env import seed_all_rng
 from focoos.utils.logger import capture_all_output, get_logger
+from focoos.utils.system import get_focoos_version, get_system_info
 
 # Mapping of task types to their primary evaluation metrics
 task_metrics = {
@@ -82,11 +83,11 @@ class FocoosTrainer:
         if comm.is_main_process():
             os.makedirs(self.output_dir, exist_ok=True)
 
-        # add_file_logging(logger=logger, verbose=True, output=self.output_dir, rank=comm.get_local_rank())
         logger.info(f"📁 Experiment Output dir: {self.output_dir}")
 
         logger.info("Rank of current process: {}. World size: {}".format(comm.get_rank(), comm.get_world_size()))
-        logger.debug("Environment info:\n" + collect_env_info())
+        get_system_info().pprint()
+
         seed_all_rng(None if self.args.seed < 0 else self.args.seed + comm.get_rank())
         torch.backends.cudnn.benchmark = False
 
@@ -103,6 +104,7 @@ class FocoosTrainer:
         # Setup Model
         self.model = model
         self.model_info = model_info
+        self.model_info.focoos_version = get_focoos_version()
         self.checkpoint = self.args.init_checkpoint
 
         self.metric = None

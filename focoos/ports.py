@@ -623,6 +623,7 @@ class GPUInfo(FocoosBaseModel):
     gpu_count: Optional[int] = None
     gpu_driver: Optional[str] = None
     gpu_cuda_version: Optional[str] = None
+    total_gpu_memory_gb: Optional[float] = None
     devices: Optional[list[GPUDevice]] = None
 
 
@@ -630,49 +631,104 @@ class SystemInfo(FocoosBaseModel):
     """System information including hardware and software details."""
 
     focoos_host: Optional[str] = None
+    focoos_version: Optional[str] = None
+    python_version: Optional[str] = None
     system: Optional[str] = None
     system_name: Optional[str] = None
     cpu_type: Optional[str] = None
     cpu_cores: Optional[int] = None
     memory_gb: Optional[float] = None
     memory_used_percentage: Optional[float] = None
-    available_providers: Optional[list[str]] = None
+    available_onnx_providers: Optional[list[str]] = None
     disk_space_total_gb: Optional[float] = None
     disk_space_used_percentage: Optional[float] = None
+    pytorch_info: Optional[str] = None
     gpu_info: Optional[GPUInfo] = None
     packages_versions: Optional[dict[str, str]] = None
     environment: Optional[dict[str, str]] = None
 
-    def pretty_print(self):
-        print("================ SYSTEM INFO ====================")
-        for key, value in self.model_dump().items():
+    def pprint(self):
+        """Pretty print the system info."""
+        from focoos.utils.logger import get_logger
+
+        logger = get_logger("SystemInfo")
+
+        output_lines = ["\n================ 🔍 SYSTEM INFO 🔍 ===================="]
+        model_data = self.model_dump()
+
+        if "focoos_host" in model_data and "focoos_version" in model_data:
+            output_lines.append(f"focoos: {model_data.get('focoos_host')} (v{model_data.get('focoos_version')})")
+            model_data.pop("focoos_host", None)
+            model_data.pop("focoos_version", None)
+
+        if "system" in model_data and "system_name" in model_data:
+            output_lines.append(f"system: {model_data.get('system')} ({model_data.get('system_name')})")
+            model_data.pop("system", None)
+            model_data.pop("system_name", None)
+
+        if "cpu_type" in model_data and "cpu_cores" in model_data:
+            output_lines.append(f"cpu: {model_data.get('cpu_type')} ({model_data.get('cpu_cores')} cores)")
+            model_data.pop("cpu_type", None)
+            model_data.pop("cpu_cores", None)
+
+        if "memory_gb" in model_data and "memory_used_percentage" in model_data:
+            output_lines.append(
+                f"memory_gb: {model_data.get('memory_gb')} ({model_data.get('memory_used_percentage')}% used)"
+            )
+            model_data.pop("memory_gb", None)
+            model_data.pop("memory_used_percentage", None)
+
+        if "disk_space_total_gb" in model_data and "disk_space_used_percentage" in model_data:
+            output_lines.append(
+                f"disk_space_total_gb: {model_data.get('disk_space_total_gb')} ({model_data.get('disk_space_used_percentage')}% used)"
+            )
+            model_data.pop("disk_space_total_gb", None)
+            model_data.pop("disk_space_used_percentage", None)
+
+        for key, value in model_data.items():
             if key == "gpu_info" and value is not None:
-                print(f"{key}:")
-                print(f"  - gpu_count: {value.get('gpu_count')}")
-                print(f"  - gpu_driver: {value.get('gpu_driver')}")
-                print(f"  - gpu_cuda_version: {value.get('gpu_cuda_version')}")
+                output_lines.append(f"{key}:")
+                output_lines.append(f"  - gpu_count: {value.get('gpu_count')}")
+                output_lines.append(f"  - total_memory_gb: {value.get('total_gpu_memory_gb')} GB")
+                output_lines.append(f"  - gpu_driver: {value.get('gpu_driver')}")
+                output_lines.append(f"  - gpu_cuda_version: {value.get('gpu_cuda_version')}")
                 if value.get("devices"):
-                    print("  - devices:")
+                    output_lines.append("  - devices:")
                     for device in value.get("devices", []):
-                        print(f"    - GPU {device.get('gpu_id')}:")
-                        for device_key, device_value in device.items():
-                            if device_key != "gpu_id":
-                                print(f"      - {device_key}: {device_value}")
+                        gpu_memory_used = (
+                            f"{device.get('gpu_memory_used_percentage')}%"
+                            if device.get("gpu_memory_used_percentage") is not None
+                            else "N/A"
+                        )
+                        gpu_load = (
+                            f"{device.get('gpu_load_percentage')}%"
+                            if device.get("gpu_load_percentage") is not None
+                            else "N/A"
+                        )
+                        gpu_memory_total = (
+                            f"{device.get('gpu_memory_total_gb')} GB"
+                            if device.get("gpu_memory_total_gb") is not None
+                            else "N/A"
+                        )
+
+                        output_lines.append(
+                            f"    - GPU {device.get('gpu_id')}: {device.get('gpu_name')}, Memory: {gpu_memory_total} ({gpu_memory_used} used), Load: {gpu_load}"
+                        )
             elif isinstance(value, list):
-                print(f"{key}:")
-                for item in value:
-                    print(f"  - {item}")
+                output_lines.append(f"{key}: {value}")
             elif isinstance(value, dict) and key == "packages_versions":  # Special formatting for packages_versions
-                print(f"{key}:")
+                output_lines.append(f"{key}:")
                 for pkg_name, pkg_version in value.items():
-                    print(f"  - {pkg_name}: {pkg_version}")
+                    output_lines.append(f"  - {pkg_name}: {pkg_version}")
             elif isinstance(value, dict) and key == "environment":  # Special formatting for environment
-                print(f"{key}:")
+                output_lines.append(f"{key}:")
                 for env_key, env_value in value.items():
-                    print(f"  - {env_key}: {env_value}")
+                    output_lines.append(f"  - {env_key}: {env_value}")
             else:
-                print(f"{key}: {value}")
-        print("================================================")
+                output_lines.append(f"{key}: {value}")
+        output_lines.append("================================================")
+
+        logger.info("\n".join(output_lines))
 
 
 class ApiKey(FocoosBaseModel):
@@ -1095,6 +1151,7 @@ class ModelInfo(DictClass):
     weights_uri: Optional[str] = None
     val_dataset: Optional[str] = None
     val_metrics: Optional[dict] = None  # todo: make them explicit
+    focoos_version: Optional[str] = None
     latency: Optional[list[LatencyMetrics]] = None
 
     @classmethod

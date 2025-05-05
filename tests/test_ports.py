@@ -54,7 +54,7 @@ def test_pretty_print_with_system_info(mocker: MockerFixture):
         cpu_cores=8,
         memory_gb=16.0,
         memory_used_percentage=50.0,
-        available_providers=["provider1", "provider2"],
+        available_onnx_providers=["provider1", "provider2"],
         disk_space_total_gb=500.0,
         disk_space_used_percentage=60.0,
         packages_versions={"pytest": "6.2.4", "pydantic": "1.8.2"},
