@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from focoos.config import FOCOOS_CONFIG
 from focoos.utils.logger import get_logger
+from focoos.utils.system import get_focoos_version
 
 logger = get_logger(__name__)
 
@@ -36,8 +37,6 @@ class ApiClient:
             api_key (str): The API key for authorization.
             host_url (str): The base URL for the API.
         """
-        if not api_key:
-            raise ValueError("API key is required")
         if not host_url:
             raise ValueError("Host URL is required")
 
@@ -46,8 +45,12 @@ class ApiClient:
 
         self.default_headers = {
             "Authorization": f"Bearer {self.api_key}",
-            "user_agent": "focoos/0.0.1",
+            "user_agent": f"focoos/{get_focoos_version()}",
         }
+
+    def _check_api_key(self):
+        if not self.api_key:
+            raise ValueError("API key is required")
 
     def external_get(self, path: str, params: Optional[dict] = None, stream: bool = False):
         """
@@ -84,6 +87,7 @@ class ApiClient:
         Returns:
             Response: The response object from the requests library.
         """
+        self._check_api_key()
         url = f"{self.host_url}/{path}"
         headers = self.default_headers.copy()
         if extra_headers:
@@ -109,6 +113,7 @@ class ApiClient:
         Returns:
             Response: The response object from the requests library.
         """
+        self._check_api_key()
         url = f"{self.host_url}/{path}"
         headers = self.default_headers.copy()
         if extra_headers:
@@ -154,6 +159,7 @@ class ApiClient:
         Returns:
             Response: The response object from the requests library.
         """
+        self._check_api_key()
         url = f"{self.host_url}/{path}"
         headers = self.default_headers.copy()
         if extra_headers:
@@ -172,9 +178,10 @@ class ApiClient:
         Returns:
             Response: The response from the upload request
         """
+        self._check_api_key()
         return self.post(path, data={"path": file_path, "file_size_bytes": file_size})
 
-    def download_file(self, uri: str, file_dir: str, file_name: Optional[str] = None, skip_if_exists: bool = False):
+    def download_ext_file(self, uri: str, file_dir: str, file_name: Optional[str] = None, skip_if_exists: bool = False):
         """
         Download a file from a URI to a local directory.
 

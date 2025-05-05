@@ -568,17 +568,18 @@ class RuntimeTypes(str, Enum):
     TORCHSCRIPT_32 = "torchscript_32"
 
 
-class ModelFormat(str, Enum):
-    """Supported model formats.
+class ModelExtension(str, Enum):
+    """Supported model extension.
 
     Values:
         - ONNX: ONNX format
         - TORCHSCRIPT: TorchScript format
-
+        - WEIGHTS: Weights format
     """
 
     ONNX = "onnx"
     TORCHSCRIPT = "pt"
+    WEIGHTS = "pth"
 
     @classmethod
     def from_runtime_type(cls, runtime_type: RuntimeTypes):

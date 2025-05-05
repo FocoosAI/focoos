@@ -27,6 +27,7 @@ import cv2
 import numpy as np
 import supervision as sv
 
+from focoos.hub.api_client import ApiClient
 from focoos.ports import (
     FocoosDet,
     FocoosDetections,
@@ -36,7 +37,6 @@ from focoos.ports import (
     Task,
     TrainingInfo,
 )
-from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
 from focoos.utils.metrics import MetricsVisualizer
 from focoos.utils.vision import fai_detections_to_sv, image_loader
@@ -359,25 +359,3 @@ class RemoteModel:
                 return
 
             sleep(interval)
-
-    def delete_model(self) -> None:
-        """
-        Delete the model from the system.
-
-        This method sends a request to delete the model identified by `model_ref`.
-        If the request fails or the status code is not 204 (No Content), an error is logged
-        and a `ValueError` is raised.
-
-        Raises:
-            ValueError: If the delete model request fails or does not return a 204 status code.
-
-        Logs:
-            - Error message if the request to delete the model fails, including the status code and response text.
-
-        Returns:
-            None: This method does not return any value.
-        """
-        res = self.api_client.delete(f"models/{self.model_ref}")
-        if res.status_code != 204:
-            logger.error(f"Failed to delete model: {res.status_code} {res.text}")
-            raise ValueError(f"Failed to delete model: {res.status_code} {res.text}")

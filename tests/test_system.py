@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from focoos.hub.api_client import ApiClient
 from focoos.ports import GPUDevice, GPUInfo, SystemInfo
-from focoos.utils.api_client import ApiClient
 from focoos.utils.system import (
     get_cpu_name,
     get_cuda_version,

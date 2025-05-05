@@ -6,15 +6,15 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from focoos import Focoos
+from focoos import FocoosHUB
 from focoos.config import FOCOOS_CONFIG
+from focoos.hub.remote_model import RemoteModel
 from focoos.infer.infer_model import InferModel
-from focoos.ports import ModelNotFound, ModelPreview
-from focoos.remote.remote_model import RemoteModel
+from focoos.ports import ModelPreview
 
 
 @pytest.fixture
-def focoos_instance(mock_api_client) -> Focoos:
+def focoos_instance(mock_api_client) -> FocoosHUB:
     """Fixture to provide a Focoos instance with a mocked ApiClient."""
     mock_api_client.get.return_value.status_code = 200
     mock_api_client.get.return_value.json.return_value = {
@@ -34,7 +34,7 @@ def focoos_instance(mock_api_client) -> Focoos:
             "max_mlg4dnxlarge_training_jobs_hours": 1000,
         },
     }
-    return Focoos(api_key="test_api_key", host_url="http://mock-host-url.com")
+    return FocoosHUB(api_key="test_api_key", host_url="http://mock-host-url.com")
 
 
 @pytest.fixture
@@ -96,22 +96,22 @@ def mock_local_model():
     return MagicMock(spec=InferModel, name="model1", model_ref="ref1")
 
 
-def test_focoos_initialization_no_api_key(focoos_instance: Focoos):
+def test_focoos_initialization_no_api_key(focoos_instance: FocoosHUB):
     focoos_instance.api_client.get = MagicMock(
         return_value=MagicMock(status_code=200, json=lambda: {"email": "test@example.com"})
     )
     FOCOOS_CONFIG.focoos_api_key = ""
     with pytest.raises(ValueError):
-        Focoos(host_url="http://mock-host-url.com")
+        FocoosHUB(host_url="http://mock-host-url.com")
 
 
-def test_focoos_initialization_fail_to_fetch_user_info(focoos_instance: Focoos):
+def test_focoos_initialization_fail_to_fetch_user_info(focoos_instance: FocoosHUB):
     focoos_instance.api_client.get = MagicMock(return_value=MagicMock(status_code=500))
     with pytest.raises(ValueError):
-        Focoos(api_key="test_api_key")
+        FocoosHUB(api_key="test_api_key")
 
 
-def test_focoos_initialization(focoos_instance: Focoos):
+def test_focoos_initialization(focoos_instance: FocoosHUB):
     assert focoos_instance.api_key == "test_api_key"
     assert focoos_instance.user_info.email == "test@example.com"
     assert focoos_instance.user_info.company == "test_company"
@@ -127,7 +127,7 @@ def test_focoos_initialization(focoos_instance: Focoos):
     assert focoos_instance.user_info.quotas.max_mlg4dnxlarge_training_jobs_hours == 1000
 
 
-def test_get_model_info(focoos_instance: Focoos):
+def test_get_model_info(focoos_instance: FocoosHUB):
     mock_response = {
         "name": "test-model",
         "ref": "model-ref",
@@ -146,30 +146,30 @@ def test_get_model_info(focoos_instance: Focoos):
     assert model_info.description == "Test model description"
 
 
-def test_get_model_info_fail(focoos_instance: Focoos):
+def test_get_model_info_fail(focoos_instance: FocoosHUB):
     focoos_instance.api_client.get = MagicMock(return_value=MagicMock(status_code=500))
 
     with pytest.raises(ValueError):
         focoos_instance.get_model_info("test-model")
 
 
-def test_list_models(focoos_instance: Focoos, mock_list_models):
+def test_list_models(focoos_instance: FocoosHUB, mock_list_models):
     focoos_instance.api_client.get = MagicMock(return_value=MagicMock(status_code=200, json=lambda: mock_list_models))
 
-    models = focoos_instance.list_models()
+    models = focoos_instance.list_remote_models()
     assert len(models) == 2
     assert models[0].name == "model1"
     assert models[1].ref == "ref2"
 
 
-def test_list_models_fail(focoos_instance: Focoos):
+def test_list_models_fail(focoos_instance: FocoosHUB):
     focoos_instance.api_client.get = MagicMock(return_value=MagicMock(status_code=500))
 
     with pytest.raises(ValueError):
-        focoos_instance.list_models()
+        focoos_instance.list_remote_models()
 
 
-def test_list_focoos_models(focoos_instance: Focoos):
+def test_list_focoos_models(focoos_instance: FocoosHUB):
     mock_response = [
         {
             "ref": "mock_model_1_ref",
@@ -191,20 +191,20 @@ def test_list_focoos_models(focoos_instance: Focoos):
 
     focoos_instance.api_client.get = MagicMock(return_value=MagicMock(status_code=200, json=lambda: mock_response))
 
-    models = focoos_instance.list_focoos_models()
+    models = focoos_instance.list_pretrained_models()
     assert len(models) == 2
     assert models[0].name == "mock_model_1_name"
     assert models[1].ref == "mock_model_2_ref"
 
 
-def test_list_focoos_models_fail(focoos_instance: Focoos):
+def test_list_focoos_models_fail(focoos_instance: FocoosHUB):
     focoos_instance.api_client.get = MagicMock(return_value=MagicMock(status_code=500))
 
     with pytest.raises(ValueError):
-        focoos_instance.list_focoos_models()
+        focoos_instance.list_pretrained_models()
 
 
-def test_list_shared_datasets(focoos_instance: Focoos, mock_shared_datasets):
+def test_list_shared_datasets(focoos_instance: FocoosHUB, mock_shared_datasets):
     focoos_instance.api_client.get = MagicMock(
         return_value=MagicMock(status_code=200, json=lambda: mock_shared_datasets)
     )
@@ -216,7 +216,7 @@ def test_list_shared_datasets(focoos_instance: Focoos, mock_shared_datasets):
     assert res[1].ref == "cce71b2050be4e28"
 
 
-def test_list_shared_datasets_fail(focoos_instance: Focoos):
+def test_list_shared_datasets_fail(focoos_instance: FocoosHUB):
     focoos_instance.api_client.get = MagicMock(return_value=MagicMock(status_code=500))
     with pytest.raises(ValueError):
         focoos_instance.list_shared_datasets()
@@ -227,44 +227,7 @@ unit tests get_model_by_name
 """
 
 
-@pytest.mark.parametrize("model_name", ["model1", "Model1"])
-def test_get_model_by_name_remote(
-    focoos_instance: Focoos,
-    mock_list_models_as_base_models,
-    mock_remote_model,
-    model_name,
-):
-    focoos_instance.list_models = MagicMock(return_value=mock_list_models_as_base_models)
-    focoos_instance.get_remote_model = MagicMock(return_value=mock_remote_model)
-
-    model = focoos_instance.get_model_by_name(name=model_name, remote=True)
-    assert model is not None
-    assert model.model_ref == "ref1"
-    assert isinstance(model, RemoteModel)
-
-
-@pytest.mark.parametrize("model_name", ["model1", "Model1"])
-def test_get_model_by_name_local(
-    focoos_instance: Focoos,
-    mock_list_models_as_base_models,
-    mock_local_model,
-    model_name,
-):
-    focoos_instance.list_models = MagicMock(return_value=mock_list_models_as_base_models)
-    focoos_instance.get_infer_model = MagicMock(return_value=mock_local_model)
-    model = focoos_instance.get_model_by_name(name=model_name, remote=False)
-    assert model is not None
-    assert model.model_ref == "ref1"
-    assert isinstance(model, InferModel)
-
-
-def test_get_model_by_name_model_not_found(focoos_instance: Focoos, mock_list_models):
-    focoos_instance.api_client.get = MagicMock(return_value=MagicMock(status_code=200, json=lambda: mock_list_models))
-    with pytest.raises(ModelNotFound):
-        focoos_instance.get_model_by_name(name="model3")
-
-
-def test_get_remote_model(mocker: MockerFixture, focoos_instance: Focoos, mock_remote_model, mock_api_client):
+def test_get_remote_model(mocker: MockerFixture, focoos_instance: FocoosHUB, mock_remote_model, mock_api_client):
     mock_remote_model_class = mocker.patch("focoos.focoos.RemoteModel", autospec=True)
     mock_remote_model_class.return_value = mock_remote_model
     model_ref = "ref1"
@@ -275,7 +238,7 @@ def test_get_remote_model(mocker: MockerFixture, focoos_instance: Focoos, mock_r
     assert isinstance(model, RemoteModel)
 
 
-def test_get_infer_model(mocker: MockerFixture, focoos_instance: Focoos, mock_local_model):
+def test_get_infer_model(mocker: MockerFixture, focoos_instance: FocoosHUB, mock_local_model):
     # Mock the LocalModel class
     mock_local_model_class = mocker.patch("focoos.infer.infer_model.InferModel", autospec=True)
     mock_local_model_class.return_value = mock_local_model
@@ -303,7 +266,7 @@ def test_get_infer_model(mocker: MockerFixture, focoos_instance: Focoos, mock_lo
         download_model_spy.assert_not_called()
 
 
-def test_get_local_model_with_download(mocker: MockerFixture, focoos_instance: Focoos, mock_local_model):
+def test_get_local_model_with_download(mocker: MockerFixture, focoos_instance: FocoosHUB, mock_local_model):
     # Mock the LocalModel class
     mock_local_model_class = mocker.patch("focoos.focoos.LocalModel", autospec=True)
     mock_local_model_class.return_value = mock_local_model
@@ -334,7 +297,7 @@ def test_get_local_model_with_download(mocker: MockerFixture, focoos_instance: F
 
 def test_new_model_created(
     mocker: MockerFixture,
-    focoos_instance: Focoos,
+    focoos_instance: FocoosHUB,
     mock_remote_model: RemoteModel,
     mock_api_client,
 ):
@@ -356,7 +319,7 @@ def test_new_model_created(
     assert isinstance(model, RemoteModel)
 
 
-def test_new_model_already_exists(mocker: MockerFixture, focoos_instance: Focoos, mock_remote_model: RemoteModel):
+def test_new_model_already_exists(mocker: MockerFixture, focoos_instance: FocoosHUB, mock_remote_model: RemoteModel):
     model_name = "fakename"
     focoos_instance.api_client.post = MagicMock(return_value=MagicMock(status_code=409))
     mock_get_model_by_name = mocker.patch.object(focoos_instance, "get_model_by_name", autospec=True)
@@ -368,14 +331,14 @@ def test_new_model_already_exists(mocker: MockerFixture, focoos_instance: Focoos
     assert isinstance(model, RemoteModel)
 
 
-def test_new_model_fail(focoos_instance: Focoos):
+def test_new_model_fail(focoos_instance: FocoosHUB):
     model_name = "fakename"
     focoos_instance.api_client.post = MagicMock(return_value=MagicMock(status_code=500))
     model = focoos_instance.new_model(model_name, "fakefocoosmodel", "fakedescription")
     assert model is None
 
 
-def test_download_model_already_exists(focoos_instance: Focoos):
+def test_download_model_already_exists(focoos_instance: FocoosHUB):
     model_ref = "ref1"
     with tempfile.TemporaryDirectory() as model_dir_tmp:
         focoos_instance.focoos_dir = model_dir_tmp
@@ -389,7 +352,7 @@ def test_download_model_already_exists(focoos_instance: Focoos):
         assert model_path == str(model_dir_tmp / "model.onnx")
 
 
-def test_download_model_onnx_fail(focoos_instance: Focoos):
+def test_download_model_onnx_fail(focoos_instance: FocoosHUB):
     model_ref = "ref1"
     focoos_instance.api_client.get = MagicMock(return_value=MagicMock(status_code=500))
     with tempfile.TemporaryDirectory() as model_dir_tmp:
@@ -399,7 +362,7 @@ def test_download_model_onnx_fail(focoos_instance: Focoos):
         assert not (pathlib.Path(focoos_instance.focoos_dir) / "model.onnx").exists()
 
 
-def test_download_model_onnx_ok_but_get_external_fail(mocker: MockerFixture, focoos_instance: Focoos):
+def test_download_model_onnx_ok_but_get_external_fail(mocker: MockerFixture, focoos_instance: FocoosHUB):
     model_ref = "ref1"
     # Mock successful API response for model metadata
     focoos_instance.api_client.get = MagicMock(
@@ -418,7 +381,7 @@ def test_download_model_onnx_ok_but_get_external_fail(mocker: MockerFixture, foc
     with tempfile.TemporaryDirectory() as model_dir_tmp:
         focoos_instance.focoos_dir = model_dir_tmp
         # Mock failed download from Focoos Cloud
-        focoos_instance.api_client.download_file = MagicMock(side_effect=ValueError("Failed to download model"))
+        focoos_instance.api_client.download_ext_file = MagicMock(side_effect=ValueError("Failed to download model"))
 
         # Should raise ValueError when download fails
         with pytest.raises(ValueError, match="Failed to download model"):
@@ -430,7 +393,7 @@ def test_download_model_onnx_ok_but_get_external_fail(mocker: MockerFixture, foc
         assert not (model_dir / "focoos_metadata.json").exists()
 
 
-def test_download_model_onnx(mocker: MockerFixture, focoos_instance: Focoos):
+def test_download_model_onnx(mocker: MockerFixture, focoos_instance: FocoosHUB):
     with tempfile.TemporaryDirectory() as model_dir_tmp:
         focoos_instance.focoos_dir = model_dir_tmp
         model_ref = "ref1"
@@ -445,7 +408,7 @@ def test_download_model_onnx(mocker: MockerFixture, focoos_instance: Focoos):
             ),
         )
         focoos_instance.api_client.external_get = MagicMock(return_value=MagicMock(status_code=200))
-        focoos_instance.api_client.download_file = MagicMock(return_value=expected_path)
+        focoos_instance.api_client.download_ext_file = MagicMock(return_value=expected_path)
         mock_model_metadata = mocker.patch("focoos.focoos.ModelMetadata.from_json", autospec=True)
         mock_model_metadata.return_value = MagicMock(model_dump_json=lambda: "fake_model_dump")
         focoos_instance.api_client.external_get = MagicMock(

@@ -3,13 +3,13 @@ import os
 import cv2
 
 import gradio as gr
-from focoos import Focoos
+from focoos import FocoosHUB
 
 ASSETS_DIR = os.path.dirname(os.path.abspath(__file__)) + "/assets"
 
 focoos_models = []
-focoos = Focoos(api_key=os.getenv("FOCOOS_API_KEY"))
-focoos_models = [model.ref for model in focoos.list_focoos_models()]
+focoos = FocoosHUB(api_key=os.getenv("FOCOOS_API_KEY"))
+focoos_models = [model.ref for model in focoos.list_pretrained_models()]
 loaded_models = {}
 image_examples = [
     ["fai-rtdetr-l-coco", f"{ASSETS_DIR}/pexels-abby-chung.jpg"],

@@ -183,6 +183,14 @@ class AutoModel:
         except Exception as e:
             raise RuntimeError(f"Error loading model {pretrained_model_name}: {str(e)}")
 
+    @classmethod
+    def from_hub(
+        cls, model_ref: str, infer: bool = False, api_key: Optional[str] = None
+    ):  # ->  Union[FocoosModel, InferModel]:
+        """Load a model from the Focoos Hub"""
+        # focoos = FocoosHUB()
+        pass
+
 
 class AutoConfigBackbone:
     """Automatic backbone configuration manager with lazy loading"""

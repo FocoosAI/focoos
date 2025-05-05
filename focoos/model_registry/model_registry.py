@@ -1,7 +1,7 @@
 import os
 from typing import Dict
 
-from focoos.ports import ModelInfo
+from focoos.ports import MODELS_DIR, ModelInfo
 from focoos.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -37,7 +37,19 @@ class ModelRegistry:
         "fai-mf-s-coco-ins": os.path.join(REGISTRY_PATH, "fai-mf-s-coco-ins.json"),
     }
 
-    # _user_models: Dict[str, ModelInfo] = {}
+    _user_models: Dict[str, ModelInfo] = {}
+
+    def __init__(self):
+        self._load_user_models()
+
+    def _load_user_models(self):
+        dir_list = [d for d in os.listdir(MODELS_DIR) if not d.startswith("fai-")]
+        for model_ref in dir_list:
+            info_keys = ["focoos_metadata.json", "model_info.json"]
+            info_files = [os.path.join(MODELS_DIR, model_ref, info_key) for info_key in info_keys]
+            for info_file in info_files:
+                if os.path.exists(info_file):
+                    self._user_models[model_ref] = ModelInfo.from_json(info_file)
 
     @classmethod
     def get_model_info(cls, model_name: str) -> ModelInfo:
@@ -52,4 +64,4 @@ class ModelRegistry:
     @classmethod
     def list_models(cls) -> list[str]:
         """List all available models"""
-        return list(cls._pretrained_models.keys())
+        return list(cls._pretrained_models.keys()) + list(cls._user_models.keys())

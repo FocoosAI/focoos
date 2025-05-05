@@ -6,7 +6,7 @@ from focoos.ports import (
     GPUDevice,
     GPUInfo,
     Hyperparameters,
-    ModelFormat,
+    ModelExtension,
     RuntimeTypes,
     SystemInfo,
 )
@@ -111,20 +111,20 @@ def test_pretty_print_with_system_info(mocker: MockerFixture):
 @pytest.mark.parametrize(
     "runtime_type,expected_format",
     [
-        (RuntimeTypes.ONNX_CUDA32, ModelFormat.ONNX),
-        (RuntimeTypes.ONNX_TRT32, ModelFormat.ONNX),
-        (RuntimeTypes.ONNX_TRT16, ModelFormat.ONNX),
-        (RuntimeTypes.ONNX_CPU, ModelFormat.ONNX),
-        (RuntimeTypes.ONNX_COREML, ModelFormat.ONNX),
-        (RuntimeTypes.TORCHSCRIPT_32, ModelFormat.TORCHSCRIPT),
+        (RuntimeTypes.ONNX_CUDA32, ModelExtension.ONNX),
+        (RuntimeTypes.ONNX_TRT32, ModelExtension.ONNX),
+        (RuntimeTypes.ONNX_TRT16, ModelExtension.ONNX),
+        (RuntimeTypes.ONNX_CPU, ModelExtension.ONNX),
+        (RuntimeTypes.ONNX_COREML, ModelExtension.ONNX),
+        (RuntimeTypes.TORCHSCRIPT_32, ModelExtension.TORCHSCRIPT),
     ],
 )
 def test_model_format_from_runtime_type(runtime_type, expected_format):
     """Test that from_runtime_type returns correct ModelFormat for each RuntimeType"""
-    assert ModelFormat.from_runtime_type(runtime_type) == expected_format
+    assert ModelExtension.from_runtime_type(runtime_type) == expected_format
 
 
 def test_model_format_from_runtime_type_invalid():
     """Test that from_runtime_type raises ValueError for invalid runtime type"""
     with pytest.raises(ValueError, match="Invalid runtime type:.*"):
-        ModelFormat.from_runtime_type("invalid_runtime")
+        ModelExtension.from_runtime_type("invalid_runtime")

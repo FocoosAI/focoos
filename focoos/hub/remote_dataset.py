@@ -1,8 +1,8 @@
 import os
 from typing import Optional
 
+from focoos.hub.api_client import ApiClient
 from focoos.ports import DATASETS_DIR, DatasetPreview, DatasetSpec
-from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -124,37 +124,6 @@ class RemoteDataset:
             raise ValueError(f"Failed to download dataset data: {res.status_code} {res.text}")
         url = res.json()["download_uri"]
 
-        path = self.api_client.download_file(url, path, skip_if_exists=True)
+        path = self.api_client.download_ext_file(url, path, skip_if_exists=True)
         logger.info(f"✅ Dataset data downloaded to {path}")
         return path
-
-    def delete(self):
-        """
-        Deletes the entire dataset from the remote storage.
-
-        Raises:
-            Exception: If the deletion fails.
-        """
-        try:
-            res = self.api_client.delete(f"datasets/{self.ref}")
-            res.raise_for_status()
-            logger.warning(f"Deleted dataset {self.ref}")
-        except Exception as e:
-            logger.error(f"Failed to delete dataset {self.ref}: {e}")
-            raise e
-
-    def delete_remote_data(self):
-        """
-        Deletes only the data content of the dataset while preserving metadata.
-
-        Updates the metadata after successful deletion.
-        """
-        try:
-            res = self.api_client.delete(f"datasets/{self.ref}/data")
-
-            res.raise_for_status()
-            new_metadata = DatasetPreview.from_json(res.json())
-            self.metadata = new_metadata
-            logger.warning(f"Deleted dataset data {self.ref}")
-        except Exception as e:
-            logger.error(f"Failed to delete dataset data {self.ref}: {e}")

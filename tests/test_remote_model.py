@@ -5,8 +5,8 @@ import pytest
 from pytest_mock import MockerFixture
 
 import tests
+from focoos.hub.remote_model import RemoteModel
 from focoos.ports import Metrics, ModelStatus, RemoteModelInfo, Task, TrainingInfo
-from focoos.remote.remote_model import RemoteModel
 
 
 def _get_mock_remote_model(mocker: MockerFixture, mock_api_client, image_ndarray, mock_metadata: RemoteModelInfo):

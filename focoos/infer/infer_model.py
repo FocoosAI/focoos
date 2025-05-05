@@ -34,7 +34,7 @@ from focoos.infer.runtimes.load_runtime import load_runtime
 from focoos.ports import (
     FocoosDetections,
     LatencyMetrics,
-    ModelFormat,
+    ModelExtension,
     RemoteModelInfo,
     RuntimeTypes,
     Task,
@@ -87,11 +87,11 @@ class InferModel:
         """
         # Determine runtime type and model format
         runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
-        model_format = ModelFormat.from_runtime_type(runtime_type)
+        extension = ModelExtension.from_runtime_type(runtime_type)
 
         # Set model directory and path
         self.model_dir: Union[str, Path] = model_dir
-        self.model_path = os.path.join(model_dir, f"model.{model_format.value}")
+        self.model_path = os.path.join(model_dir, f"model.{extension.value}")
         logger.debug(f"Runtime type: {runtime_type}, Loading model from {self.model_path}..")
 
         # Check if model path exists

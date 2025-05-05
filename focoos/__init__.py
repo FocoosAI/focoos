@@ -1,5 +1,5 @@
 from .config import FOCOOS_CONFIG
-from .focoos import Focoos
+from .hub import ApiClient, FocoosHUB, RemoteDataset, RemoteModel
 from .infer.infer_model import InferModel
 from .infer.runtimes.load_runtime import load_runtime
 from .infer.runtimes.onnx import ONNXRuntime
@@ -23,10 +23,7 @@ from .ports import (
     SystemInfo,
     Task,
     TrainingInfo,
-    TrainInstance,
 )
-from .remote.remote_model import RemoteModel
-from .utils.api_client import ApiClient
 from .utils.logger import _setup_logging, get_logger
 from .utils.system import get_cuda_version, get_system_info
 from .utils.vision import (
@@ -44,7 +41,7 @@ _setup_logging()
 
 __all__ = [
     "FOCOOS_CONFIG",
-    "Focoos",
+    "FocoosHUB",
     "InferModel",
     "RemoteModel",
     "FocoosDetections",
@@ -63,7 +60,6 @@ __all__ = [
     "RuntimeTypes",
     "SystemInfo",
     "TrainingInfo",
-    "TrainInstance",
     "get_system_info",
     "get_cuda_version",
     "ONNXRuntime",
@@ -81,4 +77,6 @@ __all__ = [
     "sv_to_fai_detections",
     "get_logger",
     "ApiClient",
+    "RemoteDataset",
+    "RemoteModel",
 ]
