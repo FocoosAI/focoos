@@ -41,6 +41,7 @@ except ImportError:
 
 # from supervision.detection.utils import mask_to_xyxy
 from focoos.ports import (
+    FocoosTask,
     LatencyMetrics,
     ModelMetadata,
     OnnxRuntimeOpts,
@@ -210,7 +211,12 @@ class ONNXRuntime(BaseRuntime):
 
     def _warmup(self):
         self.logger.info("⏱️ [onnxruntime] Warming up model ..")
-        np_image = np.random.rand(1, 3, 640, 640).astype(self.dtype)
+        size = (
+            self.model_metadata.im_size
+            if self.model_metadata.task == FocoosTask.DETECTION and self.model_metadata.im_size
+            else 640
+        )
+        np_image = np.random.rand(1, 3, size, size).astype(self.dtype)
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
 
@@ -312,7 +318,7 @@ class TorchscriptRuntime(BaseRuntime):
         self.logger = get_logger(name="TorchscriptEngine")
         self.logger.info(f"🔧 [torchscript] Device: {self.device}")
         self.opts = opts
-
+        self.model_metadata = model_metadata
         map_location = None if torch.cuda.is_available() else "cpu"
 
         self.model = torch.jit.load(model_path, map_location=map_location)
@@ -321,7 +327,12 @@ class TorchscriptRuntime(BaseRuntime):
         if self.opts.warmup_iter > 0:
             self.logger.info("⏱️ [torchscript] Warming up model..")
             with torch.no_grad():
-                np_image = torch.rand(1, 3, 640, 640, device=self.device)
+                size = (
+                    self.model_metadata.im_size
+                    if self.model_metadata.task == FocoosTask.DETECTION and self.model_metadata.im_size
+                    else 640
+                )
+                np_image = torch.rand(1, 3, size, size, device=self.device)
                 for _ in range(self.opts.warmup_iter):
                     self.model(np_image)
             self.logger.info("⏱️ [torchscript] WARMUP DONE")
