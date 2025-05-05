@@ -1,8 +1,10 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Literal
 
 from focoos.models.fai_model import ModelConfig
 from focoos.nn.backbone.base import BackboneConfig
+
+PostprocessingType = Literal["semantic", "instance"]
 
 
 @dataclass
@@ -37,7 +39,7 @@ class MaskFormerConfig(ModelConfig):
 
     # Inference configuration
     # Options: "semantic", "instance", "panoptic"
-    postprocessing_type: str = "semantic"
+    postprocessing_type: PostprocessingType = "semantic"
     top_k: int = 300
     mask_threshold: float = 0.5
 

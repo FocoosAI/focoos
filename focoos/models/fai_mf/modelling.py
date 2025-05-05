@@ -623,7 +623,7 @@ class FAIMaskFormer(BaseModelNN):
         super().__init__(config)
         self._export = False
         self.config = config
-        accepted_postprocessing_types = ["semantic", "instance", "panoptic"]
+        accepted_postprocessing_types = ["semantic", "instance"]
         if self.config.postprocessing_type not in accepted_postprocessing_types:
             raise ValueError(
                 f"Invalid postprocessing type: {self.config.postprocessing_type}. Must be one of: {accepted_postprocessing_types}"

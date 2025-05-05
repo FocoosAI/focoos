@@ -14,6 +14,15 @@ from focoos.structures import BitMasks, ImageList, Instances
 from focoos.utils.memory import retry_if_cuda_oom
 
 
+def interpolate_image(image, size):
+    return torch.nn.functional.interpolate(
+        image.unsqueeze(0),
+        size=size,
+        mode="bilinear",
+        align_corners=False,
+    )[0]
+
+
 def binary_mask_to_base64(binary_mask: np.ndarray) -> str:
     """
     Converts a binary mask (NumPy array) to a base64-encoded PNG image using OpenCV.
@@ -203,14 +212,6 @@ class MaskFormerProcessor(BaseProcessor):
             out_stride = size[1] // mask_pred_result.shape[2]
             mask_pred_result = mask_pred_result[:, : 1 + size[0] // out_stride, : 1 + size[1] // out_stride]
 
-            def interpolate_image(image, size):
-                return torch.nn.functional.interpolate(
-                    image.unsqueeze(0),
-                    size=size,
-                    mode="bilinear",
-                    align_corners=False,
-                )[0]
-
             mask_pred_result = retry_if_cuda_oom(interpolate_image)(mask_pred_result, (height, width))
             result = self.processing_fn(mask_cls_result, mask_pred_result)
             results.append({self.eval_output_name: result})
@@ -323,15 +324,23 @@ class MaskFormerProcessor(BaseProcessor):
         labels = labels.detach().cpu()
 
         for i in range(batch_size):
+            if len(bin_mask_pred[i]) == 0:
+                results.append(FocoosDetections(detections=[]))
+                continue
+            # interpolate mask pred to original size
+            bin_mask_pred_resized = retry_if_cuda_oom(interpolate_image)(
+                bin_mask_pred[i].float(), image_sizes[i]
+            ).bool()
+
             if self.config.postprocessing_type == "instance":
-                box_pred = masks_to_xyxy(bin_mask_pred[i].numpy())
+                box_pred = masks_to_xyxy(bin_mask_pred_resized.numpy())
                 py_box_pred = box_pred.tolist()
             else:
                 py_box_pred = [None] * len(scores[i])
 
             py_scores = scores[i].tolist()
             py_labels = labels[i].tolist()
-            py_mask_pred = bin_mask_pred[i].numpy()
+            py_mask_pred = bin_mask_pred_resized.numpy()
 
             results.append(
                 FocoosDetections(
