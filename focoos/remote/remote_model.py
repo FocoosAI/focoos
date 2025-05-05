@@ -30,13 +30,11 @@ import supervision as sv
 from focoos.ports import (
     FocoosDet,
     FocoosDetections,
-    Hyperparameters,
     Metrics,
     ModelStatus,
     RemoteModelInfo,
     Task,
     TrainingInfo,
-    TrainInstance,
 )
 from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
@@ -112,49 +110,6 @@ class RemoteModel:
         self.metadata = RemoteModelInfo(**res.json())
         return self.metadata
 
-    def train(
-        self,
-        dataset_ref: str,
-        hyperparameters: Hyperparameters,
-        instance_type: TrainInstance = TrainInstance.ML_G4DN_XLARGE,
-        volume_size: int = 50,
-        max_runtime_in_seconds: int = 36000,
-    ) -> dict | None:
-        """
-        Initiate the training of a remote model on the Focoos platform.
-
-        This method sends a request to the Focoos platform to start the training process for the model
-        referenced by `self.model_ref`. It requires a dataset reference and hyperparameters for training,
-        as well as optional configuration options for the instance type, volume size, and runtime.
-
-        Args:
-            dataset_ref (str): The reference ID of the dataset to be used for training.
-            hyperparameters (Hyperparameters): A structure containing the hyperparameters for the training process.
-            instance_type (TrainInstance, optional): The type of training instance to use. Defaults to TrainInstance.ML_G4DN_XLARGE.
-            volume_size (int, optional): The size of the disk volume (in GB) for the training instance. Defaults to 50.
-            max_runtime_in_seconds (int, optional): The maximum runtime for training in seconds. Defaults to 36000.
-
-        Returns:
-            dict: A dictionary containing the response from the training initiation request. The content depends on the Focoos platform's response.
-
-        Raises:
-            ValueError: If the request to start training fails (e.g., due to incorrect parameters or server issues).
-        """
-        res = self.api_client.post(
-            f"models/{self.model_ref}/train",
-            data={
-                "dataset_ref": dataset_ref,
-                "instance_type": instance_type,
-                "volume_size": volume_size,
-                "max_runtime_in_seconds": max_runtime_in_seconds,
-                "hyperparameters": hyperparameters.model_dump(),
-            },
-        )
-        if res.status_code != 200:
-            logger.warning(f"Failed to train model: {res.status_code} {res.text}")
-            raise ValueError(f"Failed to train model: {res.status_code} {res.text}")
-        return res.json()
-
     def train_info(self) -> Optional[TrainingInfo]:
         """
         Retrieve the current status of the model training.
@@ -169,8 +124,8 @@ class RemoteModel:
         """
         res = self.api_client.get(f"models/{self.model_ref}/train/status")
         if res.status_code != 200:
-            logger.error(f"Failed to get train status: {res.status_code} {res.text}")
-            raise ValueError(f"Failed to get train status: {res.status_code} {res.text}")
+            logger.error(f"Failed to get train info: {res.status_code} {res.text}")
+            raise ValueError(f"Failed to get train info: {res.status_code} {res.text}")
         return TrainingInfo(**res.json())
 
     def train_logs(self) -> list[str]:
@@ -404,27 +359,6 @@ class RemoteModel:
                 return
 
             sleep(interval)
-
-    def stop_training(self) -> None:
-        """
-        Stop the training process of the model.
-
-        This method sends a request to stop the training of the model identified by `model_ref`.
-        If the request fails, an error is logged and a `ValueError` is raised.
-
-        Raises:
-            ValueError: If the stop training request fails.
-
-        Logs:
-            - Error message if the request to stop training fails, including the status code and response text.
-
-        Returns:
-            None: This method does not return any value.
-        """
-        res = self.api_client.delete(f"models/{self.model_ref}/train")
-        if res.status_code != 200:
-            logger.error(f"Failed to get stop training: {res.status_code} {res.text}")
-            raise ValueError(f"Failed to get stop training: {res.status_code} {res.text}")
 
     def delete_model(self) -> None:
         """

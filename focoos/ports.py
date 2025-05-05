@@ -408,16 +408,6 @@ class RemoteModelInfo(FocoosBaseModel):
     dataset: Optional[DatasetPreview] = None
 
 
-class TrainInstance(str, Enum):
-    """Available training instance types.
-
-    Values:
-        - ML_G4DN_XLARGE: ml.g4dn.xlarge instance, Nvidia Tesla T4, 16GB RAM, 4vCPU
-    """
-
-    ML_G4DN_XLARGE = "ml.g4dn.xlarge"
-
-
 class FocoosDet(FocoosBaseModel):
     """Single detection result from a model.
 

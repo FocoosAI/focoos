@@ -5,7 +5,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 import tests
-from focoos.ports import Hyperparameters, Metrics, ModelStatus, RemoteModelInfo, Task, TrainingInfo, TrainInstance
+from focoos.ports import Metrics, ModelStatus, RemoteModelInfo, Task, TrainingInfo
 from focoos.remote.remote_model import RemoteModel
 
 
@@ -99,18 +99,6 @@ def test_train_logs_ok(mock_remote_model: RemoteModel):
         assert result == ["log1", "log2"]
 
 
-def test_stop_training_fail(mock_remote_model: RemoteModel):
-    with pytest.raises(ValueError):
-        mock_remote_model.api_client.delete = MagicMock(return_value=MagicMock(status_code=500))
-        mock_remote_model.stop_training()
-
-
-def test_stop_training_ok(mock_remote_model: RemoteModel):
-    with tests.not_raises(Exception):
-        mock_remote_model.api_client.delete = MagicMock(return_value=MagicMock(status_code=200))
-        mock_remote_model.stop_training()
-
-
 def test_delete_model_fail(mock_remote_model: RemoteModel):
     with pytest.raises(ValueError):
         mock_remote_model.api_client.delete = MagicMock(return_value=MagicMock(status_code=500))
@@ -149,43 +137,6 @@ def mock_hyperparameters(mocker: MockerFixture):
         "focoos.remote_model.Hyperparameters.model_dump",
         return_value={"learning_rate": 0.01, "batch_size": 32},
     )
-
-
-def test_train_fail(
-    mock_remote_model: RemoteModel,
-    mock_hyperparameters: Hyperparameters,
-):
-    with pytest.raises(ValueError):
-        mock_remote_model.api_client.post = MagicMock(return_value=MagicMock(status_code=500))
-        mock_remote_model.train(
-            dataset_ref="dataset_123",
-            hyperparameters=mock_hyperparameters,
-            instance_type=TrainInstance.ML_G4DN_XLARGE,
-            volume_size=50,
-            max_runtime_in_seconds=36000,
-        )
-
-
-def test_train_ok(mock_remote_model: RemoteModel, mock_hyperparameters: Hyperparameters):
-    mock_remote_model.api_client.post = MagicMock(
-        return_value=MagicMock(
-            status_code=200,
-            json=MagicMock(
-                return_value={
-                    "status": "training started",
-                    "model_ref": "model_123",
-                }
-            ),
-        )
-    )
-    result = mock_remote_model.train(
-        dataset_ref="dataset_123",
-        hyperparameters=mock_hyperparameters,
-        instance_type=TrainInstance.ML_G4DN_XLARGE,
-        volume_size=50,
-        max_runtime_in_seconds=36000,
-    )
-    assert result == {"status": "training started", "model_ref": "model_123"}
 
 
 def test_metrics_semseg(mock_remote_model: RemoteModel, mocker):
