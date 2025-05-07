@@ -30,6 +30,7 @@ class ModelRegistry:
         "fai-detr-l-coco": os.path.join(REGISTRY_PATH, "fai-detr-l-coco.json"),
         "fai-detr-m-coco": os.path.join(REGISTRY_PATH, "fai-detr-m-coco.json"),
         "fai-detr-s-coco": os.path.join(REGISTRY_PATH, "fai-detr-s-coco.json"),
+        "fai-detr-n-coco": os.path.join(REGISTRY_PATH, "fai-detr-n-coco.json"),
         "fai-mf-l-ade": os.path.join(REGISTRY_PATH, "fai-mf-l-ade.json"),
         "fai-mf-m-ade": os.path.join(REGISTRY_PATH, "fai-mf-m-ade.json"),
         "fai-mf-l-coco-ins": os.path.join(REGISTRY_PATH, "fai-mf-l-coco-ins.json"),
