@@ -22,7 +22,6 @@ ROOT_DIR = Path.home() / "FocoosAI"
 ROOT_DIR = str(ROOT_DIR) if os.name == "nt" else ROOT_DIR
 MODELS_DIR = os.path.join(ROOT_DIR, "models")
 DATASETS_DIR = os.path.join(ROOT_DIR, "datasets")
-RUNS_DIR = os.path.join(ROOT_DIR, "runs")
 
 
 class FocoosBaseModel(BaseModel):
@@ -820,7 +819,7 @@ class TrainerArgs:
     """
 
     run_name: Optional[str] = None
-    output_dir: str = RUNS_DIR
+    output_dir: str = MODELS_DIR
     ckpt_dir: Optional[str] = None
     init_checkpoint: Optional[str] = None
     resume: bool = False
@@ -1010,6 +1009,7 @@ class ModelInfo(DictClass):
     task: Task
     config: dict
     focoos_model: Optional[str] = None
+    ref: Optional[str] = None
     description: Optional[str] = None
     train_args: Optional[TrainerArgs] = None
     weights_uri: Optional[str] = None

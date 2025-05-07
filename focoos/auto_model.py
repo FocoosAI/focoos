@@ -6,6 +6,7 @@ from typing import Callable, Dict, Optional, Type
 from urllib.parse import urlparse
 
 from focoos.hub.api_client import ApiClient
+from focoos.infer.infer_model import InferModel
 from focoos.model_registry.model_registry import ModelRegistry
 from focoos.models.fai_model import BaseModelNN, FocoosModel, ModelConfig
 from focoos.nn.backbone.base import BackboneConfig, BaseBackbone
@@ -44,7 +45,7 @@ class AutoModel:
 
     @classmethod
     def from_config(cls, model_info: ModelInfo, config: Optional[ModelConfig] = None, **kwargs) -> FocoosModel:
-        """Load a model from a configuration"""
+        """Load a model from a scratch configuration"""
         # Import the family module only if not already registered
         if model_info.model_family not in cls._REGISTERED_MODELS:
             # Import the family module
@@ -66,6 +67,13 @@ class AutoModel:
 
         model_info.config = config
         model = model_class(model_info.config)
+        if model_info.weights_uri:
+            weights = ModelArtifactsManager.get_weights_dict(model_info)
+            if weights:
+                model.load_state_dict(weights)
+                logger.info(f"✅ Weights loaded for model {model_info.name}")
+        else:
+            logger.warning(f"⚠️ Model {model_info.name} has no pretrained weights")
         return FocoosModel(model, model_info)
 
     @classmethod
@@ -108,24 +116,38 @@ class AutoModel:
             config = AutoConfig.from_dict(model_info.model_family, model_info.config, **kwargs)
 
         model_info.config = config
+        model_class = cls._MODEL_MAPPING[model_info.model_family.value]()
+        model = model_class(config)
+        focoos_model = FocoosModel(model, model_info)
 
-        try:
-            model_class = cls._MODEL_MAPPING[model_info.model_family.value]()
-            model = model_class(config)
-            focoos_model = FocoosModel(model, model_info)
+        if model_info.weights_uri:
+            weights = ModelArtifactsManager.get_weights_dict(model_info)
+            if weights:
+                focoos_model.load_weights(weights)
+                logger.info(f"✅ Weights loaded for model {pretrained_model_name}")
+        else:
+            logger.warning(f"⚠️ Model {pretrained_model_name} has no pretrained weights")
 
-            if model_info.weights_uri:
-                weights = PretrainedWeightsManager.get_weights_dict(model_info)
-                if weights:
-                    focoos_model.load_weights(weights)
-                    logger.info(f"✅ Weights loaded for model {pretrained_model_name}")
-            else:
-                logger.warning(f"⚠️ Model {pretrained_model_name} has no pretrained weights")
+        return focoos_model
 
-            return focoos_model
+    @classmethod
+    def from_models_dir(
+        cls, name: str, models_dir: Optional[str] = None, config: Optional[ModelConfig] = None, **kwargs
+    ) -> FocoosModel:
+        """Load a model from an experiment directory"""
+        if models_dir is None:
+            models_dir = MODELS_DIR
 
-        except Exception as e:
-            raise RuntimeError(f"Error loading model {pretrained_model_name}: {str(e)}")
+        run_dir = os.path.join(models_dir, name)
+        if not os.path.exists(run_dir):
+            raise ValueError(f"Run {name} not found in {models_dir}")
+        model_info_path = os.path.join(run_dir, "model_info.json")
+        if not os.path.exists(model_info_path):
+            raise ValueError(f"Model info not found in {run_dir}")
+        model_info = ModelInfo.from_json(model_info_path)
+        if model_info.weights_uri == "model_final.pth":
+            model_info.weights_uri = os.path.join(run_dir, model_info.weights_uri)
+        return cls.from_config(model_info, config=config, **kwargs)
 
     @classmethod
     def from_hub(
@@ -133,6 +155,22 @@ class AutoModel:
     ):  # ->  Union[FocoosModel, InferModel]:
         """Load a model from the Focoos Hub"""
         # focoos = FocoosHUB()
+        pass
+
+
+class AutoInferModel:
+    """Automatic inference model manager with lazy loading"""
+
+    @classmethod
+    def from_models_dir(cls, name: str, models_dir: Optional[str] = None) -> InferModel:
+        pass
+
+    @classmethod
+    def from_pretrained(cls, name: str) -> InferModel:
+        pass
+
+    @classmethod
+    def from_hub(cls, name: str) -> InferModel:
         pass
 
 
@@ -261,7 +299,7 @@ class AutoBackbone:
         return getattr(module, class_name)
 
 
-class PretrainedWeightsManager:
+class ModelArtifactsManager:
     @staticmethod
     def get_weights_dict(model_info: ModelInfo) -> Optional[dict]:
         """

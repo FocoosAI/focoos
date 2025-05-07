@@ -246,6 +246,14 @@ class FocoosModel:
     def config(self) -> dict:
         return self.model_info.config
 
+    @property
+    def classes(self):
+        return self.model_info.classes
+
+    @property
+    def task(self):
+        return self.model_info.task
+
     def export(
         self,
         export_cfg: ExportCfg,
