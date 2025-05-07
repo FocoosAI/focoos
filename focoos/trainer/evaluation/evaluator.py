@@ -173,7 +173,7 @@ def inference_on_dataset(
             start_compute_time = time.perf_counter()
             dict.get(callbacks or {}, "before_inference", lambda: None)()
             outputs = model(inputs)
-            outputs = model.post_process(outputs, inputs)
+            outputs = model.eval_post_process(outputs, inputs)
             dict.get(callbacks or {}, "after_inference", lambda: None)()
             if torch.cuda.is_available():
                 torch.cuda.synchronize()

@@ -49,7 +49,7 @@ class VisualizationHook(HookBase):
                 sample["height"], sample["width"] = sample["image"].shape[-2:]
 
                 samples = [sample]
-                prediction = self.model.post_process(self.model(samples), samples)[0]
+                prediction = self.model.eval_post_process(self.model(samples), samples)[0]
 
                 visualizer = Visualizer(
                     sample["image"].permute(1, 2, 0).cpu().numpy(),

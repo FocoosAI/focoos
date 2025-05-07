@@ -341,7 +341,6 @@ class FocoosTrainer:
                         model=self.model,  # type: ignore
                         dataset=self.data_val,
                         period=self.args.vis_period,
-                        # postprocessing=self.post_processor,
                         n_sample=self.args.samples,
                     ),
                 ]
