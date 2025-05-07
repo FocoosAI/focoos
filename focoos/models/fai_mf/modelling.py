@@ -24,7 +24,7 @@ from focoos.nn.layers.transformer import (
     TransformerEncoder,
     TransformerEncoderLayer,
 )
-from focoos.ports import DatasetEntry
+from focoos.ports import DatasetEntry, FocoosDetections
 from focoos.structures import Instances
 from focoos.utils.logger import get_logger
 
@@ -723,9 +723,51 @@ class FAIMaskFormer(BaseModelNN):
 
         return MaskFormerModelOutput(logits=logits, masks=masks, loss=losses)
 
-    def post_process(self, outputs, batched_inputs) -> list[dict[str, Union[Instances, torch.Tensor]]]:
+    def eval_post_process(
+        self, outputs: MaskFormerModelOutput, inputs: list[DatasetEntry]
+    ) -> list[dict[str, Instances | torch.Tensor]]:
         """
         Post-process the outputs of the model.
         This function is used in the evaluation phase to convert raw outputs to Instances.
         """
-        return self.processor.eval_postprocess(outputs, batched_inputs)
+        return self.processor.eval_postprocess(outputs, inputs)
+
+    def post_process(
+        self,
+        outputs: MaskFormerModelOutput,
+        inputs: Union[
+            torch.Tensor,
+            np.ndarray,
+            Image.Image,
+            list[Image.Image],
+            list[np.ndarray],
+            list[torch.Tensor],
+        ],
+        **kwargs,
+    ) -> list[FocoosDetections]:
+        """
+        Post-process the outputs of the model.
+        This function is used in the evaluation phase to convert raw outputs to Instances.
+        """
+        # Define the expected kwargs
+        expected_kwargs = ["threshold", "predict_all_pixels", "use_mask_score", "filter_empty_masks", "top_k"]
+
+        # Log warning for unexpected kwargs
+        for key in kwargs:
+            if key not in expected_kwargs:
+                logger.warning(f"Unexpected kwarg '{key}' provided to post_process")
+
+        threshold = kwargs.get("threshold", self.config.threshold)
+        predict_all_pixels = kwargs.get("predict_all_pixels", self.config.predict_all_pixels)
+        use_mask_score = kwargs.get("use_mask_score", self.config.use_mask_score)
+        filter_empty_masks = kwargs.get("filter_empty_masks", self.config.filter_empty_masks)
+        top_k = kwargs.get("top_k", self.top_k)
+        return self.processor.postprocess(
+            outputs,
+            inputs,
+            threshold=threshold,
+            predict_all_pixels=predict_all_pixels,
+            use_mask_score=use_mask_score,
+            filter_empty_masks=filter_empty_masks,
+            top_k=top_k,
+        )

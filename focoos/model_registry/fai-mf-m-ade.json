@@ -208,11 +208,15 @@
         "weight_dict_loss_ce": 2,
         "matcher_cost_class": 2,
         "matcher_cost_mask": 5,
-        "matcher_cost_dice": 5
+        "matcher_cost_dice": 5,
+        "predict_all_pixels": true,
+        "use_mask_score": false,
+        "filter_empty_masks": false,
+        "threshold": 0.5
     },
     "description": "MaskFormer Medium model (ADE20K)",
     "train_args": null,
-    "weights_uri": "/home/ubuntu/focoos-1/pretrained_models/models/fai-mf-m-ade/model_final.pth",
+    "weights_uri": "https://public.focoos.ai/pretrained_models/fai-mf-m-ade/model_final.pth",
     "val_dataset": "ade20k",
     "val_metrics": null,
     "latency": null

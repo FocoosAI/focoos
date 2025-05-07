@@ -132,11 +132,15 @@
         "weight_dict_loss_ce": 2,
         "matcher_cost_class": 2,
         "matcher_cost_mask": 5,
-        "matcher_cost_dice": 5
+        "matcher_cost_dice": 5,
+        "predict_all_pixels": false,
+        "use_mask_score": true,
+        "filter_empty_masks": true,
+        "threshold": 0.5
     },
     "description": "MaskFormer Large model (COCO Instance Segmentation)",
     "train_args": null,
-    "weights_uri": "/home/ubuntu/focoos-1/pretrained_models/fai-mf-l-coco-ins/model_final.pth",
+    "weights_uri": "https://public.focoos.ai/pretrained_models/fai-mf-l-coco-ins/model_final.pth",
     "val_dataset": "coco_2017_instance_val",
     "val_metrics": null,
     "latency": null

@@ -23,7 +23,7 @@ from focoos.nn.layers.conv import Conv2d, ConvNormLayer
 from focoos.nn.layers.deformable import ms_deform_attn_core_pytorch
 from focoos.nn.layers.functional import inverse_sigmoid
 from focoos.nn.layers.transformer import TransformerEncoder, TransformerEncoderLayer
-from focoos.ports import DatasetEntry
+from focoos.ports import DatasetEntry, FocoosDetections
 from focoos.structures import Instances
 from focoos.utils.box import box_cxcywh_to_xyxy, box_iou, generalized_box_iou
 from focoos.utils.distributed.comm import get_world_size
@@ -1345,9 +1345,37 @@ class FAIDetr(BaseModelNN):
 
         return DETRModelOutput(logits=outputs[0], boxes=outputs[1], loss=None)
 
-    def post_process(self, outputs, batched_inputs) -> list[dict[str, Instances]]:
+    def eval_post_process(self, outputs: DETRModelOutput, inputs: list[DatasetEntry]) -> list[dict[str, Instances]]:
         """
         Post-process the outputs of the model.
         This function is used in the evaluation phase to convert raw outputs to Instances.
         """
-        return self.processor.eval_postprocess(outputs, batched_inputs, top_k=self.top_k)
+        return self.processor.eval_postprocess(outputs, inputs, top_k=self.top_k)
+
+    def post_process(
+        self,
+        outputs: DETRModelOutput,
+        inputs: Union[
+            torch.Tensor,
+            np.ndarray,
+            Image.Image,
+            list[Image.Image],
+            list[np.ndarray],
+            list[torch.Tensor],
+        ],
+        **kwargs,
+    ) -> list[FocoosDetections]:
+        """
+        Post-process the outputs of the model.
+        This function is used in the evaluation phase to convert raw outputs to Instances.
+        """
+        expected_kwargs = ["threshold", "top_k"]
+
+        # Log warning for unexpected kwargs
+        for key in kwargs:
+            if key not in expected_kwargs:
+                logger.warning(f"Unexpected kwarg '{key}' provided to post_process")
+
+        top_k = kwargs.get("top_k", self.top_k)
+        threshold = kwargs.get("threshold", self.config.threshold)
+        return self.processor.postprocess(outputs, inputs, threshold=threshold, top_k=top_k)

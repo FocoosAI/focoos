@@ -30,11 +30,27 @@ class BaseModelNN(nn.Module):
             list[Image.Image],
             list[np.ndarray],
             list[torch.Tensor],
+            list[DatasetEntry],
         ],
-    ):
+    ) -> ModelOutput:
         raise NotImplementedError("Forward is not implemented for this model.")
 
-    def post_process(self, outputs, batched_inputs) -> list[dict[str, Instances]]:
+    def eval_post_process(self, outputs: ModelOutput, inputs: list[DatasetEntry]) -> list[dict[str, Instances]]:
+        raise NotImplementedError("Post-processing is not implemented for this model.")
+
+    def post_process(
+        self,
+        outputs: ModelOutput,
+        inputs: Union[
+            torch.Tensor,
+            np.ndarray,
+            Image.Image,
+            list[Image.Image],
+            list[np.ndarray],
+            list[torch.Tensor],
+        ],
+        **kwargs,
+    ) -> list[FocoosDetections]:
         raise NotImplementedError("Post-processing is not implemented for this model.")
 
 
@@ -50,12 +66,12 @@ class BaseProcessor:
 
     def post_process(
         self,
-        outputs,
+        outputs: ModelOutput,
         inputs: Union[torch.Tensor, np.ndarray, Image.Image, list[Image.Image], list[np.ndarray], list[torch.Tensor]],
     ) -> list[FocoosDetections]:
         raise NotImplementedError("Post-processing is not implemented for this model.")
 
-    def eval_post_process(self, outputs, inputs: list[DatasetEntry]):
+    def eval_post_process(self, outputs: ModelOutput, inputs: list[DatasetEntry]):
         raise NotImplementedError("Post-processing is not implemented for this model.")
 
     def get_image_sizes(
@@ -314,13 +330,14 @@ class FocoosModel:
             list[torch.Tensor],
         ],
         **kwargs,
-    ) -> ModelOutput:
+    ) -> list[FocoosDetections]:
         model = self.model.eval()
         try:
             model = model.cuda()
         except Exception:
             logger.warning("Unable to use CUDA")
-        return model(inputs, **kwargs)
+        output = model(inputs)
+        return model.post_process(output, inputs, **kwargs)
 
     def load_weights(self, weights: dict):
         checkpoint_state_dict = weights

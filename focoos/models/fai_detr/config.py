@@ -37,6 +37,9 @@ class DETRConfig(ModelConfig):
     pixel_decoder_nhead: int = 8
     transformer_predictor_nhead: int = 8
 
+    # Post-processing configuration
+    threshold: float = 0.5
+
     # Loss configuration
     criterion_deep_supervision: bool = True
     criterion_eos_coef: float = 0.1
