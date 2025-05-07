@@ -6,8 +6,8 @@ import numpy as np
 import torch
 from PIL import Image
 
-from focoos.models.fai_bf.config import BisenetFormerConfig
-from focoos.models.fai_bf.ports import BisenetFormerOutput, BisenetFormerTargets
+from focoos.models.bisenetformer.config import BisenetFormerConfig
+from focoos.models.bisenetformer.ports import BisenetFormerOutput, BisenetFormerTargets
 from focoos.models.fai_model import BaseProcessor
 from focoos.ports import DatasetEntry, FocoosDet, FocoosDetections
 from focoos.structures import BitMasks, ImageList, Instances

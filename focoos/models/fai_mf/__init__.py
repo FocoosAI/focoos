@@ -14,5 +14,5 @@ def _register():
         return MaskFormerConfig
 
     # Qui registriamo solo la funzione load_rtdetr_model, NON viene eseguita
-    AutoModel.register_model(ModelFamily.M2F, load_model)
-    AutoConfig.register_model(ModelFamily.M2F, load_config)
+    AutoModel.register_model(ModelFamily.MASKFORMER, load_model)
+    AutoConfig.register_model(ModelFamily.MASKFORMER, load_config)

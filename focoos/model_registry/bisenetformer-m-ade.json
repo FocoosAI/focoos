@@ -1,7 +1,7 @@
 {
-    "name": "fai-bf-m-ade",
-    "model_family": "fai_bf",
-    "focoos_model": "fai-bf-m-ade",
+    "name": "bisenetformer-m-ade",
+    "model_family": "bisenetformer",
+    "focoos_model": "bisenetformer-m-ade",
     "classes": [
         "wall",
         "building",
@@ -216,7 +216,7 @@
     },
     "description": "BisenetFormer Medium model (ADE20K)",
     "train_args": null,
-    "weights_uri": "https://public.focoos.ai/pretrained_models/fai-bf-m-ade/model_final.pth",
+    "weights_uri": "https://public.focoos.ai/pretrained_models/bisenetformer-m-ade/model_final.pth",
     "val_dataset": "ade20k",
     "val_metrics": null,
     "latency": null

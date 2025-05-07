@@ -8,7 +8,7 @@ import torchvision
 from scipy.optimize import linear_sum_assignment
 from torch import Tensor, autocast, nn
 
-from focoos.models.fai_bf.ports import BisenetFormerTargets
+from focoos.models.bisenetformer.ports import BisenetFormerTargets
 from focoos.structures import BitMasks, Boxes
 from focoos.utils.distributed.comm import get_world_size
 from focoos.utils.distributed.dist import is_dist_available_and_initialized

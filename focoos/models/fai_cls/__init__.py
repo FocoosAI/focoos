@@ -14,5 +14,5 @@ def _register_cls():
         return ClassificationConfig
 
     # Register the model and config loaders
-    AutoModel.register_model(ModelFamily.CLS, load_cls_model)
-    AutoConfig.register_model(ModelFamily.CLS, load_cls_config)
+    AutoModel.register_model(ModelFamily.IMAGE_CLASSIFIER, load_cls_model)
+    AutoConfig.register_model(ModelFamily.IMAGE_CLASSIFIER, load_cls_config)

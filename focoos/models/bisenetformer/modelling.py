@@ -7,10 +7,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from PIL import Image
 
-from focoos.models.fai_bf.config import BisenetFormerConfig
-from focoos.models.fai_bf.loss import MaskHungarianMatcher, SetCriterion
-from focoos.models.fai_bf.ports import BisenetFormerOutput, BisenetFormerTargets
-from focoos.models.fai_bf.processor import BisenetFormerProcessor
+from focoos.models.bisenetformer.config import BisenetFormerConfig
+from focoos.models.bisenetformer.loss import MaskHungarianMatcher, SetCriterion
+from focoos.models.bisenetformer.ports import BisenetFormerOutput, BisenetFormerTargets
+from focoos.models.bisenetformer.processor import BisenetFormerProcessor
 from focoos.models.fai_model import BaseModelNN
 from focoos.nn.backbone.base import BaseBackbone
 from focoos.nn.backbone.build import load_backbone

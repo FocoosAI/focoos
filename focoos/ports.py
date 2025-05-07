@@ -678,10 +678,9 @@ class ModelFamily(str, Enum):
     """Enumerazione delle famiglie di modelli disponibili"""
 
     DETR = "fai_detr"
-    M2F = "fai_mf"
-    PEM = "fai_pem"
-    BF = "fai_bf"
-    CLS = "fai_cls"
+    MASKFORMER = "fai_mf"
+    BISENETFORMER = "bisenetformer"
+    IMAGE_CLASSIFIER = "fai_cls"
 
 
 # This should not be a dataclass, but their child must be

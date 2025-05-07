@@ -4,15 +4,15 @@ def _register():
 
     def load_model():
         # Questa importazione avviene SOLO quando load_rtdetr_model viene chiamata
-        from focoos.models.fai_bf.modelling import BisenetFormer
+        from focoos.models.bisenetformer.modelling import BisenetFormer
 
         return BisenetFormer
 
     def load_config():
-        from focoos.models.fai_bf.config import BisenetFormerConfig
+        from focoos.models.bisenetformer.config import BisenetFormerConfig
 
         return BisenetFormerConfig
 
     # Qui registriamo solo la funzione load_rtdetr_model, NON viene eseguita
-    AutoModel.register_model(ModelFamily.BF, load_model)
-    AutoConfig.register_model(ModelFamily.BF, load_config)
+    AutoModel.register_model(ModelFamily.BISENETFORMER, load_model)
+    AutoConfig.register_model(ModelFamily.BISENETFORMER, load_config)

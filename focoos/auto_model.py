@@ -52,7 +52,7 @@ class AutoModel:
 
             # Iteratively register all models in the family
             for attr_name in dir(family_module):
-                if attr_name.startswith("_register_"):
+                if attr_name.startswith("_register"):
                     register_func = getattr(family_module, attr_name)
                     if callable(register_func):
                         register_func()
@@ -165,7 +165,7 @@ class AutoConfig:
 
             # Iteratively register all models in the family
             for attr_name in dir(family_module):
-                if attr_name.startswith("_register_"):
+                if attr_name.startswith("_register"):
                     register_func = getattr(family_module, attr_name)
                     if callable(register_func):
                         register_func()
