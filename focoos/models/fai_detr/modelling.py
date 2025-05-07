@@ -1363,6 +1363,7 @@ class FAIDetr(BaseModelNN):
             list[np.ndarray],
             list[torch.Tensor],
         ],
+        class_names: list[str] = [],
         **kwargs,
     ) -> list[FocoosDetections]:
         """
@@ -1378,4 +1379,4 @@ class FAIDetr(BaseModelNN):
 
         top_k = kwargs.get("top_k", self.top_k)
         threshold = kwargs.get("threshold", self.config.threshold)
-        return self.processor.postprocess(outputs, inputs, threshold=threshold, top_k=top_k)
+        return self.processor.postprocess(outputs, inputs, class_names=class_names, threshold=threshold, top_k=top_k)

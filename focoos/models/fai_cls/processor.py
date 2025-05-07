@@ -106,6 +106,7 @@ class ClassificationProcessor(BaseProcessor):
             list[np.ndarray],
             list[torch.Tensor],
         ],
+        class_names: list[str] = [],
     ) -> List[FocoosDetections]:
         """Post-process model outputs.
 
@@ -128,6 +129,7 @@ class ClassificationProcessor(BaseProcessor):
                     FocoosDet(
                         conf=top_prob.item(),
                         cls_id=int(top_class.item()),
+                        label=class_names[int(top_class.item())] if class_names else None,
                     )
                 ]
             )
