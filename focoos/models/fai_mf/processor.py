@@ -229,6 +229,7 @@ class MaskFormerProcessor(BaseProcessor):
             list[np.ndarray],
             list[torch.Tensor],
         ],
+        class_names: list[str] = [],
         top_k: int = 300,
         threshold: float = 0.5,
         use_mask_score: bool = True,
@@ -350,6 +351,7 @@ class MaskFormerProcessor(BaseProcessor):
                             conf=py_s,
                             cls_id=py_l,
                             mask=binary_mask_to_base64(py_mp),
+                            label=class_names[py_l] if class_names else None,
                         )
                         for py_bp, py_s, py_l, py_mp in zip(py_box_pred, py_scores, py_labels, py_mask_pred)
                     ]

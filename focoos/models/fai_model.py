@@ -49,6 +49,7 @@ class BaseModelNN(nn.Module):
             list[np.ndarray],
             list[torch.Tensor],
         ],
+        class_names: list[str] = [],
         **kwargs,
     ) -> list[FocoosDetections]:
         raise NotImplementedError("Post-processing is not implemented for this model.")
@@ -68,6 +69,8 @@ class BaseProcessor:
         self,
         outputs: ModelOutput,
         inputs: Union[torch.Tensor, np.ndarray, Image.Image, list[Image.Image], list[np.ndarray], list[torch.Tensor]],
+        class_names: list[str] = [],
+        **kwargs,
     ) -> list[FocoosDetections]:
         raise NotImplementedError("Post-processing is not implemented for this model.")
 
@@ -258,7 +261,7 @@ class FocoosModel:
             model_path = os.path.join(export_cfg.out_dir, "model.onnx")
             onnx_export(
                 model=self.model,
-                size=(640, 640),
+                size=(self.model_info.im_size, self.model_info.im_size),
                 device="cuda",
                 opset=export_cfg.onnx_opset,
                 dynamic=export_cfg.onnx_dynamic,
@@ -337,7 +340,9 @@ class FocoosModel:
         except Exception:
             logger.warning("Unable to use CUDA")
         output = model(inputs)
-        return model.post_process(output, inputs, **kwargs)
+        class_names = self.model_info.classes
+        output_fdet = model.post_process(output, inputs, class_names=class_names, **kwargs)
+        return output_fdet
 
     def load_weights(self, weights: dict):
         checkpoint_state_dict = weights

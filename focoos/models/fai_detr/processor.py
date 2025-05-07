@@ -167,6 +167,7 @@ class DETRProcessor(BaseProcessor):
             list[np.ndarray],
             list[torch.Tensor],
         ],
+        class_names: list[str] = [],
         top_k: int = 300,
         threshold: float = 0.5,
     ) -> list[FocoosDetections]:
@@ -208,6 +209,7 @@ class DETRProcessor(BaseProcessor):
                             bbox=py_bp,
                             conf=py_s,
                             cls_id=py_l,
+                            label=class_names[py_l] if class_names else None,
                         )
                         for py_bp, py_s, py_l in zip(py_box_pred, py_scores, py_labels)
                     ]

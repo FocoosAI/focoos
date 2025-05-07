@@ -280,6 +280,7 @@ class FAIClassification(BaseModelNN):
             list[np.ndarray],
             list[torch.Tensor],
         ],
+        class_names: list[str] = [],
         **kwargs,
     ) -> List[FocoosDetections]:
         """Post-process model outputs for inference.
@@ -293,4 +294,4 @@ class FAIClassification(BaseModelNN):
         """
         for k in kwargs:
             logger.warning(f"Unexpected kwarg '{k}' provided to post_process")
-        return self.processor.postprocess(outputs, inputs)
+        return self.processor.postprocess(outputs, inputs, class_names=class_names)

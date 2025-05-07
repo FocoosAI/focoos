@@ -743,6 +743,7 @@ class FAIMaskFormer(BaseModelNN):
             list[np.ndarray],
             list[torch.Tensor],
         ],
+        class_names: list[str] = [],
         **kwargs,
     ) -> list[FocoosDetections]:
         """
@@ -770,4 +771,5 @@ class FAIMaskFormer(BaseModelNN):
             use_mask_score=use_mask_score,
             filter_empty_masks=filter_empty_masks,
             top_k=top_k,
+            class_names=class_names,
         )
