@@ -36,6 +36,7 @@ class ModelRegistry:
         "fai-mf-l-coco-ins": os.path.join(REGISTRY_PATH, "fai-mf-l-coco-ins.json"),
         "fai-mf-m-coco-ins": os.path.join(REGISTRY_PATH, "fai-mf-m-coco-ins.json"),
         "fai-mf-s-coco-ins": os.path.join(REGISTRY_PATH, "fai-mf-s-coco-ins.json"),
+        "fai-bf-m-ade": os.path.join(REGISTRY_PATH, "fai-bf-m-ade.json"),
     }
 
     _user_models: Dict[str, ModelInfo] = {}

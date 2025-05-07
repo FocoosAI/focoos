@@ -7,10 +7,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from PIL import Image
 
-from focoos.models.fai_mf.config import MaskFormerConfig
-from focoos.models.fai_mf.loss import MaskHungarianMatcher, SetCriterion
-from focoos.models.fai_mf.ports import MaskFormerModelOutput, MaskFormerTargets
-from focoos.models.fai_mf.processor import MaskFormerProcessor
+from focoos.models.fai_bf.config import BisenetFormerConfig
+from focoos.models.fai_bf.loss import MaskHungarianMatcher, SetCriterion
+from focoos.models.fai_bf.ports import BisenetFormerOutput, BisenetFormerTargets
+from focoos.models.fai_bf.processor import BisenetFormerProcessor
 from focoos.models.fai_model import BaseModelNN
 from focoos.nn.backbone.base import BaseBackbone
 from focoos.nn.backbone.build import load_backbone
@@ -21,8 +21,6 @@ from focoos.nn.layers.transformer import (
     CrossAttentionLayer,
     FFNLayer,
     SelfAttentionLayer,
-    TransformerEncoder,
-    TransformerEncoderLayer,
 )
 from focoos.ports import DatasetEntry, FocoosDetections
 from focoos.structures import Instances
@@ -133,103 +131,128 @@ class PredictionHeads(nn.Module):
         return outputs_class
 
 
-class TransformerEncoderOnly(nn.Module):
-    """Transformer encoder-only architecture."""
-
-    def __init__(
-        self,
-        d_model=512,
-        nhead=8,
-        num_encoder_layers=6,
-        dim_feedforward=2048,
-        dropout=0.1,
-        activation="relu",
-        normalize_before=False,
-    ):
-        """Initialize transformer encoder-only architecture.
-
-        Args:
-            d_model: Dimension of the model
-            nhead: Number of attention heads
-            num_encoder_layers: Number of encoder layers
-            dim_feedforward: Dimension of the feedforward network
-            dropout: Dropout probability
-            activation: Activation function
-            normalize_before: Whether to apply normalization before layers
-        """
+class ConvBNReLU(nn.Module):
+    def __init__(self, in_chan, out_chan, ks=3, stride=1, padding=1):
         super().__init__()
-
-        encoder_layer = TransformerEncoderLayer(
-            d_model,
-            nhead,
-            dim_feedforward,
-            dropout,
-            activation,
-            normalize_before,
-            batch_first=False,
+        self.conv = nn.Conv2d(
+            in_chan,
+            out_chan,
+            kernel_size=ks,
+            stride=stride,
+            padding=padding,
+            bias=False,
         )
-        encoder_norm = nn.LayerNorm(d_model) if normalize_before else None
-        self.encoder = TransformerEncoder(encoder_layer, num_encoder_layers, encoder_norm)
+        self.bn = nn.BatchNorm2d(out_chan)
+        self.relu = nn.ReLU()
 
-        self._reset_parameters()
-
-        self.d_model = d_model
-        self.nhead = nhead
-
-    def _reset_parameters(self):
-        """Initialize parameters with Xavier uniform distribution."""
-        for p in self.parameters():
-            if p.dim() > 1:
-                nn.init.xavier_uniform_(p)
-
-    def forward(self, src, mask, pos_embed):
-        """Forward pass for transformer encoder.
-
-        Args:
-            src: Source tensor
-            mask: Attention mask
-            pos_embed: Positional embedding
-
-        Returns:
-            Output tensor after transformer encoding
-        """
-        # flatten NxCxHxW to HWxNxC
-        bs, c, h, w = src.shape
-        src = src.flatten(2).permute(2, 0, 1)
-        pos_embed = pos_embed.flatten(2).permute(2, 0, 1)
-        if mask is not None:
-            mask = mask.flatten(1)
-
-        memory = self.encoder(src, src_key_padding_mask=mask, pos_embed=pos_embed)
-        return memory.permute(1, 2, 0).view(bs, c, h, w)
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.bn(x)
+        x = self.relu(x)
+        return x
 
 
-class TransformerFPN(nn.Module):
-    """Feature Pyramid Network with optional transformer layers."""
+class AttentionRefinementModule(nn.Module):
+    def __init__(self, in_chan, out_chan, *args, **kwargs):
+        super().__init__()
+        self.proj = nn.Conv2d(in_chan, out_chan, kernel_size=1, bias=False)
+        self.conv = ConvBNReLU(out_chan, out_chan, ks=3, stride=1, padding=1)
+        self.conv_atten = nn.Conv2d(out_chan, out_chan, kernel_size=1, bias=False)
+        self.bn_atten = nn.BatchNorm2d(out_chan)
 
+        self.sigmoid_atten = nn.Sigmoid()
+
+    def forward(self, x):
+        feat = self.conv(self.proj(x))
+        # feat = self.conv(x)
+        atten = feat.mean(dim=(2, 3), keepdim=True)
+        atten = self.conv_atten(atten)
+        atten = self.bn_atten(atten)
+        atten = self.sigmoid_atten(atten)
+        out = torch.mul(feat, atten)
+        return out
+
+
+class ContextPath(nn.Module):
+    def __init__(self, inplanes, hidden_dim=128, out4=False):
+        super().__init__()
+        # inplanes -> 0 res2 1/4, 1 res3 1/8, 2 res4 1/16, 3 res5 1/32
+        self.arm32 = AttentionRefinementModule(inplanes[3], hidden_dim)
+        self.conv_avg = ConvBNReLU(inplanes[3], hidden_dim, ks=1, stride=1, padding=0)
+        self.conv_head32 = ConvBNReLU(hidden_dim, hidden_dim, ks=3, stride=1, padding=1)
+
+        self.arm16 = AttentionRefinementModule(inplanes[2], hidden_dim)
+        self.conv_head16 = ConvBNReLU(hidden_dim, hidden_dim, ks=3, stride=1, padding=1)
+
+        self.out4 = out4
+        if self.out4:
+            self.arm8 = AttentionRefinementModule(inplanes[1], hidden_dim)
+            self.conv_head8 = ConvBNReLU(hidden_dim, hidden_dim, ks=3, stride=1, padding=1)
+
+    def forward(self, feat4, feat8, feat16, feat32):
+        avg = feat32.mean(dim=(2, 3), keepdim=True)
+
+        avg = self.conv_avg(avg)
+
+        feat32_arm = self.arm32(feat32)
+        feat32_sum = feat32_arm + avg
+        feat32_up = F.interpolate(feat32_sum, size=feat16.shape[-2:], mode="bilinear")
+        feat32_up = self.conv_head32(feat32_up)
+
+        feat16_arm = self.arm16(feat16)
+        feat16_sum = feat16_arm + feat32_up
+        feat16_up = F.interpolate(feat16_sum, size=feat8.shape[-2:], mode="bilinear")
+        feat16_up = self.conv_head16(feat16_up)
+
+        if self.out4:
+            feat8_arm = self.arm8(feat8)
+            feat8_sum = feat8_arm + feat16_up
+            feat8_up = F.interpolate(feat8_sum, size=feat4.shape[-2:], mode="bilinear")
+            feat8_up = self.conv_head8(feat8_up)
+        else:
+            feat8_sum = feat16_up
+            feat8_up = None
+
+        return feat8_up, feat8_sum, feat16_sum, feat32_sum  # x4, x8, x16, x32
+
+
+class FeatureFusionModule(nn.Module):
+    def __init__(self, in_chan1, in_chan2, out_chan, *args, **kwargs):
+        super().__init__()
+        self.proj1 = nn.Conv2d(in_chan1, out_chan, kernel_size=1)
+        self.proj2 = nn.Conv2d(in_chan2, out_chan, kernel_size=1)
+        self.convblk = ConvBNReLU(out_chan, out_chan, ks=1, stride=1, padding=0)
+        self.conv1 = nn.Conv2d(out_chan, out_chan // 4, kernel_size=1, stride=1, padding=0, bias=False)
+        self.conv2 = nn.Conv2d(out_chan // 4, out_chan, kernel_size=1, stride=1, padding=0, bias=False)
+        self.relu = nn.ReLU(inplace=True)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, fsp, fcp):
+        # fcat = torch.cat([fsp, fcp], dim=1)
+        # feat = self.convblk(fcat)  # self.proj1(fsp) + self.proj2(fcp))
+        feat = self.convblk(self.proj1(fsp) + self.proj2(fcp))
+        atten = F.adaptive_avg_pool2d(feat, 1)
+        atten = self.conv1(atten)
+        atten = self.relu(atten)
+        atten = self.conv2(atten)
+        atten = self.sigmoid(atten)
+        feat_atten = torch.mul(feat, atten)
+        feat_out = feat_atten + feat
+        return feat_out
+
+
+class BiseNet(nn.Module):
     def __init__(
         self,
         backbone: BaseBackbone,
         feat_dim: int,
         out_dim: int,
-        transformer_layers: int = 0,
-        transformer_dropout: float = 0.0,
-        transformer_nheads: int = 8,
-        transformer_dim_feedforward: int = 1024,
-        transformer_pre_norm: bool = True,
     ):
-        """Initialize Transformer Feature Pyramid Network.
-
+        """
         Args:
-            backbone: Backbone network to extract features
-            feat_dim: Number of channels for intermediate conv layers
-            out_dim: Number of channels for final conv layer
-            transformer_layers: Number of transformer encoder layers
-            transformer_dropout: Dropout probability for transformer
             backbone: basic backbones to extract features from images
             feat_dim: number of output channels for the intermediate conv layers.
             out_dim: number of output channels for the final conv layer.
-            norm (str or callable): normalization for all conv layers
         """
         super().__init__()
 
@@ -243,90 +266,10 @@ class TransformerFPN(nn.Module):
         self.out_dim = out_dim
         self.feat_dim = feat_dim
         feature_channels = [v.channels for k, v in self.input_shape]
-
-        if transformer_layers > 0:
-            in_channels = feature_channels[len(self.in_features) - 1]
-            self.input_proj = Conv2d(in_channels, feat_dim, kernel_size=1)
-            weight_init.c2_xavier_fill(self.input_proj)
-            self.transformer = TransformerEncoderOnly(
-                d_model=feat_dim,
-                dropout=transformer_dropout,
-                nhead=transformer_nheads,
-                dim_feedforward=transformer_dim_feedforward,
-                num_encoder_layers=transformer_layers,
-                normalize_before=transformer_pre_norm,
-            )
-            N_steps = feat_dim // 2
-            self.pe_layer = PositionEmbeddingSine(N_steps, normalize=True)
-        else:
-            self.input_proj = None
-            self.transformer = None
-            self.pe_layer = None
-
-        lateral_convs = []
-        output_convs = []
-
-        use_bias = False
-        for idx, in_channels in enumerate(feature_channels):
-            if idx == len(self.in_features) - 1:
-                output_norm = nn.BatchNorm2d(feat_dim)
-                output_conv = Conv2d(
-                    feat_dim if transformer_layers > 0 else in_channels,
-                    feat_dim,
-                    kernel_size=3,
-                    stride=1,
-                    padding=1,
-                    bias=use_bias,
-                    norm=output_norm,
-                    activation=F.relu,
-                )
-                weight_init.c2_xavier_fill(output_conv)
-                self.add_module("layer_{}".format(idx + 1), output_conv)
-
-                lateral_convs.append(None)
-                output_convs.append(output_conv)
-            else:
-                lateral_norm = nn.BatchNorm2d(feat_dim)
-                output_norm = nn.BatchNorm2d(feat_dim)
-
-                lateral_conv = Conv2d(
-                    in_channels,
-                    feat_dim,
-                    kernel_size=1,
-                    bias=use_bias,
-                    norm=lateral_norm,
-                )
-                output_conv = Conv2d(
-                    feat_dim,
-                    feat_dim,
-                    kernel_size=3,
-                    stride=1,
-                    padding=1,
-                    bias=use_bias,
-                    norm=output_norm,
-                    activation=F.relu,
-                )
-                weight_init.c2_xavier_fill(lateral_conv)
-                weight_init.c2_xavier_fill(output_conv)
-                self.add_module("adapter_{}".format(idx + 1), lateral_conv)
-                self.add_module("layer_{}".format(idx + 1), output_conv)
-
-                lateral_convs.append(lateral_conv)
-                output_convs.append(output_conv)
-        # Place convs into top-down order (from low to high resolution)
-        # to make the top-down computation in forward clearer.
-        self.lateral_convs = lateral_convs[::-1]
-        self.output_convs = output_convs[::-1]
-
-        self.mask_dim = out_dim
-        self.mask_features = Conv2d(
-            feat_dim,
-            out_dim,
-            kernel_size=3,
-            stride=1,
-            padding=1,
-        )
-        weight_init.c2_xavier_fill(self.mask_features)
+        # from res2 to res5
+        self.cp = ContextPath(feature_channels, self.feat_dim)
+        self.ffm = FeatureFusionModule(feature_channels[1], self.feat_dim, self.feat_dim)
+        self.conv_out = ConvBNReLU(feat_dim, out_dim, ks=3, stride=1, padding=1)
 
     @property
     def padding_constraints(self) -> Dict[str, int]:
@@ -337,34 +280,20 @@ class TransformerFPN(nn.Module):
         return self.forward_features(features)
 
     def forward_features(self, features):
-        multi_scale_features = []
-        num_cur_levels = 0
-        # Reverse feature maps into top-down order (from low to high resolution)
-        for idx, f in enumerate(self.in_features[::-1]):
-            x = features[f]
-            lateral_conv = self.lateral_convs[idx]
-            output_conv = self.output_convs[idx]
-            if lateral_conv is None:
-                if self.transformer is not None and self.input_proj is not None and self.pe_layer is not None:
-                    x = self.input_proj(x)
-                    x = self.transformer(x, mask=None, pos_embed=self.pe_layer(x))
-                y = output_conv(x)
-            else:
-                cur_fpn = lateral_conv(x)
-                # Following FPN implementation, we use nearest upsampling here
-                y = cur_fpn + F.interpolate(y, size=cur_fpn.shape[-2:], mode="nearest")
-                y = output_conv(y)
-            if num_cur_levels < 3:
-                multi_scale_features.append(y)
-                num_cur_levels += 1
-        return self.mask_features(y), multi_scale_features
+        res2, res3, res4, res5 = (features[f] for f in self.in_features)
+        _, feat_cp8, feat_cp16, feat_cp32 = self.cp(res2, res3, res4, res5)
+        feat_fuse = self.ffm(res3, feat_cp8)
+        feat_out = self.conv_out(feat_fuse)
+
+        return feat_out, (feat_cp32, feat_cp16, feat_cp8)
 
 
-class MultiScaleMaskedTransformerDecoder(nn.Module):
+class TransformerDecoder(nn.Module):
     def __init__(
         self,
         in_channels,
         out_dim,
+        mask_classification=True,
         *,
         num_classes: int,
         hidden_dim: int,
@@ -372,25 +301,24 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
         nheads: int,
         dim_feedforward: int,
         dec_layers: int,
-        num_scales: int = 3,
         pre_norm: bool,
         enforce_input_project: bool,
         use_attn_masks: bool = True,
     ):
         super().__init__()
 
+        assert mask_classification, "Only support mask classification model"
+        self.mask_classification = mask_classification
         self.use_attn_masks = use_attn_masks
+        self.query_init = False
 
         # positional encoding
         N_steps = hidden_dim // 2
         self.pe_layer = PositionEmbeddingSine(N_steps, normalize=True)
 
-        assert 0 < num_scales <= 3, "num_scales must between 1 and 3"
         # define Transformer decoder here
         self.num_heads = nheads
         self.num_layers = dec_layers
-        self.num_scales = num_scales
-        self.num_classes = num_classes
         self.transformer_self_attention_layers = nn.ModuleList()
         self.transformer_cross_attention_layers = nn.ModuleList()
         self.transformer_ffn_layers = nn.ModuleList()
@@ -424,13 +352,14 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
             )
 
         self.num_queries = num_queries
-        # learnable query features
-        self.query_feat = nn.Embedding(num_queries, hidden_dim)
-        # learnable query p.e.
-        self.query_embed = nn.Embedding(num_queries, hidden_dim)
+        if not self.query_init:
+            # learnable query features
+            self.query_feat = nn.Embedding(num_queries, hidden_dim)
+            # learnable query p.e.
+            self.query_embed = nn.Embedding(num_queries, hidden_dim)
 
-        # level embedding (we always use 3 scales)
-        self.num_feature_levels = min(self.num_scales, dec_layers)
+        # level embedding (we use 2 scale)
+        self.num_feature_levels = min(2, dec_layers)
         # self.level_embed = nn.Embedding(self.num_feature_levels, hidden_dim)
         self.input_proj = nn.ModuleList()
         for _ in range(min(self.num_feature_levels, dec_layers)):
@@ -441,16 +370,14 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
                 self.input_proj.append(nn.Sequential())
 
         self.forward_prediction_heads = PredictionHeads(
-            hidden_dim,
-            num_classes,
-            out_dim,
-            nheads,
-            mask_classification=True,
-            use_attn_masks=use_attn_masks,
+            hidden_dim, num_classes, out_dim, nheads, mask_classification, use_attn_masks
         )
 
-    def reset_classifier(self, num_classes: Optional[int] = None):
-        self.forward_prediction_heads.reset_classifier(num_classes if num_classes else self.num_classes)
+        if self.query_init:
+            self.out_dim = out_dim
+            self.kernels = nn.Conv2d(in_channels=out_dim, out_channels=num_queries, kernel_size=1)
+            weight_init.c2_xavier_fill(self.kernels)
+            self.proj = nn.Linear(out_dim, hidden_dim)
 
     def forward(self, x, mask_features, targets=None, mask=None):
         # x is a list of multi-scale feature
@@ -459,7 +386,7 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
         pos = []
         size_list = []
 
-        x = x[: self.num_scales]
+        x = x[:-1]  # F1 and F2 only (not F3)
 
         # disable mask, it does not affect performance
         del mask
@@ -476,24 +403,41 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
 
         _, bs, _ = src[0].shape
 
-        # QxNxC
-        query_embed = self.query_embed.weight.unsqueeze(1).repeat(1, bs, 1)
-        output = self.query_feat.weight.unsqueeze(1).repeat(1, bs, 1)
+        if not self.query_init:
+            # QxNxC
+            query_embed = self.query_embed.weight.unsqueeze(1).repeat(1, bs, 1)
+            output = self.query_feat.weight.unsqueeze(1).repeat(1, bs, 1)
+        else:
+            query_embed = None
 
         predictions_class = []
         predictions_mask = []
 
-        # prediction heads on learnable query features
-        outputs_class, outputs_mask, attn_mask = self.forward_prediction_heads(
-            output, mask_features, sizes=size_list[0]
-        )
+        if self.query_init:
+            outputs_mask = self.kernels(mask_features)
+            proposal_kernels = self.kernels.weight.clone()
+
+            output = proposal_kernels[None].expand(mask_features.shape[0], *proposal_kernels.size())
+            output = output.squeeze((3, 4)).permute(1, 0, 2)
+
+            if output.shape[-1] != self.out_dim:
+                output = self.proj(output)
+
+            outputs_class, outputs_mask, attn_mask = self.forward_prediction_heads(
+                output, outputs_mask, sizes=size_list[0], compute_masks=False
+            )
+        else:
+            # prediction heads on learnable query features
+            outputs_class, outputs_mask, attn_mask = self.forward_prediction_heads(
+                output, mask_features, sizes=size_list[0]
+            )
         attn_mask = attn_mask[0] if self.use_attn_masks else None
         predictions_class.append(outputs_class)
         predictions_mask.append(outputs_mask)
 
         for i in range(self.num_layers):
             level_index = i % self.num_feature_levels
-            #  if on a mask is all True (no pixel active), use cross attention (put every pixel at False)
+            # if on a mask is all True (no pixel active), use cross attention (put every pixel at False)
             # B N # 1 if any False, 0 if all True
             if attn_mask is not None:
                 m_mask = (attn_mask.sum(-1) != attn_mask.shape[-1]).unsqueeze(-1)
@@ -517,9 +461,7 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
             output = self.transformer_ffn_layers[i](output)
 
             outputs_class, outputs_mask, attn_mask = self.forward_prediction_heads(
-                output,
-                mask_features,
-                sizes=size_list[(i + 1) % self.num_feature_levels],
+                output, mask_features, sizes=size_list[(i + 1) % self.num_feature_levels]
             )
             attn_mask = attn_mask[0] if self.use_attn_masks else None
             predictions_class.append(outputs_class)
@@ -531,8 +473,7 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
             "pred_logits": predictions_class[-1],
             "pred_masks": predictions_mask[-1],
             "aux_outputs": self._set_aux_loss(
-                predictions_class,
-                predictions_mask,
+                predictions_class if self.mask_classification else None, predictions_mask
             ),
         }
         return out
@@ -542,7 +483,10 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
         # this is a workaround to make torchscript happy, as torchscript
         # doesn't support dictionary with non-homogeneous values, such
         # as a dict having both a Tensor and a list.
-        return [{"pred_logits": a, "pred_masks": b} for a, b in zip(outputs_class[:-1], outputs_seg_masks[:-1])]
+        if self.mask_classification:
+            return [{"pred_logits": a, "pred_masks": b} for a, b in zip(outputs_class[:-1], outputs_seg_masks[:-1])]
+        else:
+            return [{"pred_masks": b} for b in outputs_seg_masks[:-1]]
 
 
 class MaskFormerHead(nn.Module):
@@ -588,7 +532,7 @@ class MaskFormerHead(nn.Module):
 
         return predictions
 
-    def forward(self, features, targets: list[MaskFormerTargets] = []):
+    def forward(self, features, targets: list[BisenetFormerTargets] = []):
         outputs = self.layers(features, targets=targets)
 
         loss = None
@@ -618,8 +562,8 @@ class MaskFormerHead(nn.Module):
         return losses
 
 
-class FAIMaskFormer(BaseModelNN):
-    def __init__(self, config: MaskFormerConfig):
+class BisenetFormer(BaseModelNN):
+    def __init__(self, config: BisenetFormerConfig):
         super().__init__(config)
         self._export = False
         self.config = config
@@ -631,14 +575,10 @@ class FAIMaskFormer(BaseModelNN):
 
         backbone = load_backbone(self.config.backbone_config)
 
-        self.pixel_decoder = TransformerFPN(
+        self.pixel_decoder = BiseNet(
             backbone=backbone,
             feat_dim=self.config.pixel_decoder_feat_dim,
             out_dim=self.config.pixel_decoder_out_dim,
-            transformer_layers=self.config.pixel_decoder_transformer_layers,
-            transformer_dropout=self.config.pixel_decoder_transformer_dropout,
-            transformer_nheads=self.config.pixel_decoder_transformer_nheads,
-            transformer_dim_feedforward=self.config.pixel_decoder_transformer_dim_feedforward,
         )
         self.head = MaskFormerHead(
             in_channels=self.config.transformer_predictor_out_dim,
@@ -668,7 +608,7 @@ class FAIMaskFormer(BaseModelNN):
                 loss_class_type="ce_loss" if not self.config.cls_sigmoid else "bce_loss",
                 cls_sigmoid=self.config.cls_sigmoid,
             ),
-            transformer_predictor=MultiScaleMaskedTransformerDecoder(
+            transformer_predictor=TransformerDecoder(
                 in_channels=self.config.pixel_decoder_out_dim,
                 out_dim=self.config.transformer_predictor_out_dim,
                 num_classes=self.config.num_classes,
@@ -677,7 +617,6 @@ class FAIMaskFormer(BaseModelNN):
                 nheads=8,
                 dim_feedforward=self.config.transformer_predictor_dim_feedforward,
                 dec_layers=self.config.transformer_predictor_dec_layers,
-                num_scales=3,
                 pre_norm=True,
                 enforce_input_project=True,
                 use_attn_masks=True,
@@ -690,7 +629,7 @@ class FAIMaskFormer(BaseModelNN):
         self.register_buffer("pixel_std", torch.Tensor(self.config.pixel_std).view(-1, 1, 1), False)
         self.size_divisibility = self.config.size_divisibility
         self.num_classes = self.config.num_classes
-        self.processor = MaskFormerProcessor(self.config)
+        self.processor = BisenetFormerProcessor(self.config)
 
     @property
     def device(self):
@@ -707,7 +646,7 @@ class FAIMaskFormer(BaseModelNN):
             list[torch.Tensor],
             list[DatasetEntry],
         ],
-    ) -> MaskFormerModelOutput:
+    ) -> BisenetFormerOutput:
         images, targets = self.processor.preprocess(
             inputs,
             training=self.training,
@@ -721,10 +660,10 @@ class FAIMaskFormer(BaseModelNN):
         features = self.pixel_decoder(images)
         (logits, masks), losses = self.head(features, targets)
 
-        return MaskFormerModelOutput(logits=logits, masks=masks, loss=losses)
+        return BisenetFormerOutput(logits=logits, masks=masks, loss=losses)
 
     def eval_post_process(
-        self, outputs: MaskFormerModelOutput, inputs: list[DatasetEntry]
+        self, outputs: BisenetFormerOutput, inputs: list[DatasetEntry]
     ) -> list[dict[str, Instances | torch.Tensor]]:
         """
         Post-process the outputs of the model.
@@ -734,7 +673,7 @@ class FAIMaskFormer(BaseModelNN):
 
     def post_process(
         self,
-        outputs: MaskFormerModelOutput,
+        outputs: BisenetFormerOutput,
         inputs: Union[
             torch.Tensor,
             np.ndarray,
