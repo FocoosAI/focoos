@@ -125,7 +125,7 @@ class DetectionEvaluator(DatasetEvaluator):
             predictions = self._predictions
 
         if len(predictions) == 0:
-            logger.warning("[COCOEvaluator] Did not receive valid predictions.")
+            logger.error("[COCOEvaluator] Did not receive valid predictions.")
             return {}
 
         logger.info("Preparing results for COCO format ...")
@@ -135,7 +135,6 @@ class DetectionEvaluator(DatasetEvaluator):
 
         inputs = []
         images = {}
-        logger.info(f"predictions: {len(predictions)}")
         for x in predictions:
             if x["image_id"] not in images:
                 in_ = self.dataset_dict[x["image_id"]]
@@ -145,7 +144,7 @@ class DetectionEvaluator(DatasetEvaluator):
                 in_.pop("annotations")
                 in_["id"] = x["image_id"]
                 images[x["image_id"]] = in_
-        logger.info(f"inputs: {len(inputs)}")
+        logger.info(f"len(predictions): {len(predictions)} len(inputs): {len(inputs)}")
 
         self._results = OrderedDict()
         if len(predictions) > 0:

@@ -1,16 +1,15 @@
 import inspect
 import json
 import os
-import re
 from collections import OrderedDict
 from dataclasses import asdict, dataclass, fields
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Annotated, Any, List, Literal, Optional, Tuple, Union
+from typing import Any, List, Literal, Optional, Tuple, Union
 
 import torch
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel
 
 from focoos.structures import Instances
 
@@ -144,128 +143,6 @@ class Task(str, Enum):
     CLASSIFICATION = "classification"
 
 
-class Hyperparameters(FocoosBaseModel):
-    """Model training hyperparameters configuration.
-
-    Attributes:
-        batch_size (int): Number of images processed in each training iteration. Range: 1-32.
-            Larger batch sizes require more GPU memory but can speed up training.
-
-        eval_period (int): Number of iterations between model evaluations. Range: 50-2000.
-            Controls how frequently validation is performed during training.
-
-        max_iters (int): Maximum number of training iterations. Range: 100-100,000.
-            Total number of times the model will see batches of training data.
-
-        resolution (int): Input image resolution for the model. Range: 128-6400 pixels.
-            Higher resolutions can improve accuracy but require more compute.
-
-        wandb_project (Optional[str]): Weights & Biases project name in format "ORG_ID/PROJECT_NAME".
-            Used for experiment tracking and visualization.
-
-        wandb_apikey (Optional[str]): API key for Weights & Biases integration.
-            Required if using wandb_project.
-
-        learning_rate (float): Step size for model weight updates. Range: 0.00001-0.1.
-            Controls how quickly the model learns. Too high can cause instability.
-
-        decoder_multiplier (float): Multiplier for decoder learning rate.
-            Allows different learning rates for decoder vs backbone.
-
-        backbone_multiplier (float): Multiplier for backbone learning rate.
-            Default 0.1 means backbone learns 10x slower than decoder.
-
-        amp_enabled (bool): Whether to use automatic mixed precision training.
-            Can speed up training and reduce memory usage with minimal accuracy impact.
-
-        weight_decay (float): L2 regularization factor to prevent overfitting.
-            Higher values = stronger regularization.
-
-        ema_enabled (bool): Whether to use Exponential Moving Average of model weights.
-            Can improve model stability and final performance.
-
-        ema_decay (float): Decay rate for EMA. Higher = slower but more stable updates.
-            Only used if ema_enabled=True.
-
-        ema_warmup (int): Number of iterations before starting EMA.
-            Only used if ema_enabled=True.
-
-        freeze_bn (bool): Whether to freeze all batch normalization layers.
-            Useful for fine-tuning with small batch sizes.
-
-        freeze_bn_bkb (bool): Whether to freeze backbone batch normalization layers.
-            Default True to preserve pretrained backbone statistics.
-
-        optimizer (str): Optimization algorithm. Options: "ADAMW", "SGD", "RMSPROP".
-            ADAMW generally works best for vision tasks.
-
-        scheduler (str): Learning rate schedule. Options: "POLY", "FIXED", "COSINE", "MULTISTEP".
-            Controls how learning rate changes during training.
-
-        early_stop (bool): Whether to stop training early if validation metrics plateau.
-            Can prevent overfitting and save compute time.
-
-        patience (int): Number of evaluations to wait for improvement before early stopping.
-            Only used if early_stop=True.
-
-
-    """
-
-    batch_size: Annotated[
-        int,
-        Field(
-            ge=1,
-            le=32,
-            description="Batch size, how many images are processed at every iteration",
-        ),
-    ] = 16
-    eval_period: Annotated[
-        int,
-        Field(ge=50, le=2000, description="How often iterations to evaluate the model"),
-    ] = 500
-    max_iters: Annotated[
-        int,
-        Field(1500, ge=100, le=100000, description="Maximum number of training iterations"),
-    ] = 1500
-    resolution: Annotated[int, Field(640, description="Model expected resolution", ge=128, le=6400)] = 640
-    wandb_project: Annotated[
-        Optional[str],
-        Field(description="Wandb project name must be like ORG_ID/PROJECT_NAME"),
-    ] = None
-    wandb_apikey: Annotated[Optional[str], Field(description="Wandb API key")] = None
-    learning_rate: Annotated[
-        float,
-        Field(gt=0.00001, lt=0.1, description="Learning rate"),
-    ] = 5e-4
-    decoder_multiplier: Annotated[float, Field(description="Backbone multiplier")] = 1
-    backbone_multiplier: float = 0.1
-    amp_enabled: Annotated[bool, Field(description="Enable automatic mixed precision")] = True
-    weight_decay: Annotated[float, Field(description="Weight decay")] = 0.02
-    ema_enabled: Annotated[bool, Field(description="Enable EMA (exponential moving average)")] = False
-    ema_decay: Annotated[float, Field(description="EMA decay rate")] = 0.999
-    ema_warmup: Annotated[int, Field(description="EMA warmup")] = 100
-    freeze_bn: Annotated[bool, Field(description="Freeze batch normalization layers")] = False
-    freeze_bn_bkb: Annotated[bool, Field(description="Freeze backbone batch normalization layers")] = True
-    optimizer: Literal["ADAMW", "SGD", "RMSPROP"] = "ADAMW"
-    scheduler: Literal["POLY", "FIXED", "COSINE", "MULTISTEP"] = "MULTISTEP"
-
-    early_stop: Annotated[bool, Field(description="Enable early stopping")] = True
-    patience: Annotated[
-        int,
-        Field(
-            description="(Only with early_stop=True) Validation cycles after which the train is stopped if there's no improvement in accuracy."
-        ),
-    ] = 5
-
-    @field_validator("wandb_project")
-    def validate_wandb_project(cls, value):
-        if value is not None:
-            # Define a regex pattern to match valid characters
-            if not re.match(r"^[\w.-/]+$", value):
-                raise ValueError("Wandb project name must only contain characters, dashes, underscores, and dots.")
-        return value
-
-
 class TrainingInfo(FocoosBaseModel):
     """Information about a model's training process.
 
@@ -383,7 +260,6 @@ class RemoteModelInfo(FocoosBaseModel):
         latencies (Optional[list[dict]]): Inference latency measurements across different configurations.
         classes (Optional[list[str]]): List of class names the model can detect or segment.
         im_size (Optional[int]): Input image size the model expects.
-        hyperparameters (Optional[Hyperparameters]): Training hyperparameters used.
         training_info (Optional[TrainingInfo]): Information about the training process.
         location (Optional[str]): Storage location of the model.
         dataset (Optional[DatasetPreview]): Information about the dataset used for training.
@@ -402,7 +278,6 @@ class RemoteModelInfo(FocoosBaseModel):
     latencies: Optional[list[dict]] = None
     classes: Optional[list[str]] = None
     im_size: Optional[int] = None
-    hyperparameters: Optional[Hyperparameters] = None
     training_info: Optional[TrainingInfo] = None
     location: Optional[str] = None
     dataset: Optional[DatasetPreview] = None
@@ -961,8 +836,7 @@ class TrainerArgs:
     checkpointer_max_to_keep: int = 1
     eval_period: int = 50
     log_period: int = 20
-    vis_period: int = 5000
-    samples: int = 4
+    samples: int = 9
     seed: int = 42
     early_stop: bool = False
     patience: int = 10
@@ -975,9 +849,9 @@ class TrainerArgs:
     weight_decay: float = 0.02
     max_iters: int = 3000
     batch_size: int = 16
-    scheduler: str = "POLY"
+    scheduler: Literal["POLY", "FIXED", "COSINE", "MULTISTEP"] = "MULTISTEP"
     scheduler_extra: Optional[dict] = None
-    optimizer: str = "AdamW"
+    optimizer: Literal["ADAMW", "SGD", "RMSPROP"] = "ADAMW"
     optimizer_extra: Optional[dict] = None
     weight_decay_norm: float = 0.0
     weight_decay_embed: float = 0.0

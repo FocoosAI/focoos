@@ -89,7 +89,7 @@ class FocoosTrainer:
 
         logger.info(f"📁 Run name: {self.args.run_name} | Output dir: {self.output_dir}")
 
-        logger.info("Rank of current process: {}. World size: {}".format(comm.get_rank(), comm.get_world_size()))
+        logger.debug("Rank of current process: {}. World size: {}".format(comm.get_rank(), comm.get_world_size()))
         get_system_info().pprint()
 
         seed_all_rng(None if self.args.seed < 0 else self.args.seed + comm.get_rank())
@@ -340,8 +340,9 @@ class FocoosTrainer:
                     VisualizationHook(
                         model=self.model,  # type: ignore
                         dataset=self.data_val,
-                        period=self.args.vis_period,
+                        period=self.args.eval_period,
                         n_sample=self.args.samples,
+                        output_dir=self.output_dir,
                     ),
                 ]
             )
@@ -421,6 +422,21 @@ class FocoosTrainer:
             start_iter = trainer.iter + 1
         else:
             start_iter = 0
+
+        output_lines = [
+            f"🚀 Starting training from iteration {start_iter}",
+            "========== 🔧 Main Hyperparameters 🔧 ==========",
+            f" - max_iter: {self.args.max_iters}",
+            f" - batch_size: {self.args.batch_size}",
+            f" - learning_rate: {self.args.learning_rate}",
+            " - resolution: !TODO",
+            f" - optimizer: {self.args.optimizer}",
+            f" - scheduler: {self.args.scheduler}",
+            f" - weight_decay: {self.args.weight_decay}",
+            f" - ema_enabled: {self.args.ema_enabled}",
+            "================================================",
+        ]
+        logger.info("\n".join(output_lines))
 
         trainer.train(start_iter=start_iter, max_iter=args.max_iters)
         self.finished = True
@@ -545,8 +561,6 @@ class TrainerLoop:
             start_iter: Starting iteration
             max_iter: Maximum iteration
         """
-        logger.info("🚀 Starting training from iteration {}".format(start_iter))
-
         self.iter = self.start_iter = start_iter
         self.max_iter = max_iter
 
