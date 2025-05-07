@@ -136,7 +136,7 @@
     },
     "description": "MaskFormer medium model (COCO Instance Segmentation)",
     "train_args": null,
-    "weights_uri": "/home/ubuntu/focoos-1/pretrained_models/fai-m2f-m-coco-ins/model_final.pth",
+    "weights_uri": "/home/ubuntu/focoos-1/pretrained_models/fai-mf-m-coco-ins/model_final.pth",
     "val_dataset": "coco_2017_instance_val",
     "val_metrics": null,
     "latency": null

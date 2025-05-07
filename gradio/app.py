@@ -12,11 +12,11 @@ focoos = FocoosHUB(api_key=os.getenv("FOCOOS_API_KEY"))
 focoos_models = [model.ref for model in focoos.list_pretrained_models()]
 loaded_models = {}
 image_examples = [
-    ["fai-rtdetr-l-coco", f"{ASSETS_DIR}/pexels-abby-chung.jpg"],
-    ["fai-rtdetr-m-obj365", f"{ASSETS_DIR}/motogp.jpg"],
-    ["fai-rtdetr-s-coco", f"{ASSETS_DIR}/ADE_val_00000821.jpg"],
-    ["fai-m2f-m-ade", f"{ASSETS_DIR}/ADE_val_00000461.jpg"],
-    ["fai-m2f-l-coco-ins", f"{ASSETS_DIR}/ADE_val_00000034.jpg"],
+    ["fai-detr-l-coco", f"{ASSETS_DIR}/pexels-abby-chung.jpg"],
+    ["fai-detr-l-obj365", f"{ASSETS_DIR}/motogp.jpg"],
+    ["fai-detr-s-coco", f"{ASSETS_DIR}/ADE_val_00000821.jpg"],
+    ["fai-mf-m-ade", f"{ASSETS_DIR}/ADE_val_00000461.jpg"],
+    ["fai-mf-l-coco-ins", f"{ASSETS_DIR}/ADE_val_00000034.jpg"],
 ]
 
 

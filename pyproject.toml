@@ -53,6 +53,7 @@ dependencies = [
     "tensorboard~=2.19.0",
     "onnx~=1.17.0",
     "onnxslim~=0.1.50",
+    "coolname~=2.2.0",
 ]
 
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]

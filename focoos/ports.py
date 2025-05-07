@@ -19,7 +19,7 @@ PROD_API_URL = "https://api.focoos.ai/v0"
 LOCAL_API_URL = "http://localhost:8501/v0"
 
 
-ROOT_DIR = Path.home() / "FocoosAI"  # /home/ubuntu/.cache/focoos/fai-rtdetr-m/model.onnx
+ROOT_DIR = Path.home() / "FocoosAI"
 ROOT_DIR = str(ROOT_DIR) if os.name == "nt" else ROOT_DIR
 MODELS_DIR = os.path.join(ROOT_DIR, "models")
 DATASETS_DIR = os.path.join(ROOT_DIR, "datasets")
@@ -945,7 +945,7 @@ class TrainerArgs:
         zero_grad_before_forward (bool): Whether to zero gradients before forward pass
     """
 
-    run_name: str
+    run_name: Optional[str] = None
     output_dir: str = RUNS_DIR
     ckpt_dir: Optional[str] = None
     init_checkpoint: Optional[str] = None

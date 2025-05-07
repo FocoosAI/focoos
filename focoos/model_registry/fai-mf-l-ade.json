@@ -204,7 +204,7 @@
     },
     "description": "MaskFormer Large model (ADE20K)",
     "train_args": null,
-    "weights_uri": "/home/ubuntu/anyma/pretrained_models/models/fai-m2f-l-ade/model_final.pth",
+    "weights_uri": "/home/ubuntu/anyma/pretrained_models/models/fai-mf-l-ade/model_final.pth",
     "val_dataset": "ade20k",
     "val_metrics": null,
     "latency": null

@@ -147,7 +147,7 @@
     },
     "description": "RTDETR Large model (COCO)",
     "train_args": null,
-    "weights_uri": "/home/ubuntu/anyma/pretrained_models/models/fai-rtdetr-l-coco/model_final.pth",
+    "weights_uri": "https://public.focoos.ai/pretrained_models/fai-detr-l-coco/model_final.pth",
     "val_dataset": "coco",
     "val_metrics": null,
     "latency": null

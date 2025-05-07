@@ -1,4 +1,4 @@
-# fai-rtdetr-m-obj365
+# fai-detr-l-obj365
 
 ## Overview
 The models is a [RT-DETR](https://github.com/lyuwenyu/RT-DETR) model otimized by [FocoosAI](https://focoos.ai) for the [Objects365](https://www.objects365.org/overview.html). It is a object detection model able to detect 365 thing (dog, cat, car, etc.) classes.
@@ -1916,8 +1916,8 @@ import os
 # Initialize the Focoos client with your API key
 focoos = Focoos(api_key=os.getenv("FOCOOS_API_KEY"))
 
-# Get the remote model (fai-rtdetr-s-coco) from Focoos API
-model = focoos.get_remote_model("fai-rtdetr-m-obj365")
+# Get the remote model (fai-detr-s-coco) from Focoos API
+model = focoos.get_remote_model("fai-detr-l-obj365")
 
 # Run inference on an image
 predictions = model.infer("./image.jpg", threshold=0.5)

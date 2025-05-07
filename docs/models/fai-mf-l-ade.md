@@ -1,4 +1,4 @@
-# fai-m2f-l-ade
+# fai-mf-l-ade
 
 ## Overview
 The models is a [Mask2Former](https://github.com/facebookresearch/Mask2Former) model otimized by [FocoosAI](https://focoos.ai) for the [ADE20K dataset](https://groups.csail.mit.edu/vision/datasets/ADE20K/). It is a semantic segmentation model able to segment 150 classes, comprising both stuff (sky, road, etc.) and thing (dog, cat, car, etc.).
@@ -17,9 +17,9 @@ Note: FPS are computed on NVIDIA T4 using TensorRT and image size 640x640.
 | SegFormerB5 | 49.6 | 27 |
 | MaskFormer (R50) | 44.3 | 68 |
 | Mask2Former (R50) | 47.2 | 21.5 |
-| [fai-m2f-s-ade](models/fai-m2f-s-ade.md) | 41.23 | 189 |
-| [fai-m2f-m-ade](models/fai-m2f-m-ade.md) | 45.32 | 127 |
-| **fai-m2f-l-ade** | **48.27** | **73** | -->
+| [fai-mf-s-ade](models/fai-mf-s-ade.md) | 41.23 | 189 |
+| [fai-mf-m-ade](models/fai-mf-m-ade.md) | 45.32 | 127 |
+| **fai-mf-l-ade** | **48.27** | **73** | -->
 
 
 ## Model Details
@@ -261,8 +261,8 @@ import os
 # Initialize the Focoos client with your API key
 focoos = Focoos(api_key=os.getenv("FOCOOS_API_KEY"))
 
-# Get the remote model (fai-m2f-l-ade) from Focoos API
-model = focoos.get_remote_model("fai-m2f-l-ade")
+# Get the remote model (fai-mf-l-ade) from Focoos API
+model = focoos.get_remote_model("fai-mf-l-ade")
 
 # Run inference on an image
 predictions = model.infer("./image.jpg", threshold=0.5)

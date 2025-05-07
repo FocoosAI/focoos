@@ -41,7 +41,7 @@ from focoos.ports import Hyperparameters
 
 focoos = Focoos(api_key="<YOUR-API-KEY>")
 model = focoos.new_model(name="awesome",
-                         focoos_model="fai-rtdetr-m-obj365",
+                         focoos_model="fai-detr-l-obj365",
                          description="An awesome model")
 
 res = model.train(

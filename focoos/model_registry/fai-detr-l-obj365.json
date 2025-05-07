@@ -432,7 +432,7 @@
     },
     "description": "RTDETR Large model (Object365)",
     "train_args": null,
-    "weights_uri": "/home/ubuntu/anyma/pretrained_models/models/fai-rtdetr-m-obj365/model_final.pth",
+    "weights_uri": "https://public.focoos.ai/pretrained_models/fai-detr-l-obj365/model_final.pth",
     "val_dataset": "object365",
     "val_metrics": null,
     "latency": null

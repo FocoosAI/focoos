@@ -198,7 +198,7 @@ class ApiClient:
         if os.path.exists(file_dir) and not os.path.isdir(file_dir):
             raise ValueError(f"Path is not a directory: {file_dir}")
         if not os.path.exists(file_dir):
-            logger.info(f"📥 Creating directory: {file_dir}")
+            logger.debug(f"📥 Creating directory: {file_dir}")
             os.makedirs(file_dir)
         parsed_url = urlparse(uri)
         file_name = file_name or os.path.basename(parsed_url.path)
@@ -206,16 +206,14 @@ class ApiClient:
         if res.status_code != 200:
             logger.error(f"Failed to download file {file_name}: {res.status_code} {res.text}")
             raise ValueError(f"Failed to download file {file_name}: {res.status_code} {res.text}")
-        total_size = int(res.headers.get("content-length", 0))
-        logger.info(f"📥 Size: {total_size / (1024**2):.2f} MB")
 
         if not os.path.exists(file_dir):
             os.makedirs(file_dir)
         file_path = os.path.join(file_dir, file_name)
         if skip_if_exists and os.path.exists(file_path):
-            logger.info(f"📥 File already exists: {file_path}")
+            logger.debug(f"📥 File already exists: {file_path}")
             return file_path
-
+        total_size = int(res.headers.get("content-length", 0))
         with (
             open(file_path, "wb") as f,
             tqdm(
@@ -229,5 +227,5 @@ class ApiClient:
             for chunk in res.iter_content(chunk_size=8192):
                 f.write(chunk)
                 bar.update(len(chunk))
-        logger.info(f"📥 File downloaded: {file_path}")
+        logger.debug(f"📥 File downloaded: {file_path} Size: {total_size / (1024**2):.2f} MB")
         return file_path

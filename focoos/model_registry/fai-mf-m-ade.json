@@ -212,7 +212,7 @@
     },
     "description": "MaskFormer Medium model (ADE20K)",
     "train_args": null,
-    "weights_uri": "/home/ubuntu/focoos-1/pretrained_models/models/fai-m2f-m-ade/model_final.pth",
+    "weights_uri": "/home/ubuntu/focoos-1/pretrained_models/models/fai-mf-m-ade/model_final.pth",
     "val_dataset": "ade20k",
     "val_metrics": null,
     "latency": null

@@ -12,6 +12,7 @@ from typing import Optional
 
 import numpy as np
 import torch
+from coolname import generate_slug
 from torch import GradScaler, autocast
 
 from focoos.data.datasets.map_dataset import MapDataset
@@ -72,18 +73,21 @@ class FocoosTrainer:
         self._setup_environment()
 
         # Setup model and data
-        self._setup_model_and_data(model, model_info, data_train, data_val)
+        self._setup_model_and_data(model, model_info, data_train, data_val, args)
 
         # Setup training components
         self._setup_training_components()
 
     def _setup_environment(self):
         """Setup logging and environment variables."""
+        if self.args.run_name is None:
+            slug = generate_slug(2)
+            self.args.run_name = f"{str(int(time.time()))}.{slug}"
         self.output_dir = os.path.join(self.args.output_dir, self.args.run_name)
         if comm.is_main_process():
             os.makedirs(self.output_dir, exist_ok=True)
 
-        logger.info(f"📁 Experiment Output dir: {self.output_dir}")
+        logger.info(f"📁 Run name: {self.args.run_name} | Output dir: {self.output_dir}")
 
         logger.info("Rank of current process: {}. World size: {}".format(comm.get_rank(), comm.get_world_size()))
         get_system_info().pprint()
@@ -99,12 +103,21 @@ class FocoosTrainer:
         else:
             self.ckpt_dir = self.output_dir
 
-    def _setup_model_and_data(self, model, model_info, data_train, data_val):
+    def _setup_model_and_data(
+        self,
+        model: BaseModelNN,
+        model_info: ModelInfo,
+        data_train: Optional[MapDataset],
+        data_val: MapDataset,
+        args: TrainerArgs,
+    ):
         """Setup model and data."""
         # Setup Model
         self.model = model
         self.model_info = model_info
         self.model_info.focoos_version = get_focoos_version()
+        self.model_info.weights_uri = "model_final.pth"
+        self.model_info.name = args.run_name if args.run_name else "unknown"
         self.checkpoint = self.args.init_checkpoint
 
         self.metric = None
@@ -795,6 +808,8 @@ def run_train(
     Returns:
         tuple: (trained model, updated metadata)
     """
+    if train_args.run_name is None:
+        train_args.run_name = f"{str(int(time.time()))}.{generate_slug(2)}"
     rank = comm.get_local_rank()
     log_path = os.path.join(train_args.output_dir, train_args.run_name, "log.txt")
     with capture_all_output(log_path=log_path, rank=rank):
@@ -817,6 +832,8 @@ def run_test(
     model_info: ModelInfo,
 ):
     rank = comm.get_local_rank()
+    if train_args.run_name is None:
+        train_args.run_name = f"{str(int(time.time()))}.{generate_slug(2)}"
     log_path = os.path.join(train_args.output_dir, train_args.run_name, "test_log.txt")
     with capture_all_output(log_path=log_path, rank=rank):
         trainer = FocoosTrainer(
