@@ -1,4 +1,22 @@
+import collections.abc
+from itertools import repeat
+
 import torch.nn as nn
+
+
+# Layer/Module Helpers
+# Hacked together by / Copyright 2020 Ross Wightman (TIMM library)
+# From torch internals
+def _ntuple(n):
+    def parse(x):
+        if isinstance(x, collections.abc.Iterable) and not isinstance(x, str):
+            return tuple(x)
+        return tuple(repeat(x, n))
+
+    return parse
+
+
+to_2tuple = _ntuple(2)
 
 
 def drop_path(x, drop_prob: float = 0.0, training: bool = False, scale_by_keep: bool = True):
@@ -27,6 +45,7 @@ def drop_path(x, drop_prob: float = 0.0, training: bool = False, scale_by_keep: 
     return x * random_tensor
 
 
+# Copyright 2020 TIMM library
 class DropPath(nn.Module):
     """Drop paths (Stochastic Depth) per sample (when applied in main path of residual blocks)."""
 

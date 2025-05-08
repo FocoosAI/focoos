@@ -3,8 +3,9 @@ from typing import Tuple
 
 import torch
 import torch.nn as nn
-from timm.layers import DropPath, trunc_normal_
+from torch.nn.init import trunc_normal_
 
+from focoos.nn.layers.misc import DropPath
 from focoos.nn.layers.norm import LayerNorm
 
 from .base import BackboneConfig, BaseBackbone, ShapeSpec

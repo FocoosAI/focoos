@@ -284,6 +284,7 @@ class DetectionEvaluator(DatasetEvaluator):
         logger.info("Per-category {} AP: \n".format(iou_type) + table)
 
         results.update({"AP-" + name: ap for name, ap in results_per_category})
+        results = {k: (v if np.isfinite(v) else None) for k, v in results.items()}
         return results
 
     def instances_to_coco_json(self, instances, img_id):

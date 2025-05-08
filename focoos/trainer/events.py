@@ -1,4 +1,5 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) FocoosAI
+# Part of the code has been adapted from Detectron2 (c) Facebook, Inc. and its affiliates.
 import datetime
 import json
 import os
@@ -62,107 +63,93 @@ class EventWriter:
 
 class JSONWriter(EventWriter):
     """
-    Write scalars to a json file.
+    Write scalars to a json file as a single JSON array.
 
-    It saves scalars as one json per line (instead of a big json) for easy parsing.
-
-    Examples parsing such a json file:
-    ::
-        $ cat metrics.json | jq -s '.[0:2]'
-        [
-          {
-            "data_time": 0.008433341979980469,
-            "iteration": 19,
-            "loss": 1.9228371381759644,
-            "loss_box_reg": 0.050025828182697296,
-            "loss_classifier": 0.5316952466964722,
-            "loss_mask": 0.7236229181289673,
-            "loss_rpn_box": 0.0856662318110466,
-            "loss_rpn_cls": 0.48198649287223816,
-            "lr": 0.007173333333333333,
-            "time": 0.25401854515075684
-          },
-          {
-            "data_time": 0.007216215133666992,
-            "iteration": 39,
-            "loss": 1.282649278640747,
-            "loss_box_reg": 0.06222952902317047,
-            "loss_classifier": 0.30682939291000366,
-            "loss_mask": 0.6970193982124329,
-            "loss_rpn_box": 0.038663312792778015,
-            "loss_rpn_cls": 0.1471673548221588,
-            "lr": 0.007706666666666667,
-            "time": 0.2490077018737793
-          }
-        ]
-
-        $ cat metrics.json | jq '.loss_mask'
-        0.7126231789588928
-        0.689423680305481
-        0.6776131987571716
-        ...
-
+    Example structure of the resulting file:
+    [
+        {"iteration": 1, "loss": 1.0, ...},
+        {"iteration": 2, "loss": 0.9, ...}
+    ]
     """
 
-    def __init__(self, json_file, window_size=20, force_close=False):
+    def __init__(self, json_file, window_size=20):
         """
         Args:
-            json_file (str): path to the json file. New data will be appended if the file exists.
+            json_file (str): path to the json file. New data will be inserted before the final "]".
+                If the file doesn't exist, it will be created.
             window_size (int): the window size of median smoothing for the scalars whose
                 `smoothing_hint` are True.
+            force_close (bool): whether to close the file after each write operation.
         """
         self._json_file = json_file
-        self._file_handle = open(json_file, "a")
         self._window_size = window_size
         self._last_write = -1
-        self._force_close = force_close
+
+        # Initialize the file if it doesn't exist
+        if not os.path.exists(json_file):
+            with open(json_file, "w") as f:
+                f.write("[\n]")
 
     def write(self):
-        if self._file_handle is None:
-            self._file_handle = open(self._json_file, "a")
-        # Get the event storage which contains training metrics/values
         storage = get_event_storage()
-        # Create a dict to store metrics grouped by iteration
         to_save = defaultdict(dict)
 
         # Get latest metrics with smoothing applied based on window_size
-        # Each metric has a value and iteration number
         for k, (v, iter) in storage.latest_with_smoothing_hint(self._window_size).items():
-            # Skip metrics from iterations we've already written
             if iter <= self._last_write:
                 continue
-            # Group metrics by iteration number
             to_save[iter][k] = v
 
         # If we have new metrics to save
         if len(to_save):
-            # Get sorted list of iterations and update last_write
             all_iters = sorted(to_save.keys())
             self._last_write = max(all_iters)
 
-        # Write metrics for each iteration to the JSON file
-        for itr, scalars_per_iter in to_save.items():
-            # Add iteration number to the metrics
-            scalars_per_iter["iteration"] = itr
-            # Write as JSON, one line per iteration
-            self._file_handle.write(json.dumps(scalars_per_iter, sort_keys=True) + "\n")
+            # Open file in read+ mode
+            with open(self._json_file, "r+") as f:
+                # Read file contents
+                f.seek(0, os.SEEK_END)
+                file_size = f.tell()
 
-        # Ensure metrics are written to disk
-        self._file_handle.flush()
-        try:
-            # Force flush to disk using fsync
-            os.fsync(self._file_handle.fileno())
-        except AttributeError:
-            # Pass if file handle doesn't support fsync
-            logger.warning("File handle doesn't support fsync")
-        finally:
-            if self._force_close:
-                self._file_handle.close()
-                self._file_handle = None
+                # Empty file or improperly formatted
+                if file_size <= 2:
+                    f.seek(0)
+                    f.write("[\n]")
+                    file_size = 3
+
+                # Move cursor before the final bracket
+                f.seek(file_size - 3)
+
+                # Check if we need to add a comma (not empty array)
+                last_char = f.read(1)
+                needs_comma = last_char != "["
+
+                # Go back to position before closing bracket
+                f.seek(file_size - 2)
+
+                # Write each metric object
+                for itr, scalars_per_iter in to_save.items():
+                    scalars_per_iter["iteration"] = itr
+                    json_str = json.dumps(scalars_per_iter, sort_keys=True)
+
+                    if needs_comma:
+                        f.write(",\n" + json_str)
+                    else:
+                        f.write(json_str)
+                        needs_comma = True
+
+                # Write closing bracket
+                f.write("\n]")
+
+                # Ensure file is flushed to disk
+                f.flush()
+                try:
+                    os.fsync(f.fileno())
+                except AttributeError:
+                    logger.warning("File handle doesn't support fsync")
 
     def close(self):
-        if self._file_handle:
-            self._file_handle.close()
+        pass
 
 
 class TensorboardXWriter(EventWriter):
@@ -379,7 +366,7 @@ class EventStorage:
         name = self._current_prefix + name
         cur_iter = self._iter if cur_iter is None else cur_iter
         history = self._history[name]
-        value = float(value)
+        value = float(value) if value is not None else -1
         history.update(value, cur_iter)
         self._latest_scalars[name] = (value, cur_iter)
 

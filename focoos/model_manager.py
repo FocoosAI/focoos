@@ -107,6 +107,36 @@ class ModelManager:
         return cls._from_local_dir(name, models_dir=models_dir, config=config, **kwargs)
 
 
+class BackboneManager:
+    """Automatic backbone manager with lazy loading"""
+
+    _BACKBONE_MAPPING: Dict[str, str] = {
+        "resnet": "resnet.ResNet",
+        "stdc": "stdc.STDC",
+        "swin": "swin.Swin",
+        "mobilenet_v2": "mobilenet_v2.MobileNetV2",
+        "mit": "mit.MIT",
+        "convnextv2": "convnextv2.ConvNeXtV2",
+    }
+
+    @classmethod
+    def from_config(cls, config: BackboneConfig) -> BaseBackbone:
+        """Load a backbone from a configuration"""
+        if config.model_type not in cls._BACKBONE_MAPPING:
+            raise ValueError(f"Backbone {config.model_type} not supported")
+        backbone_class = cls.get_model_class(config.model_type)
+        return backbone_class(config)
+
+    @classmethod
+    def get_model_class(cls, model_type: str):
+        """Get the model class based on the model type"""
+        import importlib
+
+        module_path, class_name = cls._BACKBONE_MAPPING[model_type].split(".")
+        module = importlib.import_module(f".{module_path}", package="focoos.nn.backbone")
+        return getattr(module, class_name)
+
+
 class ConfigManager:
     """Automatic model configuration management"""
 
@@ -148,7 +178,7 @@ class ConfigManager:
 
         # Convert the input dict to the actual config type
         if "backbone_config" in config_dict and config_dict["backbone_config"] is not None:
-            config_dict["backbone_config"] = AutoConfigBackbone.from_dict(config_dict["backbone_config"])
+            config_dict["backbone_config"] = ConfigBackboneManager.from_dict(config_dict["backbone_config"])
 
             # Validate the parameters kwargs
         valid_fields = {f.name for f in fields(config_class)}
@@ -166,18 +196,16 @@ class ConfigManager:
         return config_dict
 
 
-class AutoConfigBackbone:
+class ConfigBackboneManager:
     """Automatic backbone configuration manager with lazy loading"""
 
     _BACKBONE_MAPPING: Dict[str, str] = {
         "resnet": "resnet.ResnetConfig",
         "stdc": "stdc.STDCConfig",
         "swin": "swin.SwinConfig",
-        "timm": "timmbackbone.TimmBackboneConfig",
         "mobilenet_v2": "mobilenet_v2.MobileNetV2Config",
         "mit": "mit.MITConfig",
         "convnextv2": "convnextv2.ConvNeXtV2Config",
-        "darknet": "darknet.DarkNetConfig",
     }
 
     @classmethod
@@ -198,38 +226,6 @@ class AutoConfigBackbone:
         config_class = cls.get_model_class(config_dict["model_type"])
         return_config = config_class(**config_dict)
         return return_config
-
-
-class AutoBackbone:
-    """Automatic backbone manager with lazy loading"""
-
-    _BACKBONE_MAPPING: Dict[str, str] = {
-        "resnet": "resnet.ResNet",
-        "stdc": "stdc.STDC",
-        "swin": "swin.Swin",
-        "timm": "timmbackbone.TimmBackbone",
-        "mobilenet_v2": "mobilenet_v2.MobileNetV2",
-        "mit": "mit.MIT",
-        "convnextv2": "convnextv2.ConvNeXtV2",
-        "darknet": "darknet.DarkNet",
-    }
-
-    @classmethod
-    def from_config(cls, config: BackboneConfig) -> BaseBackbone:
-        """Load a backbone from a configuration"""
-        if config.model_type not in cls._BACKBONE_MAPPING:
-            raise ValueError(f"Backbone {config.model_type} not supported")
-        backbone_class = cls.get_model_class(config.model_type)
-        return backbone_class(config)
-
-    @classmethod
-    def get_model_class(cls, model_type: str):
-        """Get the model class based on the model type"""
-        import importlib
-
-        module_path, class_name = cls._BACKBONE_MAPPING[model_type].split(".")
-        module = importlib.import_module(f".{module_path}", package="focoos.nn.backbone")
-        return getattr(module, class_name)
 
 
 class ArtifactsManager:

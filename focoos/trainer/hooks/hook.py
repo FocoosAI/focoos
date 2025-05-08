@@ -1,6 +1,5 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 import datetime
-import itertools
 import math
 import operator
 import os
@@ -17,14 +16,12 @@ try:
 except ImportError:
     from torch.optim.lr_scheduler import _LRScheduler
 
-from fvcore.common.checkpoint import Checkpointer
-from fvcore.common.checkpoint import PeriodicCheckpointer as _PeriodicCheckpointer
-from fvcore.common.timer import Timer
-from fvcore.nn.precise_bn import get_bn_modules, update_bn_stats
-
-from focoos.trainer.events import EventStorage, EventWriter
+from focoos.trainer.checkpointer import Checkpointer
+from focoos.trainer.checkpointer import PeriodicCheckpointer as _PeriodicCheckpointer
+from focoos.trainer.events import EventWriter
 from focoos.utils.distributed import comm
 from focoos.utils.logger import get_logger
+from focoos.utils.timer import Timer
 
 from .base import HookBase
 
@@ -37,7 +34,6 @@ __all__ = [
     "LRScheduler",
     "AutogradProfiler",
     "EvalHook",
-    "PreciseBN",
     "TorchProfiler",
     "TorchMemoryStats",
 ]
@@ -533,7 +529,7 @@ class EvalHook(HookBase):
             flattened_results = flatten_results_dict(results)
             for k, v in flattened_results.items():
                 try:
-                    v = float(v)
+                    v = float(v) if v is not None else -1
                 except Exception as e:
                     raise ValueError(
                         "[EvalHook] eval_function should return a nested dict of float. Got '{}: {}' instead.".format(
@@ -560,74 +556,6 @@ class EvalHook(HookBase):
         # func is likely a closure that holds reference to the trainer
         # therefore we clean it to avoid circular reference in the end
         del self._func
-
-
-class PreciseBN(HookBase):
-    """
-    The standard implementation of BatchNorm uses EMA in inference, which is
-    sometimes suboptimal.
-    This class computes the true average of statistics rather than the moving average,
-    and put true averages to every BN layer in the given model.
-
-    It is executed every ``period`` iterations and after the last iteration.
-    """
-
-    def __init__(self, period, model, data_loader, num_iter):
-        """
-        Args:
-            period (int): the period this hook is run, or 0 to not run during training.
-                The hook will always run in the end of training.
-            model (nn.Module): a module whose all BN layers in training mode will be
-                updated by precise BN.
-                Note that user is responsible for ensuring the BN layers to be
-                updated are in training mode when this hook is triggered.
-            data_loader (iterable): it will produce data to be run by `model(data)`.
-            num_iter (int): number of iterations used to compute the precise
-                statistics.
-        """
-
-        if len(get_bn_modules(model)) == 0:
-            logger.info("PreciseBN is disabled because model does not contain BN layers in training mode.")
-            self._disabled = True
-            return
-
-        self._model = model
-        self._data_loader = data_loader
-        self._num_iter = num_iter
-        self._period = period
-        self._disabled = False
-
-        self._data_iter = None
-
-    def after_step(self):
-        next_iter = self.trainer.iter + 1
-        is_final = next_iter == self.trainer.max_iter
-        if is_final or (self._period > 0 and next_iter % self._period == 0):
-            self.update_stats()
-
-    def update_stats(self):
-        """
-        Update the model with precise statistics. Users can manually call this method.
-        """
-        if self._disabled:
-            return
-
-        if self._data_iter is None:
-            self._data_iter = iter(self._data_loader)
-
-        def data_loader():
-            for num_iter in itertools.count(1):
-                if num_iter % 100 == 0:
-                    logger.info("Running precise-BN ... {}/{} iterations.".format(num_iter, self._num_iter))
-                # This way we can reuse the same iterator
-                yield next(self._data_iter)
-
-        with EventStorage():  # capture events in a new storage to discard them
-            logger.info(
-                "Running precise-BN for {} iterations...  ".format(self._num_iter)
-                + "Note that this could produce different statistics every time."
-            )
-            update_bn_stats(self._model, data_loader(), self._num_iter)
 
 
 class TorchMemoryStats(HookBase):

@@ -330,7 +330,7 @@ def capture_all_output(log_path="output.txt", rank=0):
     if os.path.exists(output):
         os.remove(output)
     # Open file for stdout/stderr
-    log_file = open(output, "a", buffering=1)  # line-buffered
+    log_file = open(output, "a", buffering=1, encoding="utf-8")  # line-buffered
 
     # Create tee streams
     tee_stdout = TeeStream(sys.stdout, log_file)

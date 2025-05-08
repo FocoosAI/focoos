@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from focoos.model_manager import AutoConfigBackbone
+from focoos.model_manager import ConfigBackboneManager
 from focoos.nn.backbone.base import BackboneConfig
 from focoos.nn.backbone.build import load_backbone
 
@@ -10,11 +10,9 @@ BACKBONE_CONFIGS = {
     "resnet": {"model_type": "resnet", "use_pretrained": False, "depth": 18},
     "stdc": {"model_type": "stdc", "use_pretrained": False, "base": 64, "layers": [4, 5, 3]},
     "swin": {"model_type": "swin", "use_pretrained": False},
-    "timm": {"model_type": "timm", "use_pretrained": False, "model_name": "resnet18"},
     "mobilenet_v2": {"model_type": "mobilenet_v2", "use_pretrained": False},
     "mit": {"model_type": "mit", "use_pretrained": False},
     "convnextv2": {"model_type": "convnextv2", "use_pretrained": False},
-    "darknet": {"model_type": "darknet", "use_pretrained": False},
 }
 
 # Different input sizes to test
@@ -28,7 +26,7 @@ INPUT_SIZES = [
 def test_build_function():
     """Test the backbone build function."""
     for backbone_type, config_dict in BACKBONE_CONFIGS.items():
-        config = AutoConfigBackbone.from_dict(config_dict)
+        config = ConfigBackboneManager.from_dict(config_dict)
 
         # Test that the backbone can be built
         backbone = load_backbone(config)
@@ -39,7 +37,7 @@ def test_build_function():
 def test_backbone_initialization(backbone_type):
     """Test that each backbone can be initialized."""
     config_dict = BACKBONE_CONFIGS[backbone_type]
-    config = AutoConfigBackbone.from_dict(config_dict)
+    config = ConfigBackboneManager.from_dict(config_dict)
 
     # Initialize the backbone
     backbone = load_backbone(config)
@@ -53,7 +51,7 @@ def test_backbone_initialization(backbone_type):
 def test_backbone_forward(backbone_type, input_size):
     """Test that each backbone can process a forward pass with different input sizes."""
     config_dict = BACKBONE_CONFIGS[backbone_type]
-    config = AutoConfigBackbone.from_dict(config_dict)
+    config = ConfigBackboneManager.from_dict(config_dict)
 
     # Initialize the backbone
     backbone = load_backbone(config)
@@ -82,7 +80,7 @@ def test_backbone_forward(backbone_type, input_size):
 def test_output_shapes():
     """Test that the output_shape method returns the expected shapes."""
     for backbone_type, config_dict in BACKBONE_CONFIGS.items():
-        config = AutoConfigBackbone.from_dict(config_dict)
+        config = ConfigBackboneManager.from_dict(config_dict)
 
         # Initialize the backbone
         backbone = load_backbone(config)
@@ -104,22 +102,13 @@ def test_invalid_backbone_type():
     config_dict = {"model_type": "invalid_backbone", "use_pretrained": False}
 
     with pytest.raises(ValueError, match="Backbone invalid_backbone not supported"):
-        AutoConfigBackbone.from_dict(config_dict)
-
-
-def test_invalid_timm_model():
-    """Test that trying to build a TimmBackbone with an invalid model_name raises an AssertionError."""
-    config_dict = {"model_type": "timm", "use_pretrained": False, "model_name": "invalid_model_name"}
-    config = AutoConfigBackbone.from_dict(config_dict)
-
-    with pytest.raises(AssertionError, match="is not included in timm"):
-        load_backbone(config)
+        ConfigBackboneManager.from_dict(config_dict)
 
 
 def test_size_divisibility():
     """Test that size_divisibility property works."""
     for backbone_type, config_dict in BACKBONE_CONFIGS.items():
-        config = AutoConfigBackbone.from_dict(config_dict)
+        config = ConfigBackboneManager.from_dict(config_dict)
         backbone = load_backbone(config)
 
         # Should be an integer
@@ -129,7 +118,7 @@ def test_size_divisibility():
 def test_padding_constraints():
     """Test that padding_constraints property works."""
     for backbone_type, config_dict in BACKBONE_CONFIGS.items():
-        config = AutoConfigBackbone.from_dict(config_dict)
+        config = ConfigBackboneManager.from_dict(config_dict)
         backbone = load_backbone(config)
 
         # Should return a dict

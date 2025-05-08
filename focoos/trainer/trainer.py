@@ -304,7 +304,6 @@ class FocoosTrainer:
                             CommonMetricPrinter(args.max_iters),
                             JSONWriter(
                                 os.path.join(self.ckpt_dir, "metrics.json"),
-                                force_close=True,
                             ),
                             TensorboardXWriter(self.output_dir),
                         ],

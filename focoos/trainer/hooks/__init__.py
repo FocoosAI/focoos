@@ -9,7 +9,6 @@ from .hook import (
     LRScheduler,
     PeriodicCheckpointer,
     PeriodicWriter,
-    PreciseBN,
     TorchMemoryStats,
     TorchProfiler,
 )
@@ -27,7 +26,6 @@ __all__ = [
     "LRScheduler",
     "PeriodicCheckpointer",
     "PeriodicWriter",
-    "PreciseBN",
     "TorchMemoryStats",
     "TorchProfiler",
     "VisualizationHook",
