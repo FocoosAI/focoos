@@ -1,5 +1,5 @@
 def _register_cls():
-    from focoos.auto_model import AutoConfig, AutoModel
+    from focoos.model_manager import ConfigManager, ModelManager
     from focoos.ports import ModelFamily
 
     def load_cls_model():
@@ -14,5 +14,5 @@ def _register_cls():
         return ClassificationConfig
 
     # Register the model and config loaders
-    AutoModel.register_model(ModelFamily.IMAGE_CLASSIFIER, load_cls_model)
-    AutoConfig.register_model(ModelFamily.IMAGE_CLASSIFIER, load_cls_config)
+    ModelManager.register_model(ModelFamily.IMAGE_CLASSIFIER, load_cls_model)
+    ConfigManager.register_config(ModelFamily.IMAGE_CLASSIFIER, load_cls_config)

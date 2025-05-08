@@ -6,18 +6,17 @@ from typing import Callable, Dict, Optional, Type
 from urllib.parse import urlparse
 
 from focoos.hub.api_client import ApiClient
-from focoos.infer.infer_model import InferModel
 from focoos.model_registry.model_registry import ModelRegistry
 from focoos.models.fai_model import BaseModelNN, FocoosModel, ModelConfig
 from focoos.nn.backbone.base import BackboneConfig, BaseBackbone
 from focoos.ports import MODELS_DIR, ModelFamily, ModelInfo
 from focoos.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger("ModelManager")
 
 
-class AutoModel:
-    """Automatic model manager with lazy loading"""
+class ModelManager:
+    """Automatic model manager with lazy loading (refactored)"""
 
     _MODEL_MAPPING: Dict[str, Callable[[], Type[BaseModelNN]]] = {}
     _REGISTERED_MODELS: set = set()
@@ -26,118 +25,49 @@ class AutoModel:
     def register_model(cls, model_family: ModelFamily, model_loader: Callable[[], Type[BaseModelNN]]):
         """
         Register a loader for a specific model
-
-        Args:
-            model_family: Model family
-            model_loader: Function that loads the model
         """
         cls._MODEL_MAPPING[model_family.value] = model_loader
         cls._REGISTERED_MODELS.add(model_family.value)
 
     @classmethod
-    def _import_model_family(cls, model_family: ModelFamily):
-        """Dynamically import a model family"""
-        try:
-            module_name = f"focoos.models.{model_family}"
-            importlib.import_module(module_name)
-        except ImportError as e:
-            raise ImportError(f"Unable to import model family {model_family}. Error: {str(e)}")
-
-    @classmethod
-    def from_config(cls, model_info: ModelInfo, config: Optional[ModelConfig] = None, **kwargs) -> FocoosModel:
-        """Load a model from a scratch configuration"""
-        # Import the family module only if not already registered
-        if model_info.model_family not in cls._REGISTERED_MODELS:
-            # Import the family module
-            family_module = importlib.import_module(f"focoos.models.{model_info.model_family.value}")
-
-            # Iteratively register all models in the family
+    def _ensure_family_registered(cls, model_family: ModelFamily):
+        """Ensure the model family is registered, importing if needed."""
+        if model_family not in cls._REGISTERED_MODELS:
+            family_module = importlib.import_module(f"focoos.models.{model_family.value}")
             for attr_name in dir(family_module):
                 if attr_name.startswith("_register"):
                     register_func = getattr(family_module, attr_name)
                     if callable(register_func):
                         register_func()
 
-        if model_info.model_family not in cls._MODEL_MAPPING:
+    @classmethod
+    def _from_model_info(cls, model_info: ModelInfo, config: Optional[ModelConfig] = None, **kwargs) -> FocoosModel:
+        """Load a model from ModelInfo, handling config and weights."""
+        cls._ensure_family_registered(model_info.model_family)
+        if model_info.model_family.value not in cls._MODEL_MAPPING:
             raise ValueError(f"Model {model_info.model_family} not supported")
-
         model_class = cls._MODEL_MAPPING[model_info.model_family.value]()
         if config is None:
-            config = AutoConfig.from_dict(model_info.model_family, model_info.config, **kwargs)
-
+            config = ConfigManager.from_dict(model_info.model_family, model_info.config, **kwargs)
         model_info.config = config
-        model = model_class(model_info.config)
+        nn_model = model_class(model_info.config)
+        model = FocoosModel(nn_model, model_info)
         if model_info.weights_uri:
-            weights = ModelArtifactsManager.get_weights_dict(model_info)
+            weights = ArtifactsManager.get_weights_dict(model_info)
             if weights:
-                model.load_state_dict(weights)
+                model.load_weights(weights)
                 logger.info(f"✅ Weights loaded for model {model_info.name}")
         else:
             logger.warning(f"⚠️ Model {model_info.name} has no pretrained weights")
-        return FocoosModel(model, model_info)
+        return model
 
     @classmethod
-    def from_pretrained(cls, pretrained_model_name: str, config: Optional[ModelConfig] = None, **kwargs) -> FocoosModel:
-        """
-        Load a pretrained model
-
-        Args:
-            pretrained_model_name: Name of the pretrained model
-            config: Model configuration (optional)
-            **kwargs: Configuration parameters to override
-
-        Returns:
-            FocoosModel: Loaded model
-
-        Raises:
-            ValueError: If the model doesn't exist or is not supported
-            RuntimeError: If there are errors during loading
-        """
-        model_info = ModelRegistry.get_model_info(pretrained_model_name)
-        if model_info is None:
-            raise ValueError(f"Model {pretrained_model_name} not found")
-
-        # Import the family module only if not already registered
-        if model_info.model_family not in cls._REGISTERED_MODELS:
-            # Import the family module
-            family_module = importlib.import_module(f"focoos.models.{model_info.model_family.value}")
-
-            # Iteratively register all models in the family
-            for attr_name in dir(family_module):
-                if attr_name.startswith("_register"):
-                    register_func = getattr(family_module, attr_name)
-                    if callable(register_func):
-                        register_func()
-
-        if model_info.model_family not in cls._MODEL_MAPPING:
-            raise ValueError(f"Model {pretrained_model_name} not supported")
-
-        if config is None:
-            config = AutoConfig.from_dict(model_info.model_family, model_info.config, **kwargs)
-
-        model_info.config = config
-        model_class = cls._MODEL_MAPPING[model_info.model_family.value]()
-        model = model_class(config)
-        focoos_model = FocoosModel(model, model_info)
-
-        if model_info.weights_uri:
-            weights = ModelArtifactsManager.get_weights_dict(model_info)
-            if weights:
-                focoos_model.load_weights(weights)
-                logger.info(f"✅ Weights loaded for model {pretrained_model_name}")
-        else:
-            logger.warning(f"⚠️ Model {pretrained_model_name} has no pretrained weights")
-
-        return focoos_model
-
-    @classmethod
-    def from_models_dir(
+    def _from_local_dir(
         cls, name: str, models_dir: Optional[str] = None, config: Optional[ModelConfig] = None, **kwargs
     ) -> FocoosModel:
-        """Load a model from an experiment directory"""
+        """Load a model from a local experiment directory."""
         if models_dir is None:
             models_dir = MODELS_DIR
-
         run_dir = os.path.join(models_dir, name)
         if not os.path.exists(run_dir):
             raise ValueError(f"Run {name} not found in {models_dir}")
@@ -147,41 +77,44 @@ class AutoModel:
         model_info = ModelInfo.from_json(model_info_path)
         if model_info.weights_uri == "model_final.pth":
             model_info.weights_uri = os.path.join(run_dir, model_info.weights_uri)
-        return cls.from_config(model_info, config=config, **kwargs)
+        return cls._from_model_info(model_info, config=config, **kwargs)
 
     @classmethod
-    def from_hub(
-        cls, model_ref: str, infer: bool = False, api_key: Optional[str] = None
-    ):  # ->  Union[FocoosModel, InferModel]:
-        """Load a model from the Focoos Hub"""
-        # focoos = FocoosHUB()
-        pass
-
-
-class AutoInferModel:
-    """Automatic inference model manager with lazy loading"""
+    def _from_hub(cls, name: str, api_key: Optional[str] = None, **kwargs) -> FocoosModel:
+        # TODO: implement hub loading logic
+        raise NotImplementedError("Hub loading is not implemented yet.")
 
     @classmethod
-    def from_models_dir(cls, name: str, models_dir: Optional[str] = None) -> InferModel:
-        pass
+    def get(
+        cls,
+        name: str,
+        model_info: Optional[ModelInfo] = None,
+        config: Optional[ModelConfig] = None,
+        models_dir: Optional[str] = None,
+        api_key: Optional[str] = None,
+        **kwargs,
+    ) -> FocoosModel:
+        """
+        Unified entrypoint to load a model by name or ModelInfo.
+        """
+        if model_info is not None:
+            return cls._from_model_info(model_info, config=config, **kwargs)
+        if name.startswith("hub://"):
+            return cls._from_hub(name, api_key=api_key, **kwargs)
+        if ModelRegistry.exists(name):
+            model_info = ModelRegistry.get_model_info(name)
+            return cls._from_model_info(model_info, config=config, **kwargs)
+        return cls._from_local_dir(name, models_dir=models_dir, config=config, **kwargs)
 
-    @classmethod
-    def from_pretrained(cls, name: str) -> InferModel:
-        pass
 
-    @classmethod
-    def from_hub(cls, name: str) -> InferModel:
-        pass
-
-
-class AutoConfig:
+class ConfigManager:
     """Automatic model configuration management"""
 
     _MODEL_MAPPING: Dict[str, Callable[[], Type[ModelConfig]]] = {}
     _REGISTERED_MODELS: set = set()
 
     @classmethod
-    def register_model(cls, model_family: ModelFamily, model_config_loader: Callable[[], Type[ModelConfig]]):
+    def register_config(cls, model_family: ModelFamily, model_config_loader: Callable[[], Type[ModelConfig]]):
         """
         Register a loader for a specific model
 
@@ -299,7 +232,7 @@ class AutoBackbone:
         return getattr(module, class_name)
 
 
-class ModelArtifactsManager:
+class ArtifactsManager:
     @staticmethod
     def get_weights_dict(model_info: ModelInfo) -> Optional[dict]:
         """

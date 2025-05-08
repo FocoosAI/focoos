@@ -1,5 +1,5 @@
 def _register():
-    from focoos.auto_model import AutoConfig, AutoModel
+    from focoos.model_manager import ConfigManager, ModelManager
     from focoos.ports import ModelFamily
 
     def load_model():
@@ -14,5 +14,5 @@ def _register():
         return BisenetFormerConfig
 
     # Qui registriamo solo la funzione load_rtdetr_model, NON viene eseguita
-    AutoModel.register_model(ModelFamily.BISENETFORMER, load_model)
-    AutoConfig.register_model(ModelFamily.BISENETFORMER, load_config)
+    ModelManager.register_model(ModelFamily.BISENETFORMER, load_model)
+    ConfigManager.register_config(ModelFamily.BISENETFORMER, load_config)

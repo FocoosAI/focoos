@@ -9,7 +9,7 @@ from focoos.config import FOCOOS_CONFIG
 from focoos.utils.logger import get_logger
 from focoos.utils.system import get_focoos_version
 
-logger = get_logger(__name__)
+logger = get_logger("HUB")
 
 
 class ApiClient:

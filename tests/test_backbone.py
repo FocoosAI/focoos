@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from focoos.auto_model import AutoConfigBackbone
+from focoos.model_manager import AutoConfigBackbone
 from focoos.nn.backbone.base import BackboneConfig
 from focoos.nn.backbone.build import load_backbone
 

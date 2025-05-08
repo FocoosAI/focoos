@@ -35,7 +35,7 @@ dependencies = [
     "Pillow~=10.2.0",
     "supervision~=0.26.0rc7",
     "opencv-python~=4.11.0.86",
-    "pydantic~=2.11.3",
+    "pydantic~=2.11.4",
     "pydantic-settings~=2.8.1",
     "tqdm~=4.67.1",
     "numpy~=2.2.1",
@@ -52,7 +52,7 @@ dependencies = [
     "timm~=0.9.16",
     "tensorboard~=2.19.0",
     "onnx~=1.17.0",
-    "onnxslim~=0.1.50",
+    "onnxslim~=0.1.51",
     "coolname~=2.2.0",
 ]
 
@@ -65,10 +65,10 @@ keywords = [
 ]
 
 [project.optional-dependencies]
-cpu = ["onnxruntime==1.21.0"]
-cuda = ["onnxruntime-gpu==1.21.0"]
-tensorrt = ["onnxruntime-gpu==1.21.0","tensorrt==10.5.0"]
-torch = ["torch==2.4.0","torchvision"]
+cpu = ["onnxruntime==1.21.1"]
+cuda = ["onnxruntime-gpu==1.21.1"]
+tensorrt = ["onnxruntime-gpu==1.21.1","tensorrt==10.5.0"]
+torch = ["torch==2.7.0","torchvision"]
 dev = [
     "pytest",
     "pytest-cov",

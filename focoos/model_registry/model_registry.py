@@ -39,20 +39,6 @@ class ModelRegistry:
         "bisenetformer-m-ade": os.path.join(REGISTRY_PATH, "bisenetformer-m-ade.json"),
     }
 
-    _user_models: Dict[str, ModelInfo] = {}
-
-    # def __init__(self):
-    #     self._load_user_models()
-
-    # def _load_user_models(self):
-    #     dir_list = [d for d in os.listdir(MODELS_DIR) if not d.startswith("fai-")]
-    #     for model_ref in dir_list:
-    #         info_keys = ["focoos_metadata.json", "model_info.json"]
-    #         info_files = [os.path.join(MODELS_DIR, model_ref, info_key) for info_key in info_keys]
-    #         for info_file in info_files:
-    #             if os.path.exists(info_file):
-    #                 self._user_models[model_ref] = ModelInfo.from_json(info_file)
-
     @classmethod
     def get_model_info(cls, model_name: str) -> ModelInfo:
         """Get the model information for a given model name"""
@@ -66,4 +52,9 @@ class ModelRegistry:
     @classmethod
     def list_models(cls) -> list[str]:
         """List all available models"""
-        return list(cls._pretrained_models.keys()) + list(cls._user_models.keys())
+        return list(cls._pretrained_models.keys())
+
+    @classmethod
+    def exists(cls, model_name: str) -> bool:
+        """Check if a model exists in the registry"""
+        return model_name in cls._pretrained_models

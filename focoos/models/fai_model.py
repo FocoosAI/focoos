@@ -14,7 +14,7 @@ from focoos.trainer.export.onnx import onnx_export
 from focoos.utils.distributed.dist import launch
 from focoos.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger("FocoosModel")
 
 
 class BaseModelNN(nn.Module):

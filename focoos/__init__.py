@@ -3,17 +3,21 @@ from .hub import ApiClient, FocoosHUB, RemoteDataset, RemoteModel
 from .infer.infer_model import InferModel
 from .infer.runtimes.load_runtime import load_runtime
 from .infer.runtimes.onnx import ONNXRuntime
+from .model_manager import ModelManager
 from .ports import (
     DEV_API_URL,
     LOCAL_API_URL,
     PROD_API_URL,
     DatasetLayout,
+    DatasetMetadata,
     DatasetPreview,
+    DetectronDict,
     FocoosDet,
     FocoosDetections,
     GPUDevice,
     GPUInfo,
     LatencyMetrics,
+    ModelInfo,
     ModelPreview,
     ModelStatus,
     OnnxRuntimeOpts,
@@ -21,6 +25,7 @@ from .ports import (
     RuntimeTypes,
     SystemInfo,
     Task,
+    TrainerArgs,
     TrainingInfo,
 )
 from .utils.logger import _setup_logging, get_logger
@@ -77,4 +82,9 @@ __all__ = [
     "ApiClient",
     "RemoteDataset",
     "RemoteModel",
+    "ModelInfo",
+    "TrainerArgs",
+    "DatasetMetadata",
+    "DetectronDict",
+    "ModelManager",
 ]
