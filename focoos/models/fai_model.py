@@ -11,6 +11,7 @@ from focoos.infer.infer_model import InferModel
 from focoos.ports import DatasetEntry, ExportCfg, FocoosDetections, ModelConfig, ModelInfo, ModelOutput, TrainerArgs
 from focoos.structures import Instances
 from focoos.trainer.export.onnx import onnx_export
+from focoos.utils.checkpoint import IncompatibleKeys, strip_prefix_if_present
 from focoos.utils.distributed.dist import launch
 from focoos.utils.logger import get_logger
 
@@ -53,6 +54,34 @@ class BaseModelNN(nn.Module):
         **kwargs,
     ) -> list[FocoosDetections]:
         raise NotImplementedError("Post-processing is not implemented for this model.")
+
+    def load_state_dict(self, checkpoint_state_dict: dict, strict: bool = True) -> IncompatibleKeys:
+        # if the state_dict comes from a model that was wrapped in a
+        # DataParallel or DistributedDataParallel during serialization,
+        # remove the "module" prefix before performing the matching.
+        strip_prefix_if_present(checkpoint_state_dict, "module.")
+
+        # workaround https://github.com/pytorch/pytorch/issues/24139
+        model_state_dict = self.state_dict()
+        incorrect_shapes = []
+        for k in list(checkpoint_state_dict.keys()):
+            if k in model_state_dict:
+                model_param = model_state_dict[k]
+                shape_model = tuple(model_param.shape)
+                shape_checkpoint = tuple(checkpoint_state_dict[k].shape)
+                if shape_model != shape_checkpoint:
+                    incorrect_shapes.append((k, shape_checkpoint, shape_model))
+                    checkpoint_state_dict.pop(k)
+
+        incompatible = super().load_state_dict(checkpoint_state_dict, strict=strict)
+        incompatible = IncompatibleKeys(
+            missing_keys=incompatible.missing_keys,
+            unexpected_keys=incompatible.unexpected_keys,
+            incorrect_shapes=incorrect_shapes,
+        )
+        incompatible.log_incompatible_keys()
+
+        return incompatible
 
 
 class BaseProcessor:
@@ -353,22 +382,6 @@ class FocoosModel:
         return output_fdet
 
     def load_weights(self, weights: dict):
-        checkpoint_state_dict = weights
-        model_state_dict = self.model.state_dict()
-        incorrect_shapes = []
-        for k in list(checkpoint_state_dict.keys()):
-            if k in model_state_dict:
-                model_param = model_state_dict[k]
-                shape_model = tuple(model_param.shape)
-                shape_checkpoint = tuple(checkpoint_state_dict[k].shape)
-                if shape_model != shape_checkpoint:
-                    incorrect_shapes.append((k, shape_checkpoint, shape_model))
-                    checkpoint_state_dict.pop(k)
-        incompatible = self.model.load_state_dict(checkpoint_state_dict, strict=False)
-
-        if incompatible.missing_keys:
-            logger.warning(f"Missing keys in checkpoint: {incompatible.missing_keys}")
-        if incompatible.unexpected_keys:
-            logger.warning(f"Unexpected keys in checkpoint: {incompatible.unexpected_keys}")
-        logger.info("Loaded weights!")
+        # Merge with load weights of checkpointer
+        incompatible = self.model.load_state_dict(weights, strict=False)
         return len(incompatible.missing_keys) + len(incompatible.unexpected_keys)

@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
-from focoos.data.catalog.utils import load_coco_json, load_coco_panoptic_json, load_sem_seg
+from focoos.data.catalog.utils import load_coco_json, load_sem_seg
 from focoos.data.datasets.dict_dataset import DictDataset
 from focoos.data.utils import filter_images_with_only_crowd_annotations
 from focoos.ports import (
@@ -224,7 +224,7 @@ def _load_dataset_split(
         #     if not gt_root_path:
         #         raise ValueError(f"Internal Error: gt_root missing from dataset {split_name}.")
         #     metadata.panoptic_root = gt_root_path
-        dataset_dict = load_coco_panoptic_json(json_file_path, image_root_path, gt_root_path, metadata)
+        # dataset_dict = load_coco_panoptic_json(json_file_path, image_root_path, gt_root_path, metadata)
     else:
         raise ValueError(f"Unknown task {task}")
 

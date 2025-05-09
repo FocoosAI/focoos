@@ -1,6 +1,5 @@
 from typing import Dict, Optional, Union
 
-import fvcore.nn.weight_init as weight_init
 import numpy as np
 import torch
 import torch.nn as nn
@@ -365,7 +364,10 @@ class TransformerDecoder(nn.Module):
         for _ in range(min(self.num_feature_levels, dec_layers)):
             if in_channels != hidden_dim or enforce_input_project:
                 self.input_proj.append(Conv2d(in_channels, hidden_dim, kernel_size=1))
-                weight_init.c2_xavier_fill(self.input_proj[-1])
+                # weight_init.c2_xavier_fill(self.input_proj[-1])
+                nn.init.kaiming_uniform_(self.input_proj[-1].weight, a=1)
+                if self.input_proj[-1].bias is not None:
+                    nn.init.constant_(self.input_proj[-1].bias, 0)
             else:
                 self.input_proj.append(nn.Sequential())
 
@@ -376,7 +378,10 @@ class TransformerDecoder(nn.Module):
         if self.query_init:
             self.out_dim = out_dim
             self.kernels = nn.Conv2d(in_channels=out_dim, out_channels=num_queries, kernel_size=1)
-            weight_init.c2_xavier_fill(self.kernels)
+            # weight_init.c2_xavier_fill(self.kernels)
+            nn.init.kaiming_uniform_(self.kernels.weight, a=1)
+            if self.kernels.bias is not None:
+                nn.init.constant_(self.kernels.bias, 0)
             self.proj = nn.Linear(out_dim, hidden_dim)
 
     def forward(self, x, mask_features, targets=None, mask=None):

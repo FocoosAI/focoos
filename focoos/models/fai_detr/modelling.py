@@ -3,7 +3,6 @@ import math
 from collections import OrderedDict
 from typing import Dict, Optional, Tuple, Union
 
-import fvcore.nn.weight_init as weight_init
 import numpy as np
 import torch
 import torch.nn as nn
@@ -214,7 +213,9 @@ class Encoder(nn.Module):
             stride=1,
             padding=1,
         )
-        weight_init.c2_xavier_fill(self.mask_features)
+        nn.init.kaiming_uniform_(self.mask_features.weight, a=1)
+        if self.mask_features.bias is not None:
+            nn.init.constant_(self.mask_features.bias, 0)
 
         self._reset_parameters()
 

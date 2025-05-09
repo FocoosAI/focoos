@@ -2,36 +2,22 @@
 # Part of the code has been copied and adapted from Detectron2 (c) Facebook, Inc. and its affiliates.
 import logging
 import os
-from collections import defaultdict
-from typing import IO, Any, Dict, Iterable, List, NamedTuple, Optional, Tuple, cast
+from typing import IO, Any, Dict, Iterable, List, Optional, Tuple, cast
 from urllib.parse import parse_qs, urlparse
 
 import torch
 import torch.nn as nn
 from iopath.common.file_io import HTTPURLHandler, PathManager
-from termcolor import colored
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 
+from focoos.models.fai_model import BaseModelNN
+from focoos.utils.checkpoint import IncompatibleKeys
 from focoos.utils.distributed import comm
 from focoos.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 __all__ = ["Checkpointer", "PeriodicCheckpointer"]
-
-
-# Copy from Detectron2
-class _IncompatibleKeys(
-    NamedTuple(
-        "IncompatibleKeys",
-        [
-            ("missing_keys", List[str]),
-            ("unexpected_keys", List[str]),
-            ("incorrect_shapes", List[Tuple[str, Tuple[int], Tuple[int]]]),
-        ],
-    )
-):
-    pass
 
 
 class Checkpointer:
@@ -42,7 +28,7 @@ class Checkpointer:
 
     def __init__(
         self,
-        model: nn.Module,
+        model: BaseModelNN,
         save_dir: str = "",
         *,
         save_to_disk: bool = True,
@@ -162,9 +148,7 @@ class Checkpointer:
         # Load and preprocess checkpoint file
         checkpoint = self._load_file(path)
         # Load the checkpoint into the model
-        incompatible = self._load_model(checkpoint)
-        if incompatible is not None:  # handle some existing subclasses that returns None
-            self._log_incompatible_keys(incompatible)
+        _ = self._load_model(checkpoint)
 
         for key in self.checkpointables if checkpointables is None else checkpointables:
             if key in checkpoint:
@@ -272,7 +256,7 @@ class Checkpointer:
             raise ValueError(f"Unsupported query remaining: f{queries}, orginal filename: {parsed_url.geturl()}")
         return loaded
 
-    def _load_model(self, checkpoint: Any) -> _IncompatibleKeys:
+    def _load_model(self, checkpoint: Any) -> IncompatibleKeys:
         """
         Load weights from a checkpoint.
 
@@ -292,57 +276,9 @@ class Checkpointer:
         """
         checkpoint_state_dict = checkpoint.pop("model")
 
-        # if the state_dict comes from a model that was wrapped in a
-        # DataParallel or DistributedDataParallel during serialization,
-        # remove the "module" prefix before performing the matching.
-        _strip_prefix_if_present(checkpoint_state_dict, "module.")
-
-        # workaround https://github.com/pytorch/pytorch/issues/24139
-        model_state_dict = self.model.state_dict()
-        incorrect_shapes = []
-        for k in list(checkpoint_state_dict.keys()):
-            if k in model_state_dict:
-                model_param = model_state_dict[k]
-                shape_model = tuple(model_param.shape)
-                shape_checkpoint = tuple(checkpoint_state_dict[k].shape)
-                if shape_model != shape_checkpoint:
-                    incorrect_shapes.append((k, shape_checkpoint, shape_model))
-                    checkpoint_state_dict.pop(k)
         incompatible = self.model.load_state_dict(checkpoint_state_dict, strict=False)
-        incompatible = _IncompatibleKeys(
-            missing_keys=incompatible.missing_keys,
-            unexpected_keys=incompatible.unexpected_keys,
-            incorrect_shapes=incorrect_shapes,
-        )
-        model_buffers = dict(self.model.named_buffers(recurse=False))
-        for k in ["pixel_mean", "pixel_std"]:
-            # Ignore missing key message about pixel_mean/std.
-            # Though they may be missing in old checkpoints, they will be correctly
-            # initialized from config anyway.
-            if k in model_buffers:
-                try:
-                    incompatible.missing_keys.remove(k)
-                except ValueError:
-                    pass
 
         return incompatible
-
-    def _log_incompatible_keys(self, incompatible: _IncompatibleKeys) -> None:
-        """
-        Log information about the incompatible keys returned by ``_load_model``.
-        """
-        for k, shape_checkpoint, shape_model in incompatible.incorrect_shapes:
-            self.logger.warning(
-                "Skip loading parameter '{}' to the model due to incompatible "
-                "shapes: {} in the checkpoint but {} in the "
-                "model! You might want to double check if this is expected.".format(k, shape_checkpoint, shape_model)
-            )
-        if incompatible.missing_keys:
-            missing_keys = _filter_reused_missing_keys(self.model, incompatible.missing_keys)
-            if missing_keys:
-                self.logger.warning(get_missing_parameters_message(missing_keys))
-        if incompatible.unexpected_keys:
-            self.logger.warning(get_unexpected_parameters_message(incompatible.unexpected_keys))
 
 
 class PeriodicCheckpointer:
@@ -423,126 +359,6 @@ class PeriodicCheckpointer:
                 :meth:`Checkpointer.save`.
         """
         self.checkpointer.save(name, **kwargs)
-
-
-def _filter_reused_missing_keys(model: nn.Module, keys: List[str]) -> List[str]:
-    """
-    Filter "missing keys" to not include keys that have been loaded with another name.
-    """
-    keyset = set(keys)
-    param_to_names = defaultdict(set)  # param -> names that points to it
-    for module_prefix, module in _named_modules_with_dup(model):
-        for name, param in list(module.named_parameters(recurse=False)) + list(module.named_buffers(recurse=False)):
-            full_name = (module_prefix + "." if module_prefix else "") + name
-            param_to_names[param].add(full_name)
-    for names in param_to_names.values():
-        # if one name appears missing but its alias exists, then this
-        # name is not considered missing
-        if any(n in keyset for n in names) and not all(n in keyset for n in names):
-            [keyset.remove(n) for n in names if n in keyset]
-    return list(keyset)
-
-
-def get_missing_parameters_message(keys: List[str]) -> str:
-    """
-    Get a logging-friendly message to report parameter names (keys) that are in
-    the model but not found in a checkpoint.
-    Args:
-        keys (list[str]): List of keys that were not found in the checkpoint.
-    Returns:
-        str: message.
-    """
-    groups = _group_checkpoint_keys(keys)
-    msg_per_group = sorted(k + _group_to_str(v) for k, v in groups.items())
-    msg = "Some model parameters or buffers are not found in the checkpoint:\n"
-    msg += "\n".join([colored(x, "blue") for x in msg_per_group])
-    return msg
-
-
-def get_unexpected_parameters_message(keys: List[str]) -> str:
-    """
-    Get a logging-friendly message to report parameter names (keys) that are in
-    the checkpoint but not found in the model.
-    Args:
-        keys (list[str]): List of keys that were not found in the model.
-    Returns:
-        str: message.
-    """
-    groups = _group_checkpoint_keys(keys)
-    msg = "The checkpoint state_dict contains keys that are not used by the model:\n"
-    msg += "\n".join("  " + colored(k + _group_to_str(v), "magenta") for k, v in groups.items())
-    return msg
-
-
-def _strip_prefix_if_present(state_dict: Dict[str, Any], prefix: str) -> None:
-    """
-    Strip the prefix in metadata, if any.
-    Args:
-        state_dict (OrderedDict): a state-dict to be loaded to the model.
-        prefix (str): prefix.
-    """
-    keys = sorted(state_dict.keys())
-    if not all(len(key) == 0 or key.startswith(prefix) for key in keys):
-        return
-
-    for key in keys:
-        newkey = key[len(prefix) :]
-        state_dict[newkey] = state_dict.pop(key)
-
-    # also strip the prefix in metadata, if any..
-    try:
-        metadata = state_dict._metadata  # type: ignore
-    except AttributeError:
-        pass
-    else:
-        for key in list(metadata.keys()):
-            # for the metadata dict, the key can be:
-            # '': for the DDP module, which we want to remove.
-            # 'module': for the actual model.
-            # 'module.xx.xx': for the rest.
-
-            if len(key) == 0:
-                continue
-            newkey = key[len(prefix) :]
-            metadata[newkey] = metadata.pop(key)
-
-
-def _group_checkpoint_keys(keys: List[str]) -> Dict[str, List[str]]:
-    """
-    Group keys based on common prefixes. A prefix is the string up to the final
-    "." in each key.
-    Args:
-        keys (list[str]): list of parameter names, i.e. keys in the model
-            checkpoint dict.
-    Returns:
-        dict[list]: keys with common prefixes are grouped into lists.
-    """
-    groups = defaultdict(list)
-    for key in keys:
-        pos = key.rfind(".")
-        if pos >= 0:
-            head, tail = key[:pos], [key[pos + 1 :]]
-        else:
-            head, tail = key, []
-        groups[head].extend(tail)
-    return groups
-
-
-def _group_to_str(group: List[str]) -> str:
-    """
-    Format a group of parameter name suffixes into a loggable string.
-    Args:
-        group (list[str]): list of parameter name suffixes.
-    Returns:
-        str: formated string.
-    """
-    if len(group) == 0:
-        return ""
-
-    if len(group) == 1:
-        return "." + group[0]
-
-    return ".{" + ", ".join(sorted(group)) + "}"
 
 
 def _named_modules_with_dup(model: nn.Module, prefix: str = "") -> Iterable[Tuple[str, nn.Module]]:

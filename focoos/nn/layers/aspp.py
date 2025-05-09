@@ -2,7 +2,6 @@
 
 from copy import deepcopy
 
-import fvcore.nn.weight_init as weight_init
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -69,7 +68,10 @@ class ASPP(nn.Module):
                 activation=deepcopy(activation),
             )
         )
-        weight_init.c2_xavier_fill(self.convs[-1])
+        # weight_init.c2_xavier_fill(self.convs[-1])
+        nn.init.kaiming_uniform_(self.convs[-1].weight, a=1)
+        if self.convs[-1].bias is not None:
+            nn.init.constant_(self.convs[-1].bias, 0)
         # atrous convs
         for dilation in dilations:
             if use_depthwise_separable_conv:
@@ -99,7 +101,10 @@ class ASPP(nn.Module):
                         activation=deepcopy(activation),
                     )
                 )
-                weight_init.c2_xavier_fill(self.convs[-1])
+                # weight_init.c2_xavier_fill(self.convs[-1])
+                nn.init.kaiming_uniform_(self.convs[-1].weight, a=1)
+                if self.convs[-1].bias is not None:
+                    nn.init.constant_(self.convs[-1].bias, 0)
         # image pooling
         # We do not add BatchNorm because the spatial resolution is 1x1,
         # the original TF implementation has BatchNorm.
@@ -125,7 +130,10 @@ class ASPP(nn.Module):
                     activation=deepcopy(activation),
                 ),
             )
-        weight_init.c2_xavier_fill(image_pooling[1])
+        # weight_init.c2_xavier_fill(image_pooling[1])
+        nn.init.kaiming_uniform_(image_pooling[1].weight, a=1)
+        if image_pooling[1].bias is not None:
+            nn.init.constant_(image_pooling[1].bias, 0)
         self.convs.append(image_pooling)
 
         self.project = Conv2d(
@@ -136,7 +144,10 @@ class ASPP(nn.Module):
             norm=get_norm(norm, out_channels),
             activation=deepcopy(activation),
         )
-        weight_init.c2_xavier_fill(self.project)
+        # weight_init.c2_xavier_fill(self.project)
+        nn.init.kaiming_uniform_(self.project.weight, a=1)
+        if self.project.bias is not None:
+            nn.init.constant_(self.project.bias, 0)
 
     def forward(self, x):
         size = x.shape[-2:]

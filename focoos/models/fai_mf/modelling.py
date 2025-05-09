@@ -1,6 +1,5 @@
 from typing import Dict, Optional, Union
 
-import fvcore.nn.weight_init as weight_init
 import numpy as np
 import torch
 import torch.nn as nn
@@ -247,7 +246,10 @@ class TransformerFPN(nn.Module):
         if transformer_layers > 0:
             in_channels = feature_channels[len(self.in_features) - 1]
             self.input_proj = Conv2d(in_channels, feat_dim, kernel_size=1)
-            weight_init.c2_xavier_fill(self.input_proj)
+            # weight_init.c2_xavier_fill(self.input_proj)
+            nn.init.kaiming_uniform_(self.input_proj.weight, a=1)
+            if self.input_proj.bias is not None:
+                nn.init.constant_(self.input_proj.bias, 0)
             self.transformer = TransformerEncoderOnly(
                 d_model=feat_dim,
                 dropout=transformer_dropout,
@@ -280,7 +282,10 @@ class TransformerFPN(nn.Module):
                     norm=output_norm,
                     activation=F.relu,
                 )
-                weight_init.c2_xavier_fill(output_conv)
+                # weight_init.c2_xavier_fill(output_conv)
+                nn.init.kaiming_uniform_(output_conv.weight, a=1)
+                if output_conv.bias is not None:
+                    nn.init.constant_(output_conv.bias, 0)
                 self.add_module("layer_{}".format(idx + 1), output_conv)
 
                 lateral_convs.append(None)
@@ -306,8 +311,14 @@ class TransformerFPN(nn.Module):
                     norm=output_norm,
                     activation=F.relu,
                 )
-                weight_init.c2_xavier_fill(lateral_conv)
-                weight_init.c2_xavier_fill(output_conv)
+                # weight_init.c2_xavier_fill(lateral_conv)
+                nn.init.kaiming_uniform_(lateral_conv.weight, a=1)
+                if lateral_conv.bias is not None:
+                    nn.init.constant_(lateral_conv.bias, 0)
+                # weight_init.c2_xavier_fill(output_conv)
+                nn.init.kaiming_uniform_(output_conv.weight, a=1)
+                if output_conv.bias is not None:
+                    nn.init.constant_(output_conv.bias, 0)
                 self.add_module("adapter_{}".format(idx + 1), lateral_conv)
                 self.add_module("layer_{}".format(idx + 1), output_conv)
 
@@ -326,7 +337,10 @@ class TransformerFPN(nn.Module):
             stride=1,
             padding=1,
         )
-        weight_init.c2_xavier_fill(self.mask_features)
+        # weight_init.c2_xavier_fill(self.mask_features)
+        nn.init.kaiming_uniform_(self.mask_features.weight, a=1)
+        if self.mask_features.bias is not None:
+            nn.init.constant_(self.mask_features.bias, 0)
 
     @property
     def padding_constraints(self) -> Dict[str, int]:
@@ -436,7 +450,10 @@ class MultiScaleMaskedTransformerDecoder(nn.Module):
         for _ in range(min(self.num_feature_levels, dec_layers)):
             if in_channels != hidden_dim or enforce_input_project:
                 self.input_proj.append(Conv2d(in_channels, hidden_dim, kernel_size=1))
-                weight_init.c2_xavier_fill(self.input_proj[-1])
+                # weight_init.c2_xavier_fill(self.input_proj[-1])
+                nn.init.kaiming_uniform_(self.input_proj[-1].weight, a=1)
+                if self.input_proj[-1].bias is not None:
+                    nn.init.constant_(self.input_proj[-1].bias, 0)
             else:
                 self.input_proj.append(nn.Sequential())
 

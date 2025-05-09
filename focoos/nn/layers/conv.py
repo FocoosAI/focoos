@@ -3,7 +3,6 @@ import warnings
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from fvcore.nn import weight_init
 
 from focoos.utils.env import TORCH_VERSION
 
@@ -148,8 +147,13 @@ class DepthwiseSeparableConv2d(nn.Module):
         )
 
         # default initialization
-        weight_init.c2_msra_fill(self.depthwise)
-        weight_init.c2_msra_fill(self.pointwise)
+        nn.init.kaiming_normal_(self.depthwise.weight, mode="fan_out", nonlinearity="relu")
+        if self.depthwise.bias is not None:
+            nn.init.constant_(self.depthwise.bias, 0)
+
+        nn.init.kaiming_normal_(self.pointwise.weight, mode="fan_out", nonlinearity="relu")
+        if self.pointwise.bias is not None:
+            nn.init.constant_(self.pointwise.bias, 0)
 
     def forward(self, x):
         return self.pointwise(self.depthwise(x))
