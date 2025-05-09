@@ -3,7 +3,7 @@ from .hub import ApiClient, FocoosHUB, RemoteDataset, RemoteModel
 from .infer.infer_model import InferModel
 from .infer.runtimes.load_runtime import load_runtime
 from .infer.runtimes.onnx import ONNXRuntime
-from .model_manager import ModelManager
+from .model_manager import ConfigManager, ModelManager
 from .ports import (
     DEV_API_URL,
     LOCAL_API_URL,
@@ -17,6 +17,7 @@ from .ports import (
     GPUDevice,
     GPUInfo,
     LatencyMetrics,
+    ModelFamily,
     ModelInfo,
     ModelPreview,
     ModelStatus,
@@ -28,6 +29,7 @@ from .ports import (
     TrainerArgs,
     TrainingInfo,
 )
+from .processor import ProcessorManager
 from .utils.logger import _setup_logging, get_logger
 from .utils.system import get_cuda_version, get_system_info
 from .utils.vision import (
@@ -87,4 +89,7 @@ __all__ = [
     "DatasetMetadata",
     "DetectronDict",
     "ModelManager",
+    "ProcessorManager",
+    "ConfigManager",
+    "ModelFamily",
 ]

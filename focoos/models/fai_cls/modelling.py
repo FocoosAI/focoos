@@ -10,7 +10,7 @@ from focoos.data.mappers.classification_dataset_mapper import ClassificationData
 from focoos.models.fai_cls.config import ClassificationConfig
 from focoos.models.fai_cls.ports import ClassificationModelOutput, ClassificationTargets
 from focoos.models.fai_cls.processor import ClassificationProcessor
-from focoos.models.fai_model import BaseModelNN
+from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.backbone.build import load_backbone
 from focoos.ports import FocoosDetections
 from focoos.utils.logger import get_logger

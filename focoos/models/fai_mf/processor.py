@@ -1,17 +1,16 @@
-import base64
 from typing import Dict, Optional, Union
 
-import cv2
 import numpy as np
 import torch
 from PIL import Image
 
 from focoos.models.fai_mf.config import MaskFormerConfig
 from focoos.models.fai_mf.ports import MaskFormerModelOutput, MaskFormerTargets
-from focoos.models.fai_model import BaseProcessor
 from focoos.ports import DatasetEntry, FocoosDet, FocoosDetections
+from focoos.processor.base_processor import BaseProcessor
 from focoos.structures import BitMasks, ImageList, Instances
 from focoos.utils.memory import retry_if_cuda_oom
+from focoos.utils.vision import binary_mask_to_base64, masks_to_xyxy
 
 
 def interpolate_image(image, size):
@@ -23,69 +22,14 @@ def interpolate_image(image, size):
     )[0]
 
 
-def binary_mask_to_base64(binary_mask: np.ndarray) -> str:
-    """
-    Converts a binary mask (NumPy array) to a base64-encoded PNG image using OpenCV.
-
-    This function takes a binary mask, where values of `True` represent the areas of interest (usually 1s)
-    and `False` represents the background (usually 0s). The binary mask is then converted to an image,
-    and this image is saved in PNG format and encoded into a base64 string.
-
-    Args:
-        binary_mask (np.ndarray): A 2D NumPy array with boolean values (`True`/`False`).
-
-    Returns:
-        str: A base64-encoded string representing the PNG image of the binary mask.
-    """
-    # Directly convert the binary mask to uint8 and multiply by 255 in one step
-    binary_mask = (binary_mask * 255).astype(np.uint8)
-
-    # Use OpenCV to encode the image as PNG
-    success, encoded_image = cv2.imencode(".png", binary_mask)
-    if not success:
-        raise ValueError("Failed to encode image")
-
-    # Encode the image to base64
-    return base64.b64encode(encoded_image).decode("utf-8")
-
-
-def masks_to_xyxy(masks: np.ndarray) -> np.ndarray:
-    """
-    Converts a 3D `np.array` of 2D bool masks into a 2D `np.array` of bounding boxes.
-
-    Parameters:
-        masks (np.ndarray): A 3D `np.array` of shape `(N, W, H)`
-            containing 2D bool masks
-
-    Returns:
-        np.ndarray: A 2D `np.array` of shape `(N, 4)` containing the bounding boxes
-            `(x_min, y_min, x_max, y_max)` for each mask
-    """
-    # Vectorized approach to find bounding boxes
-    n = masks.shape[0]
-    xyxy = np.zeros((n, 4), dtype=int)
-
-    # Use np.any to quickly find rows and columns with True values
-    for i, mask in enumerate(masks):
-        rows = np.any(mask, axis=1)
-        cols = np.any(mask, axis=0)
-
-        if np.any(rows) and np.any(cols):
-            y_min, y_max = np.where(rows)[0][[0, -1]]
-            x_min, x_max = np.where(cols)[0][[0, -1]]
-            xyxy[i, :] = [x_min, y_min, x_max, y_max]
-
-    return xyxy
-
-
 class MaskFormerProcessor(BaseProcessor):
     def __init__(self, config: MaskFormerConfig):
         super().__init__(config)
-        self.config = config
         processing_functions = {
             "semantic": self.semantic_inference,
             "instance": self.instance_inference,
         }
+        self.config = config
         self.eval_output_name = "sem_seg" if config.postprocessing_type == "semantic" else "instances"
         assert config.postprocessing_type in processing_functions, (
             f"Invalid postprocessing type: {config.postprocessing_type}. Must be one of: {processing_functions.keys()}"
@@ -109,7 +53,7 @@ class MaskFormerProcessor(BaseProcessor):
         ],
         training: bool,
         device: torch.device,
-        dtype: torch.dtype,
+        dtype: torch.dtype = torch.float32,
         size_divisibility: int = 0,
         padding_constraints: Optional[Dict[str, int]] = None,
     ) -> tuple[torch.Tensor, list[MaskFormerTargets]]:
@@ -359,3 +303,22 @@ class MaskFormerProcessor(BaseProcessor):
             )
 
         return results
+
+    def tensors_to_model_output(self, tensors: Union[list[np.ndarray], list[torch.Tensor]]) -> MaskFormerModelOutput:
+        """
+        Convert a list of tensors or numpy arrays to a MaskFormerModelOutput.
+
+        Args:
+            tensors: List of tensors or numpy arrays
+
+        Returns:
+            MaskFormerModelOutput
+        """
+
+        logits = tensors[0]
+        masks = tensors[1]
+        if isinstance(logits, np.ndarray):
+            logits = torch.from_numpy(logits)
+        if isinstance(masks, np.ndarray):
+            masks = torch.from_numpy(masks)
+        return MaskFormerModelOutput(logits=logits, masks=masks, loss=None)

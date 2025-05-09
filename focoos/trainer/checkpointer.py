@@ -10,7 +10,7 @@ import torch.nn as nn
 from iopath.common.file_io import HTTPURLHandler, PathManager
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 
-from focoos.models.fai_model import BaseModelNN
+from focoos.models.focoos_model import BaseModelNN
 from focoos.utils.checkpoint import IncompatibleKeys
 from focoos.utils.distributed import comm
 from focoos.utils.logger import get_logger

@@ -97,13 +97,13 @@ def test_init_file_not_found(mocker: MockerFixture):
 
 def test_initialization_onnx(mock_local_model_onnx: InferModel, mock_model_dir, mock_metadata):
     assert mock_local_model_onnx.model_dir == mock_model_dir
-    assert mock_local_model_onnx.metadata == mock_metadata
+    assert mock_local_model_onnx.model_info == mock_metadata
     assert isinstance(mock_local_model_onnx.runtime, ONNXRuntime)
 
 
 def test_initialization_torch(mock_local_model_torch: InferModel, mock_model_dir, mock_metadata):
     assert mock_local_model_torch.model_dir == mock_model_dir
-    assert mock_local_model_torch.metadata == mock_metadata
+    assert mock_local_model_torch.model_info == mock_metadata
     assert isinstance(mock_local_model_torch.runtime, TorchscriptRuntime)
 
 
@@ -148,7 +148,7 @@ def mock_runtime_detections() -> list[np.ndarray]:
 def test_annotate_detection_metadata_classes_none(
     image_ndarray: np.ndarray, mock_local_model_onnx: InferModel, mock_sv_detections
 ):
-    mock_local_model_onnx.metadata.classes = None
+    mock_local_model_onnx.model_info.classes = None
     annotated_im = mock_local_model_onnx._annotate(image_ndarray, mock_sv_detections)
     assert annotated_im is not None
     assert isinstance(annotated_im, np.ndarray)
@@ -167,7 +167,7 @@ def test_annotate_detection(image_ndarray: np.ndarray, mock_local_model_onnx: In
 
 
 def test_annotate_semseg(image_ndarray: np.ndarray, mock_local_model_onnx: InferModel, mock_sv_detections):
-    mock_local_model_onnx.metadata.task = Task.SEMSEG
+    mock_local_model_onnx.model_info.task = Task.SEMSEG
     annotated_im = mock_local_model_onnx._annotate(image_ndarray, mock_sv_detections)
     assert annotated_im is not None
     assert isinstance(annotated_im, np.ndarray)

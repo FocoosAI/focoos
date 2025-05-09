@@ -5,10 +5,13 @@ import torch
 from PIL import Image
 
 from focoos.models.fai_detr.ports import DETRModelOutput, DETRTargets
-from focoos.models.fai_model import BaseProcessor
 from focoos.ports import DatasetEntry, FocoosDet, FocoosDetections
+from focoos.processor.base_processor import BaseProcessor
 from focoos.structures import Boxes, ImageList, Instances
 from focoos.utils.box import box_xyxy_to_cxcywh
+from focoos.utils.logger import get_logger
+
+logger = get_logger("DETRProcessor")
 
 
 # perhaps should rename to "resize_instance"
@@ -86,7 +89,7 @@ class DETRProcessor(BaseProcessor):
         ],
         training: bool,
         device: torch.device,
-        dtype: torch.dtype,
+        dtype: torch.dtype = torch.float32,
         size_divisibility: int = 0,
         padding_constraints: Optional[Dict[str, int]] = None,
         resolution: Optional[int] = 640,
@@ -217,3 +220,38 @@ class DETRProcessor(BaseProcessor):
             )
 
         return results
+
+    def tensors_to_model_output(self, tensors: Union[list[np.ndarray], list[torch.Tensor]]) -> DETRModelOutput:
+        """
+        Convert a list of tensors or numpy arrays to a DETRModelOutput.
+
+        Args:
+            tensors (list): A list containing two elements: boxes and logits, either as numpy arrays or torch tensors.
+
+        Returns:
+            DETRModelOutput: The model output with boxes and logits as torch tensors.
+        """
+        if not (isinstance(tensors, (list, tuple)) and len(tensors) == 2):
+            raise ValueError(
+                f"Expected a list or tuple of 2 elements, got {type(tensors)} with length {len(tensors) if hasattr(tensors, '__len__') else 'N/A'}"
+            )
+
+        # Convert both elements to torch.Tensor if they are numpy arrays
+        boxes = tensors[0]
+        logits = tensors[1]
+
+        if isinstance(boxes, np.ndarray):
+            boxes = torch.from_numpy(boxes)
+        elif not isinstance(boxes, torch.Tensor):
+            raise TypeError(f"boxes must be a numpy.ndarray or torch.Tensor, got {type(boxes)}")
+
+        if isinstance(logits, np.ndarray):
+            logits = torch.from_numpy(logits)
+        elif not isinstance(logits, torch.Tensor):
+            raise TypeError(f"logits must be a numpy.ndarray or torch.Tensor, got {type(logits)}")
+
+        return DETRModelOutput(
+            boxes=boxes,
+            logits=logits,
+            loss=None,
+        )

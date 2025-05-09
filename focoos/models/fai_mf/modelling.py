@@ -10,7 +10,7 @@ from focoos.models.fai_mf.config import MaskFormerConfig
 from focoos.models.fai_mf.loss import MaskHungarianMatcher, SetCriterion
 from focoos.models.fai_mf.ports import MaskFormerModelOutput, MaskFormerTargets
 from focoos.models.fai_mf.processor import MaskFormerProcessor
-from focoos.models.fai_model import BaseModelNN
+from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.backbone.base import BaseBackbone
 from focoos.nn.backbone.build import load_backbone
 from focoos.nn.layers.base import MLP

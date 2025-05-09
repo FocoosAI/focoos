@@ -35,24 +35,26 @@ from focoos.ports import (
     FocoosDetections,
     LatencyMetrics,
     ModelExtension,
+    ModelInfo,
     RemoteModelInfo,
     RuntimeTypes,
     Task,
 )
+from focoos.processor.processor_manager import ProcessorManager
 from focoos.utils.logger import get_logger
 from focoos.utils.vision import (
-    get_postprocess_fn,
+    fai_detections_to_sv,
     image_preprocess,
-    sv_to_fai_detections,
 )
 
-logger = get_logger(__name__)
+logger = get_logger("InferModel")
 
 
 class InferModel:
     def __init__(
         self,
         model_dir: Union[str, Path],
+        model_info: Optional[ModelInfo] = None,
         runtime_type: Optional[RuntimeTypes] = None,
     ):
         """
@@ -85,6 +87,7 @@ class InferModel:
         and initializes the runtime for inference using the provided runtime type. Annotation
         utilities are also prepared for visualizing model outputs.
         """
+
         # Determine runtime type and model format
         runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
         extension = ModelExtension.from_runtime_type(runtime_type)
@@ -99,9 +102,14 @@ class InferModel:
             raise FileNotFoundError(f"Model path not found: {self.model_path}")
 
         # Load metadata and set model reference
-        self.metadata: RemoteModelInfo = self._read_metadata()
-        self.model_ref = self.metadata.ref
-        self.postprocess_fn = get_postprocess_fn(self.metadata.task)
+        # self.metadata: RemoteModelInfo = self._read_metadata()
+
+        if model_info is None:
+            self.model_info: ModelInfo = self._read_model_info()
+        else:
+            self.model_info: ModelInfo = model_info
+
+        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)
 
         # Initialize annotation utilities
         self.label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
@@ -112,7 +120,7 @@ class InferModel:
         self.runtime: BaseRuntime = load_runtime(
             runtime_type,
             str(self.model_path),
-            self.metadata,
+            self.model_info,
             FOCOOS_CONFIG.warmup_iter,
         )
 
@@ -129,6 +137,15 @@ class InferModel:
         metadata_path = os.path.join(self.model_dir, "focoos_metadata.json")
         return RemoteModelInfo.from_json(metadata_path)
 
+    def _read_model_info(self) -> ModelInfo:
+        """
+        Reads the model info from a JSON file.
+        """
+        model_info_path = os.path.join(self.model_dir, "model_info.json")
+        if not os.path.exists(model_info_path):
+            raise FileNotFoundError(f"Model info file not found: {model_info_path}")
+        return ModelInfo.from_json(model_info_path)
+
     def _annotate(self, im: np.ndarray, detections: sv.Detections) -> np.ndarray:
         """
         Annotates the input image with detection or segmentation results.
@@ -143,16 +160,16 @@ class InferModel:
         if len(detections.xyxy) == 0:
             logger.warning("No detections found, skipping annotation")
             return im
-        classes = self.metadata.classes
+        classes = self.model_info.classes
         labels = [
             f"{classes[int(class_id)] if classes is not None else str(class_id)}: {confid * 100:.0f}%"
             for class_id, confid in zip(detections.class_id, detections.confidence)  # type: ignore
         ]
-        if self.metadata.task == Task.DETECTION:
+        if self.model_info.task == Task.DETECTION:
             annotated_im = self.box_annotator.annotate(scene=im.copy(), detections=detections)
 
             annotated_im = self.label_annotator.annotate(scene=annotated_im, detections=detections, labels=labels)
-        elif self.metadata.task in [
+        elif self.model_info.task in [
             Task.SEMSEG,
             Task.INSTANCE_SEGMENTATION,
         ]:
@@ -197,40 +214,38 @@ class InferModel:
             ```
         """
         assert self.runtime is not None, "Model is not deployed (locally)"
-        resize = None  #!TODO  check for segmentation
-        if self.metadata.task == Task.DETECTION:
-            resize = 640 if not self.metadata.im_size else self.metadata.im_size
+        resize = self.model_info.im_size
 
         t0 = perf_counter()
         im1, im0 = image_preprocess(image, resize=resize)
+        tensors, _ = self.processor.preprocess(inputs=im1, training=False, device="cuda")
         logger.debug(f"Input image size: {im0.shape}, Resize to: {resize}")
         t1 = perf_counter()
-        detections = self.runtime(im1.astype(np.float32))
+
+        raw_detections = self.runtime(tensors)
 
         t2 = perf_counter()
-
-        detections = self.postprocess_fn(
-            out=detections,
-            im0_shape=(im0.shape[0], im0.shape[1]),
-            conf_threshold=threshold,  # type: ignore
-        )
-        out = sv_to_fai_detections(detections, classes=self.metadata.classes)
+        model_output = self.processor.tensors_to_model_output(raw_detections)
+        detections = self.processor.postprocess(model_output, im0)
         t3 = perf_counter()
         latency = {
             "inference": round(t2 - t1, 3),
             "preprocess": round(t1 - t0, 3),
             "postprocess": round(t3 - t2, 3),
         }
+        res = detections[0]  #!TODO  check for batching
+        res.latency = latency
+        detections = []
         im = None
         if annotate:
-            im = self._annotate(im0, detections)
+            im = self._annotate(im0, fai_detections_to_sv(res, im0.shape))
 
         logger.debug(
             f"Found {len(detections)} detections. Inference time: {(t2 - t1) * 1000:.0f}ms, preprocess: {(t1 - t0) * 1000:.0f}ms, postprocess: {(t3 - t2) * 1000:.0f}ms"
         )
-        return FocoosDetections(detections=out, latency=latency), im
+        return res, im
 
-    def benchmark(self, iterations: int, size: int) -> LatencyMetrics:
+    def benchmark(self, iterations: int = 50) -> LatencyMetrics:
         """
         Benchmark the model's inference performance over multiple iterations.
 
@@ -257,4 +272,4 @@ class InferModel:
             print(f"Input size: {metrics.im_size}x{metrics.im_size}")
             ```
         """
-        return self.runtime.benchmark(iterations, size)
+        return self.runtime.benchmark(iterations, self.model_info.im_size)

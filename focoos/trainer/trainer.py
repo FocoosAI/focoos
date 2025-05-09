@@ -12,12 +12,11 @@ from typing import Optional
 
 import numpy as np
 import torch
-from coolname import generate_slug
 from torch import GradScaler, autocast
 
 from focoos.data.datasets.map_dataset import MapDataset
 from focoos.data.loaders import build_detection_test_loader, build_detection_train_loader
-from focoos.models.fai_model import BaseModelNN
+from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.layers.norm import FrozenBatchNorm2d
 from focoos.ports import ModelInfo, Task, TrainerArgs
 from focoos.trainer.checkpointer import Checkpointer
@@ -80,9 +79,7 @@ class FocoosTrainer:
 
     def _setup_environment(self):
         """Setup logging and environment variables."""
-        if self.args.run_name is None:
-            slug = generate_slug(2)
-            self.args.run_name = f"{str(int(time.time()))}.{slug}"
+
         self.output_dir = os.path.join(self.args.output_dir, self.args.run_name)
         if comm.is_main_process():
             os.makedirs(self.output_dir, exist_ok=True)
@@ -824,8 +821,7 @@ def run_train(
     Returns:
         tuple: (trained model, updated metadata)
     """
-    if train_args.run_name is None:
-        train_args.run_name = f"{str(int(time.time()))}.{generate_slug(2)}"
+
     rank = comm.get_local_rank()
     log_path = os.path.join(train_args.output_dir, train_args.run_name, "log.txt")
     with capture_all_output(log_path=log_path, rank=rank):
@@ -848,8 +844,7 @@ def run_test(
     model_info: ModelInfo,
 ):
     rank = comm.get_local_rank()
-    if train_args.run_name is None:
-        train_args.run_name = f"{str(int(time.time()))}.{generate_slug(2)}"
+
     log_path = os.path.join(train_args.output_dir, train_args.run_name, "test_log.txt")
     with capture_all_output(log_path=log_path, rank=rank):
         trainer = FocoosTrainer(

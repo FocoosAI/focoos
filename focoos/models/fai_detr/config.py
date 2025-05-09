@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from typing import List
 
-from focoos.models.fai_model import ModelConfig
 from focoos.nn.backbone.base import BackboneConfig
+from focoos.ports import ModelConfig
 
 
 @dataclass

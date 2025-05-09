@@ -10,7 +10,7 @@ from focoos.models.bisenetformer.config import BisenetFormerConfig
 from focoos.models.bisenetformer.loss import MaskHungarianMatcher, SetCriterion
 from focoos.models.bisenetformer.ports import BisenetFormerOutput, BisenetFormerTargets
 from focoos.models.bisenetformer.processor import BisenetFormerProcessor
-from focoos.models.fai_model import BaseModelNN
+from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.backbone.base import BaseBackbone
 from focoos.nn.backbone.build import load_backbone
 from focoos.nn.layers.base import MLP

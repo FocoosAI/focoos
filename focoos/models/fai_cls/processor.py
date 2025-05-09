@@ -8,8 +8,8 @@ from PIL import Image
 from focoos.data.mappers.classification_dataset_mapper import ClassificationDatasetDict
 from focoos.models.fai_cls.config import ClassificationConfig
 from focoos.models.fai_cls.ports import ClassificationModelOutput, ClassificationTargets
-from focoos.models.fai_model import BaseProcessor
 from focoos.ports import DatasetEntry, FocoosDet, FocoosDetections
+from focoos.processor.base_processor import BaseProcessor
 from focoos.structures import ImageList
 
 
@@ -136,3 +136,22 @@ class ClassificationProcessor(BaseProcessor):
             results.append(result)
 
         return results
+
+    def tensors_to_model_output(
+        self, tensors: Union[list[np.ndarray], list[torch.Tensor]]
+    ) -> ClassificationModelOutput:
+        """
+        Convert a list of tensors or numpy arrays to a ClassificationModelOutput.
+
+        Args:
+            tensors: List of tensors or numpy arrays
+
+        Returns:
+            ClassificationModelOutput
+        """
+        if not (isinstance(tensors, (list, tuple)) and len(tensors) == 1):
+            raise ValueError(
+                f"Expected a list or tuple of 1 element, got {type(tensors)} with length {len(tensors) if hasattr(tensors, '__len__') else 'N/A'}"
+            )
+
+        return ClassificationModelOutput(logits=tensors[0], loss=None)

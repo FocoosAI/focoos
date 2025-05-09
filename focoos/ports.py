@@ -8,8 +8,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
 
-import torch
 from pydantic import BaseModel
+from torch import Tensor
 
 from focoos.structures import Instances
 
@@ -745,7 +745,7 @@ class ModelOutput(DictClass):
 
 @dataclass
 class DatasetEntry(DictClass):
-    image: Optional[torch.Tensor] = None
+    image: Optional[Tensor] = None
     height: Optional[int] = None
     width: Optional[int] = None
     instances: Optional[Instances] = None
@@ -818,7 +818,7 @@ class TrainerArgs:
         zero_grad_before_forward (bool): Whether to zero gradients before forward pass
     """
 
-    run_name: Optional[str] = None
+    run_name: str
     output_dir: str = MODELS_DIR
     ckpt_dir: Optional[str] = None
     init_checkpoint: Optional[str] = None

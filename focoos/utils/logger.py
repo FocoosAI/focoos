@@ -100,6 +100,7 @@ LOGGING_CONFIG = {
         "matplotlib": {"level": "WARNING"},
         "botocore": {"level": "INFO"},
         "fvcore": {"level": "DEBUG"},
+        "onnxscript": {"level": "WARNING"},
     },
 }
 

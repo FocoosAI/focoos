@@ -10,7 +10,7 @@ import numpy as np
 import torch
 
 from focoos.data.datasets.map_dataset import MapDataset
-from focoos.models.fai_model import BaseModelNN
+from focoos.models.focoos_model import BaseModelNN
 from focoos.trainer.events import get_event_storage
 from focoos.utils.logger import get_logger
 from focoos.utils.visualizer import ColorMode, Visualizer

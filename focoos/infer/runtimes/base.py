@@ -2,6 +2,7 @@ from abc import abstractmethod
 from typing import Any
 
 import numpy as np
+import torch
 
 from focoos.ports import LatencyMetrics, RemoteModelInfo
 
@@ -31,7 +32,7 @@ class BaseRuntime:
         pass
 
     @abstractmethod
-    def __call__(self, im: np.ndarray) -> np.ndarray:
+    def __call__(self, im: torch.Tensor) -> list[np.ndarray]:
         """
         Run inference on the input image.
 
@@ -44,13 +45,13 @@ class BaseRuntime:
         pass
 
     @abstractmethod
-    def benchmark(self, iterations=20) -> LatencyMetrics:
+    def benchmark(self, iterations: int, size: float) -> LatencyMetrics:
         """
         Benchmark the model performance.
 
         Args:
-            iterations (int, optional): Number of inference iterations to run. Defaults to 20.
-            size (int, optional): Input image size for benchmarking. Defaults to 640.
+            iterations (int): Number of inference iterations to run.
+            size (float): Input image size for benchmarking.
 
         Returns:
             LatencyMetrics: Performance metrics including mean, median, and percentile latencies.

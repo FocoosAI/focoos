@@ -1,5 +1,5 @@
 from focoos.infer.runtimes.base import BaseRuntime
-from focoos.ports import OnnxRuntimeOpts, RemoteModelInfo, RuntimeTypes, TorchscriptRuntimeOpts
+from focoos.ports import ModelInfo, OnnxRuntimeOpts, RuntimeTypes, TorchscriptRuntimeOpts
 from focoos.utils.logger import get_logger
 
 try:
@@ -23,8 +23,8 @@ logger = get_logger()
 def load_runtime(
     runtime_type: RuntimeTypes,
     model_path: str,
-    model_metadata: RemoteModelInfo,
-    warmup_iter: int = 0,
+    model_info: ModelInfo,
+    warmup_iter: int = 50,
 ) -> BaseRuntime:
     """
     Creates and returns a runtime instance based on the specified runtime type.
@@ -57,7 +57,7 @@ def load_runtime(
         from focoos.infer.runtimes.torchscript import TorchscriptRuntime
 
         opts = TorchscriptRuntimeOpts(warmup_iter=warmup_iter)
-        return TorchscriptRuntime(model_path, opts, model_metadata)
+        return TorchscriptRuntime(model_path=model_path, opts=opts, model_info=model_info)
     else:
         if not ORT_AVAILABLE:
             logger.error(
@@ -74,4 +74,4 @@ def load_runtime(
             coreml=runtime_type == RuntimeTypes.ONNX_COREML,
             verbose=False,
         )
-    return ONNXRuntime(model_path, opts, model_metadata)
+    return ONNXRuntime(model_path=model_path, opts=opts, model_info=model_info)

@@ -4,21 +4,21 @@ from typing import Union
 
 import numpy as np
 import onnxruntime as ort
+import torch
 
 # from supervision.detection.utils import mask_to_xyxy
 from focoos.infer.runtimes.base import BaseRuntime
 from focoos.ports import (
     LatencyMetrics,
+    ModelInfo,
     OnnxRuntimeOpts,
-    RemoteModelInfo,
-    Task,
 )
 from focoos.utils.logger import get_logger
 from focoos.utils.system import get_cpu_name, get_gpu_info
 
 GPU_ID = 0
 
-logger = get_logger()
+logger = get_logger("ONNXRuntime")
 
 
 class ONNXRuntime(BaseRuntime):
@@ -39,7 +39,7 @@ class ONNXRuntime(BaseRuntime):
         dtype (np.dtype): Input data type for the model.
     """
 
-    def __init__(self, model_path: Union[str, Path], opts: OnnxRuntimeOpts, model_info: RemoteModelInfo):
+    def __init__(self, model_path: Union[str, Path], opts: OnnxRuntimeOpts, model_info: ModelInfo):
         logger.debug(f"🔧 [onnxruntime device] {ort.get_device()}")
 
         self.name = Path(model_path).stem
@@ -121,7 +121,7 @@ class ONNXRuntime(BaseRuntime):
         return providers
 
     def _warmup(self):
-        size = self.model_info.im_size if self.model_info.task == Task.DETECTION and self.model_info.im_size else 640
+        size = self.model_info.im_size
         logger.info(f"⏱️ [onnxruntime] Warming up model {self.name} on {self.active_provider}, size: {size}x{size}..")
         np_image = np.random.rand(1, 3, size, size).astype(self.dtype)
         input_name = self.ort_sess.get_inputs()[0].name
@@ -132,7 +132,7 @@ class ONNXRuntime(BaseRuntime):
 
         logger.info("⏱️ [onnxruntime] Warmup done")
 
-    def __call__(self, im: np.ndarray) -> list[np.ndarray]:
+    def __call__(self, im: torch.Tensor) -> list[np.ndarray]:
         """
         Run inference on the input image.
 
@@ -144,10 +144,10 @@ class ONNXRuntime(BaseRuntime):
         """
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
-        out = self.ort_sess.run(out_name, {input_name: im})
+        out = self.ort_sess.run(out_name, {input_name: im.cpu().numpy()})
         return out
 
-    def benchmark(self, iterations=20, size=640) -> LatencyMetrics:
+    def benchmark(self, iterations: int = 50, size: int = 640) -> LatencyMetrics:
         """
         Benchmark the model performance.
 
@@ -170,9 +170,8 @@ class ONNXRuntime(BaseRuntime):
             logger.warning(f"No GPU found, using CPU {device_name}.")
 
         logger.info(f"⏱️ [onnxruntime] Benchmarking latency on {device_name}, size: {size}x{size}..")
-        size = size if isinstance(size, (tuple, list)) else (size, size)
 
-        np_input = (255 * np.random.random((1, 3, size[0], size[1]))).astype(self.dtype)
+        np_input = (255 * np.random.random((1, 3, size, size))).astype(self.dtype)
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
 
@@ -194,7 +193,7 @@ class ONNXRuntime(BaseRuntime):
             max=round(durations.max().astype(float), 3),
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
-            im_size=size[0],
+            im_size=size,
             device=str(device_name),
         )
         logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")

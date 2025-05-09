@@ -53,6 +53,7 @@ dependencies = [
     "onnx~=1.17.0",
     "onnxslim~=0.1.51",
     "coolname~=2.2.0",
+    "onnxscript~=0.2.5",
 ]
 
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]

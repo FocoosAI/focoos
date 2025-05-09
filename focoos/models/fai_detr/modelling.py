@@ -14,7 +14,7 @@ from scipy.optimize import linear_sum_assignment
 from focoos.models.fai_detr.config import DETRConfig
 from focoos.models.fai_detr.ports import DETRModelOutput, DETRTargets
 from focoos.models.fai_detr.processor import DETRProcessor
-from focoos.models.fai_model import BaseModelNN
+from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.backbone.base import BaseBackbone
 from focoos.nn.backbone.build import load_backbone
 from focoos.nn.layers.base import MLP

@@ -7,9 +7,9 @@ from urllib.parse import urlparse
 
 from focoos.hub.api_client import ApiClient
 from focoos.model_registry.model_registry import ModelRegistry
-from focoos.models.fai_model import BaseModelNN, FocoosModel, ModelConfig
+from focoos.models.focoos_model import BaseModelNN, FocoosModel
 from focoos.nn.backbone.base import BackboneConfig, BaseBackbone
-from focoos.ports import MODELS_DIR, ModelFamily, ModelInfo
+from focoos.ports import MODELS_DIR, ModelConfig, ModelFamily, ModelInfo
 from focoos.utils.logger import get_logger
 
 logger = get_logger("ModelManager")
@@ -140,8 +140,7 @@ class BackboneManager:
 class ConfigManager:
     """Automatic model configuration management"""
 
-    _MODEL_MAPPING: Dict[str, Callable[[], Type[ModelConfig]]] = {}
-    _REGISTERED_MODELS: set = set()
+    _MODEL_CFG_MAPPING: Dict[str, Callable[[], Type[ModelConfig]]] = {}
 
     @classmethod
     def register_config(cls, model_family: ModelFamily, model_config_loader: Callable[[], Type[ModelConfig]]):
@@ -152,15 +151,14 @@ class ConfigManager:
             model_family: Model family
             model_loader: Function that loads the model
         """
-        cls._MODEL_MAPPING[model_family.value] = model_config_loader
-        cls._REGISTERED_MODELS.add(model_family.value)
+        cls._MODEL_CFG_MAPPING[model_family.value] = model_config_loader
 
     @classmethod
     def from_dict(cls, model_family: ModelFamily, config_dict: dict, **kwargs) -> ModelConfig:
         """
         Create a configuration from a dictionary
         """
-        if model_family not in cls._MODEL_MAPPING:
+        if model_family not in cls._MODEL_CFG_MAPPING:
             # Import the family module
             family_module = importlib.import_module(f"focoos.models.{model_family.value}")
 
@@ -171,10 +169,10 @@ class ConfigManager:
                     if callable(register_func):
                         register_func()
 
-        if model_family not in cls._MODEL_MAPPING:
+        if model_family not in cls._MODEL_CFG_MAPPING:
             raise ValueError(f"Model {model_family} not supported")
 
-        config_class = cls._MODEL_MAPPING[model_family.value]()  # this return the config class
+        config_class = cls._MODEL_CFG_MAPPING[model_family.value]()  # this return the config class
 
         # Convert the input dict to the actual config type
         if "backbone_config" in config_dict and config_dict["backbone_config"] is not None:
