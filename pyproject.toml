@@ -49,7 +49,6 @@ dependencies = [
     "fvcore~=0.1.4",
     "pycocotools~=2.0.8",
     "faster_coco_eval~=1.6.5",
-    "timm~=0.9.16",
     "tensorboard~=2.19.0",
     "onnx~=1.17.0",
     "onnxslim~=0.1.51",

@@ -1,44 +1,26 @@
-# Imported and Adapted from Detectron2 and FVCore
-# Copyright (c) Facebook, Inc. and its affiliates
+# Copyright (c) FocoosAI
+# Part of the code has been copied and adapted from Detectron2 (c) Facebook, Inc. and its affiliates.
 import logging
 import os
-import pickle
 from collections import defaultdict
 from typing import IO, Any, Dict, Iterable, List, NamedTuple, Optional, Tuple, cast
 from urllib.parse import parse_qs, urlparse
 
-import numpy as np
 import torch
 import torch.nn as nn
 from iopath.common.file_io import HTTPURLHandler, PathManager
 from termcolor import colored
 from torch.nn.parallel import DataParallel, DistributedDataParallel
 
-from focoos.trainer.c2_model_loading import align_and_update_state_dicts
 from focoos.utils.distributed import comm
 from focoos.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-
-TORCH_VERSION: Tuple[int, ...] = tuple(int(x) for x in torch.__version__.split(".")[:2])
-if TORCH_VERSION >= (1, 11):
-    from torch.ao import quantization
-    from torch.ao.quantization import FakeQuantizeBase, ObserverBase
-elif (
-    TORCH_VERSION >= (1, 8)
-    and hasattr(torch.quantization, "FakeQuantizeBase")
-    and hasattr(torch.quantization, "ObserverBase")
-):
-    from torch import quantization
-    from torch.quantization import FakeQuantizeBase, ObserverBase
-
 __all__ = ["Checkpointer", "PeriodicCheckpointer"]
 
 
-TORCH_VERSION: Tuple[int, ...] = tuple(int(x) for x in torch.__version__.split(".")[:2])
-
-
+# Copy from Detectron2
 class _IncompatibleKeys(
     NamedTuple(
         "IncompatibleKeys",
@@ -77,6 +59,7 @@ class Checkpointer:
                 example, it can be used like
                 `Checkpointer(model, "dir", optimizer=optimizer)`.
         """
+        save_to_disk = comm.is_main_process() and save_to_disk
         if isinstance(model, (DistributedDataParallel, DataParallel)):
             model = model.module
         self.model = model
@@ -90,6 +73,7 @@ class Checkpointer:
         # A user may want to use a different project-specific PathManager
         self.path_manager: PathManager = PathManager()
         self.path_manager.register_handler(HTTPURLHandler())
+        self._parsed_url_during_load = None
 
     def add_checkpointable(self, key: str, checkpointable: Any) -> None:
         """
@@ -146,16 +130,38 @@ class Checkpointer:
                 processed. For example, those saved with
                 :meth:`.save(**extra_data)`.
         """
+        assert self._parsed_url_during_load is None
+        need_sync = False
+        logger.info("Loading from {} ...".format(path))
+
+        if path and isinstance(self.model, DistributedDataParallel):
+            has_file = os.path.isfile(path)
+            all_has_file = comm.all_gather(has_file)
+            if not all_has_file[0]:
+                raise OSError(f"File {path} not found on main worker.")
+            if not all(all_has_file):
+                logger.warning(f"Not all workers can read checkpoint {path}. Training may fail to fully resume.")
+                need_sync = True
+            if not has_file:
+                path = None  # type: ignore # don't load if not readable
+
         if not path:
             # no checkpoint provided
             self.logger.info("No checkpoint found. Initializing model from scratch")
             return {}
+        else:
+            parsed_url = urlparse(path)
+            self._parsed_url_during_load = parsed_url
+            path = parsed_url._replace(query="").geturl()  # remove query from filename
+
         self.logger.info("[Checkpointer] Loading from {} ...".format(path))
         if not os.path.isfile(path):
             path = self.path_manager.get_local_path(path)
             assert os.path.isfile(path), "Checkpoint {} not found!".format(path)
 
+        # Load and preprocess checkpoint file
         checkpoint = self._load_file(path)
+        # Load the checkpoint into the model
         incompatible = self._load_model(checkpoint)
         if incompatible is not None:  # handle some existing subclasses that returns None
             self._log_incompatible_keys(incompatible)
@@ -167,7 +173,12 @@ class Checkpointer:
                 obj.load_state_dict(checkpoint.pop(key))
 
         # return any further checkpoint data
-        return checkpoint
+        ret = checkpoint
+        if need_sync:
+            logger.info("Broadcasting model states from main worker ...")
+            self.model._sync_params_and_buffers()
+        self._parsed_url_during_load = None  # reset to None
+        return ret
 
     def has_checkpoint(self) -> bool:
         """
@@ -190,7 +201,7 @@ class Checkpointer:
             # if file doesn't exist, maybe because it has just been
             # deleted by a separate process
             return ""
-        return os.path.join(self.save_dir, last_saved)
+        return os.path.join(self.save_dir, last_saved)  # type: ignore
 
     def get_all_checkpoint_files(self) -> List[str]:
         """
@@ -235,21 +246,31 @@ class Checkpointer:
         """
         save_file = os.path.join(self.save_dir, "last_checkpoint")
         with self.path_manager.open(save_file, "w") as f:
-            f.write(last_filename_basename)  # pyre-ignore
+            f.write(last_filename_basename)  # type: ignore
 
-    def _load_file(self, f: str) -> Dict[str, Any]:
+    def _load_file(self, filename: str) -> Dict[str, Any]:
         """
         Load a checkpoint file. Can be overwritten by subclasses to support
         different formats.
 
         Args:
-            f (str): a locally mounted file path.
+            filename (str): a locally mounted file path.
         Returns:
             dict: with keys "model" and optionally others that are saved by
                 the checkpointer dict["model"] must be a dict which maps strings
                 to torch.Tensor or numpy arrays.
         """
-        return torch.load(f, map_location=torch.device("cpu"))
+        loaded = torch.load(filename, map_location=torch.device("cpu"), weights_only=True)
+        if "model" not in loaded:
+            loaded = {"model": loaded}
+        assert self._parsed_url_during_load is not None, "`_load_file` must be called inside `load`"
+        parsed_url = self._parsed_url_during_load
+        queries = parse_qs(parsed_url.query)
+
+        if len(queries) > 0:  # probably can be removed, from detectron2
+            logger.error(f"Unsupported query remaining: f{queries}, orginal filename: {parsed_url.geturl()}")
+            raise ValueError(f"Unsupported query remaining: f{queries}, orginal filename: {parsed_url.geturl()}")
+        return loaded
 
     def _load_model(self, checkpoint: Any) -> _IncompatibleKeys:
         """
@@ -270,7 +291,6 @@ class Checkpointer:
             for ``incorrect_shapes``.
         """
         checkpoint_state_dict = checkpoint.pop("model")
-        self._convert_ndarray_to_tensor(checkpoint_state_dict)
 
         # if the state_dict comes from a model that was wrapped in a
         # DataParallel or DistributedDataParallel during serialization,
@@ -283,47 +303,29 @@ class Checkpointer:
         for k in list(checkpoint_state_dict.keys()):
             if k in model_state_dict:
                 model_param = model_state_dict[k]
-                # Allow mismatch for uninitialized parameters
-                if TORCH_VERSION >= (1, 8) and isinstance(model_param, nn.parameter.UninitializedParameter):
-                    continue
                 shape_model = tuple(model_param.shape)
                 shape_checkpoint = tuple(checkpoint_state_dict[k].shape)
                 if shape_model != shape_checkpoint:
-                    has_observer_base_classes = (
-                        TORCH_VERSION >= (1, 8)
-                        and hasattr(quantization, "ObserverBase")
-                        and hasattr(quantization, "FakeQuantizeBase")
-                    )
-                    if has_observer_base_classes:
-                        # Handle the special case of quantization per channel observers,
-                        # where buffer shape mismatches are expected.
-                        def _get_module_for_key(model: torch.nn.Module, key: str) -> torch.nn.Module:
-                            # foo.bar.param_or_buffer_name -> [foo, bar]
-                            key_parts = key.split(".")[:-1]
-                            cur_module = model
-                            for key_part in key_parts:
-                                cur_module = getattr(cur_module, key_part)
-                            return cur_module
-
-                        cls_to_skip = (
-                            ObserverBase,
-                            FakeQuantizeBase,
-                        )
-                        target_module = _get_module_for_key(self.model, k)
-                        if isinstance(target_module, cls_to_skip):
-                            # Do not remove modules with expected shape mismatches
-                            # them from the state_dict loading. They have special logic
-                            # in _load_from_state_dict to handle the mismatches.
-                            continue
-
                     incorrect_shapes.append((k, shape_checkpoint, shape_model))
                     checkpoint_state_dict.pop(k)
         incompatible = self.model.load_state_dict(checkpoint_state_dict, strict=False)
-        return _IncompatibleKeys(
+        incompatible = _IncompatibleKeys(
             missing_keys=incompatible.missing_keys,
             unexpected_keys=incompatible.unexpected_keys,
             incorrect_shapes=incorrect_shapes,
         )
+        model_buffers = dict(self.model.named_buffers(recurse=False))
+        for k in ["pixel_mean", "pixel_std"]:
+            # Ignore missing key message about pixel_mean/std.
+            # Though they may be missing in old checkpoints, they will be correctly
+            # initialized from config anyway.
+            if k in model_buffers:
+                try:
+                    incompatible.missing_keys.remove(k)
+                except ValueError:
+                    pass
+
+        return incompatible
 
     def _log_incompatible_keys(self, incompatible: _IncompatibleKeys) -> None:
         """
@@ -341,23 +343,6 @@ class Checkpointer:
                 self.logger.warning(get_missing_parameters_message(missing_keys))
         if incompatible.unexpected_keys:
             self.logger.warning(get_unexpected_parameters_message(incompatible.unexpected_keys))
-
-    def _convert_ndarray_to_tensor(self, state_dict: Dict[str, Any]) -> None:
-        """
-        In-place convert all numpy arrays in the state_dict to torch tensor.
-        Args:
-            state_dict (dict): a state-dict to be loaded to the model.
-                Will be modified.
-        """
-        # model could be an OrderedDict with _metadata attribute
-        # (as returned by Pytorch's state_dict()). We should preserve these
-        # properties.
-        for k in list(state_dict.keys()):
-            v = state_dict[k]
-            if not isinstance(v, np.ndarray) and not isinstance(v, torch.Tensor):
-                raise ValueError("Unsupported type found in checkpoint! {}: {}".format(k, type(v)))
-            if not isinstance(v, torch.Tensor):
-                state_dict[k] = torch.from_numpy(v)
 
 
 class PeriodicCheckpointer:
@@ -506,7 +491,7 @@ def _strip_prefix_if_present(state_dict: Dict[str, Any], prefix: str) -> None:
 
     # also strip the prefix in metadata, if any..
     try:
-        metadata = state_dict._metadata  # pyre-ignore
+        metadata = state_dict._metadata  # type: ignore
     except AttributeError:
         pass
     else:
@@ -571,129 +556,3 @@ def _named_modules_with_dup(model: nn.Module, prefix: str = "") -> Iterable[Tupl
             continue
         submodule_prefix = prefix + ("." if prefix else "") + name
         yield from _named_modules_with_dup(module, submodule_prefix)
-
-
-class DetectionCheckpointer(Checkpointer):
-    """
-    Same as :class:`Checkpointer`, but is able to:
-    1. handle models in detectron & detectron2 model zoo, and apply conversions for legacy models.
-    2. correctly load checkpoints that are only available on the master worker
-    """
-
-    def __init__(self, model, save_dir="", *, save_to_disk=None, **checkpointables):
-        is_main_process = comm.is_main_process()
-        super().__init__(
-            model,
-            save_dir,
-            save_to_disk=is_main_process if save_to_disk is None else save_to_disk,
-            **checkpointables,
-        )
-        self._parsed_url_during_load = None
-
-    def load(self, path, *args, **kwargs):
-        assert self._parsed_url_during_load is None
-        need_sync = False
-        logger.info("Loading from {} ...".format(path))
-
-        if path and isinstance(self.model, DistributedDataParallel):
-            has_file = os.path.isfile(path)
-            all_has_file = comm.all_gather(has_file)
-            if not all_has_file[0]:
-                raise OSError(f"File {path} not found on main worker.")
-            if not all(all_has_file):
-                logger.warning(f"Not all workers can read checkpoint {path}. Training may fail to fully resume.")
-                # TODO: broadcast the checkpoint file contents from main
-                # worker, and load from it instead.
-                need_sync = True
-            if not has_file:
-                path = None  # don't load if not readable
-
-        if path:
-            parsed_url = urlparse(path)
-            self._parsed_url_during_load = parsed_url
-            path = parsed_url._replace(query="").geturl()  # remove query from filename
-        ret = super().load(path, *args, **kwargs)  # type: ignore
-
-        if need_sync:
-            logger.info("Broadcasting model states from main worker ...")
-            self.model._sync_params_and_buffers()
-        self._parsed_url_during_load = None  # reset to None
-        return ret
-
-    def _load_file(self, filename):
-        if filename.endswith(".pkl"):
-            with open(filename, "rb") as f:
-                data = pickle.load(f, encoding="latin1")
-            if "model" in data and "__author__" in data:
-                # file is in Detectron2 model zoo format
-                self.logger.info("Reading a file from '{}'".format(data["__author__"]))
-                return data
-            else:
-                # assume file is from Caffe2 / Detectron1 model zoo
-                if "blobs" in data:
-                    # Detection models have "blobs", but ImageNet models don't
-                    data = data["blobs"]
-                data = {k: v for k, v in data.items() if not k.endswith("_momentum")}
-                return {
-                    "model": data,
-                    "__author__": "Caffe2",
-                    "matching_heuristics": True,
-                }
-        elif filename.endswith(".pyth"):
-            # assume file is from pycls; no one else seems to use the ".pyth" extension
-            with open(filename, "rb") as f:
-                data = torch.load(f)
-            assert "model_state" in data, (
-                f"Cannot load .pyth file {filename}; pycls checkpoints must contain 'model_state'."
-            )
-            model_state = {k: v for k, v in data["model_state"].items() if not k.endswith("num_batches_tracked")}
-            return {
-                "model": model_state,
-                "__author__": "pycls",
-                "matching_heuristics": True,
-            }
-
-        loaded = self._torch_load(filename)
-        if "model" not in loaded:
-            loaded = {"model": loaded}
-        assert self._parsed_url_during_load is not None, "`_load_file` must be called inside `load`"
-        parsed_url = self._parsed_url_during_load
-        queries = parse_qs(parsed_url.query)
-        if queries.pop("matching_heuristics", "False") == ["True"]:
-            loaded["matching_heuristics"] = True  # type: ignore
-        if len(queries) > 0:
-            logger.error(f"Unsupported query remaining: f{queries}, orginal filename: {parsed_url.geturl()}")
-            raise ValueError(f"Unsupported query remaining: f{queries}, orginal filename: {parsed_url.geturl()}")
-        return loaded
-
-    def _torch_load(self, f):
-        return super()._load_file(f)
-
-    def _load_model(self, checkpoint):
-        if checkpoint.get("matching_heuristics", False):
-            self._convert_ndarray_to_tensor(checkpoint["model"])
-            # convert weights by name-matching heuristics
-            checkpoint["model"] = align_and_update_state_dicts(
-                self.model.state_dict(),
-                checkpoint["model"],
-                c2_conversion=checkpoint.get("__author__", None) == "Caffe2",
-            )
-        # for non-caffe2 models, use standard ways to load it
-        incompatible = super()._load_model(checkpoint)
-
-        model_buffers = dict(self.model.named_buffers(recurse=False))
-        for k in ["pixel_mean", "pixel_std"]:
-            # Ignore missing key message about pixel_mean/std.
-            # Though they may be missing in old checkpoints, they will be correctly
-            # initialized from config anyway.
-            if k in model_buffers:
-                try:
-                    incompatible.missing_keys.remove(k)
-                except ValueError:
-                    pass
-        for k in incompatible.unexpected_keys[:]:
-            # Ignore unexpected keys about cell anchors. They exist in old checkpoints
-            # but now they are non-persistent buffers and will not be in new checkpoints.
-            if "anchor_generator.cell_anchors" in k:
-                incompatible.unexpected_keys.remove(k)
-        return incompatible

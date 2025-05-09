@@ -20,7 +20,7 @@ from focoos.data.loaders import build_detection_test_loader, build_detection_tra
 from focoos.models.fai_model import BaseModelNN
 from focoos.nn.layers.norm import FrozenBatchNorm2d
 from focoos.ports import ModelInfo, Task, TrainerArgs
-from focoos.trainer.checkpointer import DetectionCheckpointer
+from focoos.trainer.checkpointer import Checkpointer
 from focoos.trainer.evaluation.evaluator import inference_on_dataset
 from focoos.trainer.evaluation.get_eval import get_evaluator
 from focoos.trainer.evaluation.utils import print_csv_format
@@ -201,7 +201,7 @@ class FocoosTrainer:
         """
         best_path = os.path.join(self.ckpt_dir, name)
         if os.path.exists(best_path):
-            state_dict = torch.load(best_path)
+            state_dict = torch.load(best_path, weights_only=True)
             self.model.load_state_dict(state_dict["model"])
             if self.args.ema_enabled and "ema_state" in state_dict:
                 self.model.ema_state.load_state_dict(state_dict["ema_state"])
@@ -400,7 +400,7 @@ class FocoosTrainer:
         )
 
         # Setup Checkpointer
-        checkpointer = DetectionCheckpointer(
+        checkpointer = Checkpointer(
             model,
             save_dir=self.ckpt_dir,
             trainer=trainer,
@@ -457,7 +457,7 @@ class FocoosTrainer:
 
         if restore_best:
             # Setup Checkpointer to recover trained model or load from scratch
-            checkpointer = DetectionCheckpointer(
+            checkpointer = Checkpointer(
                 model=model,
                 save_dir=self.output_dir,
                 **ema.get_ema_checkpointer(model) if args.ema_enabled else {},
@@ -531,7 +531,9 @@ class TrainerLoop:
         # AMP setup
         if amp:
             if grad_scaler is None:
-                grad_scaler = GradScaler()
+                # the init_scale avoids the first step to be too large
+                # and the scheduler.step() warning
+                grad_scaler = GradScaler(init_scale=2**12)
             self.grad_scaler = grad_scaler
             self.amp = amp
             self.precision = torch.float16
@@ -584,13 +586,15 @@ class TrainerLoop:
 
     def after_train(self):
         """Called after training ends."""
-        self.storage.iter = self.iter
+        if self.storage is not None:
+            self.storage.iter = self.iter
         for h in self._hooks:
             h.after_train()
 
     def before_step(self):
         """Called before each training step."""
-        self.storage.iter = self.iter
+        if self.storage is not None:
+            self.storage.iter = self.iter
         for h in self._hooks:
             h.before_step()
 
@@ -636,12 +640,12 @@ class TrainerLoop:
             self.optimizer.zero_grad()
 
         if self.amp:
-            self.grad_scaler.scale(losses).backward()
+            self.grad_scaler.scale(losses).backward()  # type: ignore
             if self.clip_gradient > 0.0:
                 self.grad_scaler.unscale_(self.optimizer)
                 self.clip_grads(self.model.parameters())
         else:
-            losses.backward()
+            losses.backward()  # type: ignore
             if self.clip_gradient > 0.0:
                 self.clip_grads(self.model.parameters())
 

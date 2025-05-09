@@ -6,7 +6,7 @@ from focoos.data.catalog.utils import load_coco_json, load_coco_panoptic_json, l
 from focoos.data.datasets.dict_dataset import DictDataset
 from focoos.data.utils import filter_images_with_only_crowd_annotations
 from focoos.ports import (
-    DATASETS_ROOT,
+    DATASETS_DIR,
     DatasetMetadata,
     DatasetSplitType,
     Task,
@@ -99,7 +99,7 @@ CATALOG = [
     ),
     CatalogDataset(
         name="ade20k_instance",
-        task=Task.INSTSEG,
+        task=Task.INSTANCE_SEGMENTATION,
         train_split=CatalogSplit(
             image_root="ADEChallengeData2016/images/training",
             json_file="ADEChallengeData2016/ade20k_instance_train.json",
@@ -110,23 +110,23 @@ CATALOG = [
             filter_empty=False,
         ),
     ),
-    CatalogDataset(
-        name="ade20k_panoptic",
-        task=Task.PANSEG,
-        train_split=CatalogSplit(
-            image_root="ADEChallengeData2016/images/training",
-            gt_root="ADEChallengeData2016/ade20k_panoptic_train",
-            json_file="ADEChallengeData2016/ade20k_panoptic_train.json",
-        ),
-        val_split=CatalogSplit(
-            image_root="ADEChallengeData2016/images/validation",
-            gt_root="ADEChallengeData2016/ade20k_panoptic_val",
-            json_file="ADEChallengeData2016/ade20k_panoptic_val.json",
-        ),
-    ),
+    # CatalogDataset(
+    #     name="ade20k_panoptic",
+    #     task=Task.,
+    #     train_split=CatalogSplit(
+    #         image_root="ADEChallengeData2016/images/training",
+    #         gt_root="ADEChallengeData2016/ade20k_panoptic_train",
+    #         json_file="ADEChallengeData2016/ade20k_panoptic_train.json",
+    #     ),
+    #     val_split=CatalogSplit(
+    #         image_root="ADEChallengeData2016/images/validation",
+    #         gt_root="ADEChallengeData2016/ade20k_panoptic_val",
+    #         json_file="ADEChallengeData2016/ade20k_panoptic_val.json",
+    #     ),
+    # ),
     CatalogDataset(
         name="coco_2017_det",
-        task=Task.DET,
+        task=Task.DETECTION,
         train_split=CatalogSplit(
             image_root="coco/train2017",
             json_file="coco/annotations/instances_train2017.json",
@@ -139,7 +139,7 @@ CATALOG = [
     ),
     CatalogDataset(
         name="coco_2017_instance",
-        task=Task.INSTSEG,
+        task=Task.INSTANCE_SEGMENTATION,
         train_split=CatalogSplit(
             image_root="coco/train2017",
             json_file="coco/annotations/instances_train2017.json",
@@ -150,23 +150,23 @@ CATALOG = [
             filter_empty=False,
         ),
     ),
-    CatalogDataset(
-        name="coco_2017_panoptic",
-        task=Task.PANSEG,
-        train_split=CatalogSplit(
-            image_root="coco/train2017",
-            gt_root="coco/annotations/panoptic_train2017",
-            json_file="coco/annotations/panoptic_train2017.json",
-        ),
-        val_split=CatalogSplit(
-            image_root="coco/val2017",
-            gt_root="coco/annotations/panoptic_val2017",
-            json_file="coco/annotations/panoptic_val2017.json",
-        ),
-    ),
+    # CatalogDataset(
+    #     name="coco_2017_panoptic",
+    #     task=Task.PANSEG,
+    #     train_split=CatalogSplit(
+    #         image_root="coco/train2017",
+    #         gt_root="coco/annotations/panoptic_train2017",
+    #         json_file="coco/annotations/panoptic_train2017.json",
+    #     ),
+    #     val_split=CatalogSplit(
+    #         image_root="coco/val2017",
+    #         gt_root="coco/annotations/panoptic_val2017",
+    #         json_file="coco/annotations/panoptic_val2017.json",
+    #     ),
+    # ),
     CatalogDataset(
         name="object365",
-        task=Task.DET,
+        task=Task.DETECTION,
         train_split=CatalogSplit(
             image_root="object365/train",
             json_file="object365/train/_annotations.coco.json",
@@ -184,7 +184,7 @@ def _load_dataset_split(
     split_name: str,
     split: CatalogSplit,
     task: Task,
-    root=DATASETS_ROOT,
+    root=DATASETS_DIR,
 ) -> DictDataset:
     """
     This function can be used for loading datasets outside the catalog but with the same format
@@ -205,7 +205,7 @@ def _load_dataset_split(
         task=task,
     )
 
-    if task in [Task.DET, Task.INSTSEG]:
+    if task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION]:
         dataset_dict = load_coco_json(json_file_path, image_root_path, metadata, task=task)
         if split.filter_empty:
             dataset_dict = filter_images_with_only_crowd_annotations(dataset_dicts=dataset_dict)
@@ -220,10 +220,10 @@ def _load_dataset_split(
             json_file=json_file_path,
             metadata=metadata,
         )
-    elif task == Task.PANSEG:
-        if not gt_root_path:
-            raise ValueError(f"Internal Error: gt_root missing from dataset {split_name}.")
-        metadata.panoptic_root = gt_root_path
+        # elif task == Task.PANSEG:
+        #     if not gt_root_path:
+        #         raise ValueError(f"Internal Error: gt_root missing from dataset {split_name}.")
+        #     metadata.panoptic_root = gt_root_path
         dataset_dict = load_coco_panoptic_json(json_file_path, image_root_path, gt_root_path, metadata)
     else:
         raise ValueError(f"Unknown task {task}")
@@ -232,7 +232,7 @@ def _load_dataset_split(
     return DictDataset(dataset_dict, task=task, metadata=metadata)
 
 
-def get_dataset_split(name: str, split: DatasetSplitType, datasets_root=DATASETS_ROOT) -> DictDataset:
+def get_dataset_split(name: str, split: DatasetSplitType, datasets_root=DATASETS_DIR) -> DictDataset:
     """
     Load a dataset split from the catalog.
     """

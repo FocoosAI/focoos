@@ -1,5 +1,5 @@
 # Copyright (c) FocoosAI
-# Part of the code has been adapted from Detectron2 (c) Facebook, Inc. and its affiliates.
+# Part of the code has been copied and adapted from Detectron2 (c) Facebook, Inc. and its affiliates.
 import datetime
 import json
 import os

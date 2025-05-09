@@ -1,4 +1,3 @@
-# Copyright (c) Focoos AI S.r.L.
 import math
 from bisect import bisect_right
 from typing import List

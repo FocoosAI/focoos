@@ -217,12 +217,10 @@ segmentation_train_augs = DatasetAugmentations(
 detection_val_augs = DatasetAugmentations(
     resolution=640,
     square=1.0,
-    max_size=int(640 * 1.25),
 )
 
 segmentation_val_augs = DatasetAugmentations(
     resolution=640,
-    max_size=int(640 * 1.25),
 )
 
 classification_train_augs = DatasetAugmentations(

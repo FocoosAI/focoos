@@ -4,11 +4,11 @@ import json
 import os
 
 import pycocotools.mask as mask_util
-from fvcore.common.timer import Timer
 
 from focoos.ports import DatasetMetadata, DetectronDict, Task
 from focoos.structures import BoxMode
 from focoos.utils.logger import get_logger
+from focoos.utils.timer import Timer
 
 logger = get_logger(__name__)
 
