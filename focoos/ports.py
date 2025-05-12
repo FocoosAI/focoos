@@ -421,6 +421,19 @@ class LatencyMetrics:
     device: str
 
 
+class ExportFormat(str, Enum):
+    """Available export formats for model inference.
+
+    Values:
+        - ONNX: ONNX format
+        - TORCHSCRIPT: TorchScript format
+
+    """
+
+    ONNX = "onnx"
+    TORCHSCRIPT = "torchscript"
+
+
 class RuntimeType(str, Enum):
     """Available runtime configurations for model inference.
 
@@ -440,6 +453,12 @@ class RuntimeType(str, Enum):
     ONNX_CPU = "onnx_cpu"
     ONNX_COREML = "onnx_coreml"
     TORCHSCRIPT_32 = "torchscript_32"
+
+    def to_export_format(self) -> ExportFormat:
+        if self == RuntimeType.TORCHSCRIPT_32:
+            return ExportFormat.TORCHSCRIPT
+        else:
+            return ExportFormat.ONNX
 
 
 class ModelExtension(str, Enum):

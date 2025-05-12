@@ -737,7 +737,7 @@ class FAIMaskFormer(BaseModelNN):
         features = self.pixel_decoder(images)
         (logits, masks), losses = self.head(features, targets)
 
-        return MaskFormerModelOutput(logits=logits, masks=masks, loss=losses)
+        return MaskFormerModelOutput(masks=masks, logits=logits, loss=losses)
 
     def eval_post_process(
         self, outputs: MaskFormerModelOutput, inputs: list[DatasetEntry]

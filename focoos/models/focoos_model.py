@@ -10,6 +10,7 @@ from focoos.infer.infer_model import InferModel
 from focoos.models.base_model import BaseModelNN
 from focoos.ports import (
     MODELS_DIR,
+    ExportFormat,
     FocoosDetections,
     ModelInfo,
     RuntimeType,
@@ -144,11 +145,13 @@ class FocoosModel:
 
     def export(
         self,
+        format: ExportFormat = ExportFormat.ONNX,
+        runtime_type: RuntimeType = RuntimeType.ONNX_CUDA32,
         onnx_opset: int = 19,
         onnx_dynamic: bool = True,
         model_fuse: bool = True,
+        fp16: bool = False,
         out_dir: Optional[str] = None,
-        format: Literal["onnx", "torchscript"] = "onnx",
         device: Literal["cuda", "cpu"] = "cuda",
         overwrite: bool = False,
     ) -> InferModel:
@@ -157,14 +160,14 @@ class FocoosModel:
 
         if out_dir is None:
             out_dir = os.path.join(MODELS_DIR, self.model_info.name)
-
+        if runtime_type.to_export_format() != format:
+            raise ValueError(f"Runtime type {runtime_type} does not match format {format}")
         exportable_model = ExportableModel(self.model, device=device)
         os.makedirs(out_dir, exist_ok=True)
         print(f"IM_SIZE: {self.model_info.im_size} RESOLUTION: {self.resolution}")
         data = 128 * torch.randn(1, 3, self.model_info.im_size, self.model_info.im_size).to(device)
 
-        export_model_name = "model.onnx" if format == "onnx" else "model.pt"
-        runtime_type = RuntimeType.ONNX_CUDA32 if format == "onnx" else RuntimeType.TORCHSCRIPT_32
+        export_model_name = "model.onnx" if format == ExportFormat.ONNX else "model.pt"
         _out_file = os.path.join(out_dir, export_model_name)
 
         dynamic_axes = self.processor.get_dynamic_axes()
@@ -201,7 +204,6 @@ class FocoosModel:
                 #    exp_program.optimize()
                 #    exp_program.save(_out_file)
                 logger.info(f"✅ Exported {format} model to {_out_file}")
-                runtime_type = RuntimeType.ONNX_CUDA32
 
         elif format == "torchscript":
             with torch.no_grad():
@@ -211,7 +213,6 @@ class FocoosModel:
                     _out_file = os.path.join(out_dir, "model.pt")
                     exp_program.save(_out_file)
                     logger.info(f"✅ Exported {format} model to {_out_file} ")
-                    runtime_type = RuntimeType.TORCHSCRIPT_32
                 else:
                     raise ValueError(f"Failed to export {format} model")
 

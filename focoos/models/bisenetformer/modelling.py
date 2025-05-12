@@ -665,7 +665,7 @@ class BisenetFormer(BaseModelNN):
         features = self.pixel_decoder(images)
         (logits, masks), losses = self.head(features, targets)
 
-        return BisenetFormerOutput(logits=logits, masks=masks, loss=losses)
+        return BisenetFormerOutput(masks=masks, logits=logits, loss=losses)
 
     def eval_post_process(
         self, outputs: BisenetFormerOutput, inputs: list[DatasetEntry]

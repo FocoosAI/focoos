@@ -51,8 +51,12 @@ class ModelManager:
         runtime_type: RuntimeType = RuntimeType.TORCHSCRIPT_32,
         models_dir: Optional[str] = None,
         api_key: Optional[str] = None,
-        **kwargs,
+        export_now: bool = False,
     ) -> InferModel:
+        if export_now:
+            return cls.get(name, models_dir=models_dir, api_key=api_key).export(
+                format=runtime_type.to_export_format(), overwrite=True, runtime_type=runtime_type
+            )
         """
         Get an infer model by name
         """
