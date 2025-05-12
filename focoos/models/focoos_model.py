@@ -12,7 +12,7 @@ from focoos.ports import (
     MODELS_DIR,
     FocoosDetections,
     ModelInfo,
-    RuntimeTypes,
+    RuntimeType,
     TrainerArgs,
 )
 from focoos.processor.processor_manager import ProcessorManager
@@ -127,8 +127,8 @@ class FocoosModel:
         return self.model.device
 
     @property
-    def im_size(self):
-        return self.model_info.config["im_size"]
+    def resolution(self):
+        return self.model_info.config["resolution"]
 
     @property
     def config(self) -> dict:
@@ -147,7 +147,6 @@ class FocoosModel:
         onnx_opset: int = 19,
         onnx_dynamic: bool = True,
         model_fuse: bool = True,
-        dynamo: bool = True,
         out_dir: Optional[str] = None,
         format: Literal["onnx", "torchscript"] = "onnx",
         device: Literal["cuda", "cpu"] = "cuda",
@@ -161,11 +160,16 @@ class FocoosModel:
 
         exportable_model = ExportableModel(self.model, device=device)
         os.makedirs(out_dir, exist_ok=True)
-
+        print(f"IM_SIZE: {self.model_info.im_size} RESOLUTION: {self.resolution}")
         data = 128 * torch.randn(1, 3, self.model_info.im_size, self.model_info.im_size).to(device)
+
         export_model_name = "model.onnx" if format == "onnx" else "model.pt"
-        runtime_type = RuntimeTypes.ONNX_CUDA32 if format == "onnx" else RuntimeTypes.TORCHSCRIPT_32
+        runtime_type = RuntimeType.ONNX_CUDA32 if format == "onnx" else RuntimeType.TORCHSCRIPT_32
         _out_file = os.path.join(out_dir, export_model_name)
+
+        dynamic_axes = self.processor.get_dynamic_axes()
+
+        # spec = InputSpec(tensors=[TensorSpec([Dim("batch", min=1, max=64), 3, 224, 224])])
         if not overwrite and os.path.exists(_out_file):
             logger.info(f"Model file {_out_file} already exists. Set overwrite to True to overwrite.")
             return InferModel(model_dir=out_dir, model_info=self.model_info, runtime_type=runtime_type)
@@ -174,15 +178,30 @@ class FocoosModel:
             with torch.no_grad():
                 logger.info("🚀 Exporting ONNX model..")
                 exp_program = torch.onnx.export(
-                    exportable_model, (data,), opset_version=onnx_opset, verbose=False, dynamo=dynamo
+                    exportable_model,
+                    (data,),
+                    f=_out_file,
+                    opset_version=onnx_opset,
+                    verbose=False,
+                    verify=True,
+                    dynamo=False,
+                    external_data=False,  # model weights external to model
+                    input_names=dynamic_axes.input_names,
+                    output_names=dynamic_axes.output_names,
+                    dynamic_axes=dynamic_axes.dynamic_axes,
+                    # dynamic_shapes={
+                    #    "x": {
+                    #        0: torch.export.Dim("batch", min=1, max=64),
+                    #        #2: torch.export.Dim("height", min=18, max=4096),
+                    #        #3: torch.export.Dim("width", min=18, max=4096),
+                    #    }
+                    # },
                 )
-                if exp_program is not None:
-                    exp_program.optimize()
-                    exp_program.save(_out_file)
-                    logger.info(f"✅ Exported {format} model to {_out_file}")
-                    runtime_type = RuntimeTypes.ONNX_CUDA32
-                else:
-                    raise ValueError(f"Failed to export {format} model")
+                # if exp_program is not None:
+                #    exp_program.optimize()
+                #    exp_program.save(_out_file)
+                logger.info(f"✅ Exported {format} model to {_out_file}")
+                runtime_type = RuntimeType.ONNX_CUDA32
 
         elif format == "torchscript":
             with torch.no_grad():
@@ -192,12 +211,11 @@ class FocoosModel:
                     _out_file = os.path.join(out_dir, "model.pt")
                     exp_program.save(_out_file)
                     logger.info(f"✅ Exported {format} model to {_out_file} ")
-                    runtime_type = RuntimeTypes.TORCHSCRIPT_32
+                    runtime_type = RuntimeType.TORCHSCRIPT_32
                 else:
                     raise ValueError(f"Failed to export {format} model")
 
         self.model_info.dump_json(os.path.join(out_dir, "model_info.json"))
-        logger.info(f"✅ Exported model info to {os.path.join(out_dir, 'model_info.json')}")
         return InferModel(model_dir=out_dir, model_info=self.model_info, runtime_type=runtime_type)
 
     def __call__(

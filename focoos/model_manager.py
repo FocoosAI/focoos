@@ -6,10 +6,11 @@ from typing import Callable, Dict, Optional, Type
 from urllib.parse import urlparse
 
 from focoos.hub.api_client import ApiClient
+from focoos.infer.infer_model import InferModel
 from focoos.model_registry.model_registry import ModelRegistry
 from focoos.models.focoos_model import BaseModelNN, FocoosModel
 from focoos.nn.backbone.base import BackboneConfig, BaseBackbone
-from focoos.ports import MODELS_DIR, ModelConfig, ModelFamily, ModelInfo
+from focoos.ports import MODELS_DIR, ModelConfig, ModelFamily, ModelInfo, RuntimeType
 from focoos.utils.logger import get_logger
 
 logger = get_logger("ModelManager")
@@ -20,6 +21,42 @@ class ModelManager:
 
     _MODEL_MAPPING: Dict[str, Callable[[], Type[BaseModelNN]]] = {}
     _REGISTERED_MODELS: set = set()
+
+    @classmethod
+    def get(
+        cls,
+        name: str,
+        model_info: Optional[ModelInfo] = None,
+        config: Optional[ModelConfig] = None,
+        models_dir: Optional[str] = None,
+        api_key: Optional[str] = None,
+        **kwargs,
+    ) -> FocoosModel:
+        """
+        Unified entrypoint to load a model by name or ModelInfo.
+        """
+        if model_info is not None:
+            return cls._from_model_info(model_info, config=config, **kwargs)
+        if name.startswith("hub://"):
+            return cls._from_hub(name, api_key=api_key, **kwargs)
+        if ModelRegistry.exists(name):
+            model_info = ModelRegistry.get_model_info(name)
+            return cls._from_model_info(model_info, config=config, **kwargs)
+        return cls._from_local_dir(name, models_dir=models_dir, config=config, **kwargs)
+
+    @classmethod
+    def get_infer_model(
+        cls,
+        name: str,
+        runtime_type: RuntimeType = RuntimeType.TORCHSCRIPT_32,
+        models_dir: Optional[str] = None,
+        api_key: Optional[str] = None,
+        **kwargs,
+    ) -> InferModel:
+        """
+        Get an infer model by name
+        """
+        pass
 
     @classmethod
     def register_model(cls, model_family: ModelFamily, model_loader: Callable[[], Type[BaseModelNN]]):
@@ -83,28 +120,6 @@ class ModelManager:
     def _from_hub(cls, name: str, api_key: Optional[str] = None, **kwargs) -> FocoosModel:
         # TODO: implement hub loading logic
         raise NotImplementedError("Hub loading is not implemented yet.")
-
-    @classmethod
-    def get(
-        cls,
-        name: str,
-        model_info: Optional[ModelInfo] = None,
-        config: Optional[ModelConfig] = None,
-        models_dir: Optional[str] = None,
-        api_key: Optional[str] = None,
-        **kwargs,
-    ) -> FocoosModel:
-        """
-        Unified entrypoint to load a model by name or ModelInfo.
-        """
-        if model_info is not None:
-            return cls._from_model_info(model_info, config=config, **kwargs)
-        if name.startswith("hub://"):
-            return cls._from_hub(name, api_key=api_key, **kwargs)
-        if ModelRegistry.exists(name):
-            model_info = ModelRegistry.get_model_info(name)
-            return cls._from_model_info(model_info, config=config, **kwargs)
-        return cls._from_local_dir(name, models_dir=models_dir, config=config, **kwargs)
 
 
 class BackboneManager:

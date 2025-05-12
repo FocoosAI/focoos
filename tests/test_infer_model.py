@@ -13,7 +13,7 @@ from focoos.ports import (
     FocoosDetections,
     LatencyMetrics,
     RemoteModelInfo,
-    RuntimeTypes,
+    RuntimeType,
     Task,
 )
 
@@ -35,7 +35,7 @@ def mock_local_model_onnx(mocker: MockerFixture, mock_model_dir, image_ndarray):
     mock_get_runtime = mocker.patch("focoos.infer.runtimes.load_runtime.load_runtime", mock_runtime)
     mock_get_runtime.return_value = mock_runtime
     mocker.patch("focoos.infer.runtimes.load_runtime.os.path.exists", return_value=True)
-    model = InferModel(model_dir=mock_model_dir, runtime_type=RuntimeTypes.ONNX_CPU)
+    model = InferModel(model_dir=mock_model_dir, runtime_type=RuntimeType.ONNX_CPU)
 
     # Mock BoxAnnotator
     mock_box_annotator = mocker.patch("focoos.infer.runtimes.sv.BoxAnnotator", autospec=True)
@@ -63,7 +63,7 @@ def mock_local_model_torch(mocker: MockerFixture, mock_model_dir, image_ndarray)
     mock_get_runtime = mocker.patch("focoos.infer.runtimes.load_runtime.load_runtime", mock_runtime)
     mock_get_runtime.return_value = mock_runtime
     mocker.patch("focoos.infer.runtimes.load_runtime.os.path.exists", return_value=True)
-    model = InferModel(model_dir=mock_model_dir, runtime_type=RuntimeTypes.TORCHSCRIPT_32)
+    model = InferModel(model_dir=mock_model_dir, runtime_type=RuntimeType.TORCHSCRIPT_32)
 
     # Mock BoxAnnotator
     mock_box_annotator = mocker.patch("focoos.local_model.sv.BoxAnnotator", autospec=True)
@@ -86,13 +86,13 @@ def mock_local_model_torch(mocker: MockerFixture, mock_model_dir, image_ndarray)
 
 def test_initialization_fail_no_model_dir():
     with pytest.raises(FileNotFoundError):
-        InferModel(model_dir="fakedir", runtime_type=RuntimeTypes.ONNX_CPU)
+        InferModel(model_dir="fakedir", runtime_type=RuntimeType.ONNX_CPU)
 
 
 def test_init_file_not_found(mocker: MockerFixture):
     mocker.patch("focoos.local_model.os.path.exists", return_value=False)
     with pytest.raises(FileNotFoundError):
-        InferModel(model_dir="fakedir", runtime_type=RuntimeTypes.ONNX_CPU)
+        InferModel(model_dir="fakedir", runtime_type=RuntimeType.ONNX_CPU)
 
 
 def test_initialization_onnx(mock_local_model_onnx: InferModel, mock_model_dir, mock_metadata):

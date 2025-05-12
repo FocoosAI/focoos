@@ -18,7 +18,7 @@ from typing import Optional
 
 from pydantic_settings import BaseSettings
 
-from focoos.ports import PROD_API_URL, RuntimeTypes
+from focoos.ports import PROD_API_URL, RuntimeType
 
 LogLevel = typing.Literal["DEBUG", "INFO", "WARNING", "ERROR", "FATAL", "CRITICAL"]
 
@@ -61,7 +61,7 @@ class FocoosConfig(BaseSettings):
     focoos_api_key: Optional[str] = None
     focoos_log_level: LogLevel = "DEBUG"
     default_host_url: str = PROD_API_URL
-    runtime_type: RuntimeTypes = RuntimeTypes.TORCHSCRIPT_32
+    runtime_type: RuntimeType = RuntimeType.TORCHSCRIPT_32
     warmup_iter: int = 2
 
 

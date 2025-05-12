@@ -37,7 +37,7 @@ from focoos.ports import (
     ModelExtension,
     ModelInfo,
     RemoteModelInfo,
-    RuntimeTypes,
+    RuntimeType,
     Task,
 )
 from focoos.processor.processor_manager import ProcessorManager
@@ -55,7 +55,7 @@ class InferModel:
         self,
         model_dir: Union[str, Path],
         model_info: Optional[ModelInfo] = None,
-        runtime_type: Optional[RuntimeTypes] = None,
+        runtime_type: Optional[RuntimeType] = None,
     ):
         """
         Initialize a LocalModel instance.
@@ -215,7 +215,7 @@ class InferModel:
         """
         assert self.runtime is not None, "Model is not deployed (locally)"
         resize = self.model_info.im_size
-
+        resize = None
         t0 = perf_counter()
         im1, im0 = image_preprocess(image, resize=resize)
         tensors, _ = self.processor.preprocess(inputs=im1, training=False, device="cuda")

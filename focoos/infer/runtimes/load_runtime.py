@@ -1,5 +1,5 @@
 from focoos.infer.runtimes.base import BaseRuntime
-from focoos.ports import ModelInfo, OnnxRuntimeOpts, RuntimeTypes, TorchscriptRuntimeOpts
+from focoos.ports import ModelInfo, OnnxRuntimeOpts, RuntimeType, TorchscriptRuntimeOpts
 from focoos.utils.logger import get_logger
 
 try:
@@ -21,7 +21,7 @@ logger = get_logger()
 
 
 def load_runtime(
-    runtime_type: RuntimeTypes,
+    runtime_type: RuntimeType,
     model_path: str,
     model_info: ModelInfo,
     warmup_iter: int = 50,
@@ -48,7 +48,7 @@ def load_runtime(
     Raises:
         ImportError: If required dependencies (torch/onnxruntime) are not installed
     """
-    if runtime_type == RuntimeTypes.TORCHSCRIPT_32:
+    if runtime_type == RuntimeType.TORCHSCRIPT_32:
         if not TORCH_AVAILABLE:
             logger.error(
                 "⚠️ Pytorch not found =(  please install focoos with ['torch'] extra. See https://focoosai.github.io/focoos/setup/ for more details"
@@ -67,11 +67,11 @@ def load_runtime(
         from focoos.infer.runtimes.onnx import ONNXRuntime
 
         opts = OnnxRuntimeOpts(
-            cuda=runtime_type == RuntimeTypes.ONNX_CUDA32,
-            trt=runtime_type in [RuntimeTypes.ONNX_TRT32, RuntimeTypes.ONNX_TRT16],
-            fp16=runtime_type == RuntimeTypes.ONNX_TRT16,
+            cuda=runtime_type == RuntimeType.ONNX_CUDA32,
+            trt=runtime_type in [RuntimeType.ONNX_TRT32, RuntimeType.ONNX_TRT16],
+            fp16=runtime_type == RuntimeType.ONNX_TRT16,
             warmup_iter=warmup_iter,
-            coreml=runtime_type == RuntimeTypes.ONNX_COREML,
+            coreml=runtime_type == RuntimeType.ONNX_COREML,
             verbose=False,
         )
     return ONNXRuntime(model_path=model_path, opts=opts, model_info=model_info)

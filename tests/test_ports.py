@@ -7,7 +7,7 @@ from focoos.ports import (
     GPUInfo,
     Hyperparameters,
     ModelExtension,
-    RuntimeTypes,
+    RuntimeType,
     SystemInfo,
 )
 
@@ -111,12 +111,12 @@ def test_pretty_print_with_system_info(mocker: MockerFixture):
 @pytest.mark.parametrize(
     "runtime_type,expected_format",
     [
-        (RuntimeTypes.ONNX_CUDA32, ModelExtension.ONNX),
-        (RuntimeTypes.ONNX_TRT32, ModelExtension.ONNX),
-        (RuntimeTypes.ONNX_TRT16, ModelExtension.ONNX),
-        (RuntimeTypes.ONNX_CPU, ModelExtension.ONNX),
-        (RuntimeTypes.ONNX_COREML, ModelExtension.ONNX),
-        (RuntimeTypes.TORCHSCRIPT_32, ModelExtension.TORCHSCRIPT),
+        (RuntimeType.ONNX_CUDA32, ModelExtension.ONNX),
+        (RuntimeType.ONNX_TRT32, ModelExtension.ONNX),
+        (RuntimeType.ONNX_TRT16, ModelExtension.ONNX),
+        (RuntimeType.ONNX_CPU, ModelExtension.ONNX),
+        (RuntimeType.ONNX_COREML, ModelExtension.ONNX),
+        (RuntimeType.TORCHSCRIPT_32, ModelExtension.TORCHSCRIPT),
     ],
 )
 def test_model_format_from_runtime_type(runtime_type, expected_format):

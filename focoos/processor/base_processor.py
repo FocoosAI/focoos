@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from PIL import Image
 
-from focoos.ports import DatasetEntry, FocoosDetections, ModelConfig, ModelOutput
+from focoos.ports import DatasetEntry, DynamicAxes, FocoosDetections, ModelConfig, ModelOutput
 
 
 class Processor:
@@ -47,6 +47,10 @@ class Processor:
         **kwargs,
     ) -> list[FocoosDetections]:
         raise NotImplementedError("Export post-processing is not implemented for this model.")
+
+    @abstractmethod
+    def get_dynamic_axes(self) -> DynamicAxes:
+        raise NotImplementedError("Export axes are not implemented for this model.")
 
     @abstractmethod
     def eval_post_process(self, outputs: ModelOutput, inputs: list[DatasetEntry]):

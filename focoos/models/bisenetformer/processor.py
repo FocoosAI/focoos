@@ -6,7 +6,7 @@ from PIL import Image
 
 from focoos.models.bisenetformer.config import BisenetFormerConfig
 from focoos.models.bisenetformer.ports import BisenetFormerOutput, BisenetFormerTargets
-from focoos.ports import DatasetEntry, FocoosDet, FocoosDetections
+from focoos.ports import DatasetEntry, DynamicAxes, FocoosDet, FocoosDetections
 from focoos.processor.base_processor import Processor
 from focoos.structures import BitMasks, ImageList, Instances
 from focoos.utils.memory import retry_if_cuda_oom
@@ -53,7 +53,7 @@ class BisenetFormerProcessor(Processor):
         ],
         training: bool,
         device: torch.device,
-        dtype: torch.dtype,
+        dtype: torch.dtype = torch.float32,
         size_divisibility: int = 0,
         padding_constraints: Optional[Dict[str, int]] = None,
     ) -> tuple[torch.Tensor, list[BisenetFormerTargets]]:
@@ -304,24 +304,49 @@ class BisenetFormerProcessor(Processor):
 
         return results
 
-    def tensors_to_model_output(self, tensors: Union[list[np.ndarray], list[torch.Tensor]]) -> BisenetFormerOutput:
-        """
-        Convert a list of tensors or numpy arrays to a BisenetFormerOutput.
+    def get_dynamic_axes(self) -> DynamicAxes:
+        return DynamicAxes(
+            input_names=["images"],
+            output_names=["logits", "masks"],
+            dynamic_axes={
+                "images": {0: "batch", 2: "height", 3: "width"},
+                "logits": {0: "batch"},
+                "masks": {0: "batch"},
+            },
+        )
 
-        Args:
-            tensors: List of tensors or numpy arrays
-
-        Returns:
-            BisenetFormerOutput
-        """
-        if not (isinstance(tensors, (list, tuple)) and len(tensors) == 2):
-            raise ValueError(
-                f"Expected a list or tuple of 2 elements, got {type(tensors)} with length {len(tensors) if hasattr(tensors, '__len__') else 'N/A'}"
-            )
-        masks = tensors[1]
-        logits = tensors[0]
-        if isinstance(masks, np.ndarray):
-            masks = torch.from_numpy(masks)
+    def export_postprocess(
+        self,
+        output: Union[list[torch.Tensor], list[np.ndarray]],
+        inputs: Union[
+            torch.Tensor,
+            np.ndarray,
+            list[np.ndarray],
+            list[torch.Tensor],
+        ],
+        class_names: list[str] = [],
+        top_k: Optional[int] = None,
+        threshold: Optional[float] = None,
+    ) -> list[FocoosDetections]:
+        masks = output[0]
+        logits = output[1]
         if isinstance(logits, np.ndarray):
             logits = torch.from_numpy(logits)
-        return BisenetFormerOutput(masks=masks, logits=logits, loss=None)
+        if isinstance(masks, np.ndarray):
+            masks = torch.from_numpy(masks)
+        predict_all_pixels = self.config.predict_all_pixels
+        use_mask_score = self.config.use_mask_score
+        filter_empty_masks = self.config.filter_empty_masks
+        top_k = self.config.num_queries if top_k is None else top_k
+        threshold = self.config.threshold if threshold is None else threshold
+        model_output = BisenetFormerOutput(logits=logits, masks=masks, loss=None)
+        return self.postprocess(
+            model_output,
+            inputs,
+            class_names,
+            threshold=threshold,
+            use_mask_score=use_mask_score,
+            filter_empty_masks=filter_empty_masks,
+            predict_all_pixels=predict_all_pixels,
+            top_k=top_k,
+        )

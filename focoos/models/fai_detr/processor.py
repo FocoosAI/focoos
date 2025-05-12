@@ -5,7 +5,7 @@ import torch
 from PIL import Image
 
 from focoos.models.fai_detr.ports import DETRModelOutput, DETRTargets
-from focoos.ports import DatasetEntry, FocoosDet, FocoosDetections
+from focoos.ports import DatasetEntry, DynamicAxes, FocoosDet, FocoosDetections
 from focoos.processor.base_processor import Processor
 from focoos.structures import Boxes, ImageList, Instances
 from focoos.utils.box import box_xyxy_to_cxcywh
@@ -244,3 +244,14 @@ class DETRProcessor(Processor):
         top_k = 300 if top_k is None else top_k
         threshold = 0.5 if threshold is None else threshold
         return self.postprocess(model_output, inputs, class_names, top_k, threshold)
+
+    def get_dynamic_axes(self) -> DynamicAxes:
+        return DynamicAxes(
+            input_names=["images"],
+            output_names=["boxes", "logits"],
+            dynamic_axes={
+                "images": {0: "batch", 2: "height", 3: "width"},
+                "boxes": {0: "batch"},
+                "logits": {0: "batch"},
+            },
+        )

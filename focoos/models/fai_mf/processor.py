@@ -6,7 +6,7 @@ from PIL import Image
 
 from focoos.models.fai_mf.config import MaskFormerConfig
 from focoos.models.fai_mf.ports import MaskFormerModelOutput, MaskFormerTargets
-from focoos.ports import DatasetEntry, FocoosDet, FocoosDetections
+from focoos.ports import DatasetEntry, DynamicAxes, FocoosDet, FocoosDetections
 from focoos.processor.base_processor import Processor
 from focoos.structures import BitMasks, ImageList, Instances
 from focoos.utils.memory import retry_if_cuda_oom
@@ -181,8 +181,6 @@ class MaskFormerProcessor(Processor):
     ) -> list[FocoosDetections]:
         # Extract image sizes from inputs
         image_sizes = self.get_image_sizes(inputs)
-        print("Image sizes: ", image_sizes)
-        print(f"logits: {output.logits.shape}, masks: {output.masks.shape}")
         batch_size = output.logits.shape[0]
         results = []
         assert len(image_sizes) == batch_size, (
@@ -195,11 +193,6 @@ class MaskFormerProcessor(Processor):
         )  # B x Q; B x Q x H/out_stride x W/out_stride
         # softmax done before. # B x Q; B x Q
         scores, labels = cls_pred.max(-1)
-        print("Scores: ", scores.shape)
-        print("Labels: ", labels.shape)
-        print(
-            f"Threshold: {threshold}, TopK: {top_k}, use_mask_score: {use_mask_score}, filter_empty_masks: {filter_empty_masks}, predict_all_pixels: {predict_all_pixels}"
-        )
 
         # # let's binarize the mask
         if predict_all_pixels:
@@ -323,8 +316,8 @@ class MaskFormerProcessor(Processor):
         top_k: Optional[int] = None,
         threshold: Optional[float] = None,
     ) -> list[FocoosDetections]:
-        logits = output[1]
         masks = output[0]
+        logits = output[1]
         if isinstance(logits, np.ndarray):
             logits = torch.from_numpy(logits)
         if isinstance(masks, np.ndarray):
@@ -344,4 +337,17 @@ class MaskFormerProcessor(Processor):
             filter_empty_masks=filter_empty_masks,
             predict_all_pixels=predict_all_pixels,
             top_k=top_k,
+        )
+
+    def get_dynamic_axes(self) -> DynamicAxes:
+        return DynamicAxes(
+            input_names=["images"],
+            output_names=["masks", "logits"],
+            dynamic_axes={
+                "images": {0: "batch", 2: "height", 3: "width"},
+                "logits": {
+                    0: "batch",
+                },
+                "masks": {0: "batch"},
+            },
         )

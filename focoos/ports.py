@@ -421,7 +421,7 @@ class LatencyMetrics:
     device: str
 
 
-class RuntimeTypes(str, Enum):
+class RuntimeType(str, Enum):
     """Available runtime configurations for model inference.
 
     Values:
@@ -456,16 +456,16 @@ class ModelExtension(str, Enum):
     WEIGHTS = "pth"
 
     @classmethod
-    def from_runtime_type(cls, runtime_type: RuntimeTypes):
+    def from_runtime_type(cls, runtime_type: RuntimeType):
         if runtime_type in [
-            RuntimeTypes.ONNX_CUDA32,
-            RuntimeTypes.ONNX_TRT32,
-            RuntimeTypes.ONNX_TRT16,
-            RuntimeTypes.ONNX_CPU,
-            RuntimeTypes.ONNX_COREML,
+            RuntimeType.ONNX_CUDA32,
+            RuntimeType.ONNX_TRT32,
+            RuntimeType.ONNX_TRT16,
+            RuntimeType.ONNX_CPU,
+            RuntimeType.ONNX_COREML,
         ]:
             return cls.ONNX
-        elif runtime_type == RuntimeTypes.TORCHSCRIPT_32:
+        elif runtime_type == RuntimeType.TORCHSCRIPT_32:
             return cls.TORCHSCRIPT
         else:
             raise ValueError(f"Invalid runtime type: {runtime_type}")
@@ -1088,3 +1088,12 @@ class ExportCfg:
     model_fuse: bool = True
     format: Literal["onnx", "torchscript"] = "onnx"
     device: Optional[str] = "cuda"
+
+
+@dataclass
+class DynamicAxes:
+    """Dynamic axes for model export."""
+
+    input_names: list[str]
+    output_names: list[str]
+    dynamic_axes: dict

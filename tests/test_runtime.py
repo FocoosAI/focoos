@@ -7,7 +7,7 @@ from pytest_mock import MockerFixture
 from focoos.infer.runtimes.load_runtime import ORT_AVAILABLE, TORCH_AVAILABLE, load_runtime
 from focoos.infer.runtimes.onnx import ONNXRuntime
 from focoos.infer.runtimes.torchscript import TorchscriptRuntime
-from focoos.ports import OnnxRuntimeOpts, RemoteModelInfo, RuntimeTypes, TorchscriptRuntimeOpts
+from focoos.ports import OnnxRuntimeOpts, RemoteModelInfo, RuntimeType, TorchscriptRuntimeOpts
 
 
 def test_runtime_availability():
@@ -50,7 +50,7 @@ def test_onnx_import():
     "runtime_type, expected_opts",
     [
         (
-            RuntimeTypes.ONNX_CUDA32,
+            RuntimeType.ONNX_CUDA32,
             OnnxRuntimeOpts(
                 cuda=True,
                 trt=False,
@@ -61,7 +61,7 @@ def test_onnx_import():
             ),
         ),
         (
-            RuntimeTypes.ONNX_TRT32,
+            RuntimeType.ONNX_TRT32,
             OnnxRuntimeOpts(
                 cuda=False,
                 trt=True,
@@ -72,7 +72,7 @@ def test_onnx_import():
             ),
         ),
         (
-            RuntimeTypes.ONNX_TRT16,
+            RuntimeType.ONNX_TRT16,
             OnnxRuntimeOpts(
                 cuda=False,
                 trt=True,
@@ -83,7 +83,7 @@ def test_onnx_import():
             ),
         ),
         (
-            RuntimeTypes.ONNX_CPU,
+            RuntimeType.ONNX_CPU,
             OnnxRuntimeOpts(
                 cuda=False,
                 trt=False,
@@ -94,7 +94,7 @@ def test_onnx_import():
             ),
         ),
         (
-            RuntimeTypes.ONNX_COREML,
+            RuntimeType.ONNX_COREML,
             OnnxRuntimeOpts(
                 cuda=False,
                 trt=False,
@@ -105,7 +105,7 @@ def test_onnx_import():
             ),
         ),
         (
-            RuntimeTypes.TORCHSCRIPT_32,
+            RuntimeType.TORCHSCRIPT_32,
             TorchscriptRuntimeOpts(
                 warmup_iter=2,
                 optimize_for_inference=True,
@@ -125,7 +125,7 @@ def test_load_runtime(mocker: MockerFixture, tmp_path, runtime_type, expected_op
     mock_model_metadata = MagicMock(spec=RemoteModelInfo)
 
     # mock opts
-    if runtime_type == RuntimeTypes.TORCHSCRIPT_32:
+    if runtime_type == RuntimeType.TORCHSCRIPT_32:
         mocker.patch("focoos.infer.runtimes.load_runtime.TORCH_AVAILABLE", True)
         mock_runtime_class = mocker.patch("focoos.infer.runtimes.torchscript.TorchscriptRuntime", autospec=True)
         mock_runtime_class.return_value = MagicMock(spec=TorchscriptRuntime, opts=expected_opts)
@@ -158,6 +158,6 @@ def test_load_unavailable_runtime(mocker: MockerFixture):
     mocker.patch("focoos.infer.runtimes.load_runtime.ORT_AVAILABLE", False)
     mocker.patch("focoos.infer.runtimes.load_runtime.TORCH_AVAILABLE", False)
     with pytest.raises(ImportError):
-        load_runtime(RuntimeTypes.TORCHSCRIPT_32, "fake_model_path", MagicMock(spec=RemoteModelInfo), 2)
+        load_runtime(RuntimeType.TORCHSCRIPT_32, "fake_model_path", MagicMock(spec=RemoteModelInfo), 2)
     with pytest.raises(ImportError):
-        load_runtime(RuntimeTypes.ONNX_CUDA32, "fake_model_path", MagicMock(spec=RemoteModelInfo), 2)
+        load_runtime(RuntimeType.ONNX_CUDA32, "fake_model_path", MagicMock(spec=RemoteModelInfo), 2)
