@@ -54,14 +54,12 @@ class ONNXRuntime(BaseRuntime):
         # Setup providers
         self.providers = self._setup_providers(model_dir=Path(model_path).parent)
         self.active_provider = self.providers[0][0]
-        logger.info(f"[onnxruntime] using: {self.active_provider}")
+        logger.info(f" using: {self.active_provider}")
         # Create session
         self.ort_sess = ort.InferenceSession(model_path, options, providers=self.providers)
 
         if self.opts.trt and self.providers[0][0] == "TensorrtExecutionProvider":
-            logger.info(
-                "🟢 [onnxruntime] TensorRT enabled. First execution may take longer as it builds the TRT engine."
-            )
+            logger.info("🟢  TensorRT enabled. First execution may take longer as it builds the TRT engine.")
         # Set input type
         self.dtype = np.uint8 if self.ort_sess.get_inputs()[0].type == "tensor(uint8)" else np.float32
 
@@ -69,10 +67,17 @@ class ONNXRuntime(BaseRuntime):
         if self.opts.warmup_iter > 0:
             self._warmup()
 
+        inputs = self.ort_sess.get_inputs()
+        outputs = self.ort_sess.get_outputs()
+        for input in inputs:
+            logger.debug(f"🔧 Input: {input.name} {input.type} {input.shape}")
+        for output in outputs:
+            logger.debug(f"🔧 Output: {output.name} {output.type} {output.shape}")
+
     def _setup_providers(self, model_dir: Path):
         providers = []
         available = ort.get_available_providers()
-        logger.info(f"[onnxruntime] available providers:{available}")
+        logger.debug(f"Available providers:{available}")
         _dir = Path(model_dir)
         models_root = _dir.parent
         # Check and add providers in order of preference
@@ -122,7 +127,7 @@ class ONNXRuntime(BaseRuntime):
 
     def _warmup(self):
         size = self.model_info.im_size
-        logger.info(f"⏱️ [onnxruntime] Warming up model {self.name} on {self.active_provider}, size: {size}x{size}..")
+        logger.info(f"⏱️ Warming up model {self.name} on {self.active_provider}, size: {size}x{size}..")
         np_image = np.random.rand(1, 3, size, size).astype(self.dtype)
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
@@ -130,7 +135,7 @@ class ONNXRuntime(BaseRuntime):
         for _ in range(self.opts.warmup_iter):
             self.ort_sess.run(out_name, {input_name: np_image})
 
-        logger.info("⏱️ [onnxruntime] Warmup done")
+        logger.info("⏱️ Warmup done")
 
     def __call__(self, im: torch.Tensor) -> list[np.ndarray]:
         """
@@ -169,7 +174,7 @@ class ONNXRuntime(BaseRuntime):
             device_name = get_cpu_name()
             logger.warning(f"No GPU found, using CPU {device_name}.")
 
-        logger.info(f"⏱️ [onnxruntime] Benchmarking latency on {device_name}, size: {size}x{size}..")
+        logger.info(f"⏱️ Benchmarking latency on {device_name}, size: {size}x{size}..")
 
         np_input = (255 * np.random.random((1, 3, size, size))).astype(self.dtype)
         input_name = self.ort_sess.get_inputs()[0].name

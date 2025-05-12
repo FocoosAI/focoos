@@ -146,7 +146,7 @@ class FocoosModel:
     def export(
         self,
         runtime_type: RuntimeType = RuntimeType.ONNX_CUDA32,
-        onnx_opset: int = 19,
+        onnx_opset: int = 17,
         onnx_dynamic: bool = True,
         model_fuse: bool = True,
         fp16: bool = False,
@@ -190,6 +190,8 @@ class FocoosModel:
                     input_names=dynamic_axes.input_names,
                     output_names=dynamic_axes.output_names,
                     dynamic_axes=dynamic_axes.dynamic_axes,
+                    do_constant_folding=True,
+                    export_params=True,
                     # dynamic_shapes={
                     #    "x": {
                     #        0: torch.export.Dim("batch", min=1, max=64),

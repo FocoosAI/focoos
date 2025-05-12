@@ -236,7 +236,7 @@ class InferModel:
         res.latency = latency
         im = None
         if annotate:
-            im = self._annotate(im0, fai_detections_to_sv(res, im0.shape))
+            im = self._annotate(im0, fai_detections_to_sv(res, im0.shape[:2]))
 
         logger.debug(
             f"Found {len(detections)} detections. Inference time: {(t2 - t1) * 1000:.0f}ms, preprocess: {(t1 - t0) * 1000:.0f}ms, postprocess: {(t3 - t2) * 1000:.0f}ms"
