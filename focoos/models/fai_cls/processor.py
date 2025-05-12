@@ -9,11 +9,11 @@ from focoos.data.mappers.classification_dataset_mapper import ClassificationData
 from focoos.models.fai_cls.config import ClassificationConfig
 from focoos.models.fai_cls.ports import ClassificationModelOutput, ClassificationTargets
 from focoos.ports import DatasetEntry, FocoosDet, FocoosDetections
-from focoos.processor.base_processor import BaseProcessor
+from focoos.processor.base_processor import Processor
 from focoos.structures import ImageList
 
 
-class ClassificationProcessor(BaseProcessor):
+class ClassificationProcessor(Processor):
     """Processor for image classification model inputs and outputs."""
 
     def __init__(self, config: ClassificationConfig):

@@ -2,16 +2,16 @@ import importlib
 from typing import Callable, Dict, Type
 
 from focoos.ports import ModelConfig, ModelFamily
-from focoos.processor.base_processor import BaseProcessor
+from focoos.processor.base_processor import Processor
 
 
 class ProcessorManager:
     """Automatic processor manager with lazy loading"""
 
-    _PROCESSOR_MAPPING: Dict[str, Callable[[], Type[BaseProcessor]]] = {}
+    _PROCESSOR_MAPPING: Dict[str, Callable[[], Type[Processor]]] = {}
 
     @classmethod
-    def register_processor(cls, model_family: ModelFamily, processor_loader: Callable[[], Type[BaseProcessor]]):
+    def register_processor(cls, model_family: ModelFamily, processor_loader: Callable[[], Type[Processor]]):
         """
         Register a loader for a specific processor
         """
@@ -29,7 +29,7 @@ class ProcessorManager:
                         register_func()
 
     @classmethod
-    def get_processor(cls, model_family: ModelFamily, model_config: ModelConfig) -> BaseProcessor:
+    def get_processor(cls, model_family: ModelFamily, model_config: ModelConfig) -> Processor:
         """
         Get a processor instance for the given model family.
         """

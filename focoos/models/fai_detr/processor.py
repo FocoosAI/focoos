@@ -6,7 +6,7 @@ from PIL import Image
 
 from focoos.models.fai_detr.ports import DETRModelOutput, DETRTargets
 from focoos.ports import DatasetEntry, FocoosDet, FocoosDetections
-from focoos.processor.base_processor import BaseProcessor
+from focoos.processor.base_processor import Processor
 from focoos.structures import Boxes, ImageList, Instances
 from focoos.utils.box import box_xyxy_to_cxcywh
 from focoos.utils.logger import get_logger
@@ -75,7 +75,7 @@ def detector_postprocess(
     return results
 
 
-class DETRProcessor(BaseProcessor):
+class DETRProcessor(Processor):
     def preprocess(
         self,
         inputs: Union[
@@ -176,10 +176,11 @@ class DETRProcessor(BaseProcessor):
     ) -> list[FocoosDetections]:
         # Extract image sizes from inputs
         image_sizes = self.get_image_sizes(inputs)
-
+        print(image_sizes)
         results = []
         batch_size = output.boxes.shape[0]
         num_classes = output.logits.shape[-1]
+
         assert len(image_sizes) == batch_size, (
             f"Expected image sizes {len(image_sizes)} to match batch size {batch_size}"
         )
@@ -204,7 +205,6 @@ class DETRProcessor(BaseProcessor):
             py_box_pred = box_pred.detach().cpu().tolist()
             py_scores = scores.detach().cpu().tolist()
             py_labels = labels.detach().cpu().tolist()
-
             results.append(
                 FocoosDetections(
                     detections=[
@@ -221,37 +221,26 @@ class DETRProcessor(BaseProcessor):
 
         return results
 
-    def tensors_to_model_output(self, tensors: Union[list[np.ndarray], list[torch.Tensor]]) -> DETRModelOutput:
-        """
-        Convert a list of tensors or numpy arrays to a DETRModelOutput.
-
-        Args:
-            tensors (list): A list containing two elements: boxes and logits, either as numpy arrays or torch tensors.
-
-        Returns:
-            DETRModelOutput: The model output with boxes and logits as torch tensors.
-        """
-        if not (isinstance(tensors, (list, tuple)) and len(tensors) == 2):
-            raise ValueError(
-                f"Expected a list or tuple of 2 elements, got {type(tensors)} with length {len(tensors) if hasattr(tensors, '__len__') else 'N/A'}"
-            )
-
-        # Convert both elements to torch.Tensor if they are numpy arrays
-        boxes = tensors[0]
-        logits = tensors[1]
-
+    def export_postprocess(
+        self,
+        output: Union[list[torch.Tensor], list[np.ndarray]],
+        inputs: Union[
+            torch.Tensor,
+            np.ndarray,
+            list[np.ndarray],
+            list[torch.Tensor],
+        ],
+        class_names: list[str] = [],
+        top_k: Optional[int] = None,
+        threshold: Optional[float] = None,
+    ) -> list[FocoosDetections]:
+        boxes = output[0]
+        logits = output[1]
         if isinstance(boxes, np.ndarray):
             boxes = torch.from_numpy(boxes)
-        elif not isinstance(boxes, torch.Tensor):
-            raise TypeError(f"boxes must be a numpy.ndarray or torch.Tensor, got {type(boxes)}")
-
         if isinstance(logits, np.ndarray):
             logits = torch.from_numpy(logits)
-        elif not isinstance(logits, torch.Tensor):
-            raise TypeError(f"logits must be a numpy.ndarray or torch.Tensor, got {type(logits)}")
-
-        return DETRModelOutput(
-            boxes=boxes,
-            logits=logits,
-            loss=None,
-        )
+        model_output = DETRModelOutput(boxes=boxes, logits=logits, loss=None)
+        top_k = 300 if top_k is None else top_k
+        threshold = 0.5 if threshold is None else threshold
+        return self.postprocess(model_output, inputs, class_names, top_k, threshold)

@@ -702,7 +702,6 @@ class FAIMaskFormer(BaseModelNN):
             cls_sigmoid=self.config.cls_sigmoid,
         )
         self.resolution = self.config.resolution
-        self.top_k = self.config.num_queries
         self.register_buffer("pixel_mean", torch.Tensor(self.config.pixel_mean).view(-1, 1, 1), False)
         self.register_buffer("pixel_std", torch.Tensor(self.config.pixel_std).view(-1, 1, 1), False)
         self.size_divisibility = self.config.size_divisibility
@@ -769,7 +768,7 @@ class FAIMaskFormer(BaseModelNN):
         """
         # Define the expected kwargs
         expected_kwargs = ["threshold", "predict_all_pixels", "use_mask_score", "filter_empty_masks", "top_k"]
-
+        print(f"kwargs: {kwargs}")
         # Log warning for unexpected kwargs
         for key in kwargs:
             if key not in expected_kwargs:
@@ -779,7 +778,7 @@ class FAIMaskFormer(BaseModelNN):
         predict_all_pixels = kwargs.get("predict_all_pixels", self.config.predict_all_pixels)
         use_mask_score = kwargs.get("use_mask_score", self.config.use_mask_score)
         filter_empty_masks = kwargs.get("filter_empty_masks", self.config.filter_empty_masks)
-        top_k = kwargs.get("top_k", self.top_k)
+        top_k = kwargs.get("top_k", self.config.num_queries)
         return self.processor.postprocess(
             outputs,
             inputs,

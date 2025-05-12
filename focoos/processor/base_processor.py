@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import Any, Literal, Union
 
 import numpy as np
@@ -7,10 +8,11 @@ from PIL import Image
 from focoos.ports import DatasetEntry, FocoosDetections, ModelConfig, ModelOutput
 
 
-class BaseProcessor:
+class Processor:
     def __init__(self, config: ModelConfig):
         self.config = config
 
+    @abstractmethod
     def preprocess(
         self,
         inputs: Union[torch.Tensor, np.ndarray, Image.Image, list[Image.Image], list[np.ndarray], list[torch.Tensor]],
@@ -20,6 +22,7 @@ class BaseProcessor:
     ) -> tuple[torch.Tensor, Any]:
         raise NotImplementedError("Pre-processing is not implemented for this model.")
 
+    @abstractmethod
     def postprocess(
         self,
         outputs: ModelOutput,
@@ -29,6 +32,23 @@ class BaseProcessor:
     ) -> list[FocoosDetections]:
         raise NotImplementedError("Post-processing is not implemented for this model.")
 
+    @abstractmethod
+    def export_postprocess(
+        self,
+        output: Union[list[torch.Tensor], list[np.ndarray]],
+        inputs: Union[
+            torch.Tensor,
+            np.ndarray,
+            Image.Image,
+            list[Image.Image],
+            list[np.ndarray],
+            list[torch.Tensor],
+        ],
+        **kwargs,
+    ) -> list[FocoosDetections]:
+        raise NotImplementedError("Export post-processing is not implemented for this model.")
+
+    @abstractmethod
     def eval_post_process(self, outputs: ModelOutput, inputs: list[DatasetEntry]):
         raise NotImplementedError("Post-processing is not implemented for this model.")
 
@@ -97,6 +117,3 @@ class BaseProcessor:
         images_torch = torch.cat(processed_inputs, dim=0)
 
         return images_torch
-
-    def tensors_to_model_output(self, tensors: Union[list[np.ndarray], list[torch.Tensor]]) -> ModelOutput:
-        raise NotImplementedError("Tensors to model output is not implemented for this model.")

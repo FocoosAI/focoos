@@ -40,12 +40,12 @@ class MaskFormerConfig(ModelConfig):
     # Inference configuration
     # Options: "semantic", "instance", "panoptic"
     postprocessing_type: PostprocessingType = "semantic"
-    top_k: int = 300
     mask_threshold: float = 0.5
     predict_all_pixels: bool = False
     use_mask_score: bool = False
     filter_empty_masks: bool = False
     threshold: float = 0.5
+    top_k: int = 100  # TODO: remove this, is mapped to num_queries
 
     # Loss configuration
     criterion_deep_supervision: bool = True

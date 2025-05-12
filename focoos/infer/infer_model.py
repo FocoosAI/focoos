@@ -225,8 +225,7 @@ class InferModel:
         raw_detections = self.runtime(tensors)
 
         t2 = perf_counter()
-        model_output = self.processor.tensors_to_model_output(raw_detections)
-        detections = self.processor.postprocess(model_output, im0)
+        detections = self.processor.export_postprocess(raw_detections, im0)
         t3 = perf_counter()
         latency = {
             "inference": round(t2 - t1, 3),
@@ -235,7 +234,6 @@ class InferModel:
         }
         res = detections[0]  #!TODO  check for batching
         res.latency = latency
-        detections = []
         im = None
         if annotate:
             im = self._annotate(im0, fai_detections_to_sv(res, im0.shape))

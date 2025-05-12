@@ -15,6 +15,7 @@ from focoos.ports import (
     RuntimeTypes,
     TrainerArgs,
 )
+from focoos.processor.processor_manager import ProcessorManager
 from focoos.utils.distributed.dist import launch
 from focoos.utils.logger import get_logger
 
@@ -34,6 +35,7 @@ class FocoosModel:
     def __init__(self, model: BaseModelNN, model_info: ModelInfo):
         self.model = model
         self.model_info = model_info
+        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)
 
     def __str__(self):
         return f"{self.model_info.name} ({self.model_info.model_family.value})"
@@ -215,9 +217,9 @@ class FocoosModel:
             model = model.cuda()
         except Exception:
             logger.warning("Unable to use CUDA")
-        output = model(inputs)
+        output = model.forward(inputs)
         class_names = self.model_info.classes
-        output_fdet = model.post_process(output, inputs, class_names=class_names, **kwargs)
+        output_fdet = self.processor.postprocess(output, inputs, class_names=class_names, **kwargs)
         return output_fdet
 
     def load_weights(self, weights: dict):

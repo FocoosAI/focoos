@@ -7,7 +7,7 @@ from PIL import Image
 from focoos.models.bisenetformer.config import BisenetFormerConfig
 from focoos.models.bisenetformer.ports import BisenetFormerOutput, BisenetFormerTargets
 from focoos.ports import DatasetEntry, FocoosDet, FocoosDetections
-from focoos.processor.base_processor import BaseProcessor
+from focoos.processor.base_processor import Processor
 from focoos.structures import BitMasks, ImageList, Instances
 from focoos.utils.memory import retry_if_cuda_oom
 from focoos.utils.vision import binary_mask_to_base64, masks_to_xyxy
@@ -22,7 +22,7 @@ def interpolate_image(image, size):
     )[0]
 
 
-class BisenetFormerProcessor(BaseProcessor):
+class BisenetFormerProcessor(Processor):
     def __init__(self, config: BisenetFormerConfig):
         super().__init__(config)
         self.config = config

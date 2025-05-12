@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import Union
 
 import numpy as np
@@ -13,6 +14,7 @@ class BaseModelNN(nn.Module):
     def __init__(self, config: ModelConfig):
         super().__init__()
 
+    @abstractmethod
     def forward(
         self,
         inputs: Union[
@@ -27,9 +29,11 @@ class BaseModelNN(nn.Module):
     ) -> ModelOutput:
         raise NotImplementedError("Forward is not implemented for this model.")
 
+    @abstractmethod
     def eval_post_process(self, outputs: ModelOutput, inputs: list[DatasetEntry]) -> list[dict[str, Instances]]:
         raise NotImplementedError("Post-processing is not implemented for this model.")
 
+    @abstractmethod
     def post_process(
         self,
         outputs: ModelOutput,
