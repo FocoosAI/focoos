@@ -12,7 +12,6 @@ from focoos.models.fai_cls.ports import ClassificationModelOutput, Classificatio
 from focoos.models.fai_cls.processor import ClassificationProcessor
 from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.backbone.build import load_backbone
-from focoos.ports import FocoosDetections
 from focoos.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -268,30 +267,3 @@ class FAIClassification(BaseModelNN):
             Processed results with classification predictions
         """
         return self.processor.eval_postprocess(outputs, inputs)  # type: ignore
-
-    def post_process(
-        self,
-        outputs: ClassificationModelOutput,
-        inputs: Union[
-            torch.Tensor,
-            np.ndarray,
-            Image.Image,
-            list[Image.Image],
-            list[np.ndarray],
-            list[torch.Tensor],
-        ],
-        class_names: list[str] = [],
-        **kwargs,
-    ) -> List[FocoosDetections]:
-        """Post-process model outputs for inference.
-
-        Args:
-            outputs: Model outputs
-            batched_inputs: Batch input metadata
-
-        Returns:
-            Processed results with classification predictions
-        """
-        for k in kwargs:
-            logger.warning(f"Unexpected kwarg '{k}' provided to post_process")
-        return self.processor.postprocess(outputs, inputs, class_names=class_names)

@@ -6,7 +6,7 @@ import torch
 from PIL import Image
 from torch import nn
 
-from focoos.ports import DatasetEntry, FocoosDetections, Instances, ModelConfig, ModelOutput
+from focoos.ports import DatasetEntry, Instances, ModelConfig, ModelOutput
 from focoos.utils.checkpoint import IncompatibleKeys, strip_prefix_if_present
 
 
@@ -31,23 +31,6 @@ class BaseModelNN(nn.Module):
 
     @abstractmethod
     def eval_post_process(self, outputs: ModelOutput, inputs: list[DatasetEntry]) -> list[dict[str, Instances]]:
-        raise NotImplementedError("Post-processing is not implemented for this model.")
-
-    @abstractmethod
-    def post_process(
-        self,
-        outputs: ModelOutput,
-        inputs: Union[
-            torch.Tensor,
-            np.ndarray,
-            Image.Image,
-            list[Image.Image],
-            list[np.ndarray],
-            list[torch.Tensor],
-        ],
-        class_names: list[str] = [],
-        **kwargs,
-    ) -> list[FocoosDetections]:
         raise NotImplementedError("Post-processing is not implemented for this model.")
 
     def load_state_dict(self, checkpoint_state_dict: dict, strict: bool = True) -> IncompatibleKeys:

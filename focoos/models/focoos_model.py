@@ -145,7 +145,6 @@ class FocoosModel:
 
     def export(
         self,
-        format: ExportFormat = ExportFormat.ONNX,
         runtime_type: RuntimeType = RuntimeType.ONNX_CUDA32,
         onnx_opset: int = 19,
         onnx_dynamic: bool = True,
@@ -160,11 +159,10 @@ class FocoosModel:
 
         if out_dir is None:
             out_dir = os.path.join(MODELS_DIR, self.model_info.name)
-        if runtime_type.to_export_format() != format:
-            raise ValueError(f"Runtime type {runtime_type} does not match format {format}")
+
+        format = runtime_type.to_export_format()
         exportable_model = ExportableModel(self.model, device=device)
         os.makedirs(out_dir, exist_ok=True)
-        print(f"IM_SIZE: {self.model_info.im_size} RESOLUTION: {self.resolution}")
         data = 128 * torch.randn(1, 3, self.model_info.im_size, self.model_info.im_size).to(device)
 
         export_model_name = "model.onnx" if format == ExportFormat.ONNX else "model.pt"

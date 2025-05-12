@@ -345,9 +345,5 @@ class MaskFormerProcessor(Processor):
             output_names=["masks", "logits"],
             dynamic_axes={
                 "images": {0: "batch", 2: "height", 3: "width"},
-                "logits": {
-                    0: "batch",
-                },
-                "masks": {0: "batch"},
             },
         )
