@@ -1,15 +1,12 @@
-from typing import Dict, List, Union
+from typing import Dict, List
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from PIL import Image
 
 from focoos.data.mappers.classification_dataset_mapper import ClassificationDatasetDict
 from focoos.models.fai_cls.config import ClassificationConfig
 from focoos.models.fai_cls.ports import ClassificationModelOutput, ClassificationTargets
-from focoos.models.fai_cls.processor import ClassificationProcessor
 from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.backbone.build import load_backbone
 from focoos.utils.logger import get_logger
@@ -167,7 +164,6 @@ class FAIClassification(BaseModelNN):
         super().__init__(config)
 
         self.config = config
-        self.processor = ClassificationProcessor(config)
 
         self.register_buffer("pixel_mean", torch.Tensor(self.config.pixel_mean).view(-1, 1, 1), False)
         self.register_buffer("pixel_std", torch.Tensor(self.config.pixel_std).view(-1, 1, 1), False)
@@ -210,15 +206,8 @@ class FAIClassification(BaseModelNN):
 
     def forward(
         self,
-        inputs: Union[
-            torch.Tensor,
-            List[torch.Tensor],
-            np.ndarray,
-            List[np.ndarray],
-            Image.Image,
-            List[Image.Image],
-            List[ClassificationDatasetDict],
-        ],
+        images: torch.Tensor,
+        targets: list[ClassificationTargets] = [],
     ) -> ClassificationModelOutput:
         """Forward pass of the classification model.
 
@@ -228,16 +217,6 @@ class FAIClassification(BaseModelNN):
         Returns:
             Classification model output with logits and optional loss
         """
-
-        images, targets = self.processor.preprocess(
-            inputs,
-            training=self.training,
-            device=self.device,
-            dtype=self.dtype,
-            resolution=self.config.resolution,
-            size_divisibility=self.backbone.size_divisibility,
-            padding_constraints=self.backbone.padding_constraints,
-        )
 
         images = (images - self.pixel_mean) / self.pixel_std  # type: ignore
         # Extract features from backbone

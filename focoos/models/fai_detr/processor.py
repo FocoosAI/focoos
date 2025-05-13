@@ -1,9 +1,10 @@
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import torch
 from PIL import Image
 
+from focoos.models.fai_detr.config import DETRConfig
 from focoos.models.fai_detr.ports import DETRModelOutput, DETRTargets
 from focoos.ports import DatasetEntry, DynamicAxes, FocoosDet, FocoosDetections
 from focoos.processor.base_processor import Processor
@@ -76,6 +77,11 @@ def detector_postprocess(
 
 
 class DETRProcessor(Processor):
+    def __init__(self, config: DETRConfig):
+        super().__init__(config)
+        self.top_k = config.top_k
+        self.threshold = config.threshold
+
     def preprocess(
         self,
         inputs: Union[
@@ -87,11 +93,8 @@ class DETRProcessor(Processor):
             list[torch.Tensor],
             list[DatasetEntry],
         ],
-        training: bool,
         device: torch.device,
         dtype: torch.dtype = torch.float32,
-        size_divisibility: int = 0,
-        padding_constraints: Optional[Dict[str, int]] = None,
         resolution: Optional[int] = 640,
     ) -> tuple[torch.Tensor, list[DETRTargets]]:
         targets = []
@@ -99,12 +102,9 @@ class DETRProcessor(Processor):
             images = [x.image.to(device) for x in inputs]
             images = ImageList.from_tensors(
                 tensors=images,
-                # FIXME using size_divisibility in eval make detection break due to padding issue (in scaling bboxes)
-                size_divisibility=size_divisibility if training or size_divisibility else 0,
-                padding_constraints=padding_constraints,
             )
             images_torch = images.tensor
-            if training:
+            if self.training:
                 # mask classification target
                 gt_instances = [x.instances.to(device) for x in inputs]
                 h, w = images.tensor.shape[-2:]
@@ -116,7 +116,7 @@ class DETRProcessor(Processor):
                     gt_boxes = box_xyxy_to_cxcywh(gt_boxes)
                     targets.append(DETRTargets(labels=gt_classes, boxes=gt_boxes))
         else:
-            if training:
+            if self.training:
                 raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
             images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
             if resolution is not None:
@@ -130,8 +130,10 @@ class DETRProcessor(Processor):
         self,
         output: DETRModelOutput,
         batched_inputs: list[DatasetEntry],
-        top_k: int = 300,
+        top_k: Optional[int] = None,
     ) -> list[dict[str, Instances]]:
+        top_k = top_k or self.top_k
+
         results = []
         box_cls, box_pred = output.logits, output.boxes
         batch_size = box_cls.shape[0]
@@ -171,10 +173,14 @@ class DETRProcessor(Processor):
             list[torch.Tensor],
         ],
         class_names: list[str] = [],
-        top_k: int = 300,
-        threshold: float = 0.5,
+        top_k: Optional[int] = None,
+        threshold: Optional[float] = None,
     ) -> list[FocoosDetections]:
         # Extract image sizes from inputs
+
+        top_k = top_k or self.top_k
+        threshold = threshold or self.threshold
+
         image_sizes = self.get_image_sizes(inputs)
         print(image_sizes)
         results = []

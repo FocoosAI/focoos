@@ -37,20 +37,6 @@ class AutoDataset:
         self.datasets_dir = datasets_dir
         self.dataset_name = dataset_name
 
-        # if is_inside_sagemaker():
-        #     # non compressed path: /opt/ml/input/data/dataset (there's not dataset name)
-        #     # compressed path: /opt/ml/input/data/dataset_compressed/{dataset_name}.zip
-        #     logger.info("Running inside Sagemaker: True")
-        #     dataset_path = get_sgm_dataset_path(layout, self.datasets_root_dir)
-        # else:
-        #     # non compressed path: datasets_root_dir/dataset_name if not catalog
-        #     #                      datasets_root_dir              if catalog
-        #     # compressed path: datasets_root_dir/dataset_name.zip if not catalog
-        #     #                  NOT SUPPORTED if catalog
-        #     if self.layout is not DatasetLayout.CATALOG:
-        #         dataset_path = os.path.join(self.datasets_root_dir, dataset_name)
-        #     else:
-        #         dataset_path = self.datasets_root_dir
         if self.layout is not DatasetLayout.CATALOG:
             dataset_path = os.path.join(self.datasets_dir, dataset_name)
         else:

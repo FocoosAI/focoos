@@ -2,7 +2,7 @@
 import math
 import os
 import random
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
 from typing import Optional
 
 import cv2
@@ -11,6 +11,7 @@ import torch
 
 from focoos.data.datasets.map_dataset import MapDataset
 from focoos.models.focoos_model import BaseModelNN
+from focoos.processor.base_processor import Processor
 from focoos.trainer.events import get_event_storage
 from focoos.utils.logger import get_logger
 from focoos.utils.visualizer import ColorMode, Visualizer
@@ -20,10 +21,26 @@ from .base import HookBase
 logger = get_logger("VisualizationHook")
 
 
+@contextmanager
+def inference_context(model):
+    """
+    A context where the model is temporarily changed to eval mode,
+    and restored to previous mode afterwards.
+
+    Args:
+        model: a torch Module
+    """
+    training_mode = model.training
+    model.eval()
+    yield
+    model.train(training_mode)
+
+
 class VisualizationHook(HookBase):
     def __init__(
         self,
         model: BaseModelNN,
+        processor: Processor,
         dataset: MapDataset,
         period,
         index_list=[],
@@ -32,6 +49,7 @@ class VisualizationHook(HookBase):
         output_dir: Optional[str] = None,
     ):
         self.model = model
+        self.processor = processor
         # self.postprocessing = postprocessing
         self._period = period
         if index_list is None or len(index_list) <= 0:
@@ -109,6 +127,8 @@ class VisualizationHook(HookBase):
 
         with ExitStack() as stack:
             stack.enter_context(torch.no_grad())
+            stack.enter_context(inference_context(self.model))
+            stack.enter_context(inference_context(self.processor))
 
             storage = get_event_storage()
             self.model.eval()
@@ -120,7 +140,9 @@ class VisualizationHook(HookBase):
                 sample["height"], sample["width"] = sample["image"].shape[-2:]
 
                 samples = [sample]
-                prediction = self.model.eval_post_process(self.model(samples), samples)[0]
+                images, _ = self.processor.preprocess(samples, device=self.model.device, dtype=self.model.dtype)
+                outputs = self.model(images)
+                prediction = self.processor.eval_postprocess(outputs, samples)[0]
 
                 visualizer = Visualizer(
                     sample["image"].permute(1, 2, 0).cpu().numpy(),

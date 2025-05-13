@@ -39,6 +39,7 @@ class DETRConfig(ModelConfig):
 
     # Post-processing configuration
     threshold: float = 0.5
+    top_k: int = 300
 
     # Loss configuration
     criterion_deep_supervision: bool = True

@@ -18,6 +18,7 @@ from focoos.ports import (
 )
 from focoos.processor.processor_manager import ProcessorManager
 from focoos.utils.distributed.dist import launch
+from focoos.utils.env import TORCH_VERSION
 from focoos.utils.logger import get_logger
 
 logger = get_logger("FocoosModel")
@@ -73,7 +74,7 @@ class FocoosModel:
                 run_train,
                 args.num_gpus,
                 dist_url="auto",
-                args=(args, data_train, data_val, self.model, self.model_info),
+                args=(args, data_train, data_val, self.model, self.processor, self.model_info),
             )
             logger.info("Training done, resuming main process.")
             # here i should restore the best model and config since in DDP it is not updated
@@ -90,7 +91,7 @@ class FocoosModel:
             self.load_weights(weights)
             self.model_info = ModelInfo.from_json(metadata_path)
         else:
-            run_train(args, data_train, data_val, self.model, self.model_info)
+            run_train(args, data_train, data_val, self.model, self.processor, self.model_info)
 
     def test(self, args: TrainerArgs, data_test: MapDataset):
         from focoos.trainer.trainer import run_test
@@ -113,7 +114,7 @@ class FocoosModel:
                 run_test,
                 args.num_gpus,
                 dist_url="auto",
-                args=(args, data_test, self.model, self.model_info),
+                args=(args, data_test, self.model, self.processor, self.model_info),
             )
             logger.info("Testing done, resuming main process.")
             # here i should restore the best model and config since in DDP it is not updated
@@ -121,7 +122,7 @@ class FocoosModel:
             metadata_path = os.path.join(final_folder, "focoos_metadata.json")
             self.model_info = ModelInfo.from_json(metadata_path)
         else:
-            run_test(args, data_test, self.model, self.model_info)
+            run_test(args, data_test, self.model, self.processor, self.model_info)
 
     @property
     def device(self):
@@ -178,28 +179,44 @@ class FocoosModel:
         if format == "onnx":
             with torch.no_grad():
                 logger.info("🚀 Exporting ONNX model..")
-                exp_program = torch.onnx.export(
-                    exportable_model,
-                    (data,),
-                    f=_out_file,
-                    opset_version=onnx_opset,
-                    verbose=False,
-                    verify=True,
-                    dynamo=False,
-                    external_data=False,  # model weights external to model
-                    input_names=dynamic_axes.input_names,
-                    output_names=dynamic_axes.output_names,
-                    dynamic_axes=dynamic_axes.dynamic_axes,
-                    do_constant_folding=True,
-                    export_params=True,
-                    # dynamic_shapes={
-                    #    "x": {
-                    #        0: torch.export.Dim("batch", min=1, max=64),
-                    #        #2: torch.export.Dim("height", min=18, max=4096),
-                    #        #3: torch.export.Dim("width", min=18, max=4096),
-                    #    }
-                    # },
-                )
+                if TORCH_VERSION >= (2, 5):
+                    exp_program = torch.onnx.export(
+                        exportable_model,
+                        (data,),
+                        f=_out_file,
+                        opset_version=onnx_opset,
+                        verbose=False,
+                        verify=True,
+                        dynamo=False,
+                        external_data=False,  # model weights external to model
+                        input_names=dynamic_axes.input_names,
+                        output_names=dynamic_axes.output_names,
+                        dynamic_axes=dynamic_axes.dynamic_axes,
+                        do_constant_folding=True,
+                        export_params=True,
+                        # dynamic_shapes={
+                        #    "x": {
+                        #        0: torch.export.Dim("batch", min=1, max=64),
+                        #        #2: torch.export.Dim("height", min=18, max=4096),
+                        #        #3: torch.export.Dim("width", min=18, max=4096),
+                        #    }
+                        # },
+                    )
+                elif TORCH_VERSION >= (2, 0):
+                    torch.onnx.export(
+                        exportable_model,
+                        (data,),
+                        f=_out_file,
+                        opset_version=onnx_opset,
+                        verbose=False,
+                        input_names=dynamic_axes.input_names,
+                        output_names=dynamic_axes.output_names,
+                        dynamic_axes=dynamic_axes.dynamic_axes,
+                        do_constant_folding=True,
+                        export_params=True,
+                    )
+                else:
+                    raise ValueError(f"Unsupported Torch version: {TORCH_VERSION}. Install torch 2.x")
                 # if exp_program is not None:
                 #    exp_program.optimize()
                 #    exp_program.save(_out_file)
@@ -232,16 +249,20 @@ class FocoosModel:
         **kwargs,
     ) -> list[FocoosDetections]:
         model = self.model.eval()
+        processor = self.processor.eval()
         try:
             model = model.cuda()
         except Exception:
             logger.warning("Unable to use CUDA")
+        inputs, _ = processor.preprocess(
+            inputs, device=model.device, dtype=model.dtype
+        )  # second output is targets that we're not using
         output = model.forward(inputs)
         class_names = self.model_info.classes
-        output_fdet = self.processor.postprocess(output, inputs, class_names=class_names, **kwargs)
+        output_fdet = processor.postprocess(output, inputs, class_names=class_names, **kwargs)
         return output_fdet
 
-    def load_weights(self, weights: dict):
+    def load_weights(self, weights: dict) -> int:
         # Merge with load weights of checkpointer
         incompatible = self.model.load_state_dict(weights, strict=False)
         return len(incompatible.missing_keys) + len(incompatible.unexpected_keys)

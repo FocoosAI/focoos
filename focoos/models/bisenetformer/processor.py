@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import torch
@@ -39,6 +39,9 @@ class BisenetFormerProcessor(Processor):
         self.num_classes = config.num_classes
         self.top_k = config.top_k
         self.mask_threshold = config.mask_threshold
+        self.use_mask_score = config.use_mask_score
+        self.filter_empty_masks = config.filter_empty_masks
+        self.predict_all_pixels = config.predict_all_pixels
 
     def preprocess(
         self,
@@ -51,23 +54,17 @@ class BisenetFormerProcessor(Processor):
             list[torch.Tensor],
             list[DatasetEntry],
         ],
-        training: bool,
         device: torch.device,
         dtype: torch.dtype = torch.float32,
-        size_divisibility: int = 0,
-        padding_constraints: Optional[Dict[str, int]] = None,
     ) -> tuple[torch.Tensor, list[BisenetFormerTargets]]:
         targets = []
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DatasetEntry):
             images = [x.image.to(device) for x in inputs]
             images = ImageList.from_tensors(
                 tensors=images,
-                # FIXME using size_divisibility in eval make detection break due to padding issue (in scaling bboxes)
-                size_divisibility=size_divisibility if training or size_divisibility else 0,
-                padding_constraints=padding_constraints,
             )
             images_torch = images.tensor
-            if training:
+            if self.training:
                 # mask classification target
                 gt_instances = [x.instances.to(device) for x in inputs]
                 h, w = images.tensor.shape[-2:]
@@ -86,7 +83,7 @@ class BisenetFormerProcessor(Processor):
                     cls_labels = targets_per_image.gt_classes
                     targets.append(BisenetFormerTargets(labels=cls_labels, masks=padded_masks))
         else:
-            if training:
+            if self.training:
                 raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
             images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
 
@@ -174,12 +171,18 @@ class BisenetFormerProcessor(Processor):
             list[torch.Tensor],
         ],
         class_names: list[str] = [],
-        top_k: int = 300,
-        threshold: float = 0.5,
-        use_mask_score: bool = True,
-        filter_empty_masks: bool = True,
-        predict_all_pixels: bool = False,
+        top_k: Optional[int] = None,
+        threshold: Optional[float] = None,
+        use_mask_score: Optional[bool] = None,
+        filter_empty_masks: Optional[bool] = None,
+        predict_all_pixels: Optional[bool] = None,
     ) -> list[FocoosDetections]:
+        top_k = self.top_k if top_k is None else top_k
+        threshold = self.mask_threshold if threshold is None else threshold
+        use_mask_score = self.use_mask_score if use_mask_score is None else use_mask_score
+        filter_empty_masks = self.filter_empty_masks if filter_empty_masks is None else filter_empty_masks
+        predict_all_pixels = self.predict_all_pixels if predict_all_pixels is None else predict_all_pixels
+
         # Extract image sizes from inputs
         image_sizes = self.get_image_sizes(inputs)
         batch_size = output.logits.shape[0]

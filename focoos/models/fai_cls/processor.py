@@ -8,7 +8,7 @@ from PIL import Image
 from focoos.data.mappers.classification_dataset_mapper import ClassificationDatasetDict
 from focoos.models.fai_cls.config import ClassificationConfig
 from focoos.models.fai_cls.ports import ClassificationModelOutput, ClassificationTargets
-from focoos.ports import DatasetEntry, FocoosDet, FocoosDetections
+from focoos.ports import DatasetEntry, DynamicAxes, FocoosDet, FocoosDetections
 from focoos.processor.base_processor import Processor
 from focoos.structures import ImageList
 
@@ -22,6 +22,7 @@ class ClassificationProcessor(Processor):
         Args:
             config: Model configuration
         """
+        super().__init__(config)
         self.config = config
         self.multi_label = config.multi_label
 
@@ -36,12 +37,9 @@ class ClassificationProcessor(Processor):
             List[torch.Tensor],
             List[ClassificationDatasetDict],
         ],
-        training: bool,
         device: torch.device,
         dtype: torch.dtype,
         resolution: Optional[int] = 640,
-        size_divisibility: int = 0,
-        padding_constraints: Optional[Dict[str, int]] = None,
     ) -> Tuple[torch.Tensor, List[ClassificationTargets]]:
         """Process input images for model inference.
 
@@ -61,8 +59,6 @@ class ClassificationProcessor(Processor):
             images = [x.image.to(device) for x in inputs]
             images = ImageList.from_tensors(
                 tensors=images,
-                size_divisibility=size_divisibility if training or size_divisibility else 0,
-                padding_constraints=padding_constraints,
             )
             images_torch = images.tensor
             targets = [
@@ -70,7 +66,7 @@ class ClassificationProcessor(Processor):
             ]
             return images_torch, targets
 
-        if training:
+        if self.training:
             raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
         images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
         if resolution is not None:
@@ -153,5 +149,37 @@ class ClassificationProcessor(Processor):
             raise ValueError(
                 f"Expected a list or tuple of 1 element, got {type(tensors)} with length {len(tensors) if hasattr(tensors, '__len__') else 'N/A'}"
             )
+        if isinstance(tensors[0], np.ndarray):
+            new_tensor = torch.from_numpy(tensors[0])
+        else:
+            new_tensor = tensors[0]
+        return ClassificationModelOutput(logits=new_tensor, loss=None)
 
-        return ClassificationModelOutput(logits=tensors[0], loss=None)
+    def get_dynamic_axes(self) -> DynamicAxes:
+        return DynamicAxes(
+            input_names=["images"],
+            output_names=["logits"],
+            dynamic_axes={
+                "images": {0: "batch", 2: "height", 3: "width"},
+                "logits": {0: "batch"},
+            },
+        )
+
+    def export_postprocess(
+        self,
+        output: Union[list[torch.Tensor], list[np.ndarray]],
+        inputs: Union[
+            torch.Tensor,
+            np.ndarray,
+            Image.Image,
+            list[Image.Image],
+            list[np.ndarray],
+            list[torch.Tensor],
+        ],
+        **kwargs,
+    ) -> list[FocoosDetections]:
+        logits = output[0]
+        if isinstance(logits, np.ndarray):
+            logits = torch.from_numpy(logits)
+        model_output = ClassificationModelOutput(logits=logits, loss=None)
+        return self.postprocess(model_output, inputs, **kwargs)

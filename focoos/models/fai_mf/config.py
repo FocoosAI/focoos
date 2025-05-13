@@ -45,7 +45,7 @@ class MaskFormerConfig(ModelConfig):
     use_mask_score: bool = False
     filter_empty_masks: bool = False
     threshold: float = 0.5
-    top_k: int = 100  # TODO: remove this, is mapped to num_queries
+    top_k: int = 100
 
     # Loss configuration
     criterion_deep_supervision: bool = True

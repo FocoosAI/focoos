@@ -1,15 +1,12 @@
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from PIL import Image
 
 from focoos.models.fai_mf.config import MaskFormerConfig
 from focoos.models.fai_mf.loss import MaskHungarianMatcher, SetCriterion
 from focoos.models.fai_mf.ports import MaskFormerModelOutput, MaskFormerTargets
-from focoos.models.fai_mf.processor import MaskFormerProcessor
 from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.backbone.base import BaseBackbone
 from focoos.nn.backbone.build import load_backbone
@@ -23,8 +20,6 @@ from focoos.nn.layers.transformer import (
     TransformerEncoder,
     TransformerEncoderLayer,
 )
-from focoos.ports import DatasetEntry
-from focoos.structures import Instances
 from focoos.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -701,49 +696,27 @@ class FAIMaskFormer(BaseModelNN):
             ),
             cls_sigmoid=self.config.cls_sigmoid,
         )
-        self.resolution = self.config.resolution
         self.register_buffer("pixel_mean", torch.Tensor(self.config.pixel_mean).view(-1, 1, 1), False)
         self.register_buffer("pixel_std", torch.Tensor(self.config.pixel_std).view(-1, 1, 1), False)
         self.size_divisibility = self.config.size_divisibility
         self.num_classes = self.config.num_classes
-        self.processor = MaskFormerProcessor(self.config)
 
     @property
     def device(self):
         return self.pixel_mean.device
 
+    @property
+    def dtype(self):
+        return self.pixel_mean.dtype
+
     def forward(
         self,
-        inputs: Union[
-            torch.Tensor,
-            np.ndarray,
-            Image.Image,
-            list[Image.Image],
-            list[np.ndarray],
-            list[torch.Tensor],
-            list[DatasetEntry],
-        ],
+        images: torch.Tensor,
+        targets: list[MaskFormerTargets] = [],
     ) -> MaskFormerModelOutput:
-        images, targets = self.processor.preprocess(
-            inputs,
-            training=self.training,
-            device=self.device,  # type: ignore
-            dtype=self.pixel_mean.dtype,  # type: ignore
-            size_divisibility=self.size_divisibility,
-            padding_constraints=self.pixel_decoder.padding_constraints,
-        )
         images = (images - self.pixel_mean) / self.pixel_std  # type: ignore
 
         features = self.pixel_decoder(images)
         (logits, masks), losses = self.head(features, targets)
 
         return MaskFormerModelOutput(masks=masks, logits=logits, loss=losses)
-
-    def eval_post_process(
-        self, outputs: MaskFormerModelOutput, inputs: list[DatasetEntry]
-    ) -> list[dict[str, Instances | torch.Tensor]]:
-        """
-        Post-process the outputs of the model.
-        This function is used in the evaluation phase to convert raw outputs to Instances.
-        """
-        return self.processor.eval_postprocess(outputs, inputs)

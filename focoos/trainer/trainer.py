@@ -21,6 +21,7 @@ from focoos.data.loaders import build_detection_test_loader, build_detection_tra
 from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.layers.norm import FrozenBatchNorm2d
 from focoos.ports import ModelInfo, ModelStatus, Task, TrainerArgs
+from focoos.processor.base_processor import Processor
 from focoos.trainer.checkpointer import Checkpointer
 from focoos.trainer.evaluation.evaluator import inference_on_dataset
 from focoos.trainer.evaluation.get_eval import get_evaluator
@@ -54,6 +55,7 @@ class FocoosTrainer:
         self,
         args: TrainerArgs,
         model: BaseModelNN,
+        processor: Processor,
         model_info: ModelInfo,
         data_val: MapDataset,
         data_train: Optional[MapDataset] = None,
@@ -77,7 +79,7 @@ class FocoosTrainer:
         self._setup_environment()
 
         # Setup model and data
-        self._setup_model_and_data(model, model_info, data_train, data_val, args)
+        self._setup_model_and_data(model, processor, model_info, data_train, data_val, args)
 
         # Setup training components
         self._setup_training_components()
@@ -119,6 +121,7 @@ class FocoosTrainer:
     def _setup_model_and_data(
         self,
         model: BaseModelNN,
+        processor: Processor,
         model_info: ModelInfo,
         data_train: Optional[MapDataset],
         data_val: MapDataset,
@@ -127,6 +130,7 @@ class FocoosTrainer:
         """Setup model and data."""
         # Setup Model
         self.model = model
+        self.processor = processor.train()
         self.model_info = model_info
         self.model_info.focoos_version = get_focoos_version()
         self.model_info.weights_uri = "model_final.pth"
@@ -264,6 +268,7 @@ class FocoosTrainer:
 
         ret = inference_on_dataset(
             model,
+            processor=self.processor,
             data_loader=data_loader,
             evaluator=self.data_evaluator,
         )
@@ -367,6 +372,7 @@ class FocoosTrainer:
                     ),
                     VisualizationHook(
                         model=self.model,  # type: ignore
+                        processor=self.processor,
                         dataset=self.data_val,
                         period=self.args.eval_period,
                         n_sample=self.args.samples,
@@ -420,6 +426,7 @@ class FocoosTrainer:
         # Setup Trainer
         trainer_loop = TrainerLoop(
             model=model,
+            processor=self.processor,
             dataloader=train_loader,
             optimizer=optim,
             amp=args.amp_enabled,
@@ -430,7 +437,7 @@ class FocoosTrainer:
 
         # Setup Checkpointer
         checkpointer = Checkpointer(
-            model,
+            model,  # type: ignore
             save_dir=self.ckpt_dir,
             trainer=trainer_loop,
             **ema.get_ema_checkpointer(model) if args.ema_enabled else {},
@@ -489,7 +496,7 @@ class FocoosTrainer:
         if restore_best:
             # Setup Checkpointer to recover trained model or load from scratch
             checkpointer = Checkpointer(
-                model=model,
+                model=model,  # type: ignore
                 save_dir=self.output_dir,
                 **ema.get_ema_checkpointer(model) if args.ema_enabled else {},
             )
@@ -527,6 +534,7 @@ class TrainerLoop:
     def __init__(
         self,
         model,
+        processor,
         dataloader,
         optimizer,
         amp=False,
@@ -557,6 +565,7 @@ class TrainerLoop:
         model.train()
 
         self.model = model
+        self.processor = processor
         self.data_loader = dataloader
         self._data_loader_iter_obj = None
         self.optimizer = optimizer
@@ -568,7 +577,7 @@ class TrainerLoop:
             if grad_scaler is None:
                 # the init_scale avoids the first step to be too large
                 # and the scheduler.step() warning
-                grad_scaler = GradScaler(init_scale=2**12)
+                grad_scaler = GradScaler(init_scale=2**10)
             self.grad_scaler = grad_scaler
             self.amp = amp
             self.precision = torch.float16
@@ -657,7 +666,9 @@ class TrainerLoop:
         if self.amp:
             assert torch.cuda.is_available(), "[UnifiedTrainerLoop] CUDA is required for AMP training!"
             with autocast(enabled=self.amp, dtype=self.precision, device_type="cuda"):
-                loss_dict = self.model(data).loss
+                # we need to have preprocess data here
+                images, targets = self.processor.preprocess(data, dtype=self.precision, device=self.model.device)
+                loss_dict = self.model(images, targets).loss
                 if isinstance(loss_dict, torch.Tensor):
                     losses = loss_dict
                     loss_dict = {"total_loss": loss_dict}
@@ -845,6 +856,7 @@ def run_train(
     data_train: MapDataset,
     data_val: MapDataset,
     image_model: BaseModelNN,
+    processor: Processor,
     model_info: ModelInfo,  # type: ignore  # noqa: F821
 ):
     """Run model training.
@@ -866,6 +878,7 @@ def run_train(
         trainer = FocoosTrainer(
             args=train_args,
             model=image_model,
+            processor=processor,
             model_info=model_info,
             data_train=data_train,
             data_val=data_val,
@@ -879,6 +892,7 @@ def run_test(
     train_args: TrainerArgs,
     data_val: MapDataset,
     image_model: BaseModelNN,
+    processor: Processor,
     model_info: ModelInfo,
 ):
     rank = comm.get_local_rank()
@@ -888,6 +902,7 @@ def run_test(
         trainer = FocoosTrainer(
             args=train_args,
             model=image_model,
+            processor=processor,
             model_info=model_info,
             data_val=data_val,
         )

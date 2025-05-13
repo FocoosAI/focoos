@@ -9,6 +9,7 @@ from typing import List, Union
 import torch
 from torch import nn
 
+from focoos.processor.base_processor import Processor
 from focoos.utils.distributed.comm import get_world_size, is_main_process
 from focoos.utils.logger import get_logger, log_every_n_seconds
 
@@ -113,6 +114,7 @@ class DatasetEvaluators(DatasetEvaluator):
 
 def inference_on_dataset(
     model: nn.Module,
+    processor: Processor,
     data_loader,
     evaluator: Union[DatasetEvaluator, List[DatasetEvaluator], None],
     callbacks=None,
@@ -158,6 +160,7 @@ def inference_on_dataset(
     with ExitStack() as stack:
         if isinstance(model, nn.Module):
             stack.enter_context(inference_context(model))
+        stack.enter_context(inference_context(processor))
         stack.enter_context(torch.no_grad())
 
         start_data_time = time.perf_counter()
@@ -172,8 +175,9 @@ def inference_on_dataset(
 
             start_compute_time = time.perf_counter()
             dict.get(callbacks or {}, "before_inference", lambda: None)()
-            outputs = model(inputs)
-            outputs = model.eval_post_process(outputs, inputs)
+            images, _ = processor.preprocess(inputs, device=model.device, dtype=model.dtype)
+            outputs = model(images)
+            outputs = processor.eval_postprocess(outputs, inputs)
             dict.get(callbacks or {}, "after_inference", lambda: None)()
             if torch.cuda.is_available():
                 torch.cuda.synchronize()

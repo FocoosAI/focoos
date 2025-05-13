@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 import numpy as np
 import torch
@@ -23,7 +23,10 @@ def interpolate_image(image, size):
 
 
 class MaskFormerProcessor(Processor):
-    def __init__(self, config: MaskFormerConfig):
+    def __init__(
+        self,
+        config: MaskFormerConfig,
+    ):
         super().__init__(config)
         processing_functions = {
             "semantic": self.semantic_inference,
@@ -38,6 +41,11 @@ class MaskFormerProcessor(Processor):
 
         self.num_classes = config.num_classes
         self.mask_threshold = config.mask_threshold
+        self.top_k = config.top_k
+        self.threshold = config.threshold
+        self.use_mask_score = config.use_mask_score
+        self.filter_empty_masks = config.filter_empty_masks
+        self.predict_all_pixels = config.predict_all_pixels
 
     def preprocess(
         self,
@@ -50,23 +58,17 @@ class MaskFormerProcessor(Processor):
             list[torch.Tensor],
             list[DatasetEntry],
         ],
-        training: bool,
         device: torch.device,
         dtype: torch.dtype = torch.float32,
-        size_divisibility: int = 0,
-        padding_constraints: Optional[Dict[str, int]] = None,
     ) -> tuple[torch.Tensor, list[MaskFormerTargets]]:
         targets = []
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DatasetEntry):
             images = [x.image.to(device) for x in inputs]
             images = ImageList.from_tensors(
                 tensors=images,
-                # FIXME using size_divisibility in eval make detection break due to padding issue (in scaling bboxes)
-                size_divisibility=size_divisibility if training or size_divisibility else 0,
-                padding_constraints=padding_constraints,
             )
             images_torch = images.tensor
-            if training:
+            if self.training:
                 # mask classification target
                 gt_instances = [x.instances.to(device) for x in inputs]
                 h, w = images.tensor.shape[-2:]
@@ -85,7 +87,7 @@ class MaskFormerProcessor(Processor):
                     cls_labels = targets_per_image.gt_classes
                     targets.append(MaskFormerTargets(labels=cls_labels, masks=padded_masks))
         else:
-            if training:
+            if self.training:
                 raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
             images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
 
@@ -173,12 +175,18 @@ class MaskFormerProcessor(Processor):
             list[torch.Tensor],
         ],
         class_names: list[str] = [],
-        top_k: int = 300,
-        threshold: float = 0.5,
-        use_mask_score: bool = True,
-        filter_empty_masks: bool = True,
-        predict_all_pixels: bool = False,
+        top_k: Optional[int] = None,
+        threshold: Optional[float] = None,
+        use_mask_score: Optional[bool] = None,
+        filter_empty_masks: Optional[bool] = None,
+        predict_all_pixels: Optional[bool] = None,
     ) -> list[FocoosDetections]:
+        top_k = top_k or self.top_k
+        threshold = threshold or self.threshold
+        use_mask_score = use_mask_score or self.use_mask_score
+        filter_empty_masks = filter_empty_masks or self.filter_empty_masks
+        predict_all_pixels = predict_all_pixels or self.predict_all_pixels
+
         # Extract image sizes from inputs
         image_sizes = self.get_image_sizes(inputs)
         batch_size = output.logits.shape[0]

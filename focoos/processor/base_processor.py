@@ -11,13 +11,21 @@ from focoos.ports import DatasetEntry, DynamicAxes, FocoosDetections, ModelConfi
 class Processor(ABC):
     def __init__(self, config: ModelConfig):
         self.config = config
+        self.training = False
+
+    def eval(self):
+        self.training = False
+        return self
+
+    def train(self, training: bool = True):
+        self.training = training
+        return self
 
     @abstractmethod
     def preprocess(
         self,
         inputs: Union[torch.Tensor, np.ndarray, Image.Image, list[Image.Image], list[np.ndarray], list[torch.Tensor]],
-        training: bool = False,
-        device: Literal["cuda", "cpu"] = "cuda",
+        device: Union[Literal["cuda", "cpu"], torch.device] = "cuda",
         dtype: torch.dtype = torch.float32,
     ) -> tuple[torch.Tensor, Any]:
         raise NotImplementedError("Pre-processing is not implemented for this model.")

@@ -3,17 +3,14 @@ import math
 from collections import OrderedDict
 from typing import Dict, Optional, Tuple, Union
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.init as init
-from PIL import Image
 from scipy.optimize import linear_sum_assignment
 
 from focoos.models.fai_detr.config import DETRConfig
 from focoos.models.fai_detr.ports import DETRModelOutput, DETRTargets
-from focoos.models.fai_detr.processor import DETRProcessor
 from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.backbone.base import BaseBackbone
 from focoos.nn.backbone.build import load_backbone
@@ -22,8 +19,6 @@ from focoos.nn.layers.conv import Conv2d, ConvNormLayer
 from focoos.nn.layers.deformable import ms_deform_attn_core_pytorch
 from focoos.nn.layers.functional import inverse_sigmoid
 from focoos.nn.layers.transformer import TransformerEncoder, TransformerEncoderLayer
-from focoos.ports import DatasetEntry
-from focoos.structures import Instances
 from focoos.utils.box import box_cxcywh_to_xyxy, box_iou, generalized_box_iou
 from focoos.utils.distributed.comm import get_world_size
 from focoos.utils.distributed.dist import is_dist_available_and_initialized
@@ -1303,38 +1298,24 @@ class FAIDetr(BaseModelNN):
             cls_sigmoid=True,
         )
         self.resolution = self.config.resolution
-        self.top_k = self.config.num_queries
         self.register_buffer("pixel_mean", torch.Tensor(self.config.pixel_mean).view(-1, 1, 1), False)
         self.register_buffer("pixel_std", torch.Tensor(self.config.pixel_std).view(-1, 1, 1), False)
         self.size_divisibility = self.config.size_divisibility
         self.num_classes = self.config.num_classes
-        self.processor = DETRProcessor(self.config)
 
     @property
     def device(self):
         return self.pixel_mean.device
 
+    @property
+    def dtype(self):
+        return self.pixel_mean.dtype
+
     def forward(
         self,
-        inputs: Union[
-            torch.Tensor,
-            np.ndarray,
-            Image.Image,
-            list[Image.Image],
-            list[np.ndarray],
-            list[torch.Tensor],
-            list[DatasetEntry],
-        ],
+        images: torch.Tensor,
+        targets: list[DETRTargets] = [],
     ) -> DETRModelOutput:
-        images, targets = self.processor.preprocess(
-            inputs,
-            training=self.training,
-            device=self.device,  # type: ignore
-            dtype=self.pixel_mean.dtype,  # type: ignore
-            size_divisibility=self.size_divisibility,
-            padding_constraints=self.pixel_decoder.padding_constraints,
-            resolution=self.resolution,
-        )
         images = (images - self.pixel_mean) / self.pixel_std  # type: ignore
 
         features = self.pixel_decoder(images)
@@ -1345,10 +1326,3 @@ class FAIDetr(BaseModelNN):
             return DETRModelOutput(logits=torch.zeros(0, 0, 0), boxes=torch.zeros(0, 0, 4), loss=losses)
 
         return DETRModelOutput(logits=outputs[0], boxes=outputs[1], loss=None)
-
-    def eval_post_process(self, outputs: DETRModelOutput, inputs: list[DatasetEntry]) -> list[dict[str, Instances]]:
-        """
-        Post-process the outputs of the model.
-        This function is used in the evaluation phase to convert raw outputs to Instances.
-        """
-        return self.processor.eval_postprocess(outputs, inputs, top_k=self.top_k)

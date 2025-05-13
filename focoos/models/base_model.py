@@ -6,13 +6,23 @@ import torch
 from PIL import Image
 from torch import nn
 
-from focoos.ports import DatasetEntry, Instances, ModelConfig, ModelOutput
+from focoos.ports import DatasetEntry, ModelConfig, ModelOutput
 from focoos.utils.checkpoint import IncompatibleKeys, strip_prefix_if_present
 
 
 class BaseModelNN(ABC, nn.Module):
     def __init__(self, config: ModelConfig):
         super().__init__()
+
+    @property
+    @abstractmethod
+    def device(self) -> torch.device:
+        raise NotImplementedError("Device is not implemented for this model.")
+
+    @property
+    @abstractmethod
+    def dtype(self) -> torch.dtype:
+        raise NotImplementedError("Dtype is not implemented for this model.")
 
     @abstractmethod
     def forward(
@@ -28,10 +38,6 @@ class BaseModelNN(ABC, nn.Module):
         ],
     ) -> ModelOutput:
         raise NotImplementedError("Forward is not implemented for this model.")
-
-    @abstractmethod
-    def eval_post_process(self, outputs: ModelOutput, inputs: list[DatasetEntry]) -> list[dict[str, Instances]]:
-        raise NotImplementedError("Post-processing is not implemented for this model.")
 
     def load_state_dict(self, checkpoint_state_dict: dict, strict: bool = True) -> IncompatibleKeys:
         # if the state_dict comes from a model that was wrapped in a
@@ -57,6 +63,7 @@ class BaseModelNN(ABC, nn.Module):
             unexpected_keys=incompatible.unexpected_keys,
             incorrect_shapes=incorrect_shapes,
         )
+
         incompatible.log_incompatible_keys()
 
         return incompatible
