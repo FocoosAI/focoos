@@ -38,7 +38,7 @@ from focoos.utils.metrics import parse_metrics
 from focoos.utils.system import get_focoos_version, get_system_info
 
 # Mapping of task types to their primary evaluation metrics
-task_metrics = {
+TASK_METRICS = {
     Task.DETECTION.value: "bbox/AP",
     Task.SEMSEG.value: "sem_seg/mIoU",
     Task.INSTANCE_SEGMENTATION.value: "segm/AP",
@@ -89,7 +89,7 @@ class FocoosTrainer:
         if comm.is_main_process():
             os.makedirs(self.output_dir, exist_ok=True)
 
-        _to_delete = ["metrics.json", "preview", "log.txt", "model_info.json"]
+        _to_delete = ["metrics.json", "preview", "model_info.json"]
 
         if comm.is_main_process():
             for file in _to_delete:
@@ -133,12 +133,9 @@ class FocoosTrainer:
         self.model_info.name = args.run_name.strip() if args.run_name else "unknown"
         self.model_info.status = ModelStatus.TRAINING_STARTING
         self.model_info.updated_at = datetime.now().isoformat()
+        self.model_info.latency = []
         self.model_info.metrics = None
         self.checkpoint = self.args.init_checkpoint
-
-        self.metric = None
-        self.best_metric = None
-
         # Setup data
         self.data_train = data_train
         self.data_val = data_val
@@ -282,23 +279,27 @@ class FocoosTrainer:
         if self.args.ema_enabled:
             logger.info("🔍 Run evaluation with EMA.")
             with ema.apply_model_ema_and_restore(self.model):
-                res = self._do_eval(self.model)
+                eval_res = self._do_eval(self.model)
         else:
             logger.info("🔍 Run evaluation without EMA.")
-            res = self._do_eval(self.model)
+            eval_res = self._do_eval(self.model)
 
         if comm.get_rank() == 0:
-            key, value = task_metrics[self.task.value].split("/")
-            self.metric = _add_prefix(res[key], key)
+            key, value = TASK_METRICS[self.task.value].split("/")
+            storage = get_event_storage()
+            iteration = storage.iteration
+            raw_metrics = _add_prefix(eval_res[key], key)
+            raw_metrics["iteration"] = iteration
 
             if (
                 self.model_info.val_metrics is None
-                or self.metric[task_metrics[self.task.value]]
-                > self.model_info.val_metrics[task_metrics[self.task.value]]
+                or raw_metrics[TASK_METRICS[self.task.value]]
+                > self.model_info.val_metrics[TASK_METRICS[self.task.value]]
             ):
-                self.model_info.val_metrics = self.metric
+                self.model_info.val_metrics = raw_metrics
+                self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
 
-        return res
+        return eval_res
 
     def _register_hooks(self, trainer, model, checkpointer, optim, scheduler, args):
         """Register hooks for the trainer.
@@ -344,7 +345,7 @@ class FocoosTrainer:
                     enabled=args.early_stop,
                     eval_period=args.eval_period,
                     patience=args.patience,
-                    val_metric=task_metrics[self.task.value],
+                    val_metric=TASK_METRICS[self.task.value],
                     mode="max",
                 ),
             ]
@@ -356,7 +357,7 @@ class FocoosTrainer:
                     hook.BestCheckpointer(
                         checkpointer=checkpointer,
                         eval_period=args.eval_period,
-                        val_metric=task_metrics[self.task.value],
+                        val_metric=TASK_METRICS[self.task.value],
                         mode="max",
                     ),
                     hook.PeriodicCheckpointer(
@@ -496,20 +497,24 @@ class FocoosTrainer:
             if args.ema_enabled:
                 ema.apply_model_ema(model)
 
-        res = self._do_eval(model)
+        eval_result = self._do_eval(model)
+
         if comm.get_rank() == 0:
-            key, value = task_metrics[self.task.value].split("/")
-            self.metric = _add_prefix(res[key], key)
+            key, value = TASK_METRICS[self.task.value].split("/")
+            raw_metrics = _add_prefix(eval_result[key], key)
+            storage = get_event_storage()
+            iteration = storage.get("iteration")
+            logger.info(f"STORAGE ITERATION: {iteration}")
             if (
                 self.model_info.val_metrics is None
-                or self.metric[task_metrics[self.task.value]]
-                > self.model_info.val_metrics[task_metrics[self.task.value]]
+                or raw_metrics[TASK_METRICS[self.task.value]]
+                > self.model_info.val_metrics[TASK_METRICS[self.task.value]]
             ):
-                self.model_info.val_metrics = self.metric
+                self.model_info.val_metrics = raw_metrics
 
         self.finished = True
         self.finish()
-        return res
+        return eval_result
 
 
 class TrainerLoop:

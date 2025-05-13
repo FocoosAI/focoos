@@ -67,12 +67,12 @@ class ONNXRuntime(BaseRuntime):
         if self.opts.warmup_iter > 0:
             self._warmup()
 
-        inputs = self.ort_sess.get_inputs()
-        outputs = self.ort_sess.get_outputs()
-        for input in inputs:
-            logger.debug(f"🔧 Input: {input.name} {input.type} {input.shape}")
-        for output in outputs:
-            logger.debug(f"🔧 Output: {output.name} {output.type} {output.shape}")
+        # inputs = self.ort_sess.get_inputs()
+        # outputs = self.ort_sess.get_outputs()
+        # for input in inputs:
+        #     logger.debug(f"🔧 Input: {input.name} {input.type} {input.shape}")
+        # for output in outputs:
+        #     logger.debug(f"🔧 Output: {output.name} {output.type} {output.shape}")
 
     def _setup_providers(self, model_dir: Path):
         providers = []
