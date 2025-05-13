@@ -149,12 +149,7 @@
     "train_args": null,
     "weights_uri": "https://public.focoos.ai/pretrained_models/fai-mf-s-coco-ins/model_final.pth",
     "val_dataset": "coco_2017_instance",
-    "metrics": {
-        "infer_metrics": [],
-        "valid_metrics": [],
-        "train_metrics": [],
-        "iterations": null,
-        "best_valid_metric": {
+    "val_metrics": {
             "segm/AP": 41.41236322095247,
             "segm/AP50": 64.6340658933245,
             "segm/AP75": 43.74818301101372,
@@ -240,8 +235,7 @@
             "segm/AP-scissors": 27.02997439745508,
             "segm/AP-teddy bear": 47.766570679474384,
             "segm/AP-hair drier": 11.849539891482861,
-            "segm/AP-toothbrush": 15.42745236506969
-        }
+        "segm/AP-toothbrush": 15.42745236506969
     },
     "focoos_version": "0.15.0",
     "latency": [

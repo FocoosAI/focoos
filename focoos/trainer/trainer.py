@@ -34,6 +34,7 @@ from focoos.trainer.solver.build import build_lr_scheduler, build_optimizer
 from focoos.utils.distributed.dist import comm, create_ddp_model
 from focoos.utils.env import seed_all_rng
 from focoos.utils.logger import capture_all_output, get_logger
+from focoos.utils.metrics import parse_metrics
 from focoos.utils.system import get_focoos_version, get_system_info
 
 # Mapping of task types to their primary evaluation metrics
@@ -70,6 +71,8 @@ class FocoosTrainer:
         self.resume = args.resume
         self.finished = False
 
+        self.args.run_name = self.args.run_name.strip()
+        self.output_dir = os.path.join(self.args.output_dir, self.args.run_name)
         # Setup logging and environment
         self._setup_environment()
 
@@ -127,7 +130,7 @@ class FocoosTrainer:
         self.model_info = model_info
         self.model_info.focoos_version = get_focoos_version()
         self.model_info.weights_uri = "model_final.pth"
-        self.model_info.name = args.run_name if args.run_name else "unknown"
+        self.model_info.name = args.run_name.strip() if args.run_name else "unknown"
         self.model_info.status = ModelStatus.TRAINING_STARTING
         self.model_info.updated_at = datetime.now().isoformat()
         self.model_info.metrics = None
@@ -201,7 +204,7 @@ class FocoosTrainer:
         save_file = os.path.join(self.output_dir, save_file)
         logger.info("Saving final model to {}".format(save_file))
         torch.save(data, save_file)
-        self.model_info.weights_uri = os.path.abspath(save_file)
+        self.model_info.weights_uri = "model_final.pth"
 
     def _restore_best_model(self, name: str = "model_best.pth"):
         """Restore best model from checkpoint.
@@ -235,7 +238,17 @@ class FocoosTrainer:
                         ema.apply_model_ema(self.model, save_current=True)
                     os.remove(os.path.join(self.ckpt_dir, "model_best.pth"))
                 self._store_model("model_final.pth")
+            try:
+                parsed_metrics = parse_metrics(os.path.join(self.output_dir, "metrics.json"))
+                parsed_metrics.valid_metrics = []
+                parsed_metrics.train_metrics = []
+                self.model_info.val_metrics = parsed_metrics.best_valid_metric
+            except Exception as e:
+                logger.warning(f"Error parsing metrics.json: {e}")
+                pass
 
+            self.model_info.status = ModelStatus.TRAINING_COMPLETED
+            self.model_info.updated_at = datetime.now().isoformat()
             self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
 
     def _do_eval(self, model):
@@ -277,12 +290,14 @@ class FocoosTrainer:
         if comm.get_rank() == 0:
             key, value = task_metrics[self.task.value].split("/")
             self.metric = _add_prefix(res[key], key)
+
             if (
                 self.model_info.val_metrics is None
                 or self.metric[task_metrics[self.task.value]]
                 > self.model_info.val_metrics[task_metrics[self.task.value]]
             ):
                 self.model_info.val_metrics = self.metric
+
         return res
 
     def _register_hooks(self, trainer, model, checkpointer, optim, scheduler, args):
@@ -402,7 +417,7 @@ class FocoosTrainer:
         )
 
         # Setup Trainer
-        trainer = TrainerLoop(
+        trainer_loop = TrainerLoop(
             model=model,
             dataloader=train_loader,
             optimizer=optim,
@@ -416,11 +431,11 @@ class FocoosTrainer:
         checkpointer = Checkpointer(
             model,
             save_dir=self.ckpt_dir,
-            trainer=trainer,
+            trainer=trainer_loop,
             **ema.get_ema_checkpointer(model) if args.ema_enabled else {},
         )
 
-        self._register_hooks(trainer, model, checkpointer, optim, scheduler, args)
+        self._register_hooks(trainer_loop, model, checkpointer, optim, scheduler, args)
 
         # Load checkpoint if needed
         if self.checkpoint:
@@ -431,7 +446,7 @@ class FocoosTrainer:
         if self.args.resume and checkpointer.has_checkpoint():
             # The checkpoint stores the training iteration that just finished, thus we start
             # at the next iteration
-            start_iter = trainer.iter + 1
+            start_iter = trainer_loop.iter + 1
         else:
             start_iter = 0
 
@@ -449,8 +464,10 @@ class FocoosTrainer:
             "================================================",
         ]
         logger.info("\n".join(output_lines))
-
-        trainer.train(start_iter=start_iter, max_iter=args.max_iters)
+        self.model_info.status = ModelStatus.TRAINING_RUNNING
+        self.model_info.updated_at = datetime.now().isoformat()
+        self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
+        trainer_loop.train(start_iter=start_iter, max_iter=args.max_iters)
         self.finished = True
         self.finish()
 
@@ -839,7 +856,7 @@ def run_train(
     """
 
     rank = comm.get_local_rank()
-    log_path = os.path.join(train_args.output_dir, train_args.run_name, "log.txt")
+    log_path = os.path.join(train_args.output_dir, train_args.run_name.strip(), "log.txt")
     with capture_all_output(log_path=log_path, rank=rank):
         trainer = FocoosTrainer(
             args=train_args,
@@ -861,7 +878,7 @@ def run_test(
 ):
     rank = comm.get_local_rank()
 
-    log_path = os.path.join(train_args.output_dir, train_args.run_name, "test_log.txt")
+    log_path = os.path.join(train_args.output_dir, train_args.run_name.strip(), "test_log.txt")
     with capture_all_output(log_path=log_path, rank=rank):
         trainer = FocoosTrainer(
             args=train_args,

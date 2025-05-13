@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import orjson
 from colorama import Fore, Style
 
@@ -165,19 +163,19 @@ class MetricsVisualizer:
         plt.show()
 
 
-def parse_metrics(metrics_text: str) -> Metrics:
+def parse_metrics(metrics_path: str) -> Metrics:
     """
-    Parse the given metrics text and extract validation, training, and inference metrics.
+    Parse metrics from a file path and extract validation, training, and inference metrics.
 
     Args:
-        metrics_text (str): A string containing JSON lines of metrics data.
+        metrics_path (str): Path to a file containing JSON lines of metrics data.
 
     Returns:
-        FocoosMetrics: An instance of FocoosMetrics containing parsed metrics categorized into
-                       'valid_metrics', 'train_metrics', 'infer_metrics', along with 'iterations'
-                       and 'best_valid_metric'.
+        Metrics: An instance of Metrics containing parsed metrics categorized into
+                'valid_metrics', 'train_metrics', 'infer_metrics', along with 'iterations'
+                and 'best_valid_metric'.
     """
-    # Initialize the FocoosMetrics object with empty lists for metrics and None for iterations
+    # Initialize the Metrics object with empty lists for metrics and None for iterations
     res = Metrics(
         valid_metrics=[],
         train_metrics=[],
@@ -186,8 +184,12 @@ def parse_metrics(metrics_text: str) -> Metrics:
         best_valid_metric=None,
     )
 
+    # Read the metrics file
+    with open(metrics_path, "r") as f:
+        metrics_text = f.read()
+
     # Parse the input metrics text into a list of dictionaries, ignoring empty lines
-    content = [orjson.loads(line.replace("NaN", "null")) for line in metrics_text.split("\n") if line.strip()]
+    content = orjson.loads(metrics_text)
 
     # Create a set of all possible validation metrics for easy lookup
     #! TODO: this is a hack to get the best metric to use delta, not stable for overlapping metrics
@@ -235,9 +237,8 @@ def parse_metrics(metrics_text: str) -> Metrics:
             if k in res.valid_metrics[0]:
                 best_metric = k
                 break
-        print(f"best metric to use delta: {best_metric}")
         # If a best metric is found, determine the best iteration based on it
         if best_metric:
             res.best_valid_metric = max(res.valid_metrics, key=lambda x: x.get(best_metric, 0))
-    res.updated_at = datetime.now()
+
     return res

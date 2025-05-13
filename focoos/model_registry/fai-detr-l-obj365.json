@@ -438,13 +438,7 @@
     "train_args": null,
     "weights_uri": "https://public.focoos.ai/pretrained_models/fai-detr-l-obj365/model_final.pth",
     "val_dataset": "object365",
-    "metrics": {
-        "infer_metrics": [],
-        "valid_metrics": [],
-        "train_metrics": [],
-        "iterations": null,
-        "best_valid_metric": null
-    },
+    "val_metrics": null,
     "focoos_version": "0.15.0",
     "latency": [
         {
