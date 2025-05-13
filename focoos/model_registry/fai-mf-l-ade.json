@@ -213,7 +213,7 @@
         "matcher_cost_dice": 5
     },
     "focoos_model": "fai-mf-l-ade",
-    "ref": null,
+    "ref": "fai-mf-l-ade",
     "status": "TRAINING_COMPLETED",
     "description": "MaskFormer Large model (ADE20K)",
     "train_args": null,
@@ -531,17 +531,38 @@
             "sem_seg/ACC-flag": 65.05363798993652
         }
     },
-    "focoos_version": null,
+    "focoos_version": "0.15.0",
     "latency": [
         {
-            "fps": 21,
+            "fps": 73,
+            "engine": "onnx.TensorrtExecutionProvider",
+            "min": 13.355,
+            "max": 13.964,
+            "mean": 13.631,
+            "std": 0.12,
+            "im_size": 640,
+            "device": "Tesla T4"
+        },
+        {
+            "fps": 22,
             "engine": "torchscript",
-            "min": 44.589,
-            "max": 47.282,
-            "mean": 45.566,
-            "std": 0.636,
+            "min": 44.216,
+            "max": 46.778,
+            "mean": 45.407,
+            "std": 0.641,
+            "im_size": 640,
+            "device": "Tesla T4"
+        },
+        {
+            "fps": 16,
+            "engine": "onnx.CUDAExecutionProvider",
+            "min": 59.966,
+            "max": 61.467,
+            "mean": 60.646,
+            "std": 0.397,
             "im_size": 640,
             "device": "Tesla T4"
         }
-    ]
+    ],
+    "updated_at": null
 }

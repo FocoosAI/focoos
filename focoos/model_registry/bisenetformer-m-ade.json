@@ -217,7 +217,7 @@
         "matcher_cost_dice": 5
     },
     "focoos_model": "bisenetformer-m-ade",
-    "ref": null,
+    "ref": "bisenetformer-m-ade",
     "status": "TRAINING_COMPLETED",
     "description": "BisenetFormer Medium model (ADE20K)",
     "train_args": null,
@@ -535,17 +535,38 @@
             "sem_seg/ACC-flag": 30.5972872878263
         }
     },
-    "focoos_version": null,
+    "focoos_version": "0.15.0",
     "latency": [
         {
-            "fps": 125,
+            "fps": 185,
+            "engine": "onnx.TensorrtExecutionProvider",
+            "min": 5.095,
+            "max": 8.2,
+            "mean": 5.388,
+            "std": 0.492,
+            "im_size": 640,
+            "device": "Tesla T4"
+        },
+        {
+            "fps": 95,
             "engine": "torchscript",
-            "min": 7.789,
-            "max": 8.496,
-            "mean": 7.944,
-            "std": 0.161,
-            "im_size": 512,
+            "min": 8.233,
+            "max": 11.674,
+            "mean": 10.456,
+            "std": 0.813,
+            "im_size": 640,
+            "device": "Tesla T4"
+        },
+        {
+            "fps": 69,
+            "engine": "onnx.CUDAExecutionProvider",
+            "min": 14.125,
+            "max": 14.535,
+            "mean": 14.319,
+            "std": 0.093,
+            "im_size": 640,
             "device": "Tesla T4"
         }
-    ]
+    ],
+    "updated_at": null
 }

@@ -143,7 +143,7 @@
         "matcher_cost_dice": 5
     },
     "focoos_model": "fai-mf-m-coco-ins",
-    "ref": null,
+    "ref": "fai-mf-m-coco-ins",
     "status": "TRAINING_COMPLETED",
     "description": "MaskFormer medium model (COCO Instance Segmentation)",
     "train_args": null,
@@ -243,17 +243,38 @@
             "segm/AP-toothbrush": 23.31393955943152
         }
     },
-    "focoos_version": null,
+    "focoos_version": "0.15.0",
     "latency": [
         {
-            "fps": 9,
+            "fps": 61,
+            "engine": "onnx.TensorrtExecutionProvider",
+            "min": 16.139,
+            "max": 17.282,
+            "mean": 16.354,
+            "std": 0.242,
+            "im_size": 640,
+            "device": "Tesla T4"
+        },
+        {
+            "fps": 21,
             "engine": "torchscript",
-            "min": 106.259,
-            "max": 111.412,
-            "mean": 108.629,
-            "std": 0.947,
-            "im_size": 1024,
+            "min": 44.949,
+            "max": 48.315,
+            "mean": 45.897,
+            "std": 0.617,
+            "im_size": 640,
+            "device": "Tesla T4"
+        },
+        {
+            "fps": 16,
+            "engine": "onnx.CUDAExecutionProvider",
+            "min": 60.032,
+            "max": 63.466,
+            "mean": 61.229,
+            "std": 0.559,
+            "im_size": 640,
             "device": "Tesla T4"
         }
-    ]
+    ],
+    "updated_at": null
 }

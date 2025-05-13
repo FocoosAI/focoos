@@ -155,7 +155,7 @@
         "matcher_gamma": 2.0
     },
     "focoos_model": "fai-detr-m-coco",
-    "ref": null,
+    "ref": "fai-detr-m-coco",
     "status": "TRAINING_COMPLETED",
     "description": "RTDETR Medium model (COCO)",
     "train_args": null,
@@ -255,17 +255,38 @@
             "bbox/AP-toothbrush": 30.220492542838574
         }
     },
-    "focoos_version": null,
+    "focoos_version": "0.15.0",
     "latency": [
+        {
+            "fps": 180,
+            "engine": "onnx.TensorrtExecutionProvider",
+            "min": 5.395,
+            "max": 5.614,
+            "mean": 5.541,
+            "std": 0.044,
+            "im_size": 640,
+            "device": "Tesla T4"
+        },
         {
             "fps": 66,
             "engine": "torchscript",
-            "min": 9.196,
-            "max": 15.375,
-            "mean": 14.986,
-            "std": 0.836,
+            "min": 12.091,
+            "max": 17.234,
+            "mean": 14.978,
+            "std": 0.694,
+            "im_size": 640,
+            "device": "Tesla T4"
+        },
+        {
+            "fps": 57,
+            "engine": "onnx.CUDAExecutionProvider",
+            "min": 17.04,
+            "max": 18.226,
+            "mean": 17.409,
+            "std": 0.254,
             "im_size": 640,
             "device": "Tesla T4"
         }
-    ]
+    ],
+    "updated_at": null
 }

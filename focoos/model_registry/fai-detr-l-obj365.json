@@ -432,7 +432,7 @@
         "matcher_gamma": 2.0
     },
     "focoos_model": "fai-detr-l-obj365",
-    "ref": null,
+    "ref": "fai-detr-l-obj365",
     "status": "TRAINING_COMPLETED",
     "description": "RTDETR Large model (Object365)",
     "train_args": null,
@@ -445,17 +445,38 @@
         "iterations": null,
         "best_valid_metric": null
     },
-    "focoos_version": null,
+    "focoos_version": "0.15.0",
     "latency": [
+        {
+            "fps": 91,
+            "engine": "onnx.TensorrtExecutionProvider",
+            "min": 10.623,
+            "max": 11.182,
+            "mean": 10.965,
+            "std": 0.099,
+            "im_size": 640,
+            "device": "Tesla T4"
+        },
         {
             "fps": 26,
             "engine": "torchscript",
-            "min": 37.28,
-            "max": 41.78,
-            "mean": 38.4,
-            "std": 0.814,
+            "min": 37.296,
+            "max": 41.131,
+            "mean": 38.235,
+            "std": 0.699,
+            "im_size": 640,
+            "device": "Tesla T4"
+        },
+        {
+            "fps": 21,
+            "engine": "onnx.CUDAExecutionProvider",
+            "min": 44.645,
+            "max": 47.315,
+            "mean": 45.669,
+            "std": 0.502,
             "im_size": 640,
             "device": "Tesla T4"
         }
-    ]
+    ],
+    "updated_at": null
 }
