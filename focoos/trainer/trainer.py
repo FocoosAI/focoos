@@ -5,9 +5,11 @@ the functionality of the original FocoosTrainer and the engine Trainer classes.
 """
 
 import os
+import shutil
 import time
 import weakref
 from collections.abc import Mapping
+from datetime import datetime
 from typing import Optional
 
 import numpy as np
@@ -18,7 +20,7 @@ from focoos.data.datasets.map_dataset import MapDataset
 from focoos.data.loaders import build_detection_test_loader, build_detection_train_loader
 from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.layers.norm import FrozenBatchNorm2d
-from focoos.ports import ModelInfo, Task, TrainerArgs
+from focoos.ports import ModelInfo, ModelStatus, Task, TrainerArgs
 from focoos.trainer.checkpointer import Checkpointer
 from focoos.trainer.evaluation.evaluator import inference_on_dataset
 from focoos.trainer.evaluation.get_eval import get_evaluator
@@ -84,6 +86,17 @@ class FocoosTrainer:
         if comm.is_main_process():
             os.makedirs(self.output_dir, exist_ok=True)
 
+        _to_delete = ["metrics.json", "preview", "log.txt", "model_info.json"]
+
+        if comm.is_main_process():
+            for file in _to_delete:
+                if os.path.exists(os.path.join(self.output_dir, file)):
+                    logger.warning(f"File {file} already exists in {self.output_dir}. Overwriting...")
+                    if os.path.isdir(os.path.join(self.output_dir, file)):
+                        shutil.rmtree(os.path.join(self.output_dir, file))
+                    else:
+                        os.remove(os.path.join(self.output_dir, file))
+
         logger.info(f"📁 Run name: {self.args.run_name} | Output dir: {self.output_dir}")
 
         logger.debug("Rank of current process: {}. World size: {}".format(comm.get_rank(), comm.get_world_size()))
@@ -115,6 +128,9 @@ class FocoosTrainer:
         self.model_info.focoos_version = get_focoos_version()
         self.model_info.weights_uri = "model_final.pth"
         self.model_info.name = args.run_name if args.run_name else "unknown"
+        self.model_info.status = ModelStatus.TRAINING_STARTING
+        self.model_info.updated_at = datetime.now().isoformat()
+        self.model_info.metrics = None
         self.checkpoint = self.args.init_checkpoint
 
         self.metric = None

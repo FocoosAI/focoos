@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Any, Literal, Union
 
 import numpy as np
@@ -8,7 +8,7 @@ from PIL import Image
 from focoos.ports import DatasetEntry, DynamicAxes, FocoosDetections, ModelConfig, ModelOutput
 
 
-class Processor:
+class Processor(ABC):
     def __init__(self, config: ModelConfig):
         self.config = config
 
@@ -53,7 +53,7 @@ class Processor:
         raise NotImplementedError("Export axes are not implemented for this model.")
 
     @abstractmethod
-    def eval_post_process(self, outputs: ModelOutput, inputs: list[DatasetEntry]):
+    def eval_postprocess(self, outputs: ModelOutput, inputs: list[DatasetEntry]):
         raise NotImplementedError("Post-processing is not implemented for this model.")
 
     def get_image_sizes(

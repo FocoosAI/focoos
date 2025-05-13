@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Union
 
 import numpy as np
@@ -10,7 +10,7 @@ from focoos.ports import DatasetEntry, Instances, ModelConfig, ModelOutput
 from focoos.utils.checkpoint import IncompatibleKeys, strip_prefix_if_present
 
 
-class BaseModelNN(nn.Module):
+class BaseModelNN(ABC, nn.Module):
     def __init__(self, config: ModelConfig):
         super().__init__()
 

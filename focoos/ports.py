@@ -1,8 +1,9 @@
 import inspect
 import json
 import os
+from abc import ABC
 from collections import OrderedDict
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -24,7 +25,7 @@ MODELS_DIR = os.path.join(ROOT_DIR, "models")
 DATASETS_DIR = os.path.join(ROOT_DIR, "datasets")
 
 
-class FocoosBaseModel(BaseModel):
+class PydanticBase(BaseModel, ABC):
     @classmethod
     def from_json(cls, data: Union[str, dict]):
         if isinstance(data, str):
@@ -142,7 +143,7 @@ class Task(str, Enum):
     CLASSIFICATION = "classification"
 
 
-class TrainingInfo(FocoosBaseModel):
+class TrainingInfo(PydanticBase):
     """Information about a model's training process.
 
     This class contains details about the training job configuration, status, and timing.
@@ -176,7 +177,7 @@ class TrainingInfo(FocoosBaseModel):
     artifact_location: Optional[str] = None
 
 
-class ModelPreview(FocoosBaseModel):
+class ModelPreview(PydanticBase):
     """Preview information for a Focoos model.
 
     This class provides a lightweight preview of model information in the Focoos platform,
@@ -199,7 +200,7 @@ class ModelPreview(FocoosBaseModel):
     focoos_model: str
 
 
-class DatasetSpec(FocoosBaseModel):
+class DatasetSpec(PydanticBase):
     """Specification details for a dataset in the Focoos platform.
 
     This class provides information about the dataset's size and composition,
@@ -216,7 +217,7 @@ class DatasetSpec(FocoosBaseModel):
     size_mb: float
 
 
-class DatasetPreview(FocoosBaseModel):
+class DatasetPreview(PydanticBase):
     """Preview information for a Focoos dataset.
 
     This class provides metadata about a dataset in the Focoos platform,
@@ -239,7 +240,7 @@ class DatasetPreview(FocoosBaseModel):
     spec: Optional[DatasetSpec] = None
 
 
-class RemoteModelInfo(FocoosBaseModel):
+class RemoteModelInfo(PydanticBase):
     """Complete metadata for a Focoos model.
 
     This class contains comprehensive information about a model in the Focoos platform,
@@ -282,7 +283,7 @@ class RemoteModelInfo(FocoosBaseModel):
     dataset: Optional[DatasetPreview] = None
 
 
-class FocoosDet(FocoosBaseModel):
+class FocoosDet(PydanticBase):
     """Single detection result from a model.
 
     This class represents a single detection or segmentation result from a Focoos model.
@@ -327,7 +328,7 @@ class FocoosDet(FocoosBaseModel):
         return cls.model_validate(data_dict)
 
 
-class FocoosDetections(FocoosBaseModel):
+class FocoosDetections(PydanticBase):
     """Collection of detection results from a model.
 
     This class represents a collection of detection or segmentation results from a Focoos model.
@@ -490,7 +491,7 @@ class ModelExtension(str, Enum):
             raise ValueError(f"Invalid runtime type: {runtime_type}")
 
 
-class GPUDevice(FocoosBaseModel):
+class GPUDevice(PydanticBase):
     """Information about a GPU device."""
 
     gpu_id: Optional[int] = None
@@ -501,7 +502,7 @@ class GPUDevice(FocoosBaseModel):
     gpu_load_percentage: Optional[float] = None
 
 
-class GPUInfo(FocoosBaseModel):
+class GPUInfo(PydanticBase):
     """Information about a GPU driver."""
 
     gpu_count: Optional[int] = None
@@ -511,7 +512,7 @@ class GPUInfo(FocoosBaseModel):
     devices: Optional[list[GPUDevice]] = None
 
 
-class SystemInfo(FocoosBaseModel):
+class SystemInfo(PydanticBase):
     """System information including hardware and software details."""
 
     focoos_host: Optional[str] = None
@@ -615,13 +616,13 @@ class SystemInfo(FocoosBaseModel):
         logger.info("\n".join(output_lines))
 
 
-class ApiKey(FocoosBaseModel):
+class ApiKey(PydanticBase):
     """API key for authentication."""
 
     key: str  # type: ignore
 
 
-class Quotas(FocoosBaseModel):
+class Quotas(PydanticBase):
     """Usage quotas and limits for a user account.
 
     Attributes:
@@ -648,7 +649,7 @@ class Quotas(FocoosBaseModel):
     max_mlg4dnxlarge_training_jobs_hours: float
 
 
-class User(FocoosBaseModel):
+class User(PydanticBase):
     """User account information.
 
     This class represents a user account in the Focoos platform, containing
@@ -679,17 +680,17 @@ class ModelNotFound(Exception):
         super().__init__(self.message)
 
 
-class Metrics(FocoosBaseModel):
+@dataclass
+class Metrics:
     """
     Collection of training and inference metrics.
     """
 
-    infer_metrics: list[dict] = []
-    valid_metrics: list[dict] = []
-    train_metrics: list[dict] = []
+    infer_metrics: list[dict] = field(default_factory=list)
+    valid_metrics: list[dict] = field(default_factory=list)
+    train_metrics: list[dict] = field(default_factory=list)
     iterations: Optional[int] = None
     best_valid_metric: Optional[dict] = None
-    updated_at: Optional[datetime] = None
 
 
 class ModelFamily(str, Enum):
@@ -739,10 +740,10 @@ class DictClass(OrderedDict):
         if not len(class_fields):
             raise ValueError(f"{self.__class__.__name__} has no fields.")
 
-        for field in class_fields:
-            v = getattr(self, field.name)
+        for _field in class_fields:
+            v = getattr(self, _field.name)
             if v is not None:
-                self[field.name] = v
+                self[_field.name] = v
 
     def __reduce__(self):
         state_dict = {field.name: getattr(self, field.name) for field in fields(self)}
@@ -752,7 +753,6 @@ class DictClass(OrderedDict):
 @dataclass
 class ModelConfig(DictClass):
     num_classes: int
-    pass
 
 
 @dataclass
@@ -1029,11 +1029,13 @@ class ModelInfo(DictClass):
     config: dict
     focoos_model: Optional[str] = None
     ref: Optional[str] = None
+    status: Optional[ModelStatus] = None
     description: Optional[str] = None
     train_args: Optional[TrainerArgs] = None
     weights_uri: Optional[str] = None
     val_dataset: Optional[str] = None
-    val_metrics: Optional[dict] = None  # todo: make them explicit
+    # val_metrics: Optional[dict] = None  # todo: make them explicit
+    metrics: Optional[Metrics] = None
     focoos_version: Optional[str] = None
     latency: Optional[list[LatencyMetrics]] = None
 
@@ -1044,9 +1046,9 @@ class ModelInfo(DictClass):
         model_info = cls(
             name=model_info_json["name"],
             model_family=ModelFamily(model_info_json["model_family"]),
-            # config_class=model_info_json["config_class"],
             classes=model_info_json["classes"],
             im_size=int(model_info_json["im_size"]),
+            status=ModelStatus(model_info_json.get("status")) if model_info_json.get("status") else None,
             task=Task(model_info_json["task"]),
             focoos_model=model_info_json.get("focoos_model", None),
             config=model_info_json["config"],
@@ -1056,7 +1058,8 @@ class ModelInfo(DictClass):
             else None,
             weights_uri=model_info_json.get("weights_uri", None),
             val_dataset=model_info_json.get("val_dataset", None),
-            val_metrics=model_info_json.get("val_metrics", None),
+            # val_metrics=model_info_json.get("val_metrics", None),
+            metrics=Metrics(**model_info_json.get("metrics", None)),
             latency=[LatencyMetrics(**latency) for latency in model_info_json.get("latency", [])]
             if "latency" in model_info_json and model_info_json["latency"] is not None
             else None,

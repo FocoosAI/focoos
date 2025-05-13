@@ -54,6 +54,7 @@ dependencies = [
     "onnxslim~=0.1.51",
     "coolname~=2.2.0",
     "onnxscript~=0.2.5",
+    "orjson~=3.10.18",
 ]
 
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]

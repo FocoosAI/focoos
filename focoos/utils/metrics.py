@@ -1,6 +1,33 @@
+from datetime import datetime
+
+import orjson
 from colorama import Fore, Style
 
 from focoos.ports import Metrics
+
+OBJECT_DETECTIONS_VALIDATION_METRICS = [
+    "bbox/AP",
+    "bbox/AP50",
+    "bbox/AP75",
+    "bbox/APs",
+    "bbox/APm",
+    "bbox/APl",
+]
+SEGMENTATION_VALIDATION_METRICS = [
+    "sem_seg/mIoU",
+    "sem_seg/fwIoU",
+    "sem_seg/pACC",
+    "sem_seg/mAcc",
+]
+INSTANCE_SEGMENTATION_VALIDATION_METRICS = [
+    "segm/AP",
+    "segm/AP50",
+    "segm/AP75",
+    "segm/APs",
+    "segm/APm",
+    "segm/APl",
+]
+PANOPTIC_SEGMENTATION_VALIDATION_METRICS = ["panoptic_seg/PQ"]
 
 
 class MetricsVisualizer:
@@ -136,3 +163,81 @@ class MetricsVisualizer:
 
         plt.tight_layout()
         plt.show()
+
+
+def parse_metrics(metrics_text: str) -> Metrics:
+    """
+    Parse the given metrics text and extract validation, training, and inference metrics.
+
+    Args:
+        metrics_text (str): A string containing JSON lines of metrics data.
+
+    Returns:
+        FocoosMetrics: An instance of FocoosMetrics containing parsed metrics categorized into
+                       'valid_metrics', 'train_metrics', 'infer_metrics', along with 'iterations'
+                       and 'best_valid_metric'.
+    """
+    # Initialize the FocoosMetrics object with empty lists for metrics and None for iterations
+    res = Metrics(
+        valid_metrics=[],
+        train_metrics=[],
+        infer_metrics=[],
+        iterations=None,
+        best_valid_metric=None,
+    )
+
+    # Parse the input metrics text into a list of dictionaries, ignoring empty lines
+    content = [orjson.loads(line.replace("NaN", "null")) for line in metrics_text.split("\n") if line.strip()]
+
+    # Create a set of all possible validation metrics for easy lookup
+    #! TODO: this is a hack to get the best metric to use delta, not stable for overlapping metrics
+    valid_metrics_set = set(
+        INSTANCE_SEGMENTATION_VALIDATION_METRICS
+        + OBJECT_DETECTIONS_VALIDATION_METRICS
+        + SEGMENTATION_VALIDATION_METRICS
+        + PANOPTIC_SEGMENTATION_VALIDATION_METRICS
+    )
+
+    # Iterate over each metric dictionary in the content
+    for metric in content:
+        # Filter out keys that end with a _digit, as they are not needed (loss_100, etc)
+        metric = {
+            k: round(v, 4) if isinstance(v, (int, float)) else v
+            for k, v in metric.items()
+            if not (k[-2] == "_" and k[-1].isdigit())
+        }
+        # Determine if the metric belongs to validation or training based on the presence of validation metrics
+        if valid_metrics_set.intersection(metric):
+            res.valid_metrics.append(metric)
+        else:
+            res.train_metrics.append(metric)
+
+    # If there are training metrics, set the total iterations to the last iteration value
+    if len(res.train_metrics) > 0:
+        res.iterations = res.train_metrics[-1].get("iteration", -1)
+
+    # If there are validation metrics, update total iterations and find the best iteration
+    if len(res.valid_metrics) > 0:
+        # Update total iterations if the last validation iteration is greater
+        if res.valid_metrics[-1].get("iteration", -1) > (res.iterations or 0):
+            res.iterations = res.valid_metrics[-1].get("iteration")
+
+        delta_keys = [
+            INSTANCE_SEGMENTATION_VALIDATION_METRICS[0],
+            OBJECT_DETECTIONS_VALIDATION_METRICS[0],
+            SEGMENTATION_VALIDATION_METRICS[0],
+            PANOPTIC_SEGMENTATION_VALIDATION_METRICS[0],
+        ]
+
+        # Determine the best metric to use for finding the best iteration
+        best_metric = None
+        for k in delta_keys:
+            if k in res.valid_metrics[0]:
+                best_metric = k
+                break
+        print(f"best metric to use delta: {best_metric}")
+        # If a best metric is found, determine the best iteration based on it
+        if best_metric:
+            res.best_valid_metric = max(res.valid_metrics, key=lambda x: x.get(best_metric, 0))
+    res.updated_at = datetime.now()
+    return res

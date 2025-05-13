@@ -19,8 +19,7 @@ logger = get_logger("ModelManager")
 class ModelManager:
     """Automatic model manager with lazy loading (refactored)"""
 
-    _MODEL_MAPPING: Dict[str, Callable[[], Type[BaseModelNN]]] = {}
-    _REGISTERED_MODELS: set = set()
+    _models_family_map: Dict[str, Callable[[], Type[BaseModelNN]]] = {}  # {"fai-detr": load_fai_detr()}
 
     @classmethod
     def get(
@@ -67,13 +66,12 @@ class ModelManager:
         """
         Register a loader for a specific model
         """
-        cls._MODEL_MAPPING[model_family.value] = model_loader
-        cls._REGISTERED_MODELS.add(model_family.value)
+        cls._models_family_map[model_family.value] = model_loader
 
     @classmethod
     def _ensure_family_registered(cls, model_family: ModelFamily):
         """Ensure the model family is registered, importing if needed."""
-        if model_family not in cls._REGISTERED_MODELS:
+        if model_family not in cls._models_family_map:
             family_module = importlib.import_module(f"focoos.models.{model_family.value}")
             for attr_name in dir(family_module):
                 if attr_name.startswith("_register"):
@@ -85,9 +83,9 @@ class ModelManager:
     def _from_model_info(cls, model_info: ModelInfo, config: Optional[ModelConfig] = None, **kwargs) -> FocoosModel:
         """Load a model from ModelInfo, handling config and weights."""
         cls._ensure_family_registered(model_info.model_family)
-        if model_info.model_family.value not in cls._MODEL_MAPPING:
+        if model_info.model_family.value not in cls._models_family_map:
             raise ValueError(f"Model {model_info.model_family} not supported")
-        model_class = cls._MODEL_MAPPING[model_info.model_family.value]()
+        model_class = cls._models_family_map[model_info.model_family.value]()
         if config is None:
             config = ConfigManager.from_dict(model_info.model_family, model_info.config, **kwargs)
         model_info.config = config

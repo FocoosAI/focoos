@@ -1,7 +1,6 @@
 {
     "name": "fai-detr-l-obj365",
     "model_family": "fai_detr",
-    "focoos_model": "fai-detr-l-obj365",
     "classes": [
         "Person",
         "Sneakers",
@@ -430,10 +429,21 @@
         "matcher_alpha": 0.25,
         "matcher_gamma": 2.0
     },
+    "focoos_model": "fai-detr-l-obj365",
+    "ref": null,
+    "status": "TRAINING_COMPLETED",
     "description": "RTDETR Large model (Object365)",
     "train_args": null,
     "weights_uri": "https://public.focoos.ai/pretrained_models/fai-detr-l-obj365/model_final.pth",
     "val_dataset": "object365",
     "val_metrics": null,
+    "metrics": {
+        "infer_metrics": [],
+        "valid_metrics": [],
+        "train_metrics": [],
+        "iterations": null,
+        "best_valid_metric": null
+    },
+    "focoos_version": null,
     "latency": null
 }
