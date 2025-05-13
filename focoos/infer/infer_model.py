@@ -243,7 +243,7 @@ class InferModel:
         )
         return res, im
 
-    def benchmark(self, iterations: int = 50) -> LatencyMetrics:
+    def benchmark(self, iterations: int = 50, size: int = 640) -> LatencyMetrics:
         """
         Benchmark the model's inference performance over multiple iterations.
 
@@ -270,4 +270,5 @@ class InferModel:
             print(f"Input size: {metrics.im_size}x{metrics.im_size}")
             ```
         """
-        return self.runtime.benchmark(iterations, self.model_info.im_size)
+
+        return self.runtime.benchmark(iterations, size)

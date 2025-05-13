@@ -376,6 +376,7 @@
             "use_pretrained": false,
             "backbone_url": null,
             "model_type": "resnet",
+            "in_chans": 3,
             "depth": 50,
             "variant": "d",
             "freeze_at": -1,
@@ -410,6 +411,7 @@
         "pixel_decoder_dropout": 0.0,
         "pixel_decoder_nhead": 8,
         "transformer_predictor_nhead": 8,
+        "threshold": 0.5,
         "criterion_deep_supervision": true,
         "criterion_eos_coef": 0.1,
         "criterion_losses": [
@@ -436,7 +438,6 @@
     "train_args": null,
     "weights_uri": "https://public.focoos.ai/pretrained_models/fai-detr-l-obj365/model_final.pth",
     "val_dataset": "object365",
-    "val_metrics": null,
     "metrics": {
         "infer_metrics": [],
         "valid_metrics": [],
@@ -445,5 +446,16 @@
         "best_valid_metric": null
     },
     "focoos_version": null,
-    "latency": null
+    "latency": [
+        {
+            "fps": 26,
+            "engine": "torchscript",
+            "min": 37.28,
+            "max": 41.78,
+            "mean": 38.4,
+            "std": 0.814,
+            "im_size": 640,
+            "device": "Tesla T4"
+        }
+    ]
 }

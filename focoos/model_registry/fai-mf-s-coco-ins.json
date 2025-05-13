@@ -126,12 +126,12 @@
         "head_out_dim": 128,
         "cls_sigmoid": false,
         "postprocessing_type": "instance",
-        "top_k": 300,
         "mask_threshold": 0.5,
         "predict_all_pixels": false,
         "use_mask_score": true,
         "filter_empty_masks": true,
         "threshold": 0.5,
+        "top_k": 300,
         "criterion_deep_supervision": true,
         "criterion_eos_coef": 0.1,
         "criterion_num_points": 12544,
@@ -149,7 +149,6 @@
     "train_args": null,
     "weights_uri": "https://public.focoos.ai/pretrained_models/fai-mf-s-coco-ins/model_final.pth",
     "val_dataset": "coco_2017_instance",
-    "val_metrics": null,
     "metrics": {
         "infer_metrics": [],
         "valid_metrics": [],
@@ -244,6 +243,17 @@
             "segm/AP-toothbrush": 15.645467812732806
         }
     },
-    "focoos_version": "0.14.0",
-    "latency": null
+    "focoos_version": null,
+    "latency": [
+        {
+            "fps": 12,
+            "engine": "torchscript",
+            "min": 75.694,
+            "max": 80.279,
+            "mean": 77.58,
+            "std": 0.836,
+            "im_size": 1024,
+            "device": "Tesla T4"
+        }
+    ]
 }

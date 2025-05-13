@@ -196,12 +196,12 @@
         "head_out_dim": 128,
         "cls_sigmoid": false,
         "postprocessing_type": "semantic",
-        "top_k": 300,
         "mask_threshold": 0.5,
         "predict_all_pixels": true,
         "use_mask_score": false,
         "filter_empty_masks": false,
         "threshold": 0.5,
+        "top_k": 300,
         "criterion_deep_supervision": true,
         "criterion_eos_coef": 0.1,
         "criterion_num_points": 12544,
@@ -219,7 +219,6 @@
     "train_args": null,
     "weights_uri": "https://public.focoos.ai/pretrained_models/fai-mf-l-ade/model_final.pth",
     "val_dataset": "ade20k_semseg",
-    "val_metrics": null,
     "metrics": {
         "infer_metrics": [],
         "valid_metrics": [],
@@ -532,6 +531,17 @@
             "sem_seg/ACC-flag": 65.05363798993652
         }
     },
-    "focoos_version": "0.14.0",
-    "latency": null
+    "focoos_version": null,
+    "latency": [
+        {
+            "fps": 21,
+            "engine": "torchscript",
+            "min": 44.589,
+            "max": 47.282,
+            "mean": 45.566,
+            "std": 0.636,
+            "im_size": 640,
+            "device": "Tesla T4"
+        }
+    ]
 }

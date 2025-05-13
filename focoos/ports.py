@@ -1038,6 +1038,7 @@ class ModelInfo(DictClass):
     metrics: Optional[Metrics] = None
     focoos_version: Optional[str] = None
     latency: Optional[list[LatencyMetrics]] = None
+    updated_at: Optional[str] = None
 
     @classmethod
     def from_json(cls, path: str):
@@ -1058,11 +1059,12 @@ class ModelInfo(DictClass):
             else None,
             weights_uri=model_info_json.get("weights_uri", None),
             val_dataset=model_info_json.get("val_dataset", None),
-            # val_metrics=model_info_json.get("val_metrics", None),
             metrics=Metrics(**model_info_json.get("metrics", None)),
             latency=[LatencyMetrics(**latency) for latency in model_info_json.get("latency", [])]
             if "latency" in model_info_json and model_info_json["latency"] is not None
             else None,
+            updated_at=model_info_json.get("updated_at", None),
+            focoos_version=model_info_json.get("focoos_version", None),
         )
 
         return model_info

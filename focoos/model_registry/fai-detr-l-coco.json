@@ -153,7 +153,6 @@
     "train_args": null,
     "weights_uri": "https://public.focoos.ai/pretrained_models/fai-detr-l-coco/model_final.pth",
     "val_dataset": "coco_2017_det",
-    "val_metrics": null,
     "metrics": {
         "infer_metrics": [],
         "valid_metrics": [],
@@ -248,6 +247,17 @@
             "bbox/AP-toothbrush": 42.00000022081457
         }
     },
-    "focoos_version": "0.14.0",
-    "latency": null
+    "focoos_version": null,
+    "latency": [
+        {
+            "fps": 26,
+            "engine": "torchscript",
+            "min": 36.915,
+            "max": 41.845,
+            "mean": 37.899,
+            "std": 0.883,
+            "im_size": 640,
+            "device": "Tesla T4"
+        }
+    ]
 }

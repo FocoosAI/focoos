@@ -223,7 +223,6 @@
     "train_args": null,
     "weights_uri": "https://public.focoos.ai/pretrained_models/bisenetformer-m-ade/model_final.pth",
     "val_dataset": "ade20k_semseg",
-    "val_metrics": null,
     "metrics": {
         "infer_metrics": [],
         "valid_metrics": [],
@@ -536,6 +535,17 @@
             "sem_seg/ACC-flag": 30.5972872878263
         }
     },
-    "focoos_version": "0.14.0",
-    "latency": null
+    "focoos_version": null,
+    "latency": [
+        {
+            "fps": 125,
+            "engine": "torchscript",
+            "min": 7.789,
+            "max": 8.496,
+            "mean": 7.944,
+            "std": 0.161,
+            "im_size": 512,
+            "device": "Tesla T4"
+        }
+    ]
 }
