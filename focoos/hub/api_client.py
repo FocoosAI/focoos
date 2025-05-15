@@ -27,8 +27,8 @@ class ApiClient:
 
     def __init__(
         self,
-        api_key: Optional[str] = FOCOOS_CONFIG.focoos_api_key,
-        host_url: Optional[str] = FOCOOS_CONFIG.default_host_url,
+        api_key: Optional[str] = None,
+        host_url: Optional[str] = None,
     ):
         """
         Initialize the ApiClient with an API key and host URL.
@@ -37,11 +37,8 @@ class ApiClient:
             api_key (str): The API key for authorization.
             host_url (str): The base URL for the API.
         """
-        if not host_url:
-            raise ValueError("Host URL is required")
-
-        self.api_key = api_key
-        self.host_url = host_url
+        self.api_key = api_key or FOCOOS_CONFIG.focoos_api_key
+        self.host_url = host_url or FOCOOS_CONFIG.default_host_url
 
         self.default_headers = {
             "Authorization": f"Bearer {self.api_key}",
