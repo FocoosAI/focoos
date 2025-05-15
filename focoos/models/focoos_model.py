@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from typing import Literal, Optional, Union
 
 import numpy as np
@@ -13,14 +14,18 @@ from focoos.ports import (
     MODELS_DIR,
     ExportFormat,
     FocoosDetections,
+    ModelArtifact,
     ModelInfo,
+    ModelStatus,
     RuntimeType,
     TrainerArgs,
+    TrainingInfo,
 )
 from focoos.processor.processor_manager import ProcessorManager
 from focoos.utils.distributed.dist import launch
 from focoos.utils.env import TORCH_VERSION
 from focoos.utils.logger import get_logger
+from focoos.utils.system import get_cpu_name, get_focoos_version, get_system_info
 
 logger = get_logger("FocoosModel")
 
@@ -56,18 +61,15 @@ class FocoosModel:
             data_train: Training dataset
             data_val: Validation dataset
         """
+
+        self._setup_model_info_for_training(args, data_train, data_val)
+        assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
         if self.model_info.config["num_classes"] != data_val.dataset.metadata.num_classes:
             logger.error(
                 f"Number of classes in the model ({self.model_info.config['num_classes']}) does not match the number of classes in the dataset ({data_val.dataset.metadata.num_classes})."
             )
             # self.model_info.config["num_classes"] = data_val.dataset.metadata.num_classes
             return
-
-        self.model_info.train_args = args  # type: ignore
-        self.model_info.val_dataset = data_val.dataset.metadata.name
-        self.model_info.val_metrics = None
-        self.model_info.classes = data_val.dataset.metadata.classes
-        assert self.model_info.task == data_val.dataset.metadata.task, "Task mismatch between model and dataset."
 
         assert args.num_gpus, "Training without GPUs is not supported. num_gpus must be greater than 0"
         if args.num_gpus > 1:
@@ -80,8 +82,8 @@ class FocoosModel:
             logger.info("Training done, resuming main process.")
             # here i should restore the best model and config since in DDP it is not updated
             final_folder = os.path.join(args.output_dir, args.run_name)
-            model_path = os.path.join(final_folder, "model_final.pth")
-            metadata_path = os.path.join(final_folder, "model_info.json")
+            model_path = os.path.join(final_folder, ModelArtifact.WEIGHTS)
+            metadata_path = os.path.join(final_folder, ModelArtifact.INFO)
 
             if not os.path.exists(model_path):
                 raise FileNotFoundError(f"Training did not end correctly, model file not found at {model_path}")
@@ -267,3 +269,30 @@ class FocoosModel:
         # Merge with load weights of checkpointer
         incompatible = self.model.load_state_dict(weights, strict=False)
         return len(incompatible.missing_keys) + len(incompatible.unexpected_keys)
+
+    def _setup_model_info_for_training(self, train_args: TrainerArgs, data_train: MapDataset, data_val: MapDataset):
+        device = get_cpu_name()
+        system_info = get_system_info()
+        if system_info.gpu_info and system_info.gpu_info.devices and len(system_info.gpu_info.devices) > 0:
+            device = system_info.gpu_info.devices[0].gpu_name
+        self.model_info.name = train_args.run_name.strip() if train_args.run_name else "unknown"
+        self.model_info.train_args = train_args  # type: ignore
+        self.model_info.val_dataset = data_val.dataset.metadata.name
+        self.model_info.val_metrics = None
+        self.model_info.classes = data_val.dataset.metadata.classes
+        self.model_info.focoos_version = get_focoos_version()
+        self.model_info.status = ModelStatus.TRAINING_STARTING
+        self.model_info.updated_at = datetime.now().isoformat()
+        self.model_info.latency = []
+        self.model_info.metrics = None
+        self.model_info.training_info = TrainingInfo(
+            instance_device=device,
+            main_status=ModelStatus.TRAINING_STARTING,
+            start_time=datetime.now(),
+            status_transitions=[
+                {"status": ModelStatus.TRAINING_STARTING, "timestamp": datetime.now().isoformat(), "iter": 0},
+            ],
+        )
+        self.model_info.classes = data_train.dataset.metadata.classes
+        self.model_info.config["num_classes"] = len(data_train.dataset.metadata.classes)
+        assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."

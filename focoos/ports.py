@@ -143,7 +143,8 @@ class Task(str, Enum):
     CLASSIFICATION = "classification"
 
 
-class TrainingInfo(PydanticBase):
+@dataclass
+class TrainingInfo:
     """Information about a model's training process.
 
     This class contains details about the training job configuration, status, and timing.
@@ -163,15 +164,12 @@ class TrainingInfo(PydanticBase):
         artifact_location: Storage location of the training artifacts and model outputs.
     """
 
-    algorithm_name: str
+    instance_device: Optional[str] = None
     instance_type: Optional[str] = None
-    volume_size: Optional[int] = 100
-    max_runtime_in_seconds: Optional[int] = 36000
+    volume_size: Optional[int] = None
     main_status: Optional[str] = None
-    secondary_status: Optional[str] = None
     failure_reason: Optional[str] = None
-    elapsed_time: Optional[int] = None
-    status_transitions: list[dict] = []
+    status_transitions: Optional[list[dict]] = None
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     artifact_location: Optional[str] = None

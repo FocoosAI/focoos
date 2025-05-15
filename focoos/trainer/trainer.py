@@ -21,7 +21,7 @@ from focoos.data.loaders import build_detection_test_loader, build_detection_tra
 from focoos.hub.focoos_hub import FocoosHUB
 from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.layers.norm import FrozenBatchNorm2d
-from focoos.ports import ModelInfo, ModelStatus, Task, TrainerArgs
+from focoos.ports import ModelArtifact, ModelInfo, ModelStatus, Task, TrainerArgs
 from focoos.processor.base_processor import Processor
 from focoos.trainer.checkpointer import Checkpointer
 from focoos.trainer.evaluation.evaluator import inference_on_dataset
@@ -38,7 +38,7 @@ from focoos.utils.distributed.dist import comm, create_ddp_model
 from focoos.utils.env import seed_all_rng
 from focoos.utils.logger import capture_all_output, get_logger
 from focoos.utils.metrics import parse_metrics
-from focoos.utils.system import get_focoos_version, get_system_info
+from focoos.utils.system import get_system_info
 
 # Mapping of task types to their primary evaluation metrics
 TASK_METRICS = {
@@ -136,13 +136,7 @@ class FocoosTrainer:
         self.model = model
         self.processor = processor.train()
         self.model_info = model_info
-        self.model_info.focoos_version = get_focoos_version()
-        self.model_info.weights_uri = "model_final.pth"
-        self.model_info.name = args.run_name.strip() if args.run_name else "unknown"
-        self.model_info.status = ModelStatus.TRAINING_STARTING
-        self.model_info.updated_at = datetime.now().isoformat()
-        self.model_info.latency = []
-        self.model_info.metrics = None
+        self.model_info.weights_uri = ModelArtifact.WEIGHTS
         self.checkpoint = self.args.init_checkpoint
         # Setup data
         self.data_train = data_train
