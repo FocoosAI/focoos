@@ -24,7 +24,7 @@ from tabulate import tabulate
 
 import focoos.utils.distributed.comm as comm
 from focoos.data.datasets.dict_dataset import DictDataset
-from focoos.structures import BoxMode
+from focoos.structures import BoxMode, Instances
 from focoos.utils.logger import create_small_table, get_logger
 
 from .evaluator import DatasetEvaluator
@@ -94,13 +94,14 @@ class DetectionEvaluator(DatasetEvaluator):
                     detection/segmentation results as Instances objects
         """
         for input, output in zip(inputs, outputs):
-            prediction = {"image_id": input.image_id}
+            assert isinstance(input, DatasetEntry), "Input must be a DatasetEntry!"
+            assert input.image_id is not None, "Image ID must be present in the input!"
 
             if "instances" in output:
-                # in the dataset mapper, we did not applied augmentations, so we can directly use the gt instances
-                prediction["instances"] = self.instances_to_coco_json(
-                    output["instances"].to(self.cpu_device), input.image_id
-                )
+                prediction = {
+                    "image_id": input.image_id,
+                    "instances": self.instances_to_coco_json(output["instances"].to(self.cpu_device), input.image_id),
+                }
                 self._predictions.append(prediction)
             else:
                 raise Exception("No instances in output?!")
@@ -117,7 +118,7 @@ class DetectionEvaluator(DatasetEvaluator):
         if self._distributed:
             comm.synchronize()
             predictions = comm.gather(self._predictions, dst=0)
-            predictions = list(itertools.chain(*predictions))
+            predictions = list(itertools.chain(*predictions))  # type: ignore
 
             if not comm.is_main_process():
                 return {}
@@ -163,6 +164,7 @@ class DetectionEvaluator(DatasetEvaluator):
         coco_inputs = inputs
         coco_results = predictions
 
+        assert self.dataset_dict.metadata.thing_classes is not None, "Metadata must contain thing_classes!"
         categories = [
             {
                 "id": idx,
@@ -209,7 +211,7 @@ class DetectionEvaluator(DatasetEvaluator):
         coco_gt = create_coco(images, categories, coco_gt, self.iou_type)
         coco_dt = create_coco(images, categories, coco_results, self.iou_type)
 
-        coco_eval = COCOeval(coco_gt, coco_dt, self.iou_type)
+        coco_eval = COCOeval(coco_gt, coco_dt, self.iou_type)  # type: ignore
         coco_eval.params.maxDets = [1, 10, 100]
         coco_eval.evaluate()
         coco_eval.accumulate()
@@ -287,7 +289,7 @@ class DetectionEvaluator(DatasetEvaluator):
         results = {k: (v if np.isfinite(v) else None) for k, v in results.items()}
         return results
 
-    def instances_to_coco_json(self, instances, img_id):
+    def instances_to_coco_json(self, instances: Instances, img_id: int) -> List[dict]:
         """
         Convert Instances predictions to COCO json format.
 
@@ -302,19 +304,22 @@ class DetectionEvaluator(DatasetEvaluator):
         if num_instance == 0:
             return []
 
-        boxes = instances.pred_boxes.tensor.numpy()
+        assert instances.boxes is not None, "Predictions must contain boxes!"
+        assert instances.scores is not None, "Predictions must contain scores!"
+        assert instances.classes is not None, "Predictions must contain classes!"
+
+        boxes = instances.boxes.tensor.numpy()
         boxes = BoxMode.convert(boxes, BoxMode.XYXY_ABS, BoxMode.XYWH_ABS)
         boxes = boxes.tolist()  # type: ignore
         scores = instances.scores.tolist()
-        classes = instances.pred_classes.tolist()
+        classes = instances.classes.tolist()
 
-        has_mask = instances.has("pred_masks")
-        if has_mask:
+        if instances.masks is not None:
             # use RLE to encode the masks, because they are too large and takes memory
             # since this evaluator stores outputs of the entire dataset
             rles = [
                 mask_util.encode(np.array(mask[:, :, None], order="F", dtype="uint8"))[0]  # type: ignore
-                for mask in instances.pred_masks
+                for mask in instances.masks
             ]
             for rle in rles:
                 # "counts" is an array encoded by mask_util as a byte-stream. Python3's
@@ -323,9 +328,8 @@ class DetectionEvaluator(DatasetEvaluator):
                 # the pycocotools/_mask.pyx does).
                 rle["counts"] = rle["counts"].decode("utf-8")
 
-        has_keypoints = instances.has("pred_keypoints")
-        if has_keypoints:
-            keypoints = instances.pred_keypoints
+        if instances.keypoints is not None:
+            keypoints = instances.keypoints
 
         results = []
         for k in range(num_instance):
@@ -335,9 +339,9 @@ class DetectionEvaluator(DatasetEvaluator):
                 "bbox": boxes[k],
                 "score": scores[k],
             }
-            if has_mask:
+            if instances.masks is not None:
                 result["segmentation"] = rles[k]
-            if has_keypoints:
+            if instances.keypoints is not None:
                 # In COCO annotations,
                 # keypoints coordinates are pixel indices.
                 # However our predictions are floating point coordinates.

@@ -1,10 +1,10 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
-from typing import List, Optional
+from typing import List
 
 import torch
 from torch.nn import functional as F
 
-from focoos.structures import BitMasks, Boxes
+from focoos.structures import BitMasks, Boxes, Instances, shapes_to_tensor
 
 """
 Shape shorthand in this module:
@@ -24,26 +24,6 @@ def cat(tensors: List[torch.Tensor], dim: int = 0):
     if len(tensors) == 1:
         return tensors[0]
     return torch.cat(tensors, dim)
-
-
-def shapes_to_tensor(x: List[int], device: Optional[torch.device] = None) -> torch.Tensor:
-    """
-    Turn a list of integer scalars or integer Tensor scalars into a vector,
-    in a way that's both traceable and scriptable.
-
-    In tracing, `x` should be a list of scalar Tensor, so the output can trace to the inputs.
-    In scripting or eager, `x` should be a list of int.
-    """
-    if torch.jit.is_scripting():
-        return torch.as_tensor(x, device=device)
-    if torch.jit.is_tracing():
-        assert all([isinstance(t, torch.Tensor) for t in x]), "Shape should be tensor during tracing!"
-        # as_tensor should not be used in tracing because it records a constant
-        ret = torch.stack(x)
-        if ret.device != device:  # avoid recording a hard-coded device if not necessary
-            ret = ret.to(device=device)
-        return ret
-    return torch.as_tensor(x, device=device)
 
 
 def point_sample(input, point_coords, **kwargs):
@@ -248,7 +228,7 @@ def get_point_coords_wrt_image(boxes_coords, point_coords):
     return point_coords_wrt_image
 
 
-def sample_point_labels(instances, point_coords):
+def sample_point_labels(instances: Instances, point_coords: torch.Tensor):
     """
     Sample point labels from ground truth mask given point_coords.
 
@@ -272,12 +252,12 @@ def sample_point_labels(instances, point_coords):
         for i, instances_per_image in enumerate(instances):
             if len(instances_per_image) == 0:
                 continue
-            assert isinstance(instances_per_image.gt_masks, BitMasks), (
+            assert isinstance(instances_per_image.masks, BitMasks), (
                 "Point head works with GT in 'bitmask' format. Set INPUT.MASK_FORMAT to 'bitmask'."
             )
 
-            gt_bit_masks = instances_per_image.gt_masks.tensor
-            h, w = instances_per_image.gt_masks.image_size
+            gt_bit_masks = instances_per_image.masks.tensor
+            h, w = instances_per_image.masks.image_size
             scale = torch.tensor([w, h], dtype=torch.float, device=gt_bit_masks.device)
             points_coord_grid_sample_format = point_coords_splits[i] / scale
             gt_mask_logits.append(

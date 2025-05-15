@@ -19,8 +19,6 @@ from focoos.structures import (
     Boxes,
     BoxMode,
     Keypoints,
-    PolygonMasks,
-    RotatedBoxes,
 )
 from focoos.utils.logger import get_logger
 
@@ -638,14 +636,14 @@ class Visualizer:
         Returns:
             output (VisImage): image object with visualizations.
         """
-        boxes = predictions.pred_boxes if predictions.has("pred_boxes") else None
-        scores = predictions.scores if predictions.has("scores") else None
-        classes = predictions.pred_classes.tolist() if predictions.has("pred_classes") else None
+        boxes = predictions.boxes
+        scores = predictions.scores
+        classes = predictions.classes.tolist()
         labels = _create_text_labels(classes, scores, self.metadata.get("thing_classes", None))
-        keypoints = predictions.pred_keypoints if predictions.has("pred_keypoints") else None
+        keypoints = predictions.keypoints
 
-        if predictions.has("pred_masks"):
-            masks = np.asarray(predictions.pred_masks)
+        if predictions.masks is not None:
+            masks = np.asarray(predictions.masks)
             masks = [GenericMask(x, self.output.height, self.output.width) for x in masks]
         else:
             masks = None
@@ -660,7 +658,7 @@ class Visualizer:
         if self._instance_mode == ColorMode.IMAGE_BW:
             self.output.reset_image(
                 self._create_grayscale_image(
-                    (predictions.pred_masks.any(dim=0) > 0).numpy() if predictions.has("pred_masks") else None
+                    (predictions.masks.any(dim=0) > 0).numpy() if predictions.masks is not None else None
                 )
             )
             alpha = 0.3
@@ -866,7 +864,6 @@ class Visualizer:
             labels (list[str]): the text to be displayed for each instance.
             masks (masks-like object): Supported types are:
 
-                * :class:`detectron2.structures.PolygonMasks`,
                   :class:`detectron2.structures.BitMasks`.
                 * list[list[ndarray]]: contains the segmentation masks for all objects in one image.
                   The first level of the list corresponds to individual instances. The second
@@ -1439,7 +1436,7 @@ class Visualizer:
         """
         Convert different format of boxes to an NxB array, where B = 4 or 5 is the box dimension.
         """
-        if isinstance(boxes, Boxes) or isinstance(boxes, RotatedBoxes):
+        if isinstance(boxes, Boxes):
             return boxes.tensor.detach().numpy()
         else:
             return np.asarray(boxes)
@@ -1453,8 +1450,6 @@ class Visualizer:
         """
 
         m = masks_or_polygons
-        if isinstance(m, PolygonMasks):
-            m = m.polygons
         if isinstance(m, BitMasks):
             m = m.tensor.numpy()
         if isinstance(m, torch.Tensor):

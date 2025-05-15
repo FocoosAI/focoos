@@ -49,7 +49,7 @@ class ClassificationDatasetMapper(DatasetMapper):
         """
         super().__init__(
             is_train=is_train,
-            augmentations=augmentations,
+            augmentations=augmentations,  # type: ignore
             image_format=image_format,
         )
         self.logger = get_logger(__name__)
@@ -80,6 +80,8 @@ class ClassificationDatasetMapper(DatasetMapper):
         aug_input = A.AugInput(image)
         self.augmentations(aug_input)  # apply augmentations in place, no need to return
         image = aug_input.image
+        if image is None:
+            raise ValueError(f"Image is None for {dataset_dict['file_name']}")
 
         # Convert image to tensor format (C, H, W)
         dataset_dict["image"] = torch.as_tensor(np.ascontiguousarray(image.transpose(2, 0, 1)))

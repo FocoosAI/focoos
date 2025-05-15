@@ -131,4 +131,4 @@ class ToIterableDataset(torchdata.IterableDataset):
             yield self.dataset[idx]
 
     def __len__(self):
-        return len(self.sampler)
+        return len(self.sampler)  # type: ignore

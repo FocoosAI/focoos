@@ -10,7 +10,7 @@ from focoos.data import utils
 from focoos.data.transforms import augmentation as A
 from focoos.data.transforms import transform as T
 from focoos.ports import DatasetEntry
-from focoos.structures import BoxMode, Instances
+from focoos.structures import BitMasks, BoxMode, Instances
 from focoos.utils.logger import get_logger
 
 from .mapper import DatasetMapper
@@ -107,16 +107,17 @@ class DetectionDatasetMapper(DatasetMapper):
         # bounding box of the cropped triangle should be [(1,0),(2,1)], which is not equal to
         # the intersection of original bounding box and the cropping box.
         if self.recompute_boxes and self.use_instance_mask:
-            instances.gt_boxes = instances.gt_masks.get_bounding_boxes()
+            assert isinstance(instances.masks, BitMasks), "Error, masks in instances are not BitMasks"
+            instances.boxes = instances.masks.get_bounding_boxes()
 
         instances = utils.filter_empty_instances(instances, by_box=use_bbox, by_mask=use_mask)
 
         if self.use_instance_mask:
             h, w = instances.image_size
-            if hasattr(instances, "gt_masks"):  # Handle Images without annotations
-                instances.gt_masks = instances.gt_masks.tensor
+            if instances.masks is not None:  # Handle Images without annotations
+                instances.masks = instances.masks
             else:
-                instances.gt_masks = torch.zeros(0, h, w)
+                instances.masks = BitMasks(torch.zeros(0, h, w))
 
         dataset_dict["instances"] = instances
 
@@ -159,7 +160,8 @@ class DetectionDatasetMapper(DatasetMapper):
         transforms = self.augmentations(aug_input)
         # we don't collect boxes but we recompute the transforms at the end
         image = aug_input.image
-
+        if image is None:
+            raise ValueError(f"Image is None for {dataset_dict['file_name']}")
         image_shape = image.shape[:2]  # h, w
         # Pytorch's dataloader is efficient on torch.Tensor due to shared-memory,
         # but not efficient on large generic data structures due to the use of pickle & mp.Queue.

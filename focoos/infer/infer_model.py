@@ -176,6 +176,11 @@ class InferModel:
             annotated_im = self.mask_annotator.annotate(scene=im.copy(), detections=detections)
         return annotated_im
 
+    def __call__(
+        self, image: Union[bytes, str, Path, np.ndarray, Image.Image]
+    ) -> Tuple[FocoosDetections, Optional[np.ndarray]]:
+        return self.infer(image)
+
     def infer(
         self,
         image: Union[bytes, str, Path, np.ndarray, Image.Image],
@@ -218,7 +223,7 @@ class InferModel:
         resize = None
         t0 = perf_counter()
         im1, im0 = image_preprocess(image, resize=resize)
-        tensors, _ = self.processor.preprocess(inputs=im1, training=False, device="cuda")
+        tensors, _ = self.processor.preprocess(inputs=im1, device="cuda")
         logger.debug(f"Input image size: {im0.shape}, Resize to: {resize}")
         t1 = perf_counter()
 
@@ -239,7 +244,7 @@ class InferModel:
             im = self._annotate(im0, fai_detections_to_sv(res, im0.shape[:2]))
 
         logger.debug(
-            f"Found {len(detections)} detections. Inference time: {(t2 - t1) * 1000:.0f}ms, preprocess: {(t1 - t0) * 1000:.0f}ms, postprocess: {(t3 - t2) * 1000:.0f}ms"
+            f"Found {len(res)} detections. Inference time: {(t2 - t1) * 1000:.0f}ms, preprocess: {(t1 - t0) * 1000:.0f}ms, postprocess: {(t3 - t2) * 1000:.0f}ms"
         )
         return res, im
 
@@ -272,4 +277,32 @@ class InferModel:
         """
         if size is None:
             size = self.model_info.im_size
-        return self.runtime.benchmark(iterations, size)
+
+        engine, device = self.runtime.get_info()
+        logger.info(f"⏱️ Benchmarking latency on {device}, size: {size}x{size}..")
+
+        np_input = (255 * np.random.random((size, size, 3))).astype(np.uint8)
+
+        durations = []
+        for step in range(iterations + 5):
+            start = perf_counter()
+            self(np_input)
+            end = perf_counter()
+
+            if step >= 5:  # Skip first 5 iterations
+                durations.append((end - start) * 1000)
+
+        durations = np.array(durations)
+
+        metrics = LatencyMetrics(
+            fps=int(1000 / durations.mean()),
+            engine=engine,
+            mean=round(durations.mean().astype(float), 3),
+            max=round(durations.max().astype(float), 3),
+            min=round(durations.min().astype(float), 3),
+            std=round(durations.std().astype(float), 3),
+            im_size=size,
+            device=device,
+        )
+        logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")
+        return metrics

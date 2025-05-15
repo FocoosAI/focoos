@@ -719,4 +719,49 @@ class FAIMaskFormer(BaseModelNN):
         features = self.pixel_decoder(images)
         (logits, masks), losses = self.head(features, targets)
 
+        # Do exportable postprocessing for inference already here
+        if not self.training:
+            bin_masks = None
+            if self.config.filter_empty_masks:
+                bin_masks = masks > 0.0
+                non_zero_masks = bin_masks.sum(dim=(-2, -1)) > 1  # B x top_k_masks
+                # Set scores and labels to 0 for empty masks
+                # Get indices of non-zero masks
+                non_zero_indices = (non_zero_masks).nonzero(as_tuple=True)
+                # Filter scores, labels and bin_mask_pred to only keep non-zero masks
+                logits = torch.gather(
+                    logits, dim=1, index=non_zero_indices[1].unsqueeze(0).unsqueeze(-1).expand(-1, -1, logits.shape[-1])
+                )
+                masks = torch.gather(
+                    masks,
+                    dim=1,
+                    index=non_zero_indices[1]
+                    .unsqueeze(0)
+                    .unsqueeze(-1)
+                    .unsqueeze(-1)
+                    .expand(-1, -1, *masks.shape[-2:]),
+                )
+
+            if self.config.use_mask_score:
+                bin_masks = masks > 0.0
+                # Quickfix to avoid num. instability.
+                bin_masks = bin_masks * 1e-3
+                mask_score = (bin_masks * masks).sum(-1).sum(-1) / (
+                    (bin_masks).sum(-1).sum(-1) + 1e-5
+                )  # add EPS to avoid division by 0
+                # Multiply mask scores to class scores for final score
+                logits = logits * mask_score.view(*logits.shape[:2], 1)  # B x Q x C
+
+            if logits.shape[1] > self.config.top_k:
+                scores, labels = logits.max(-1)
+                scores, index = torch.topk(scores, self.config.top_k, dim=-1)
+                logits = torch.gather(logits, dim=1, index=index)  # B x top_k_masks
+                masks = torch.gather(
+                    masks,
+                    dim=1,
+                    index=index.unsqueeze(-1).unsqueeze(-1).tile(1, 1, *masks.shape[-2:]),
+                )  # B x top_k_masks x H x W
+
+            masks = F.interpolate(masks, size=images.shape[2:], mode="bilinear", align_corners=False)
+
         return MaskFormerModelOutput(masks=masks, logits=logits, loss=losses)

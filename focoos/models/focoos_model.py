@@ -15,6 +15,7 @@ from focoos.ports import (
     ArtifactName,
     ExportFormat,
     FocoosDetections,
+    LatencyMetrics,
     ModelInfo,
     ModelStatus,
     RuntimeType,
@@ -263,7 +264,7 @@ class FocoosModel:
                 exp_program = torch.jit.trace(exportable_model, data)
                 if exp_program is not None:
                     _out_file = os.path.join(out_dir, "model.pt")
-                    exp_program.save(_out_file)
+                    torch.jit.save(exp_program, _out_file)
                     logger.info(f"✅ Exported {format} model to {_out_file} ")
                 else:
                     raise ValueError(f"Failed to export {format} model")
@@ -289,10 +290,15 @@ class FocoosModel:
             model = model.cuda()
         except Exception:
             logger.warning("Unable to use CUDA")
-        inputs, _ = processor.preprocess(
+        images, _ = processor.preprocess(
             inputs, device=model.device, dtype=model.dtype
         )  # second output is targets that we're not using
-        output = model.forward(inputs)
+        with torch.no_grad():
+            try:
+                with torch.autocast(device_type="cuda", dtype=torch.float16):
+                    output = model.forward(images)
+            except Exception:
+                output = model.forward(images)
         class_names = self.model_info.classes
         output_fdet = processor.postprocess(output, inputs, class_names=class_names, **kwargs)
         return output_fdet
@@ -301,3 +307,44 @@ class FocoosModel:
         # Merge with load weights of checkpointer
         incompatible = self.model.load_state_dict(weights, strict=False)
         return len(incompatible.missing_keys) + len(incompatible.unexpected_keys)
+
+    def benchmark(
+        self, iterations: int = 50, size: Optional[int] = None, device: Literal["cuda", "cpu"] = "cuda"
+    ) -> LatencyMetrics:
+        """
+        Benchmark the model's inference performance over multiple iterations.
+        """
+        if size is None:
+            size = self.model_info.im_size
+
+        try:
+            model = self.model.cuda()
+        except Exception:
+            logger.warning("Unable to use CUDA")
+        logger.info(f"⏱️ Benchmarking latency on {model.device}, size: {size}x{size}..")
+        # warmup
+        data = 128 * torch.randn(1, 3, size, size).to(model.device)
+
+        durations = []
+        for _ in range(iterations):
+            start = torch.cuda.Event(enable_timing=True)
+            end = torch.cuda.Event(enable_timing=True)
+            start.record(stream=torch.cuda.Stream())
+            _ = self(data)
+            end.record(stream=torch.cuda.Stream())
+            torch.cuda.synchronize()
+            durations.append(start.elapsed_time(end))
+
+        durations = np.array(durations)
+        metrics = LatencyMetrics(
+            fps=int(1000 / durations.mean()),
+            engine=f"torch.{self.model.device}",
+            mean=round(durations.mean().astype(float), 3),
+            max=round(durations.max().astype(float), 3),
+            min=round(durations.min().astype(float), 3),
+            std=round(durations.std().astype(float), 3),
+            im_size=size,
+            device=str(self.model.device),
+        )
+        logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")
+        return metrics

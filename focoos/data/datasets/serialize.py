@@ -15,10 +15,10 @@ class TorchSerializedDataset:
             return np.frombuffer(buffer, dtype=np.uint8)
 
         logger.debug("Serializing {} elements to byte tensors and concatenating them all ...".format(len(lst)))
-        self._lst = [_serialize(x) for x in lst]
-        self._addr = np.asarray([len(x) for x in self._lst], dtype=np.int64)
+        _lst = [_serialize(x) for x in lst]
+        self._addr = np.asarray([len(x) for x in _lst], dtype=np.int64)
         self._addr = torch.from_numpy(np.cumsum(self._addr))
-        self._lst = torch.from_numpy(np.concatenate(self._lst))
+        self._lst = torch.from_numpy(np.concatenate(_lst))
         logger.debug("Serialized dataset takes {:.2f} MiB".format(len(self._lst) / 1024**2))
 
     def __len__(self):

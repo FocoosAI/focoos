@@ -10,7 +10,6 @@ from focoos.structures import (
     BoxMode,
     Instances,
     Keypoints,
-    RotatedBoxes,
     polygons_to_bitmask,
 )
 from focoos.utils.logger import get_logger
@@ -21,7 +20,6 @@ _M_RGB2YUV = [
     [-0.14713, -0.28886, 0.436],
     [0.615, -0.51499, -0.10001],
 ]
-_M_YUV2RGB = [[1.0, 0.0, 1.13983], [1.0, -0.39465, -0.58060], [1.0, 2.03211, 0.0]]
 
 
 def convert_coco_poly_to_mask(segmentations, height, width):
@@ -92,8 +90,6 @@ def transform_instance_annotations(annotation, transforms, image_size, *, keypoi
             transformed according to `transforms`.
             The "bbox_mode" field will be set to XYXY_ABS.
     """
-    if isinstance(transforms, (tuple, list)):
-        transforms = T.TransformList(transforms)
     # bbox is 1d (per-instance bounding box)
     bbox = BoxMode.convert(annotation["bbox"], annotation["bbox_mode"], BoxMode.XYXY_ABS)
     # clip transformed bbox to image size
@@ -110,7 +106,7 @@ def transform_instance_annotations(annotation, transforms, image_size, *, keypoi
             annotation["segmentation"] = [p.reshape(-1) for p in transforms.apply_polygons(polygons)]
         elif isinstance(segm, dict):
             # RLE
-            mask = mask_util.decode(segm)
+            mask = mask_util.decode(segm)  # type: ignore
             mask = transforms.apply_segmentation(mask)
             assert tuple(mask.shape[:2]) == image_size
             annotation["segmentation"] = mask
@@ -155,6 +151,7 @@ def transform_keypoint_annotations(keypoints, transforms, image_size, keypoint_h
     keypoints[:, 2][~inside] = 0
 
     # This assumes that HorizFlipTransform is the only one that does flip
+
     do_hflip = sum(isinstance(t, T.HFlipTransform) for t in transforms.transforms) % 2 == 1
 
     # Alternative way: check if probe points was horizontally flipped.
@@ -200,13 +197,12 @@ def annotations_to_instances(annos, image_size):
         if len(annos)
         else np.zeros((0, 4))
     )
-    target = Instances(image_size)
-    target.gt_boxes = Boxes(boxes)
+    boxes = Boxes(torch.from_numpy(boxes))
 
     classes = [int(obj["category_id"]) for obj in annos]
     classes = torch.tensor(classes, dtype=torch.int64)
-    target.gt_classes = classes
 
+    masks = None
     if len(annos) and "segmentation" in annos[0]:
         segms = [obj["segmentation"] for obj in annos]
         masks = []
@@ -216,7 +212,7 @@ def annotations_to_instances(annos, image_size):
                 masks.append(polygons_to_bitmask(segm, *image_size))
             elif isinstance(segm, dict):
                 # COCO RLE
-                masks.append(mask_util.decode(segm))
+                masks.append(mask_util.decode(segm))  # type: ignore
             elif isinstance(segm, np.ndarray):
                 assert segm.ndim == 2, "Expect segmentation of 2 dimensions, got {}.".format(segm.ndim)
                 # mask array
@@ -231,45 +227,18 @@ def annotations_to_instances(annos, image_size):
                 )
         # torch.from_numpy does not support array with negative stride.
         masks = BitMasks(torch.stack([torch.from_numpy(np.ascontiguousarray(x)) for x in masks]))
-        target.gt_masks = masks
 
+    keypoints = None
     if len(annos) and "keypoints" in annos[0]:
         kpts = [obj.get("keypoints", []) for obj in annos]
-        target.gt_keypoints = Keypoints(kpts)
+        keypoints = Keypoints(kpts)
 
-    return target
-
-
-def annotations_to_instances_rotated(annos, image_size):
-    """
-    Create an :class:`Instances` object used by the models,
-    from instance annotations in the dataset dict.
-    Compared to `annotations_to_instances`, this function is for rotated boxes only
-
-    Args:
-        annos (list[dict]): a list of instance annotations in one image, each
-            element for one instance.
-        image_size (tuple): height, width
-
-    Returns:
-        Instances:
-            Containing fields "gt_boxes", "gt_classes",
-            if they can be obtained from `annos`.
-            This is the format that builtin models expect.
-    """
-    boxes = [obj["bbox"] for obj in annos]
-    target = Instances(image_size)
-    boxes = target.gt_boxes = RotatedBoxes(boxes)
-    boxes.clip(image_size)
-
-    classes = [obj["category_id"] for obj in annos]
-    classes = torch.tensor(classes, dtype=torch.int64)
-    target.gt_classes = classes
-
-    return target
+    return Instances(image_size, boxes=boxes, classes=classes, masks=masks, keypoints=keypoints)
 
 
-def filter_empty_instances(instances, by_box=True, by_mask=True, box_threshold=1e-5, return_mask=False):
+def filter_empty_instances(
+    instances: Instances, by_box: bool = True, by_mask: bool = True, box_threshold: float = 1e-5
+) -> Instances:
     """
     Filter out empty instances in an `Instances` object.
 
@@ -286,11 +255,11 @@ def filter_empty_instances(instances, by_box=True, by_mask=True, box_threshold=1
     """
     assert by_box or by_mask
     r = []
-    if by_box:
-        r.append(instances.gt_boxes.nonempty(threshold=box_threshold))
-    if instances.has("gt_masks") and by_mask:
-        r.append(instances.gt_masks.nonempty())
-
+    if instances.boxes and by_box:
+        r.append(instances.boxes.nonempty(threshold=box_threshold))
+    if instances.masks and by_mask:
+        assert isinstance(instances.masks, BitMasks), "Error, masks in instances are not BitMasks"
+        r.append(instances.masks.nonempty())
     # TODO: can also filter visible keypoints
 
     if not r:
@@ -298,35 +267,8 @@ def filter_empty_instances(instances, by_box=True, by_mask=True, box_threshold=1
     m = r[0]
     for x in r[1:]:
         m = m & x
-    if return_mask:
-        return instances[m], m
+
     return instances[m]
-
-
-def convert_image_to_rgb(image, format):
-    """
-    Convert an image from given format to RGB.
-
-    Args:
-        image (np.ndarray or Tensor): an HWC image
-        format (str): the format of input image, also see `read_image`
-
-    Returns:
-        (np.ndarray): (H,W,3) RGB image in 0-255 range, can be either float or uint8
-    """
-    if isinstance(image, torch.Tensor):
-        image = image.cpu().numpy()
-    if format == "BGR":
-        image = image[:, :, [2, 1, 0]]
-    elif format == "YUV-BT.601":
-        image = np.dot(image, np.array(_M_YUV2RGB).T)
-        image = image * 255.0
-    else:
-        if format == "L":
-            image = image[:, :, 0]
-        image = image.astype(np.uint8)
-        image = np.asarray(Image.fromarray(image, mode=format).convert("RGB"))
-    return image
 
 
 def convert_PIL_to_numpy(image, format):

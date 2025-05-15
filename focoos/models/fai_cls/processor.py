@@ -55,14 +55,15 @@ class ClassificationProcessor(Processor):
         """
         targets = []
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], ClassificationDatasetDict):
-            inputs: List[ClassificationDatasetDict]
-            images = [x.image.to(device) for x in inputs]
+            class_data_dict: List[ClassificationDatasetDict] = inputs  # type: ignore
+            images = [x.image.to(device) for x in class_data_dict]  # type: ignore
             images = ImageList.from_tensors(
                 tensors=images,
             )
             images_torch = images.tensor
             targets = [
-                ClassificationTargets(labels=torch.tensor(x.label, dtype=torch.int64, device=device)) for x in inputs
+                ClassificationTargets(labels=torch.tensor(x.label, dtype=torch.int64, device=device))
+                for x in class_data_dict  # type: ignore
             ]
             return images_torch, targets
 

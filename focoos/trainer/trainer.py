@@ -27,7 +27,7 @@ from focoos.trainer.checkpointer import Checkpointer
 from focoos.trainer.evaluation.evaluator import inference_on_dataset
 from focoos.trainer.evaluation.get_eval import get_evaluator
 from focoos.trainer.evaluation.utils import print_csv_format
-from focoos.trainer.events import CommonMetricPrinter, EventStorage, JSONWriter, TensorboardXWriter, get_event_storage
+from focoos.trainer.events import CommonMetricPrinter, EventStorage, JSONWriter, get_event_storage
 from focoos.trainer.hooks import hook
 from focoos.trainer.hooks.early_stop import EarlyStoppingHook
 from focoos.trainer.hooks.sync_to_hub import SyncToHubHook
@@ -338,7 +338,7 @@ class FocoosTrainer:
                             JSONWriter(
                                 os.path.join(self.ckpt_dir, "metrics.json"),
                             ),
-                            TensorboardXWriter(self.output_dir),
+                            # TensorboardXWriter(self.output_dir),
                         ],
                         period=args.log_period,
                     )
@@ -518,9 +518,6 @@ class FocoosTrainer:
         if comm.get_rank() == 0:
             key, value = TASK_METRICS[self.task.value].split("/")
             raw_metrics = _add_prefix(eval_result[key], key)
-            storage = get_event_storage()
-            iteration = storage.get("iteration")
-            logger.info(f"STORAGE ITERATION: {iteration}")
             if (
                 self.model_info.val_metrics is None
                 or raw_metrics[TASK_METRICS[self.task.value]]

@@ -10,7 +10,7 @@ from focoos.ports import DatasetEntry, DynamicAxes, FocoosDet, FocoosDetections
 from focoos.processor.base_processor import Processor
 from focoos.structures import BitMasks, ImageList, Instances
 from focoos.utils.memory import retry_if_cuda_oom
-from focoos.utils.vision import binary_mask_to_base64, masks_to_xyxy
+from focoos.utils.vision import binary_mask_to_base64
 
 
 def interpolate_image(image, size):
@@ -63,18 +63,19 @@ class MaskFormerProcessor(Processor):
     ) -> tuple[torch.Tensor, list[MaskFormerTargets]]:
         targets = []
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DatasetEntry):
-            images = [x.image.to(device) for x in inputs]
+            images = [x.image.to(device) for x in inputs]  # type: ignore
             images = ImageList.from_tensors(
                 tensors=images,
             )
             images_torch = images.tensor
             if self.training:
                 # mask classification target
-                gt_instances = [x.instances.to(device) for x in inputs]
+                gt_instances = [x.instances.to(device) for x in inputs]  # type: ignore
                 h, w = images.tensor.shape[-2:]
                 targets = []
                 for targets_per_image in gt_instances:
-                    gt_masks = targets_per_image.gt_masks
+                    assert targets_per_image.masks is not None, "masks are required for training"
+                    gt_masks = targets_per_image.masks.tensor
                     if len(gt_masks) > 0:
                         padded_masks = torch.zeros(
                             (gt_masks.shape[0], h, w),
@@ -84,7 +85,8 @@ class MaskFormerProcessor(Processor):
                         padded_masks[:, : gt_masks.shape[1], : gt_masks.shape[2]] = gt_masks
                     else:
                         padded_masks = gt_masks
-                    cls_labels = targets_per_image.gt_classes
+                    assert targets_per_image.classes is not None, "classes are required for training"
+                    cls_labels = targets_per_image.classes
                     targets.append(MaskFormerTargets(labels=cls_labels, masks=padded_masks))
         else:
             if self.training:
@@ -112,6 +114,7 @@ class MaskFormerProcessor(Processor):
         num_queries = mask_pred.shape[0]
 
         # [Q, K]
+        # todo: merge this with the modeling top_k in the forward pass
         scores = mask_cls
         labels = (
             torch.arange(self.num_classes, device=mask_cls.device).unsqueeze(0).repeat(num_queries, 1).flatten(0, 1)
@@ -124,18 +127,11 @@ class MaskFormerProcessor(Processor):
         # mask_pred = mask_pred.unsqueeze(1).repeat(1, self.sem_seg_head.num_classes, 1).flatten(0, 1)
         mask_pred = mask_pred[topk_indices]
 
-        result = Instances(image_size)
-        # mask (before sigmoid)
-        result.pred_masks = (mask_pred > self.mask_threshold).float()
-        result.pred_boxes = BitMasks(mask_pred > self.mask_threshold).get_bounding_boxes()
-
-        # calculate average mask prob
-        mask_scores_per_image = (mask_pred.flatten(1) * result.pred_masks.flatten(1)).sum(1) / (
-            result.pred_masks.flatten(1).sum(1) + 1e-6
-        )
-        result.scores = scores_per_image * mask_scores_per_image
-        result.pred_classes = labels_per_image
-        return result
+        masks = BitMasks((mask_pred > self.mask_threshold).float())
+        boxes = masks.get_bounding_boxes()
+        scores = scores_per_image
+        classes = labels_per_image
+        return Instances(image_size, boxes=boxes, masks=masks, scores=scores, classes=classes)
 
     def eval_postprocess(
         self,
@@ -189,6 +185,7 @@ class MaskFormerProcessor(Processor):
 
         # Extract image sizes from inputs
         image_sizes = self.get_image_sizes(inputs)
+
         batch_size = output.logits.shape[0]
         results = []
         assert len(image_sizes) == batch_size, (
@@ -217,29 +214,9 @@ class MaskFormerProcessor(Processor):
                 for class_idx in range(q):
                     # Set True where the argmax equals this class index
                     bin_mask_pred[batch_idx, class_idx] = out[batch_idx] == class_idx
-
         else:
             bin_mask_pred = mask_pred >= self.mask_threshold  # B x Q x H x W
 
-        if use_mask_score:
-            bin_mask_pred = bin_mask_pred.int()
-            # Quickfix to avoid num. instability.
-            bin_mask_pred = bin_mask_pred * 1e-3
-            mask_score = (bin_mask_pred * mask_pred).sum(-1).sum(-1) / (
-                (bin_mask_pred).sum(-1).sum(-1) + 1e-5
-            )  # add EPS to avoid division by 0
-            # Multiply mask scores to class scores for final score
-            scores = scores * mask_score  # B x Q
-
-        if scores.shape[1] > top_k:
-            scores, index = torch.topk(scores, top_k, dim=-1)
-            labels = torch.gather(labels, dim=1, index=index)  # B x top_k_masks
-            bin_mask_pred = torch.gather(
-                bin_mask_pred,
-                dim=1,
-                index=index.unsqueeze(-1).unsqueeze(-1).tile(1, 1, *mask_pred.shape[-2:]),
-            )  # B x top_k_masks x H x W
-        print("Scores2: ", scores.shape)
         # Filter based on the scores greather than threshold
         if threshold > 0:
             filter_mask = scores > threshold
@@ -251,25 +228,6 @@ class MaskFormerProcessor(Processor):
                 dim=1,
                 index=filter_mask[1].unsqueeze(0).unsqueeze(-1).unsqueeze(-1).expand(-1, -1, *bin_mask_pred.shape[-2:]),
             )  # B x top_k_masks x H x W
-
-        # Find masks with zero sum
-        if filter_empty_masks:
-            non_zero_masks = bin_mask_pred.sum(dim=(-2, -1)) > 1  # B x top_k_masks
-            # Set scores and labels to 0 for empty masks
-            # Get indices of non-zero masks
-            non_zero_indices = (non_zero_masks).nonzero(as_tuple=True)
-            # Filter scores, labels and bin_mask_pred to only keep non-zero masks
-            scores = torch.gather(scores, dim=1, index=non_zero_indices[1].unsqueeze(0))
-            labels = torch.gather(labels, dim=1, index=non_zero_indices[1].unsqueeze(0))
-            bin_mask_pred = torch.gather(
-                bin_mask_pred,
-                dim=1,
-                index=non_zero_indices[1]
-                .unsqueeze(0)
-                .unsqueeze(-1)
-                .unsqueeze(-1)
-                .expand(-1, -1, *bin_mask_pred.shape[-2:]),
-            )
 
         bin_mask_pred = bin_mask_pred.detach().cpu()
         scores = scores.detach().cpu()
@@ -284,11 +242,11 @@ class MaskFormerProcessor(Processor):
                 bin_mask_pred[i].float(), image_sizes[i]
             ).bool()
 
-            if self.config.postprocessing_type == "instance":
-                box_pred = masks_to_xyxy(bin_mask_pred_resized.numpy())
-                py_box_pred = box_pred.tolist()
-            else:
-                py_box_pred = [None] * len(scores[i])
+            # if self.config.postprocessing_type == "instance":
+            #     box_pred = masks_to_xyxy(bin_mask_pred_resized.numpy())
+            #     py_box_pred = box_pred.tolist()
+            # else:
+            py_box_pred = [None] * len(scores[i])
 
             py_scores = scores[i].tolist()
             py_labels = labels[i].tolist()
@@ -321,30 +279,22 @@ class MaskFormerProcessor(Processor):
             list[torch.Tensor],
         ],
         class_names: list[str] = [],
-        top_k: Optional[int] = None,
-        threshold: Optional[float] = None,
+        **kwargs,
     ) -> list[FocoosDetections]:
         masks = output[0]
         logits = output[1]
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if isinstance(logits, np.ndarray):
             logits = torch.from_numpy(logits)
         if isinstance(masks, np.ndarray):
             masks = torch.from_numpy(masks)
-        predict_all_pixels = self.config.predict_all_pixels
-        use_mask_score = self.config.use_mask_score
-        filter_empty_masks = self.config.filter_empty_masks
-        top_k = self.config.num_queries if top_k is None else top_k
-        threshold = self.config.threshold if threshold is None else threshold
-        model_output = MaskFormerModelOutput(logits=logits, masks=masks, loss=None)
+
+        model_output = MaskFormerModelOutput(logits=logits.to(device), masks=masks.to(device), loss=None)
         return self.postprocess(
             model_output,
             inputs,
             class_names,
-            threshold=threshold,
-            use_mask_score=use_mask_score,
-            filter_empty_masks=filter_empty_masks,
-            predict_all_pixels=predict_all_pixels,
-            top_k=top_k,
+            **kwargs,
         )
 
     def get_dynamic_axes(self) -> DynamicAxes:

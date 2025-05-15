@@ -12,44 +12,6 @@ from focoos.ports import (
     Task,
 )
 
-# JSON FILE FORMAT:
-# {
-#    "categories": [
-#     {
-#         "id": 0,
-#         "name": "Name",
-#         "supercategory": "SuperName"
-#     },...
-#     ]
-#     "images": [
-#     {
-#         "id": 0,
-#         "file_name": "image_name",
-#         "height": 640,
-#         "width": 640,
-#     }, ... ]
-#     "annotations": [ # for detection
-#     {
-#         "id": 0,
-#         "image_id": 0,
-#         "category_id": 4,
-#         "bbox": [
-#             233,
-#             307,
-#             71,
-#             69
-#         ],
-#         "area": 4899,
-#         "segmentation": list of points or bitmask, # for instance seg
-#         "iscrowd": 0
-#     },
-#     "annotations": [ # for semantic
-#     {
-#         "image_id": 0,
-#         "file_name": "annotation.png"
-#         "segments_info": [ { as bbox }, ... ]  # for panoptic
-#     },
-
 
 @dataclass
 class CatalogSplit:
@@ -110,20 +72,6 @@ CATALOG = [
             filter_empty=False,
         ),
     ),
-    # CatalogDataset(
-    #     name="ade20k_panoptic",
-    #     task=Task.,
-    #     train_split=CatalogSplit(
-    #         image_root="ADEChallengeData2016/images/training",
-    #         gt_root="ADEChallengeData2016/ade20k_panoptic_train",
-    #         json_file="ADEChallengeData2016/ade20k_panoptic_train.json",
-    #     ),
-    #     val_split=CatalogSplit(
-    #         image_root="ADEChallengeData2016/images/validation",
-    #         gt_root="ADEChallengeData2016/ade20k_panoptic_val",
-    #         json_file="ADEChallengeData2016/ade20k_panoptic_val.json",
-    #     ),
-    # ),
     CatalogDataset(
         name="coco_2017_det",
         task=Task.DETECTION,
@@ -150,20 +98,6 @@ CATALOG = [
             filter_empty=False,
         ),
     ),
-    # CatalogDataset(
-    #     name="coco_2017_panoptic",
-    #     task=Task.PANSEG,
-    #     train_split=CatalogSplit(
-    #         image_root="coco/train2017",
-    #         gt_root="coco/annotations/panoptic_train2017",
-    #         json_file="coco/annotations/panoptic_train2017.json",
-    #     ),
-    #     val_split=CatalogSplit(
-    #         image_root="coco/val2017",
-    #         gt_root="coco/annotations/panoptic_val2017",
-    #         json_file="coco/annotations/panoptic_val2017.json",
-    #     ),
-    # ),
     CatalogDataset(
         name="object365",
         task=Task.DETECTION,
@@ -220,11 +154,6 @@ def _load_dataset_split(
             json_file=json_file_path,
             metadata=metadata,
         )
-        # elif task == Task.PANSEG:
-        #     if not gt_root_path:
-        #         raise ValueError(f"Internal Error: gt_root missing from dataset {split_name}.")
-        #     metadata.panoptic_root = gt_root_path
-        # dataset_dict = load_coco_panoptic_json(json_file_path, image_root_path, gt_root_path, metadata)
     else:
         raise ValueError(f"Unknown task {task}")
 

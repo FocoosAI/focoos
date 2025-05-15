@@ -59,18 +59,19 @@ class BisenetFormerProcessor(Processor):
     ) -> tuple[torch.Tensor, list[BisenetFormerTargets]]:
         targets = []
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DatasetEntry):
-            images = [x.image.to(device) for x in inputs]
+            images = [x.image.to(device) for x in inputs]  # type: ignore
             images = ImageList.from_tensors(
                 tensors=images,
             )
             images_torch = images.tensor
             if self.training:
                 # mask classification target
-                gt_instances = [x.instances.to(device) for x in inputs]
+                gt_instances = [x.instances.to(device) for x in inputs]  # type: ignore
                 h, w = images.tensor.shape[-2:]
                 targets = []
                 for targets_per_image in gt_instances:
-                    gt_masks = targets_per_image.gt_masks
+                    assert targets_per_image.masks is not None, "masks are required for training"
+                    gt_masks = targets_per_image.masks.tensor
                     if len(gt_masks) > 0:
                         padded_masks = torch.zeros(
                             (gt_masks.shape[0], h, w),
@@ -80,7 +81,8 @@ class BisenetFormerProcessor(Processor):
                         padded_masks[:, : gt_masks.shape[1], : gt_masks.shape[2]] = gt_masks
                     else:
                         padded_masks = gt_masks
-                    cls_labels = targets_per_image.gt_classes
+                    assert targets_per_image.classes is not None, "classes are required for training"
+                    cls_labels = targets_per_image.classes
                     targets.append(BisenetFormerTargets(labels=cls_labels, masks=padded_masks))
         else:
             if self.training:
@@ -108,6 +110,7 @@ class BisenetFormerProcessor(Processor):
         num_queries = mask_pred.shape[0]
 
         # [Q, K]
+        # todo: merge this with the modeling top_k in the forward pass
         scores = mask_cls
         labels = (
             torch.arange(self.num_classes, device=mask_cls.device).unsqueeze(0).repeat(num_queries, 1).flatten(0, 1)
@@ -120,18 +123,11 @@ class BisenetFormerProcessor(Processor):
         # mask_pred = mask_pred.unsqueeze(1).repeat(1, self.sem_seg_head.num_classes, 1).flatten(0, 1)
         mask_pred = mask_pred[topk_indices]
 
-        result = Instances(image_size)
-        # mask (before sigmoid)
-        result.pred_masks = (mask_pred > self.mask_threshold).float()
-        result.pred_boxes = BitMasks(mask_pred > self.mask_threshold).get_bounding_boxes()
-
-        # calculate average mask prob
-        mask_scores_per_image = (mask_pred.flatten(1) * result.pred_masks.flatten(1)).sum(1) / (
-            result.pred_masks.flatten(1).sum(1) + 1e-6
-        )
-        result.scores = scores_per_image * mask_scores_per_image
-        result.pred_classes = labels_per_image
-        return result
+        masks = BitMasks((mask_pred > self.mask_threshold).float())
+        boxes = masks.get_bounding_boxes()
+        scores = scores_per_image
+        classes = labels_per_image
+        return Instances(image_size, boxes=boxes, masks=masks, scores=scores, classes=classes)
 
     def eval_postprocess(
         self,
@@ -326,28 +322,20 @@ class BisenetFormerProcessor(Processor):
             list[torch.Tensor],
         ],
         class_names: list[str] = [],
-        top_k: Optional[int] = None,
-        threshold: Optional[float] = None,
+        **kwargs,
     ) -> list[FocoosDetections]:
         masks = output[0]
         logits = output[1]
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if isinstance(logits, np.ndarray):
             logits = torch.from_numpy(logits)
         if isinstance(masks, np.ndarray):
             masks = torch.from_numpy(masks)
-        predict_all_pixels = self.config.predict_all_pixels
-        use_mask_score = self.config.use_mask_score
-        filter_empty_masks = self.config.filter_empty_masks
-        top_k = self.config.num_queries if top_k is None else top_k
-        threshold = self.config.threshold if threshold is None else threshold
-        model_output = BisenetFormerOutput(logits=logits, masks=masks, loss=None)
+
+        model_output = BisenetFormerOutput(logits=logits.to(device), masks=masks.to(device), loss=None)
         return self.postprocess(
             model_output,
             inputs,
             class_names,
-            threshold=threshold,
-            use_mask_score=use_mask_score,
-            filter_empty_masks=filter_empty_masks,
-            predict_all_pixels=predict_all_pixels,
-            top_k=top_k,
+            **kwargs,
         )

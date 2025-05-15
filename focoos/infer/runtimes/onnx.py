@@ -152,6 +152,16 @@ class ONNXRuntime(BaseRuntime):
         out = self.ort_sess.run(out_name, {input_name: im.cpu().numpy()})
         return out
 
+    def get_info(self) -> tuple[str, str]:
+        gpu_info = get_gpu_info()
+        device_name = "CPU"
+        if gpu_info.devices is not None and len(gpu_info.devices) > 0:
+            device_name = gpu_info.devices[0].gpu_name
+        else:
+            device_name = get_cpu_name()
+            logger.warning(f"No GPU found, using CPU {device_name}.")
+        return f"onnx.{self.active_provider}", str(device_name)
+
     def benchmark(self, iterations: int = 50, size: int = 640) -> LatencyMetrics:
         """
         Benchmark the model performance.
@@ -166,13 +176,7 @@ class ONNXRuntime(BaseRuntime):
         Returns:
             LatencyMetrics: Performance metrics including FPS, mean, min, max, and std latencies.
         """
-        gpu_info = get_gpu_info()
-        device_name = "CPU"
-        if gpu_info.devices is not None and len(gpu_info.devices) > 0:
-            device_name = gpu_info.devices[0].gpu_name
-        else:
-            device_name = get_cpu_name()
-            logger.warning(f"No GPU found, using CPU {device_name}.")
+        engine, device_name = self.get_info()
 
         logger.info(f"⏱️ Benchmarking latency on {device_name}, size: {size}x{size}..")
 
@@ -193,13 +197,13 @@ class ONNXRuntime(BaseRuntime):
 
         metrics = LatencyMetrics(
             fps=int(1000 / durations.mean()),
-            engine=f"onnx.{self.active_provider}",
+            engine=engine,
             mean=round(durations.mean().astype(float), 3),
             max=round(durations.max().astype(float), 3),
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
             im_size=size,
-            device=str(device_name),
+            device=device_name,
         )
         logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")
         return metrics

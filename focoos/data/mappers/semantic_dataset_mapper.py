@@ -82,8 +82,11 @@ class SemanticDatasetMapper(DatasetMapper):
 
         aug_input = A.AugInput(image, sem_seg=sem_seg_gt)
         aug_input, transforms = A.apply_augmentations(self.augmentations, aug_input)
-        image = aug_input.image
-        sem_seg_gt = aug_input.sem_seg if sem_seg_gt is not None else None
+
+        if not hasattr(aug_input, "image") or aug_input.image is None:  # type: ignore
+            raise ValueError(f"Image is None for {dataset_dict['file_name']}")
+        image = aug_input.image  # type: ignore
+        sem_seg_gt = aug_input.sem_seg if sem_seg_gt is not None else None  # type: ignore
 
         # Pad image and segmentation label here!
         image = torch.as_tensor(np.ascontiguousarray(image.transpose(2, 0, 1)))
@@ -106,24 +109,23 @@ class SemanticDatasetMapper(DatasetMapper):
         # Prepare per-category binary masks
         if sem_seg_gt is not None:
             sem_seg_gt = sem_seg_gt.numpy()
-            instances = Instances(image_shape)
+
             classes = np.unique(sem_seg_gt)
             # remove ignored region
             classes = classes[classes != self.ignore_label]
-            instances.gt_classes = torch.tensor(classes, dtype=torch.int64)
+            classes = torch.tensor(classes, dtype=torch.int64)
 
-            masks = []
+            masks_np = []
             for class_id in classes:
-                masks.append(sem_seg_gt == class_id)
+                masks_np.append(sem_seg_gt == class_id)
 
-            if len(masks) == 0:
+            if len(masks_np) == 0:
                 # Some image does not have annotation (all ignored)
-                instances.gt_masks = torch.zeros((0, sem_seg_gt.shape[-2], sem_seg_gt.shape[-1]))
+                masks = BitMasks(torch.zeros((0, sem_seg_gt.shape[-2], sem_seg_gt.shape[-1])))
             else:
-                masks = BitMasks(torch.stack([torch.from_numpy(np.ascontiguousarray(x.copy())) for x in masks]))
-                instances.gt_masks = masks.tensor
+                masks = BitMasks(torch.stack([x.contiguous() for x in masks_np]))
 
-            dataset_dict["instances"] = instances
+            dataset_dict["instances"] = Instances(image_shape, classes=classes, masks=masks)
 
         return SemanticSegmentationDatasetEntry(
             image=dataset_dict["image"],

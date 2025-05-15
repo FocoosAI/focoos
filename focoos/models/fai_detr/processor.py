@@ -38,40 +38,21 @@ def detector_postprocess(
     Returns:
         Instances: the resized output from the model, based on the output resolution
     """
-    if isinstance(output_width, torch.Tensor):
-        # This shape might (but not necessarily) be tensors during tracing.
-        # Converts integer tensors to float temporaries to ensure true
-        # division is performed when computing scale_x and scale_y.
-        output_width_tmp = output_width.float()
-        output_height_tmp = output_height.float()
-        new_size = torch.stack([output_height, output_width])
-    else:
-        new_size = (output_height, output_width)
-        output_width_tmp = output_width
-        output_height_tmp = output_height
+    new_size = (output_height, output_width)
+    output_width_tmp = output_width
+    output_height_tmp = output_height
 
     scale_x, scale_y = (
         output_width_tmp / results.image_size[1],
         output_height_tmp / results.image_size[0],
     )
-    results = Instances(new_size, **results.get_fields())
+    results = Instances(new_size, boxes=results.boxes, scores=results.scores, classes=results.classes)
 
-    if results.has("pred_boxes"):
-        output_boxes = results.pred_boxes
-    elif results.has("proposal_boxes"):
-        output_boxes = results.proposal_boxes
-    else:
-        output_boxes = None
-    assert output_boxes is not None, "Predictions must contain boxes!"
+    assert results.boxes is not None, "Predictions must contain boxes!"
+    results.boxes.scale(scale_x, scale_y)
+    results.boxes.clip(results.image_size)
 
-    output_boxes.scale(scale_x, scale_y)
-    output_boxes.clip(results.image_size)
-
-    results = results[output_boxes.nonempty()]
-
-    if results.has("pred_keypoints"):
-        results.pred_keypoints[:, :, 0] *= scale_x
-        results.pred_keypoints[:, :, 1] *= scale_y
+    results = results[results.boxes.nonempty()]  # type: ignore
 
     return results
 
@@ -99,20 +80,23 @@ class DETRProcessor(Processor):
     ) -> tuple[torch.Tensor, list[DETRTargets]]:
         targets = []
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DatasetEntry):
-            images = [x.image.to(device) for x in inputs]
+            images = [x.image.to(device) for x in inputs]  # type: ignore
             images = ImageList.from_tensors(
                 tensors=images,
             )
             images_torch = images.tensor
             if self.training:
                 # mask classification target
-                gt_instances = [x.instances.to(device) for x in inputs]
+                gt_instances = [x.instances.to(device) for x in inputs]  # type: ignore
                 h, w = images.tensor.shape[-2:]
                 targets = []
                 for targets_per_image in gt_instances:
+                    assert targets_per_image.boxes is not None and targets_per_image.classes is not None, (
+                        "boxes and classes are required for training"
+                    )
                     image_size_xyxy = torch.as_tensor([w, h, w, h], dtype=torch.float, device=device)
-                    gt_classes = targets_per_image.gt_classes
-                    gt_boxes = targets_per_image.gt_boxes.tensor / image_size_xyxy
+                    gt_classes = targets_per_image.classes
+                    gt_boxes = targets_per_image.boxes.tensor / image_size_xyxy
                     gt_boxes = box_xyxy_to_cxcywh(gt_boxes)
                     targets.append(DETRTargets(labels=gt_classes, boxes=gt_boxes))
         else:
@@ -133,7 +117,6 @@ class DETRProcessor(Processor):
         top_k: Optional[int] = None,
     ) -> list[dict[str, Instances]]:
         top_k = top_k or self.top_k
-
         results = []
         box_cls, box_pred = output.logits, output.boxes
         batch_size = box_cls.shape[0]
@@ -143,12 +126,10 @@ class DETRProcessor(Processor):
             # Process results directly within the loop
             scores, labels, processed_box_pred = self._get_predictions(box_cls[i], box_pred[i], top_k, num_classes)
 
-            result = Instances(image_size=(1, 1))  # we are using normalized boxes
-            result.pred_boxes = Boxes(processed_box_pred)
-            result.scores = scores
-            result.pred_classes = labels
+            boxes = Boxes(processed_box_pred)
+            result = Instances(image_size=(1, 1), boxes=boxes, scores=scores, classes=labels)
             result = detector_postprocess(
-                result, output_height=batched_inputs[i].height, output_width=batched_inputs[i].width
+                result, output_height=batched_inputs[i].height or 1, output_width=batched_inputs[i].width or 1
             )
             results.append({"instances": result})
 
@@ -182,7 +163,7 @@ class DETRProcessor(Processor):
         threshold = threshold or self.threshold
 
         image_sizes = self.get_image_sizes(inputs)
-        print(image_sizes)
+
         results = []
         batch_size = output.boxes.shape[0]
         num_classes = output.logits.shape[-1]
@@ -202,8 +183,8 @@ class DETRProcessor(Processor):
             labels = labels[mask]
 
             # Multiply boxes by image size
-            box_pred[:, 0::2] = box_pred[:, 0::2] * image_sizes[i][0]
-            box_pred[:, 1::2] = box_pred[:, 1::2] * image_sizes[i][1]
+            box_pred[:, 0::2] = box_pred[:, 0::2] * image_sizes[i][1]
+            box_pred[:, 1::2] = box_pred[:, 1::2] * image_sizes[i][0]
             # Convert box coordinates to integers for pixel-precise bounding boxes
             box_pred = box_pred.round().to(torch.int32)
 

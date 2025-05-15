@@ -45,6 +45,13 @@ class BaseRuntime:
         pass
 
     @abstractmethod
+    def get_info(self) -> tuple[str, str]:
+        """
+        Get the engine and device name.
+        """
+        pass
+
+    @abstractmethod
     def benchmark(self, iterations: int, size: float) -> LatencyMetrics:
         """
         Benchmark the model performance.
