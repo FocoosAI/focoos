@@ -21,7 +21,7 @@ from focoos.data.loaders import build_detection_test_loader, build_detection_tra
 from focoos.hub.focoos_hub import FocoosHUB
 from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.layers.norm import FrozenBatchNorm2d
-from focoos.ports import ModelArtifact, ModelInfo, ModelStatus, Task, TrainerArgs
+from focoos.ports import ArtifactName, ModelInfo, ModelStatus, StatusTransition, Task, TrainerArgs, TrainingInfo
 from focoos.processor.base_processor import Processor
 from focoos.trainer.checkpointer import Checkpointer
 from focoos.trainer.evaluation.evaluator import inference_on_dataset
@@ -136,7 +136,7 @@ class FocoosTrainer:
         self.model = model
         self.processor = processor.train()
         self.model_info = model_info
-        self.model_info.weights_uri = ModelArtifact.WEIGHTS
+        self.model_info.weights_uri = ArtifactName.WEIGHTS
         self.checkpoint = self.args.init_checkpoint
         # Setup data
         self.data_train = data_train
@@ -246,9 +246,7 @@ class FocoosTrainer:
                 logger.warning(f"Error parsing metrics.json: {e}")
                 pass
 
-            self.model_info.status = ModelStatus.TRAINING_COMPLETED
-            self.model_info.updated_at = datetime.now().isoformat()
-            self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
+            self._update_training_info_and_dump(ModelStatus.TRAINING_COMPLETED, self.args.max_iters)
 
     def _do_eval(self, model):
         """Internal method to evaluate model.
@@ -300,8 +298,11 @@ class FocoosTrainer:
                 > self.model_info.val_metrics[TASK_METRICS[self.task.value]]
             ):
                 self.model_info.val_metrics = raw_metrics
-                self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
-
+                self.model_info.updated_at = datetime.now().isoformat()
+                logger.info(f"✨ New best validation metric: {raw_metrics[TASK_METRICS[self.task.value]]}")
+            self._update_training_info_and_dump(
+                ModelStatus.TRAINING_RUNNING, iteration, detail=f"Validation iter: {iteration}"
+            )
         return eval_res
 
     def _register_hooks(self, trainer, model, checkpointer, optim, scheduler, args):
@@ -481,9 +482,8 @@ class FocoosTrainer:
             "================================================",
         ]
         logger.info("\n".join(output_lines))
-        self.model_info.status = ModelStatus.TRAINING_RUNNING
-        self.model_info.updated_at = datetime.now().isoformat()
-        self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
+
+        self._update_training_info_and_dump(ModelStatus.TRAINING_RUNNING, start_iter)
         trainer_loop.train(start_iter=start_iter, max_iter=args.max_iters)
         self.finished = True
         self.finish()
@@ -531,6 +531,36 @@ class FocoosTrainer:
         self.finished = True
         self.finish()
         return eval_result
+
+    def _update_training_info_and_dump(self, new_status: ModelStatus, iter: int, detail: Optional[str] = None):
+        self.model_info.status = new_status
+        self.model_info.updated_at = datetime.now().isoformat()
+        if self.model_info.training_info is None:
+            self.model_info.training_info = TrainingInfo()
+
+        self.model_info.training_info.main_status = new_status
+        if self.model_info.training_info.status_transitions is None:
+            self.model_info.training_info.status_transitions = []
+        if self.model_info.training_info.main_status != new_status:
+            self.model_info.training_info.main_status = new_status
+
+        if new_status in [ModelStatus.TRAINING_ERROR, ModelStatus.TRAINING_COMPLETED]:
+            self.model_info.training_info.end_time = datetime.now().isoformat()
+
+        if new_status == ModelStatus.TRAINING_ERROR:
+            self.model_info.training_info.failure_reason = detail
+
+        self.model_info.training_info.status_transitions.append(
+            StatusTransition(
+                status=new_status,
+                timestamp=datetime.now().isoformat(),
+                iter=iter,
+                detail=detail,
+            )
+        )
+        if comm.is_main_process():
+            self.model_info.dump_json(os.path.join(self.output_dir, ArtifactName.INFO))
+        logger.debug(f"update model status: {new_status} iter: {iter} detail: {detail}")
 
 
 class TrainerLoop:

@@ -3,7 +3,7 @@ import sys
 from typing import List, Optional
 
 from focoos.hub.focoos_hub import FocoosHUB
-from focoos.ports import ModelArtifact, ModelInfo, ModelStatus
+from focoos.ports import ArtifactName, ModelInfo, ModelStatus
 from focoos.trainer.hooks.base import HookBase
 from focoos.utils.logger import get_logger
 
@@ -47,7 +47,7 @@ class SyncToHubHook(HookBase):
             self._sync_train_job()
 
         elif (self.iteration % (self.eval_period + 3) == 0) and self.iteration > 0:
-            self._sync_train_job(upload_artifacts=[ModelArtifact.WEIGHTS])
+            self._sync_train_job(upload_artifacts=[ArtifactName.WEIGHTS])
 
     def after_train(self):
         exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -62,16 +62,16 @@ class SyncToHubHook(HookBase):
         self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
         self._sync_train_job(
             upload_artifacts=[
-                ModelArtifact.WEIGHTS,
-                ModelArtifact.LOGS,
-                ModelArtifact.PT,
-                ModelArtifact.ONNX,
-                ModelArtifact.INFO,
-                ModelArtifact.METRICS,
+                ArtifactName.WEIGHTS,
+                ArtifactName.LOGS,
+                ArtifactName.PT,
+                ArtifactName.ONNX,
+                ArtifactName.INFO,
+                ArtifactName.METRICS,
             ]
         )
 
-    def _sync_train_job(self, upload_artifacts: Optional[List[ModelArtifact]] = None):
+    def _sync_train_job(self, upload_artifacts: Optional[List[ArtifactName]] = None):
         try:
             self.hub.sync_training_job(self.output_dir, upload_artifacts)
             logger.debug(f"Sync: {self.iteration} {self.model_info.name} ref: {self.model_info.ref}")

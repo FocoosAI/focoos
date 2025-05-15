@@ -23,8 +23,8 @@ from focoos.hub.remote_dataset import RemoteDataset
 from focoos.hub.remote_model import RemoteModel
 from focoos.ports import (
     MODELS_DIR,
+    ArtifactName,
     DatasetPreview,
-    ModelArtifact,
     ModelExtension,
     ModelInfo,
     ModelPreview,
@@ -399,12 +399,12 @@ class FocoosHUB:
         """
         return RemoteDataset(ref, self.api_client)
 
-    def sync_training_job(self, dir: str, upload_artifacts: Optional[List[ModelArtifact]] = None) -> None:
-        if not os.path.exists(os.path.join(dir, "model_info.json")):
+    def sync_training_job(self, dir: str, upload_artifacts: Optional[List[ArtifactName]] = None) -> None:
+        if not os.path.exists(os.path.join(dir, ArtifactName.INFO)):
             logger.warning(f"Model info not found in {dir}")
             raise ValueError(f"Model info not found in {dir}")
-        model_info = ModelInfo.from_json(os.path.join(dir, "model_info.json"))
-        metrics = parse_metrics(os.path.join(dir, "metrics.json"))
+        model_info = ModelInfo.from_json(os.path.join(dir, ArtifactName.INFO))
+        metrics = parse_metrics(os.path.join(dir, ArtifactName.METRICS))
         # status = model_info.status
         # send info to focoos
         logger.debug(
@@ -435,7 +435,10 @@ class FocoosHUB:
             for artifact in upload_artifacts:
                 file_path = os.path.join(dir, artifact.value)
                 if os.path.isfile(file_path):
-                    self.upload_model_artifact(model_info.ref, file_path)
+                    try:
+                        self.upload_model_artifact(model_info.ref, file_path)
+                    except Exception:
+                        pass
 
     def upload_model_artifact(self, model_ref: str, path: str) -> None:
         """
@@ -444,7 +447,7 @@ class FocoosHUB:
         if not os.path.exists(path):
             raise ValueError(f"File not found: {path}")
         file_ext = os.path.splitext(path)[1]
-        if file_ext not in [".pt", ".onnx", ".pth"]:
+        if file_ext not in [".pt", ".onnx", ".pth", ".json", ".txt"]:
             raise ValueError(f"Unsupported file extension: {file_ext}")
         file_name = os.path.basename(path)
         file_size = os.path.getsize(path)
@@ -467,7 +470,7 @@ class FocoosHUB:
         )
         if res.status_code not in [200, 201, 204]:
             raise ValueError(f"Failed to upload model artifact: {res.status_code} {res.text}")
-        logger.info(f"✅ Model artifact {file_name} uploaded to HUB")
+        logger.info(f"✅ Model artifact {file_name} uploaded to HUB.")
 
     def new_model(self, model_info: ModelInfo) -> RemoteModel:
         """

@@ -144,6 +144,14 @@ class Task(str, Enum):
 
 
 @dataclass
+class StatusTransition:
+    status: ModelStatus
+    timestamp: str
+    iter: Optional[int] = None
+    detail: Optional[str] = None
+
+
+@dataclass
 class TrainingInfo:
     """Information about a model's training process.
 
@@ -169,9 +177,9 @@ class TrainingInfo:
     volume_size: Optional[int] = None
     main_status: Optional[str] = None
     failure_reason: Optional[str] = None
-    status_transitions: Optional[list[dict]] = None
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
+    status_transitions: Optional[list[StatusTransition]] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
     artifact_location: Optional[str] = None
 
 
@@ -1046,6 +1054,7 @@ class ModelInfo(DictClass):
     val_metrics: Optional[dict] = None  # TODO: Consider making metrics explicit in the future
     focoos_version: Optional[str] = None
     latency: Optional[list[LatencyMetrics]] = None
+    training_info: Optional[TrainingInfo] = None
     updated_at: Optional[str] = None
 
     @classmethod
@@ -1083,6 +1092,9 @@ class ModelInfo(DictClass):
             updated_at=model_info_json.get("updated_at", None),
             focoos_version=model_info_json.get("focoos_version", None),
             val_metrics=model_info_json.get("val_metrics", None),
+            training_info=TrainingInfo(**model_info_json["training_info"])
+            if "training_info" in model_info_json and model_info_json["training_info"] is not None
+            else None,
         )
         return model_info
 
@@ -1095,6 +1107,7 @@ class ModelInfo(DictClass):
         """
         data = asdict(self)
         # Note: config_class is not included; if needed, convert to string here.
+
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
 
@@ -1150,7 +1163,7 @@ class DynamicAxes:
     dynamic_axes: dict
 
 
-class ModelArtifact(str, Enum):
+class ArtifactName(str, Enum):
     """Model artifact type."""
 
     WEIGHTS = "model_final.pth"
