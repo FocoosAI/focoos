@@ -147,7 +147,6 @@ class Task(str, Enum):
 class StatusTransition:
     status: ModelStatus
     timestamp: str
-    iter: Optional[int] = None
     detail: Optional[str] = None
 
 
@@ -172,6 +171,7 @@ class TrainingInfo:
         artifact_location: Storage location of the training artifacts and model outputs.
     """
 
+    algorithm_name: Optional[str] = ""  # todo: remove
     instance_device: Optional[str] = None
     instance_type: Optional[str] = None
     volume_size: Optional[int] = None

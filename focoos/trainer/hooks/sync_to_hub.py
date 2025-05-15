@@ -1,9 +1,10 @@
 import os
 import sys
+from datetime import datetime
 from typing import List, Optional
 
 from focoos.hub.focoos_hub import FocoosHUB
-from focoos.ports import ArtifactName, ModelInfo, ModelStatus
+from focoos.ports import ArtifactName, ModelInfo, ModelStatus, StatusTransition
 from focoos.trainer.hooks.base import HookBase
 from focoos.utils.logger import get_logger
 
@@ -37,9 +38,6 @@ class SyncToHubHook(HookBase):
         """
         Called before the first iteration.
         """
-        status = ModelStatus.TRAINING_RUNNING
-        self.model_info.status = status
-        self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
         self._sync_train_job()
 
     def after_step(self):
@@ -56,9 +54,21 @@ class SyncToHubHook(HookBase):
                 f"Exception during training, status set to TRAINING_ERROR: {str(exc_type.__name__)} {str(exc_value)}"
             )
             status = ModelStatus.TRAINING_ERROR
-        else:
-            status = ModelStatus.TRAINING_COMPLETED
-        self.model_info.status = status
+            self.model_info.status = status
+            if self.model_info.training_info is not None:
+                self.model_info.training_info.main_status = status
+                self.model_info.training_info.failure_reason = str(exc_value)
+                self.model_info.training_info.end_time = datetime.now().isoformat()
+                if self.model_info.training_info.status_transitions is None:
+                    self.model_info.training_info.status_transitions = []
+                self.model_info.training_info.status_transitions.append(
+                    StatusTransition(
+                        status=status,
+                        timestamp=datetime.now().isoformat(),
+                        detail=f"{str(exc_type.__name__)}:  {str(exc_value)}",
+                    )
+                )
+
         self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
         self._sync_train_job(
             upload_artifacts=[
@@ -74,6 +84,6 @@ class SyncToHubHook(HookBase):
     def _sync_train_job(self, upload_artifacts: Optional[List[ArtifactName]] = None):
         try:
             self.hub.sync_training_job(self.output_dir, upload_artifacts)
-            logger.debug(f"Sync: {self.iteration} {self.model_info.name} ref: {self.model_info.ref}")
+            # logger.debug(f"Sync: {self.iteration} {self.model_info.name} ref: {self.model_info.ref}")
         except Exception as e:
             logger.error(f"[sync_train_job] failed to sync train job: {str(e)}")

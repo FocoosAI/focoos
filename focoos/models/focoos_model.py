@@ -59,6 +59,7 @@ class FocoosModel:
         if system_info.gpu_info and system_info.gpu_info.devices and len(system_info.gpu_info.devices) > 0:
             device = system_info.gpu_info.devices[0].gpu_name
 
+        self.model_info.name = train_args.run_name.strip()
         self.model_info.train_args = train_args  # type: ignore
         self.model_info.val_dataset = data_val.dataset.metadata.name
         self.model_info.val_metrics = None
@@ -76,7 +77,6 @@ class FocoosModel:
                 StatusTransition(
                     status=ModelStatus.TRAINING_STARTING,
                     timestamp=datetime.now().isoformat(),
-                    iter=0,
                 )
             ],
         )
