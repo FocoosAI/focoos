@@ -198,21 +198,24 @@ class VisualizationHook(HookBase):
         # set model back to training mode
         self.model.train(training_mode)
 
-    def after_step(self):
+    @property
+    def iter(self):
         try:
-            next_iter = self.trainer.iter + 1
-            if self._period > 0 and next_iter % self._period == 0:
-                # do the last eval in after_train
-                if next_iter != self.trainer.max_iter:
-                    self._visualize()
+            return self.trainer.iter
         except (AttributeError, TypeError):
-            # In case self.trainer is None
-            self._visualize()
+            return 0
+
+    def after_step(self):
+        next_iter = self.iter + 1
+        if self._period > 0 and next_iter % self._period == 0:
+            # do the last eval in after_train
+            if next_iter != self.trainer.max_iter:
+                self._visualize()
 
     def after_train(self):
         try:
             # This condition is to prevent the eval from running after a failed training
-            if self.trainer.iter + 1 >= self.trainer.max_iter:
+            if self.iteration + 1 >= self.trainer.max_iter:
                 self._visualize()
         except (AttributeError, TypeError):
             # In case self.trainer is None

@@ -120,6 +120,19 @@ class ApiClient:
             headers.update(extra_headers)
         return requests.post(url, headers=headers, json=data, files=files)
 
+    def patch(
+        self,
+        path: str,
+        data: Optional[dict] = None,
+        extra_headers: Optional[dict] = None,
+    ):
+        self._check_api_key()
+        url = f"{self.host_url}/{path}"
+        headers = self.default_headers.copy()
+        if extra_headers:
+            headers.update(extra_headers)
+        return requests.patch(url, headers=headers, json=data)
+
     def external_post(
         self,
         path: str,

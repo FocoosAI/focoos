@@ -6,6 +6,7 @@ import torch
 from PIL import Image
 
 from focoos.data.datasets.map_dataset import MapDataset
+from focoos.hub.focoos_hub import FocoosHUB
 from focoos.infer.infer_model import InferModel
 from focoos.models.base_model import BaseModelNN
 from focoos.ports import (
@@ -45,7 +46,7 @@ class FocoosModel:
     def __repr__(self):
         return f"{self.model_info.name} ({self.model_info.model_family.value})"
 
-    def train(self, args: TrainerArgs, data_train: MapDataset, data_val: MapDataset):
+    def train(self, args: TrainerArgs, data_train: MapDataset, data_val: MapDataset, hub: Optional[FocoosHUB] = None):
         from focoos.trainer.trainer import run_train
 
         """Train the model.
@@ -91,7 +92,7 @@ class FocoosModel:
             self.load_weights(weights)
             self.model_info = ModelInfo.from_json(metadata_path)
         else:
-            run_train(args, data_train, data_val, self.model, self.processor, self.model_info)
+            run_train(args, data_train, data_val, self.model, self.processor, self.model_info, hub)
 
     def test(self, args: TrainerArgs, data_test: MapDataset):
         from focoos.trainer.trainer import run_test

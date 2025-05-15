@@ -532,11 +532,11 @@ class SystemInfo(PydanticBase):
     packages_versions: Optional[dict[str, str]] = None
     environment: Optional[dict[str, str]] = None
 
-    def pprint(self):
+    def pprint(self, level: Literal["INFO", "DEBUG"] = "DEBUG"):
         """Pretty print the system info."""
         from focoos.utils.logger import get_logger
 
-        logger = get_logger("SystemInfo")
+        logger = get_logger("SystemInfo", level=level)
 
         output_lines = ["\n================ 🔍 SYSTEM INFO 🔍 ===================="]
         model_data = self.model_dump()
@@ -884,6 +884,9 @@ class TrainerArgs:
     gather_metric_period: int = 1
     zero_grad_before_forward: bool = False
 
+    # Sync to hub
+    sync_to_hub: bool = False
+
 
 @dataclass
 class DatasetMetadata:
@@ -1002,23 +1005,31 @@ class DetectronDict:
 
 @dataclass
 class ModelInfo(DictClass):
-    """Detailed information about a specific model.
+    """
+    Comprehensive metadata for a Focoos model.
 
-    This class stores all the necessary information to identify, configure, and evaluate a model.
+    This dataclass encapsulates all relevant information required to identify, configure, and evaluate a model
+    within the Focoos platform. It is used for serialization, deserialization, and programmatic access to model
+    properties.
 
     Attributes:
-        name: Unique identifier for the model.
-        model_family: The family/architecture the model belongs to (e.g., RTDETR, M2F).
-        config_class: The configuration class type used to instantiate the model.
-        classes: List of class names the model can detect/segment.
-        im_size: Input image size (typically square dimensions).
-        task: The task the model performs (detection, segmentation, etc.).
-        config: Configuration instance with model-specific parameters.
-        description: Optional human-readable description of the model.
-        weights_uri: Optional path or URI to the model weights.
-        val_dataset: Optional name of the validation dataset used.
-        val_metrics: Optional dictionary containing validation metrics.
-        latency: Optional list of latency measurements across different runtimes.
+        name (str): Human-readable name or unique identifier for the model.
+        model_family (ModelFamily): The model's architecture family (e.g., RTDETR, M2F).
+        classes (list[str]): List of class names that the model can detect or segment.
+        im_size (int): Input image size (usually square, e.g., 640).
+        task (Task): Computer vision task performed by the model (e.g., detection, segmentation).
+        config (dict): Model-specific configuration parameters.
+        ref (Optional[str]): Optional unique reference string for the model.
+        focoos_model (Optional[str]): Optional Focoos base model identifier.
+        status (Optional[ModelStatus]): Current status of the model (e.g., training, ready).
+        description (Optional[str]): Optional human-readable description of the model.
+        train_args (Optional[TrainerArgs]): Optional training arguments used to train the model.
+        weights_uri (Optional[str]): Optional URI or path to the model weights.
+        val_dataset (Optional[str]): Optional name or reference of the validation dataset.
+        val_metrics (Optional[dict]): Optional dictionary of validation metrics (e.g., mAP, accuracy).
+        focoos_version (Optional[str]): Optional Focoos version string.
+        latency (Optional[list[LatencyMetrics]]): Optional list of latency measurements for different runtimes.
+        updated_at (Optional[str]): Optional ISO timestamp of the last update.
     """
 
     name: str
@@ -1027,24 +1038,34 @@ class ModelInfo(DictClass):
     im_size: int
     task: Task
     config: dict
-    focoos_model: Optional[str] = None
     ref: Optional[str] = None
+    focoos_model: Optional[str] = None
     status: Optional[ModelStatus] = None
     description: Optional[str] = None
     train_args: Optional[TrainerArgs] = None
     weights_uri: Optional[str] = None
     val_dataset: Optional[str] = None
-    val_metrics: Optional[dict] = None  # todo: make them explicit
+    val_metrics: Optional[dict] = None  # TODO: Consider making metrics explicit in the future
     focoos_version: Optional[str] = None
     latency: Optional[list[LatencyMetrics]] = None
     updated_at: Optional[str] = None
 
     @classmethod
     def from_json(cls, path: str):
+        """
+        Load ModelInfo from a JSON file.
+
+        Args:
+            path (str): Path to the JSON file containing model metadata.
+
+        Returns:
+            ModelInfo: An instance of ModelInfo populated with data from the file.
+        """
         with open(path, encoding="utf-8") as f:
             model_info_json = json.load(f)
         model_info = cls(
             name=model_info_json["name"],
+            ref=model_info_json.get("ref", None),
             model_family=ModelFamily(model_info_json["model_family"]),
             classes=model_info_json["classes"],
             im_size=int(model_info_json["im_size"]),
@@ -1065,29 +1086,38 @@ class ModelInfo(DictClass):
             focoos_version=model_info_json.get("focoos_version", None),
             val_metrics=model_info_json.get("val_metrics", None),
         )
-
         return model_info
 
     def dump_json(self, path: str):
+        """
+        Serialize ModelInfo to a JSON file.
+
+        Args:
+            path (str): Path where the JSON file will be saved.
+        """
         data = asdict(self)
-        # Convert config_class to string
-        # data["config_class"] = self.config_class.__name__
+        # Note: config_class is not included; if needed, convert to string here.
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
 
     def pprint(self):
+        """
+        Pretty-print the main model information using the Focoos logger.
+        """
         from focoos.utils.logger import get_logger
 
         logger = get_logger("model_info")
-        logger.info(f"""
-                    📋 Name: {self.name}
-                    📝 Description: {self.description}
-                    👪 Family: {self.model_family}
-                    🔗 Focoos Model: {self.focoos_model}
-                    🎯 Task: {self.task}
-                    🏷️ Classes: {self.classes}
-                    🖼️ Im size: {self.im_size}
-                    """)
+        logger.info(
+            f"""
+            📋 Name: {self.name}
+            📝 Description: {self.description}
+            👪 Family: {self.model_family}
+            🔗 Focoos Model: {self.focoos_model}
+            🎯 Task: {self.task}
+            🏷️ Classes: {self.classes}
+            🖼️ Im size: {self.im_size}
+            """
+        )
 
 
 @dataclass
@@ -1120,3 +1150,14 @@ class DynamicAxes:
     input_names: list[str]
     output_names: list[str]
     dynamic_axes: dict
+
+
+class ModelArtifact(str, Enum):
+    """Model artifact type."""
+
+    WEIGHTS = "model_final.pth"
+    ONNX = "model.onnx"
+    PT = "model.pt"
+    INFO = "model_info.json"
+    METRICS = "metrics.json"
+    LOGS = "log.txt"

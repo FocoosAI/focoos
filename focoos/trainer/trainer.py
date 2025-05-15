@@ -18,6 +18,7 @@ from torch import GradScaler, autocast
 
 from focoos.data.datasets.map_dataset import MapDataset
 from focoos.data.loaders import build_detection_test_loader, build_detection_train_loader
+from focoos.hub.focoos_hub import FocoosHUB
 from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.layers.norm import FrozenBatchNorm2d
 from focoos.ports import ModelInfo, ModelStatus, Task, TrainerArgs
@@ -29,6 +30,7 @@ from focoos.trainer.evaluation.utils import print_csv_format
 from focoos.trainer.events import CommonMetricPrinter, EventStorage, JSONWriter, TensorboardXWriter, get_event_storage
 from focoos.trainer.hooks import hook
 from focoos.trainer.hooks.early_stop import EarlyStoppingHook
+from focoos.trainer.hooks.sync_to_hub import SyncToHubHook
 from focoos.trainer.hooks.visualization import VisualizationHook
 from focoos.trainer.solver import ema
 from focoos.trainer.solver.build import build_lr_scheduler, build_optimizer
@@ -59,6 +61,7 @@ class FocoosTrainer:
         model_info: ModelInfo,
         data_val: MapDataset,
         data_train: Optional[MapDataset] = None,
+        hub: Optional[FocoosHUB] = None,
     ):
         """Initialize the trainer.
 
@@ -77,6 +80,7 @@ class FocoosTrainer:
         self.output_dir = os.path.join(self.args.output_dir, self.args.run_name)
         # Setup logging and environment
         self._setup_environment()
+        self.hub = hub
 
         # Setup model and data
         self._setup_model_and_data(model, processor, model_info, data_train, data_val, args)
@@ -380,6 +384,17 @@ class FocoosTrainer:
                     ),
                 ]
             )
+            if self.args.sync_to_hub:
+                trainer.register_hooks(
+                    [
+                        SyncToHubHook(
+                            hub=self.hub,
+                            model_info=self.model_info,
+                            output_dir=self.output_dir,
+                            sync_period=20,
+                        ),
+                    ]
+                )
 
     def train(self):
         """Train the model using the configured settings."""
@@ -618,9 +633,10 @@ class TrainerLoop:
                     self.after_step()
                 self.iter += 1
             except Exception as e:
-                logger.error(f"Exception during training: {e}")
+                logger.error(f"🚨 Exception during training: {e}")
                 raise e
             finally:
+                # Verifica se c'è stata un'eccezione prima di eseguire after_train
                 self.after_train()
 
     def before_train(self):
@@ -858,6 +874,7 @@ def run_train(
     image_model: BaseModelNN,
     processor: Processor,
     model_info: ModelInfo,  # type: ignore  # noqa: F821
+    hub: Optional[FocoosHUB] = None,
 ):
     """Run model training.
 
@@ -882,6 +899,7 @@ def run_train(
             model_info=model_info,
             data_train=data_train,
             data_val=data_val,
+            hub=hub,
         )
         trainer.train()
 

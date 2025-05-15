@@ -17,7 +17,7 @@ logger = get_logger("ModelManager")
 
 
 class ModelManager:
-    """Automatic model manager with lazy loading (refactored)"""
+    """Automatic model manager with lazy loading"""
 
     _models_family_map: Dict[str, Callable[[], Type[BaseModelNN]]] = {}  # {"fai-detr": load_fai_detr()}
 
