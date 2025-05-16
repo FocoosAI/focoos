@@ -62,6 +62,7 @@ class DETRProcessor(Processor):
         super().__init__(config)
         self.top_k = config.top_k
         self.threshold = config.threshold
+        self.resolution = config.resolution
 
     def preprocess(
         self,
@@ -76,7 +77,7 @@ class DETRProcessor(Processor):
         ],
         device: torch.device,
         dtype: torch.dtype = torch.float32,
-        resolution: Optional[int] = 640,
+        resolution: Optional[int] = None,
     ) -> tuple[torch.Tensor, list[DETRTargets]]:
         targets = []
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DatasetEntry):
@@ -103,10 +104,11 @@ class DETRProcessor(Processor):
             if self.training:
                 raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
             images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
-            if resolution is not None:
-                images_torch = torch.nn.functional.interpolate(
-                    images_torch, size=resolution, mode="bilinear", align_corners=False
-                )
+            resolution = resolution or self.resolution
+
+            images_torch = torch.nn.functional.interpolate(
+                images_torch, size=resolution, mode="bilinear", align_corners=False
+            )
             # Normalize the inputs
         return images_torch, targets
 

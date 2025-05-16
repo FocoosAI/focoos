@@ -124,12 +124,18 @@ class MaskFormerProcessor(Processor):
         labels_per_image = labels[topk_indices]
 
         topk_indices = topk_indices // self.num_classes
-        # mask_pred = mask_pred.unsqueeze(1).repeat(1, self.sem_seg_head.num_classes, 1).flatten(0, 1)
+
         mask_pred = mask_pred[topk_indices]
 
-        masks = BitMasks((mask_pred > self.mask_threshold).float())
+        bin_masks = mask_pred > self.mask_threshold
+        bin_masks = bin_masks * 1e-3
+        mask_scores_per_image = (bin_masks.flatten(1) * mask_pred.flatten(1)).sum(1) / (
+            bin_masks.flatten(1).sum(1) + 1e-6
+        )
+
+        masks = BitMasks(bin_masks.float())
         boxes = masks.get_bounding_boxes()
-        scores = scores_per_image
+        scores = scores_per_image * mask_scores_per_image
         classes = labels_per_image
         return Instances(image_size, boxes=boxes, masks=masks, scores=scores, classes=classes)
 
@@ -216,6 +222,46 @@ class MaskFormerProcessor(Processor):
                     bin_mask_pred[batch_idx, class_idx] = out[batch_idx] == class_idx
         else:
             bin_mask_pred = mask_pred >= self.mask_threshold  # B x Q x H x W
+
+        # Find masks with zero sum
+        if filter_empty_masks:
+            non_zero_masks = bin_mask_pred.sum(dim=(-2, -1)) > 1  # B x top_k_masks
+            # Set scores and labels to 0 for empty masks
+            # Get indices of non-zero masks
+            non_zero_indices = (non_zero_masks).nonzero(as_tuple=True)
+            # Filter scores, labels and bin_mask_pred to only keep non-zero masks
+            scores = torch.gather(scores, dim=1, index=non_zero_indices[1].unsqueeze(0))
+            labels = torch.gather(labels, dim=1, index=non_zero_indices[1].unsqueeze(0))
+
+            bin_mask_pred = torch.gather(
+                bin_mask_pred,
+                dim=1,
+                index=non_zero_indices[1]
+                .unsqueeze(0)
+                .unsqueeze(-1)
+                .unsqueeze(-1)
+                .expand(-1, -1, *bin_mask_pred.shape[-2:]),
+            )
+
+            mask_pred = torch.gather(
+                mask_pred,
+                dim=1,
+                index=non_zero_indices[1]
+                .unsqueeze(0)
+                .unsqueeze(-1)
+                .unsqueeze(-1)
+                .expand(-1, -1, *mask_pred.shape[-2:]),
+            )
+
+        if use_mask_score:
+            bin_mask_pred = bin_mask_pred.int()
+            # Quickfix to avoid num. instability.
+            bin_mask_pred = bin_mask_pred * 1e-3
+            mask_score = (bin_mask_pred * mask_pred).sum(-1).sum(-1) / (
+                (bin_mask_pred).sum(-1).sum(-1) + 1e-5
+            )  # add EPS to avoid division by 0
+            # Multiply mask scores to class scores for final score
+            scores = scores * mask_score  # B x Q
 
         # Filter based on the scores greather than threshold
         if threshold > 0:

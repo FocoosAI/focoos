@@ -10,7 +10,7 @@ from focoos.ports import DatasetEntry, DynamicAxes, FocoosDet, FocoosDetections
 from focoos.processor.base_processor import Processor
 from focoos.structures import BitMasks, ImageList, Instances
 from focoos.utils.memory import retry_if_cuda_oom
-from focoos.utils.vision import binary_mask_to_base64, masks_to_xyxy
+from focoos.utils.vision import binary_mask_to_base64
 
 
 def interpolate_image(image, size):
@@ -42,6 +42,7 @@ class BisenetFormerProcessor(Processor):
         self.use_mask_score = config.use_mask_score
         self.filter_empty_masks = config.filter_empty_masks
         self.predict_all_pixels = config.predict_all_pixels
+        self.threshold = config.threshold
 
     def preprocess(
         self,
@@ -120,12 +121,18 @@ class BisenetFormerProcessor(Processor):
         labels_per_image = labels[topk_indices]
 
         topk_indices = topk_indices // self.num_classes
-        # mask_pred = mask_pred.unsqueeze(1).repeat(1, self.sem_seg_head.num_classes, 1).flatten(0, 1)
+
         mask_pred = mask_pred[topk_indices]
 
-        masks = BitMasks((mask_pred > self.mask_threshold).float())
+        bin_masks = mask_pred > self.mask_threshold
+        bin_masks = bin_masks * 1e-3
+        mask_scores_per_image = (bin_masks.flatten(1) * mask_pred.flatten(1)).sum(1) / (
+            bin_masks.flatten(1).sum(1) + 1e-6
+        )
+
+        masks = BitMasks(bin_masks.float())
         boxes = masks.get_bounding_boxes()
-        scores = scores_per_image
+        scores = scores_per_image * mask_scores_per_image
         classes = labels_per_image
         return Instances(image_size, boxes=boxes, masks=masks, scores=scores, classes=classes)
 
@@ -173,14 +180,15 @@ class BisenetFormerProcessor(Processor):
         filter_empty_masks: Optional[bool] = None,
         predict_all_pixels: Optional[bool] = None,
     ) -> list[FocoosDetections]:
-        top_k = self.top_k if top_k is None else top_k
-        threshold = self.mask_threshold if threshold is None else threshold
-        use_mask_score = self.use_mask_score if use_mask_score is None else use_mask_score
-        filter_empty_masks = self.filter_empty_masks if filter_empty_masks is None else filter_empty_masks
-        predict_all_pixels = self.predict_all_pixels if predict_all_pixels is None else predict_all_pixels
+        top_k = top_k or self.top_k
+        threshold = threshold or self.threshold
+        use_mask_score = use_mask_score or self.use_mask_score
+        filter_empty_masks = filter_empty_masks or self.filter_empty_masks
+        predict_all_pixels = predict_all_pixels or self.predict_all_pixels
 
         # Extract image sizes from inputs
         image_sizes = self.get_image_sizes(inputs)
+
         batch_size = output.logits.shape[0]
         results = []
         assert len(image_sizes) == batch_size, (
@@ -209,10 +217,38 @@ class BisenetFormerProcessor(Processor):
                 for class_idx in range(q):
                     # Set True where the argmax equals this class index
                     bin_mask_pred[batch_idx, class_idx] = out[batch_idx] == class_idx
-
         else:
             bin_mask_pred = mask_pred >= self.mask_threshold  # B x Q x H x W
 
+        # Find masks with zero sum
+        if filter_empty_masks:
+            non_zero_masks = bin_mask_pred.sum(dim=(-2, -1)) > 1  # B x top_k_masks
+            # Set scores and labels to 0 for empty masks
+            # Get indices of non-zero masks
+            non_zero_indices = (non_zero_masks).nonzero(as_tuple=True)
+            # Filter scores, labels and bin_mask_pred to only keep non-zero masks
+            scores = torch.gather(scores, dim=1, index=non_zero_indices[1].unsqueeze(0))
+            labels = torch.gather(labels, dim=1, index=non_zero_indices[1].unsqueeze(0))
+
+            bin_mask_pred = torch.gather(
+                bin_mask_pred,
+                dim=1,
+                index=non_zero_indices[1]
+                .unsqueeze(0)
+                .unsqueeze(-1)
+                .unsqueeze(-1)
+                .expand(-1, -1, *bin_mask_pred.shape[-2:]),
+            )
+
+            mask_pred = torch.gather(
+                mask_pred,
+                dim=1,
+                index=non_zero_indices[1]
+                .unsqueeze(0)
+                .unsqueeze(-1)
+                .unsqueeze(-1)
+                .expand(-1, -1, *mask_pred.shape[-2:]),
+            )
         if use_mask_score:
             bin_mask_pred = bin_mask_pred.int()
             # Quickfix to avoid num. instability.
@@ -222,15 +258,6 @@ class BisenetFormerProcessor(Processor):
             )  # add EPS to avoid division by 0
             # Multiply mask scores to class scores for final score
             scores = scores * mask_score  # B x Q
-
-        if scores.shape[1] > top_k:
-            scores, index = torch.topk(scores, top_k, dim=-1)
-            labels = torch.gather(labels, dim=1, index=index)  # B x top_k_masks
-            bin_mask_pred = torch.gather(
-                bin_mask_pred,
-                dim=1,
-                index=index.unsqueeze(-1).unsqueeze(-1).tile(1, 1, *mask_pred.shape[-2:]),
-            )  # B x top_k_masks x H x W
 
         # Filter based on the scores greather than threshold
         if threshold > 0:
@@ -243,25 +270,6 @@ class BisenetFormerProcessor(Processor):
                 dim=1,
                 index=filter_mask[1].unsqueeze(0).unsqueeze(-1).unsqueeze(-1).expand(-1, -1, *bin_mask_pred.shape[-2:]),
             )  # B x top_k_masks x H x W
-
-        # Find masks with zero sum
-        if filter_empty_masks:
-            non_zero_masks = bin_mask_pred.sum(dim=(-2, -1)) > 1  # B x top_k_masks
-            # Set scores and labels to 0 for empty masks
-            # Get indices of non-zero masks
-            non_zero_indices = (non_zero_masks).nonzero(as_tuple=True)
-            # Filter scores, labels and bin_mask_pred to only keep non-zero masks
-            scores = torch.gather(scores, dim=1, index=non_zero_indices[1].unsqueeze(0))
-            labels = torch.gather(labels, dim=1, index=non_zero_indices[1].unsqueeze(0))
-            bin_mask_pred = torch.gather(
-                bin_mask_pred,
-                dim=1,
-                index=non_zero_indices[1]
-                .unsqueeze(0)
-                .unsqueeze(-1)
-                .unsqueeze(-1)
-                .expand(-1, -1, *bin_mask_pred.shape[-2:]),
-            )
 
         bin_mask_pred = bin_mask_pred.detach().cpu()
         scores = scores.detach().cpu()
@@ -276,11 +284,11 @@ class BisenetFormerProcessor(Processor):
                 bin_mask_pred[i].float(), image_sizes[i]
             ).bool()
 
-            if self.config.postprocessing_type == "instance":
-                box_pred = masks_to_xyxy(bin_mask_pred_resized.numpy())
-                py_box_pred = box_pred.tolist()
-            else:
-                py_box_pred = [None] * len(scores[i])
+            # if self.config.postprocessing_type == "instance":
+            #     box_pred = masks_to_xyxy(bin_mask_pred_resized.numpy())
+            #     py_box_pred = box_pred.tolist()
+            # else:
+            py_box_pred = [None] * len(scores[i])
 
             py_scores = scores[i].tolist()
             py_labels = labels[i].tolist()

@@ -359,10 +359,9 @@ class TransformerDecoder(nn.Module):
         for _ in range(min(self.num_feature_levels, dec_layers)):
             if in_channels != hidden_dim or enforce_input_project:
                 self.input_proj.append(Conv2d(in_channels, hidden_dim, kernel_size=1))
-                # weight_init.c2_xavier_fill(self.input_proj[-1])
-                nn.init.kaiming_uniform_(self.input_proj[-1].weight, a=1)
+                nn.init.kaiming_uniform_(self.input_proj[-1].weight, a=1)  # type: ignore
                 if self.input_proj[-1].bias is not None:
-                    nn.init.constant_(self.input_proj[-1].bias, 0)
+                    nn.init.constant_(self.input_proj[-1].bias, 0)  # type: ignore
             else:
                 self.input_proj.append(nn.Sequential())
 
@@ -373,7 +372,6 @@ class TransformerDecoder(nn.Module):
         if self.query_init:
             self.out_dim = out_dim
             self.kernels = nn.Conv2d(in_channels=out_dim, out_channels=num_queries, kernel_size=1)
-            # weight_init.c2_xavier_fill(self.kernels)
             nn.init.kaiming_uniform_(self.kernels.weight, a=1)
             if self.kernels.bias is not None:
                 nn.init.constant_(self.kernels.bias, 0)
@@ -523,9 +521,6 @@ class MaskFormerHead(nn.Module):
         self.cls_sigmoid = cls_sigmoid
         self.mask_threshold = 0
 
-    def reset_classifier(self, num_classes: Optional[int] = None):
-        self.predictor.reset_classifier(num_classes if num_classes else self.num_classes)
-
     def layers(self, features, targets=None, mask=None):
         mask_features, multi_scale_features = features
         predictions = self.predictor(multi_scale_features, mask_features, targets=targets, mask=mask)
@@ -647,5 +642,8 @@ class BisenetFormer(BaseModelNN):
 
         features = self.pixel_decoder(images)
         (logits, masks), losses = self.head(features, targets)
+
+        if not self.training:
+            masks = F.interpolate(masks, size=images.shape[2:], mode="bilinear", align_corners=False)
 
         return BisenetFormerOutput(masks=masks, logits=logits, loss=losses)

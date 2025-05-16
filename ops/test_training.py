@@ -1,0 +1,130 @@
+import os
+import tempfile
+from pathlib import Path
+from typing import List, Optional, Union
+
+from focoos.data.auto_dataset import AutoDataset
+from focoos.data.default_aug import get_default_by_task
+from focoos.model_manager import ModelManager
+from focoos.ports import DATASETS_DIR, DatasetLayout, DatasetSplitType, Task, TrainerArgs
+from focoos.utils.logger import get_logger
+
+logger = get_logger("TestTraning")
+
+
+def list_files_with_extensions_recursively(
+    base_dir: Union[str, Path], extensions: Optional[List[str]] = None
+) -> List[Path]:
+    """
+    Generate a list of file paths with specific extensions recursively starting from a base directory.
+
+    Parameters:
+        base_directory (Union[str, Path]): The directory to start the recursive search from.
+        extensions (Optional[List[str]]): List of file extensions to filter by. If None, all files will be included.
+
+    Returns:
+        List[Path]: A list of Path objects representing the file paths that match the criteria.
+    """
+    base_dir = Path(base_dir)
+    file_paths = []
+
+    if extensions:
+        for extension in extensions:
+            if extension.startswith("."):
+                extension = extension[1:]
+            _glob = f"*.{extension}"
+            file_paths.extend(base_dir.rglob(_glob))
+    else:
+        file_paths.extend(base_dir.rglob("*"))
+
+    return [path for path in file_paths if path.is_file()]
+
+
+def get_dataset(task: Task, ds_folder: str = DATASETS_DIR):
+    if task == Task.SEMSEG:
+        ds_name = "pizza"
+        layout = DatasetLayout.ROBOFLOW_SEG
+    elif task == Task.DETECTION:
+        ds_name = "aquarium"
+        layout = DatasetLayout.ROBOFLOW_COCO
+    elif task == Task.INSTANCE_SEGMENTATION:
+        ds_name = "fruits"
+        layout = DatasetLayout.ROBOFLOW_COCO
+    else:
+        raise ValueError(f"Error: task {task} not supported")
+
+    logger.info(f"Dataset folder: {ds_folder}")
+    if not os.path.exists(os.path.join(ds_folder, ds_name)):
+        if not os.path.exists(ds_folder):
+            logger.warning(f"Dataset folder {ds_folder} not found, creating it")
+            os.makedirs(ds_folder)
+        logger.warning(f"Dataset {ds_name} not found in {ds_folder}, downloading from hub")
+        # FIXME: here we need to download the dataset from HUB
+
+    return ds_name, layout
+
+
+def train(model_name: str):
+    model = ModelManager.get(model_name)
+
+    # Convert string task to Task enum
+    task = Task(model.model_info.task)
+
+    dataset_name, layout = get_dataset(task)
+
+    # Initialize dataset
+    auto_dataset = AutoDataset(dataset_name=dataset_name, task=task, layout=layout)
+    resolution = model.model_info.im_size
+
+    # Get default augmentations for the specified task
+    train_augs, val_augs = get_default_by_task(task, resolution)
+    train_dataset = auto_dataset.get_split(augs=train_augs.get_augmentations(), split=DatasetSplitType.TRAIN)
+    valid_dataset = auto_dataset.get_split(augs=val_augs.get_augmentations(), split=DatasetSplitType.VAL)
+
+    # Get again the model with the correct number of classes
+    model = ModelManager.get(model_name, num_classes=train_dataset.dataset.metadata.num_classes)
+
+    _temp_dir = tempfile.mkdtemp()
+    out_dir = os.path.join(_temp_dir, "output")
+    logger.info(f"Created temporary directory for training output: {_temp_dir}")
+
+    # Configure training arguments
+    trainer_args = TrainerArgs(
+        run_name=model_name + "_test",
+        output_dir=out_dir,
+        amp_enabled=True,
+        batch_size=8,
+        max_iters=100,
+        eval_period=50,
+        learning_rate=1e-4,
+        scheduler="MULTISTEP",
+        weight_decay=0.0,
+        workers=4,
+    )
+
+    # Start training
+    model.train(trainer_args, train_dataset, valid_dataset)
+
+    out_dir = trainer_args.output_dir
+    files = list_files_with_extensions_recursively(out_dir)
+    files_to_check = ["log.txt", "model_final.pth", "model_info.json", "metrics.json"]
+    for file in files_to_check:
+        file_found = False
+        for full_path in files:
+            if os.path.basename(full_path) == file:
+                file_found = True
+                break
+        assert file_found, f"File {file} not found in {out_dir}"
+
+    print(f"✅ TEST DONE, {files_to_check} correctly found in {out_dir}.")
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Train a pretrained model")
+    parser.add_argument("--model", type=str, required=True, help="Name of the model to train")
+
+    args = parser.parse_args()
+    logger.info(f"Training model: {args.model}")
+    train(args.model)
