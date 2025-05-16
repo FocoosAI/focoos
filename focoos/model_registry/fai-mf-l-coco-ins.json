@@ -143,7 +143,7 @@
         "matcher_cost_dice": 5
     },
     "focoos_model": "fai-mf-l-coco-ins",
-    "ref": "fai-mf-l-coco-ins",
+    "ref": null,
     "status": "TRAINING_COMPLETED",
     "description": "MaskFormer Large model (COCO Instance Segmentation)",
     "train_args": null,

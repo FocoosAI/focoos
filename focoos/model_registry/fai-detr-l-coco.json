@@ -147,7 +147,7 @@
         "matcher_gamma": 2.0
     },
     "focoos_model": "fai-detr-l-coco",
-    "ref": "fai-detr-l-coco",
+    "ref": null,
     "status": "TRAINING_COMPLETED",
     "description": "RTDETR Large model (COCO)",
     "train_args": null,

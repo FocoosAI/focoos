@@ -213,7 +213,7 @@
         "matcher_cost_dice": 5
     },
     "focoos_model": "fai-mf-l-ade",
-    "ref": "fai-mf-l-ade",
+    "ref": null,
     "status": "TRAINING_COMPLETED",
     "description": "MaskFormer Large model (ADE20K)",
     "train_args": null,

@@ -432,7 +432,7 @@
         "matcher_gamma": 2.0
     },
     "focoos_model": "fai-detr-l-obj365",
-    "ref": "fai-detr-l-obj365",
+    "ref": null,
     "status": "TRAINING_COMPLETED",
     "description": "RTDETR Large model (Object365)",
     "train_args": null,

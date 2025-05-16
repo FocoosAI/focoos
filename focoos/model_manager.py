@@ -37,8 +37,8 @@ class ModelManager:
         if model_info is not None:
             return cls._from_model_info(model_info=model_info, config=config, **kwargs)
         if name.startswith("hub://"):
-            return cls._from_hub(name=name, hub=hub, **kwargs)
-        if ModelRegistry.exists(name):
+            return cls._from_hub(name, hub=hub, **kwargs)
+        if ModelRegistry.exists(name):  # Pretrained models
             model_info = ModelRegistry.get_model_info(name)
             return cls._from_model_info(model_info=model_info, config=config, **kwargs)
         return cls._from_local_dir(name=name, models_dir=models_dir, config=config, **kwargs)
