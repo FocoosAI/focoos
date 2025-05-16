@@ -69,7 +69,7 @@ class SyncToHubHook(HookBase):
                     )
                 )
 
-        self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
+        self.model_info.dump_json(os.path.join(self.output_dir, ArtifactName.INFO))
         self._sync_train_job(
             upload_artifacts=[
                 ArtifactName.WEIGHTS,

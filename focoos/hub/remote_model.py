@@ -84,6 +84,10 @@ class RemoteModel:
             f"[RemoteModel]: ref: {self.model_ref} name: {self.metadata.name} description: {self.metadata.description} status: {self.metadata.status}"
         )
 
+    @property
+    def ref(self) -> str:
+        return self.model_ref
+
     def get_info(self) -> RemoteModelInfo:
         """
         Retrieve model metadata.

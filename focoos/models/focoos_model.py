@@ -58,7 +58,7 @@ class FocoosModel:
         system_info = get_system_info()
         if system_info.gpu_info and system_info.gpu_info.devices and len(system_info.gpu_info.devices) > 0:
             device = system_info.gpu_info.devices[0].gpu_name
-
+        self.model_info.ref = None
         self.model_info.name = train_args.run_name.strip()
         self.model_info.train_args = train_args  # type: ignore
         self.model_info.val_dataset = data_val.dataset.metadata.name
@@ -80,6 +80,7 @@ class FocoosModel:
                 )
             ],
         )
+
         self.model_info.classes = data_train.dataset.metadata.classes
         self.model_info.config["num_classes"] = len(data_train.dataset.metadata.classes)
         assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
@@ -95,7 +96,16 @@ class FocoosModel:
             data_val: Validation dataset
         """
 
+        # hub.create_model(self.model_info)
+        # hub.sync_training_job(args.output_dir, [ArtifactName.WEIGHTS, ArtifactName.INFO, ArtifactName.METRICS])
+
         self._setup_model_info_for_training(args, data_train, data_val)
+        if args.sync_to_hub:
+            if hub is None:
+                hub = FocoosHUB()
+            model_ref = hub.new_model(self.model_info)
+            self.model_info.ref = model_ref
+            logger.info(f"Model {self.model_info.name} created in hub with ref {self.model_info.ref}")
         assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
         if self.model_info.config["num_classes"] != data_val.dataset.metadata.num_classes:
             logger.error(
@@ -155,7 +165,7 @@ class FocoosModel:
             logger.info("Testing done, resuming main process.")
             # here i should restore the best model and config since in DDP it is not updated
             final_folder = os.path.join(args.output_dir, args.run_name)
-            metadata_path = os.path.join(final_folder, "focoos_metadata.json")
+            metadata_path = os.path.join(final_folder, ArtifactName.INFO)
             self.model_info = ModelInfo.from_json(metadata_path)
         else:
             run_test(args, data_test, self.model, self.processor, self.model_info)
@@ -202,7 +212,7 @@ class FocoosModel:
         os.makedirs(out_dir, exist_ok=True)
         data = 128 * torch.randn(1, 3, self.model_info.im_size, self.model_info.im_size).to(device)
 
-        export_model_name = "model.onnx" if format == ExportFormat.ONNX else "model.pt"
+        export_model_name = ArtifactName.ONNX if format == ExportFormat.ONNX else ArtifactName.PT
         _out_file = os.path.join(out_dir, export_model_name)
 
         dynamic_axes = self.processor.get_dynamic_axes()
@@ -263,13 +273,13 @@ class FocoosModel:
                 logger.info("🚀 Exporting TorchScript model..")
                 exp_program = torch.jit.trace(exportable_model, data)
                 if exp_program is not None:
-                    _out_file = os.path.join(out_dir, "model.pt")
+                    _out_file = os.path.join(out_dir, ArtifactName.PT)
                     torch.jit.save(exp_program, _out_file)
                     logger.info(f"✅ Exported {format} model to {_out_file} ")
                 else:
                     raise ValueError(f"Failed to export {format} model")
 
-        self.model_info.dump_json(os.path.join(out_dir, "model_info.json"))
+        self.model_info.dump_json(os.path.join(out_dir, ArtifactName.INFO))
         return InferModel(model_dir=out_dir, model_info=self.model_info, runtime_type=runtime_type)
 
     def __call__(

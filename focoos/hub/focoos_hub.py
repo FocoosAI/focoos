@@ -403,6 +403,7 @@ class FocoosHUB:
         if not os.path.exists(os.path.join(dir, ArtifactName.INFO)):
             logger.warning(f"Model info not found in {dir}")
             raise ValueError(f"Model info not found in {dir}")
+
         model_info = ModelInfo.from_json(os.path.join(dir, ArtifactName.INFO))
         metrics = parse_metrics(os.path.join(dir, ArtifactName.METRICS))
         # status = model_info.status
@@ -472,7 +473,7 @@ class FocoosHUB:
             raise ValueError(f"Failed to upload model artifact: {res.status_code} {res.text}")
         logger.info(f"✅ Model artifact {file_name} uploaded to HUB.")
 
-    def new_model(self, model_info: ModelInfo) -> RemoteModel:
+    def new_model(self, model_info: ModelInfo) -> str:
         """
         Creates a new model in the Focoos platform.
 
@@ -501,10 +502,11 @@ class FocoosHUB:
                 "name": model_info.name,
                 "focoos_model": model_info.focoos_model,
                 "description": model_info.description,
+                "config": model_info.config if model_info.config else {},
             },
         )
         if res.status_code in [200, 201]:
-            return RemoteModel(res.json()["ref"], self.api_client)
+            return res.json()["ref"]
         if res.status_code == 409:
             logger.warning(f"Model already exists: {model_info.name}")
             raise ValueError(f"Failed to create new model: {res.status_code} {res.text}")

@@ -6,6 +6,7 @@ from typing import Callable, Dict, Optional, Type
 from urllib.parse import urlparse
 
 from focoos.hub.api_client import ApiClient
+from focoos.hub.focoos_hub import FocoosHUB
 from focoos.infer.infer_model import InferModel
 from focoos.model_registry.model_registry import ModelRegistry
 from focoos.models.focoos_model import BaseModelNN, FocoosModel
@@ -28,7 +29,7 @@ class ModelManager:
         model_info: Optional[ModelInfo] = None,
         config: Optional[ModelConfig] = None,
         models_dir: Optional[str] = None,
-        api_key: Optional[str] = None,
+        hub: Optional[FocoosHUB] = None,
         **kwargs,
     ) -> FocoosModel:
         """
@@ -37,7 +38,7 @@ class ModelManager:
         if model_info is not None:
             return cls._from_model_info(model_info, config=config, **kwargs)
         if name.startswith("hub://"):
-            return cls._from_hub(name, api_key=api_key, **kwargs)
+            return cls._from_hub(name, hub=hub, **kwargs)
         if ModelRegistry.exists(name):
             model_info = ModelRegistry.get_model_info(name)
             return cls._from_model_info(model_info, config=config, **kwargs)
@@ -119,9 +120,14 @@ class ModelManager:
         return cls._from_model_info(model_info, config=config, **kwargs)
 
     @classmethod
-    def _from_hub(cls, name: str, api_key: Optional[str] = None, **kwargs) -> FocoosModel:
+    def _from_hub(cls, model_ref: str, hub: Optional[FocoosHUB] = None, **kwargs) -> FocoosModel:
         # TODO: implement hub loading logic
+        if hub is None:
+            hub = FocoosHUB()
+        # model = hub.get_model_info(model_ref)
         raise NotImplementedError("Hub loading is not implemented yet.")
+        # model_info = ModelInfo.from_dict(model)
+        # eturn cls._from_model_info(model.model_info, config=config, **kwargs)
 
 
 class BackboneManager:
