@@ -7,11 +7,10 @@ from urllib.parse import urlparse
 
 from focoos.hub.api_client import ApiClient
 from focoos.hub.focoos_hub import FocoosHUB
-from focoos.infer.infer_model import InferModel
 from focoos.model_registry.model_registry import ModelRegistry
 from focoos.models.focoos_model import BaseModelNN, FocoosModel
 from focoos.nn.backbone.base import BackboneConfig, BaseBackbone
-from focoos.ports import MODELS_DIR, ModelConfig, ModelFamily, ModelInfo, RuntimeType
+from focoos.ports import MODELS_DIR, ModelConfig, ModelFamily, ModelInfo
 from focoos.utils.logger import get_logger
 
 logger = get_logger("ModelManager")
@@ -36,31 +35,13 @@ class ModelManager:
         Unified entrypoint to load a model by name or ModelInfo.
         """
         if model_info is not None:
-            return cls._from_model_info(model_info, config=config, **kwargs)
+            return cls._from_model_info(model_info=model_info, config=config, **kwargs)
         if name.startswith("hub://"):
-            return cls._from_hub(name, hub=hub, **kwargs)
+            return cls._from_hub(name=name, hub=hub, **kwargs)
         if ModelRegistry.exists(name):
             model_info = ModelRegistry.get_model_info(name)
-            return cls._from_model_info(model_info, config=config, **kwargs)
-        return cls._from_local_dir(name, models_dir=models_dir, config=config, **kwargs)
-
-    @classmethod
-    def get_infer_model(
-        cls,
-        name: str,
-        runtime_type: RuntimeType = RuntimeType.TORCHSCRIPT_32,
-        models_dir: Optional[str] = None,
-        api_key: Optional[str] = None,
-        export_now: bool = False,
-    ) -> InferModel:
-        if export_now:
-            return cls.get(name, models_dir=models_dir, api_key=api_key).export(
-                format=runtime_type.to_export_format(), overwrite=True, runtime_type=runtime_type
-            )
-        """
-        Get an infer model by name
-        """
-        pass
+            return cls._from_model_info(model_info=model_info, config=config, **kwargs)
+        return cls._from_local_dir(name=name, models_dir=models_dir, config=config, **kwargs)
 
     @classmethod
     def register_model(cls, model_family: ModelFamily, model_loader: Callable[[], Type[BaseModelNN]]):
@@ -72,13 +53,14 @@ class ModelManager:
     @classmethod
     def _ensure_family_registered(cls, model_family: ModelFamily):
         """Ensure the model family is registered, importing if needed."""
-        if model_family not in cls._models_family_map:
-            family_module = importlib.import_module(f"focoos.models.{model_family.value}")
-            for attr_name in dir(family_module):
-                if attr_name.startswith("_register"):
-                    register_func = getattr(family_module, attr_name)
-                    if callable(register_func):
-                        register_func()
+        if model_family in cls._models_family_map:
+            return
+        family_module = importlib.import_module(f"focoos.models.{model_family.value}")
+        for attr_name in dir(family_module):
+            if attr_name.startswith("_register"):
+                register_func = getattr(family_module, attr_name)
+                if callable(register_func):
+                    register_func()
 
     @classmethod
     def _from_model_info(cls, model_info: ModelInfo, config: Optional[ModelConfig] = None, **kwargs) -> FocoosModel:
@@ -181,7 +163,7 @@ class ConfigManager:
         """
         Create a configuration from a dictionary
         """
-        if model_family not in cls._MODEL_CFG_MAPPING:
+        if model_family.value not in cls._MODEL_CFG_MAPPING:
             # Import the family module
             family_module = importlib.import_module(f"focoos.models.{model_family.value}")
 
@@ -192,7 +174,7 @@ class ConfigManager:
                     if callable(register_func):
                         register_func()
 
-        if model_family not in cls._MODEL_CFG_MAPPING:
+        if model_family.value not in cls._MODEL_CFG_MAPPING:
             raise ValueError(f"Model {model_family} not supported")
 
         config_class = cls._MODEL_CFG_MAPPING[model_family.value]()  # this return the config class
@@ -212,7 +194,8 @@ class ConfigManager:
         config_dict = config_class(**config_dict)
 
         # Update the config with the kwargs
-        config_dict.update(kwargs)
+        if kwargs:
+            config_dict.update(kwargs)
 
         return config_dict
 
