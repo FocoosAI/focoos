@@ -57,16 +57,17 @@ def train(model_name: str):
     # Start training
     model.test(trainer_args, valid_dataset)
 
-    diff = {k: v for k, v in model.model_info.val_metrics.items() if v != current_val_metrics[k]}
+    original_metrics = dict(model.model_info.val_metrics.items())
+    diff = {k: abs(v - current_val_metrics[k]) for k, v in original_metrics.items() if v != current_val_metrics[k]}
     valid = True
     for k, v in diff.items():
-        if v > THRESHOLD * current_val_metrics[k]:
+        if v > (THRESHOLD * original_metrics[k]):
             logger.warning(f"{k}: {v} -> {current_val_metrics[k]}")
             valid = False
     if valid:
         logger.info(f"✅ TEST DONE, Model {model_name} validated.")
     else:
-        logger.warning(f"❌ TEST FAILED, Model {model_name} did not validate.")
+        logger.warning(f"❌ TEST FAILED, Model {model_name} didn't validate.")
 
 
 if __name__ == "__main__":
