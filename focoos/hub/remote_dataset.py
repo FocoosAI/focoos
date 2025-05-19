@@ -38,6 +38,8 @@ class RemoteDataset:
             DatasetPreview: The dataset preview information.
         """
         res = self.api_client.get(f"datasets/{self.ref}")
+        if res.status_code != 200:
+            raise ValueError(f"Failed to get dataset info: {res.status_code} {res.text}")
         return DatasetPreview.from_json(res.json())
 
     def upload_data(self, path: str) -> Optional[DatasetSpec]:
