@@ -41,7 +41,7 @@ class ApiClient:
         self.host_url = host_url or FOCOOS_CONFIG.default_host_url
 
         self.default_headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "X-API-Key": self.api_key,
             "user_agent": f"focoos/{get_focoos_version()}",
         }
 
