@@ -420,7 +420,7 @@ class FocoosHUB:
             ```
         """
         res = self.api_client.post(
-            "models/",
+            "models/local-model",
             data={
                 "name": model_info.name,
                 "focoos_model": model_info.focoos_model,

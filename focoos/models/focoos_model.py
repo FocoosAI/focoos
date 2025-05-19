@@ -109,6 +109,7 @@ class FocoosModel:
             if hub is None:
                 hub = FocoosHUB()
             remote_model = hub.new_model(self.model_info)
+
             self.model_info.ref = remote_model.ref
             logger.info(f"Model {self.model_info.name} created in hub with ref {self.model_info.ref}")
 
