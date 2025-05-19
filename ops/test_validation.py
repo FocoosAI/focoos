@@ -62,7 +62,7 @@ def train(model_name: str):
     valid = True
     for k, v in diff.items():
         if v > (THRESHOLD * original_metrics[k]):
-            logger.warning(f"{k}: {v} -> {current_val_metrics[k]}")
+            logger.warning(f"{k}: {current_val_metrics[k]} -> {original_metrics[k]} ({v})")
             valid = False
     if valid:
         logger.info(f"✅ TEST DONE, Model {model_name} validated.")

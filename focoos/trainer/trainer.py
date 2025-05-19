@@ -149,13 +149,6 @@ class FocoosTrainer:
         # Apply model modifications
         if self.args.freeze_bn:
             self.model = FrozenBatchNorm2d.convert_frozen_batchnorm(self.model)
-        elif self.args.freeze_bn_bkb:
-            self.model.pixel_decoder.backbone = FrozenBatchNorm2d.convert_frozen_batchnorm(
-                self.model.pixel_decoder.backbone
-            )
-
-        if self.args.reset_classifier:
-            self.model.reset_classifier()
 
         # Setup DDP if needed
         if comm.get_world_size() > 1:
@@ -219,7 +212,7 @@ class FocoosTrainer:
             state_dict = torch.load(best_path, weights_only=True)
             self.model.load_state_dict(state_dict["model"])
             if self.args.ema_enabled and "ema_state" in state_dict:
-                self.model.ema_state.load_state_dict(state_dict["ema_state"])
+                self.model.ema_state.load_state_dict(state_dict["ema_state"])  # type: ignore
             return True
         return False
 
