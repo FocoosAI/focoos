@@ -14,8 +14,7 @@ Exceptions:
 """
 
 import os
-from dataclasses import asdict
-from typing import List, Optional
+from typing import Optional
 
 from focoos.config import FOCOOS_CONFIG
 from focoos.hub.api_client import ApiClient
@@ -23,7 +22,6 @@ from focoos.hub.remote_dataset import RemoteDataset
 from focoos.hub.remote_model import RemoteModel
 from focoos.ports import (
     MODELS_DIR,
-    ArtifactName,
     DatasetPreview,
     ModelExtension,
     ModelInfo,
@@ -32,7 +30,6 @@ from focoos.ports import (
     User,
 )
 from focoos.utils.logger import get_logger
-from focoos.utils.metrics import parse_metrics
 
 logger = get_logger("HUB")
 
@@ -399,81 +396,7 @@ class FocoosHUB:
         """
         return RemoteDataset(ref, self.api_client)
 
-    def sync_training_job(self, dir: str, upload_artifacts: Optional[List[ArtifactName]] = None) -> None:
-        if not os.path.exists(os.path.join(dir, ArtifactName.INFO)):
-            logger.warning(f"Model info not found in {dir}")
-            raise ValueError(f"Model info not found in {dir}")
-
-        model_info = ModelInfo.from_json(os.path.join(dir, ArtifactName.INFO))
-        metrics = parse_metrics(os.path.join(dir, ArtifactName.METRICS))
-        # status = model_info.status
-        # send info to focoos
-        logger.debug(
-            f"[Syncing Training] iter: {metrics.iterations} {model_info.name} status: {model_info.status} ref: {model_info.ref}"
-        )
-
-        if not model_info.ref:
-            raise ValueError("Model ref is required")
-
-        ## Update metrics
-        res = self.api_client.post(
-            f"models/{model_info.ref}/metrics",
-            data=asdict(metrics),
-        )
-        if res.status_code != 200:
-            logger.error(f"Failed to update metrics: {res.status_code} {res.text}")
-            raise ValueError(f"Failed to update metrics: {res.status_code} {res.text}")
-
-        ## Update status
-        res = self.api_client.patch(
-            f"models/{model_info.ref}/sync-local-training",
-            data=asdict(model_info),
-        )
-        if res.status_code != 200:
-            logger.error(f"Failed to update status: {res.status_code} {res.text}")
-            raise ValueError(f"Failed to update status: {res.status_code} {res.text}")
-        if upload_artifacts:
-            for artifact in upload_artifacts:
-                file_path = os.path.join(dir, artifact.value)
-                if os.path.isfile(file_path):
-                    try:
-                        self.upload_model_artifact(model_info.ref, file_path)
-                    except Exception:
-                        pass
-
-    def upload_model_artifact(self, model_ref: str, path: str) -> None:
-        """
-        Uploads an model artifact to the Focoos platform.
-        """
-        if not os.path.exists(path):
-            raise ValueError(f"File not found: {path}")
-        file_ext = os.path.splitext(path)[1]
-        if file_ext not in [".pt", ".onnx", ".pth", ".json", ".txt"]:
-            raise ValueError(f"Unsupported file extension: {file_ext}")
-        file_name = os.path.basename(path)
-        file_size = os.path.getsize(path)
-        file_size_mb = file_size / (1024 * 1024)
-        logger.debug(f"🔗 Requesting upload url for {file_name} of size {file_size_mb:.2f} MB")
-        presigned_url = self.api_client.post(
-            f"models/{model_ref}/generate-upload-url",
-            data={"file_size_bytes": file_size, "file_name": file_name},
-        )
-        if presigned_url.status_code != 200:
-            raise ValueError(f"Failed to generate upload url: {presigned_url.status_code} {presigned_url.text}")
-        presigned_url = presigned_url.json()
-        fields = {k: v for k, v in presigned_url["fields"].items()}
-        logger.info(f"📤 Uploading file {file_name} to HUB, size: {file_size_mb:.2f} MB")
-        fields["file"] = (file_name, open(path, "rb"))
-        res = self.api_client.external_post(
-            presigned_url["url"],
-            files=fields,
-            data=presigned_url["fields"],
-        )
-        if res.status_code not in [200, 201, 204]:
-            raise ValueError(f"Failed to upload model artifact: {res.status_code} {res.text}")
-        logger.info(f"✅ Model artifact {file_name} uploaded to HUB.")
-
-    def new_model(self, model_info: ModelInfo) -> str:
+    def new_model(self, model_info: ModelInfo) -> RemoteModel:
         """
         Creates a new model in the Focoos platform.
 
@@ -503,10 +426,13 @@ class FocoosHUB:
                 "focoos_model": model_info.focoos_model,
                 "description": model_info.description,
                 "config": model_info.config if model_info.config else {},
+                "task": model_info.task,
+                "classes": model_info.classes,
+                "im_size": model_info.im_size,
             },
         )
         if res.status_code in [200, 201]:
-            return res.json()["ref"]
+            return RemoteModel(res.json()["ref"], self.api_client)
         if res.status_code == 409:
             logger.warning(f"Model already exists: {model_info.name}")
             raise ValueError(f"Failed to create new model: {res.status_code} {res.text}")

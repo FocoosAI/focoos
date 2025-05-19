@@ -100,19 +100,17 @@ class FocoosModel:
         # hub.sync_training_job(args.output_dir, [ArtifactName.WEIGHTS, ArtifactName.INFO, ArtifactName.METRICS])
 
         self._setup_model_info_for_training(args, data_train, data_val)
+        assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
+        assert self.model_info.config["num_classes"] == data_train.dataset.metadata.num_classes, (
+            "Number of classes mismatch between model and dataset."
+        )
+        remote_model = None
         if args.sync_to_hub:
             if hub is None:
                 hub = FocoosHUB()
-            model_ref = hub.new_model(self.model_info)
-            self.model_info.ref = model_ref
+            remote_model = hub.new_model(self.model_info)
+            self.model_info.ref = remote_model.ref
             logger.info(f"Model {self.model_info.name} created in hub with ref {self.model_info.ref}")
-        assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
-        if self.model_info.config["num_classes"] != data_val.dataset.metadata.num_classes:
-            logger.error(
-                f"Number of classes in the model ({self.model_info.config['num_classes']}) does not match the number of classes in the dataset ({data_val.dataset.metadata.num_classes})."
-            )
-            # self.model_info.config["num_classes"] = data_val.dataset.metadata.num_classes
-            return
 
         assert args.num_gpus, "Training without GPUs is not supported. num_gpus must be greater than 0"
         if args.num_gpus > 1:
@@ -120,7 +118,7 @@ class FocoosModel:
                 run_train,
                 args.num_gpus,
                 dist_url="auto",
-                args=(args, data_train, data_val, self.model, self.processor, self.model_info),
+                args=(args, data_train, data_val, self.model, self.processor, self.model_info, remote_model),
             )
             logger.info("Training done, resuming main process.")
             # here i should restore the best model and config since in DDP it is not updated
@@ -137,7 +135,7 @@ class FocoosModel:
             self.load_weights(weights)
             self.model_info = ModelInfo.from_json(metadata_path)
         else:
-            run_train(args, data_train, data_val, self.model, self.processor, self.model_info, hub)
+            run_train(args, data_train, data_val, self.model, self.processor, self.model_info, remote_model)
 
     def test(self, args: TrainerArgs, data_test: MapDataset):
         from focoos.trainer.trainer import run_test

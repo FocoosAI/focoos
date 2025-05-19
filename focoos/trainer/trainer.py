@@ -18,7 +18,7 @@ from torch import GradScaler, autocast
 
 from focoos.data.datasets.map_dataset import MapDataset
 from focoos.data.loaders import build_detection_test_loader, build_detection_train_loader
-from focoos.hub.focoos_hub import FocoosHUB
+from focoos.hub.remote_model import RemoteModel
 from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.layers.norm import FrozenBatchNorm2d
 from focoos.ports import ArtifactName, ModelInfo, ModelStatus, StatusTransition, Task, TrainerArgs, TrainingInfo
@@ -61,7 +61,7 @@ class FocoosTrainer:
         model_info: ModelInfo,
         data_val: MapDataset,
         data_train: Optional[MapDataset] = None,
-        hub: Optional[FocoosHUB] = None,
+        remote_model: Optional[RemoteModel] = None,
     ):
         """Initialize the trainer.
 
@@ -80,7 +80,7 @@ class FocoosTrainer:
         self.output_dir = os.path.join(self.args.output_dir, self.args.run_name)
         # Setup logging and environment
         self._setup_environment()
-        self.hub = hub
+        self.remote_model = remote_model
 
         # Setup model and data
         self._setup_model_and_data(model, processor, model_info, data_train, data_val, args)
@@ -376,11 +376,11 @@ class FocoosTrainer:
                     ),
                 ]
             )
-            if self.args.sync_to_hub:
+            if self.args.sync_to_hub and self.remote_model:
                 trainer.register_hooks(
                     [
                         SyncToHubHook(
-                            hub=self.hub,
+                            remote_model=self.remote_model,
                             model_info=self.model_info,
                             output_dir=self.output_dir,
                             sync_period=60,
@@ -890,7 +890,7 @@ def run_train(
     image_model: BaseModelNN,
     processor: Processor,
     model_info: ModelInfo,  # type: ignore  # noqa: F821
-    hub: Optional[FocoosHUB] = None,
+    remote_model: Optional[RemoteModel] = None,
 ):
     """Run model training.
 
@@ -915,7 +915,7 @@ def run_train(
             model_info=model_info,
             data_train=data_train,
             data_val=data_val,
-            hub=hub,
+            remote_model=remote_model,
         )
         trainer.train()
 
@@ -928,6 +928,7 @@ def run_test(
     image_model: BaseModelNN,
     processor: Processor,
     model_info: ModelInfo,
+    remote_model: Optional[RemoteModel] = None,
 ):
     rank = comm.get_local_rank()
 
@@ -939,6 +940,7 @@ def run_test(
             processor=processor,
             model_info=model_info,
             data_val=data_val,
+            remote_model=remote_model,
         )
         trainer.test()
 

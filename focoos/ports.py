@@ -1172,3 +1172,12 @@ class ArtifactName(str, Enum):
     INFO = "model_info.json"
     METRICS = "metrics.json"
     LOGS = "log.txt"
+
+
+@dataclass
+class HubSyncLocalTraining:
+    status: Optional[ModelStatus] = None
+    training_info: Optional[TrainingInfo] = None
+    metrics: Optional[Metrics] = None
+    iterations: Optional[int] = None
+    focoos_version: Optional[str] = None

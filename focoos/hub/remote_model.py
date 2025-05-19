@@ -19,9 +19,10 @@ Methods:
 
 import os
 import time
+from dataclasses import asdict
 from pathlib import Path
 from time import sleep
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -29,8 +30,10 @@ import supervision as sv
 
 from focoos.hub.api_client import ApiClient
 from focoos.ports import (
+    ArtifactName,
     FocoosDet,
     FocoosDetections,
+    HubSyncLocalTraining,
     Metrics,
     ModelStatus,
     RemoteModelInfo,
@@ -38,7 +41,7 @@ from focoos.ports import (
     TrainingInfo,
 )
 from focoos.utils.logger import get_logger
-from focoos.utils.metrics import MetricsVisualizer
+from focoos.utils.metrics import MetricsVisualizer, parse_metrics
 from focoos.utils.vision import fai_detections_to_sv, image_loader
 
 logger = get_logger()
@@ -113,6 +116,68 @@ class RemoteModel:
             raise ValueError(f"Failed to get model info: {res.status_code} {res.text}")
         self.metadata = RemoteModelInfo(**res.json())
         return self.metadata
+
+    def sync_local_training_job(
+        self, local_training_info: HubSyncLocalTraining, dir: str, upload_artifacts: Optional[List[ArtifactName]] = None
+    ) -> None:
+        if not os.path.exists(os.path.join(dir, ArtifactName.INFO)):
+            logger.warning(f"Model info not found in {dir}")
+            raise ValueError(f"Model info not found in {dir}")
+        metrics = parse_metrics(os.path.join(dir, ArtifactName.METRICS))
+        local_training_info.metrics = metrics
+        logger.debug(
+            f"[Syncing Training] iter: {metrics.iterations} {self.metadata.name} status: {local_training_info.status} ref: {self.model_ref}"
+        )
+
+        ## Update metrics
+        res = self.api_client.patch(
+            f"models/{self.model_ref}/sync-local-training",
+            data=asdict(local_training_info),
+        )
+        if res.status_code != 200:
+            logger.error(f"Failed to sync local training: {res.status_code} {res.text}")
+            raise ValueError(f"Failed to sync local training: {res.status_code} {res.text}")
+        if upload_artifacts:
+            for artifact in [ArtifactName.METRICS, ArtifactName.WEIGHTS]:
+                file_path = os.path.join(dir, artifact.value)
+                if os.path.isfile(file_path):
+                    try:
+                        self._upload_model_artifact(file_path)
+                    except Exception:
+                        logger.error(f"Failed to upload artifact: {artifact.value}")
+                        pass
+
+    def _upload_model_artifact(self, path: str) -> None:
+        """
+        Uploads an model artifact to the Focoos platform.
+        """
+        if not os.path.exists(path):
+            raise ValueError(f"File not found: {path}")
+        file_ext = os.path.splitext(path)[1]
+        if file_ext not in [".pt", ".onnx", ".pth", ".json", ".txt"]:
+            raise ValueError(f"Unsupported file extension: {file_ext}")
+        file_name = os.path.basename(path)
+        file_size = os.path.getsize(path)
+        file_size_mb = file_size / (1024 * 1024)
+        logger.debug(f"🔗 Requesting upload url for {file_name} of size {file_size_mb:.2f} MB")
+        presigned_url = self.api_client.post(
+            f"models/{self.model_ref}/generate-upload-url",
+            data={"file_size_bytes": file_size, "file_name": file_name},
+        )
+        if presigned_url.status_code != 200:
+            raise ValueError(f"Failed to generate upload url: {presigned_url.status_code} {presigned_url.text}")
+        presigned_url = presigned_url.json()
+        fields = {k: v for k, v in presigned_url["fields"].items()}
+        logger.info(f"📤 Uploading file {file_name} to HUB, size: {file_size_mb:.2f} MB")
+        fields["file"] = (file_name, open(path, "rb"))
+        res = self.api_client.external_post(
+            presigned_url["url"],
+            files=fields,
+            data=presigned_url["fields"],
+        )
+        if res.status_code not in [200, 201, 204]:
+            raise ValueError(f"Failed to upload model artifact: {res.status_code} {res.text}")
+        logger.info(f"✅ Model artifact {file_name} uploaded to HUB.")
 
     def train_info(self) -> Optional[TrainingInfo]:
         """

@@ -1,5 +1,5 @@
 from .config import FOCOOS_CONFIG
-from .hub import ApiClient, FocoosHUB, RemoteDataset, RemoteModel
+from .hub import ApiClient, RemoteDataset, RemoteModel
 from .infer.infer_model import InferModel
 from .infer.runtimes.load_runtime import load_runtime
 from .infer.runtimes.onnx import ONNXRuntime
@@ -47,7 +47,7 @@ _setup_logging()
 
 __all__ = [
     "FOCOOS_CONFIG",
-    "FocoosHUB",
+    "RemoteModel",
     "InferModel",
     "RemoteModel",
     "FocoosDetections",

@@ -108,8 +108,14 @@ class InferModel:
             self.model_info: ModelInfo = self._read_model_info()
         else:
             self.model_info: ModelInfo = model_info
+        try:
+            from focoos.model_manager import ConfigManager
 
-        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)
+            model_config = ConfigManager.from_dict(self.model_info.model_family, self.model_info.config)
+            self.processor = ProcessorManager.get_processor(self.model_info.model_family, model_config)
+        except Exception as e:
+            logger.error(f"Error creating model config: {e}")
+            raise e
 
         # Initialize annotation utilities
         self.label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
