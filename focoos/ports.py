@@ -280,6 +280,7 @@ class RemoteModelInfo(PydanticBase):
     created_at: datetime
     updated_at: datetime
     status: ModelStatus
+    model_family: Optional[str] = None
     metrics: Optional[dict] = None
     latencies: Optional[list[dict]] = None
     classes: Optional[list[str]] = None
