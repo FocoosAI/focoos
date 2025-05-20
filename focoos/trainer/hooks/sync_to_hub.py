@@ -91,7 +91,7 @@ class SyncToHubHook(HookBase):
         self.model_info.dump_json(os.path.join(self.output_dir, ArtifactName.INFO))
         self._sync_train_job(
             sync_info=HubSyncLocalTraining(
-                status=status,  # type: ignore
+                status=ModelStatus.TRAINING_COMPLETED,
                 iterations=self.iteration,
                 training_info=self.model_info.training_info,
             ),
