@@ -256,26 +256,22 @@ class RemoteModel:
         if len(detections.xyxy) == 0:
             logger.warning("No detections found, skipping annotation")
             return im
-        classes = self.metadata.classes
-        if classes is not None:
-            labels = [
-                f"{classes[int(class_id)]}: {confid * 100:.0f}%"
-                for class_id, confid in zip(detections.class_id, detections.confidence)
-            ]
-        else:
-            labels = [
-                f"{str(class_id)}: {confid * 100:.0f}%"
-                for class_id, confid in zip(detections.class_id, detections.confidence)
-            ]
-        if self.metadata.task == Task.DETECTION:
-            annotated_im = self.box_annotator.annotate(scene=im.copy(), detections=detections)
 
-            annotated_im = self.label_annotator.annotate(scene=annotated_im, detections=detections, labels=labels)
-        elif self.metadata.task in [
-            Task.SEMSEG,
-            Task.INSTANCE_SEGMENTATION,
-        ]:
-            annotated_im = self.mask_annotator.annotate(scene=im.copy(), detections=detections)
+        if self.metadata.task in [Task.SEMSEG, Task.INSTANCE_SEGMENTATION]:
+            return self.mask_annotator.annotate(scene=im.copy(), detections=detections)
+
+        if detections.class_id is None:
+            raise ValueError("Class IDs are not available in the detections")
+        if detections.confidence is None:
+            raise ValueError("Confidence scores are not available in the detections")
+
+        classes = self.metadata.classes
+        annotated_im = self.box_annotator.annotate(scene=im.copy(), detections=detections)
+        labels = [
+            f"{classes[int(class_id)] if classes is not None else str(class_id)}: {confid * 100:.0f}%"
+            for class_id, confid in zip(detections.class_id, detections.confidence)
+        ]
+        annotated_im = self.label_annotator.annotate(scene=annotated_im, detections=detections, labels=labels)
         return annotated_im
 
     def infer(
