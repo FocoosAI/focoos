@@ -97,8 +97,10 @@ class ModelManager:
         if not os.path.exists(model_info_path):
             raise ValueError(f"Model info not found in {run_dir}")
         model_info = ModelInfo.from_json(model_info_path)
+
         if model_info.weights_uri == "model_final.pth":
             model_info.weights_uri = os.path.join(run_dir, model_info.weights_uri)
+
         return cls._from_model_info(model_info, config=config, **kwargs)
 
     @classmethod

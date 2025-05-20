@@ -136,7 +136,7 @@ class FocoosTrainer:
         self.model = model
         self.processor = processor.train()
         self.model_info = model_info
-        self.model_info.weights_uri = ArtifactName.WEIGHTS
+        self.model_info.weights_uri = os.path.join(self.output_dir, "model_final.pth")
         self.checkpoint = self.args.init_checkpoint
         # Setup data
         self.data_train = data_train
@@ -196,7 +196,7 @@ class FocoosTrainer:
         save_file = os.path.join(self.output_dir, save_file)
         logger.info("Saving final model to {}".format(save_file))
         torch.save(data, save_file)
-        self.model_info.weights_uri = "model_final.pth"
+        self.model_info.weights_uri = save_file
 
     def _restore_best_model(self, name: str = "model_best.pth"):
         """Restore best model from checkpoint.
