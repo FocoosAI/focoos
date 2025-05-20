@@ -106,8 +106,7 @@ class FocoosModel:
         )
         remote_model = None
         if args.sync_to_hub:
-            if hub is None:
-                hub = FocoosHUB()
+            hub = hub or FocoosHUB()
             remote_model = hub.new_model(self.model_info)
 
             self.model_info.ref = remote_model.ref
