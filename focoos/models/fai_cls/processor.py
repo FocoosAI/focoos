@@ -104,6 +104,7 @@ class ClassificationProcessor(Processor):
             list[torch.Tensor],
         ],
         class_names: list[str] = [],
+        threshold: Optional[float] = None,
     ) -> List[FocoosDetections]:
         """Post-process model outputs.
 
@@ -177,10 +178,11 @@ class ClassificationProcessor(Processor):
             list[np.ndarray],
             list[torch.Tensor],
         ],
+        threshold: Optional[float] = None,
         **kwargs,
     ) -> list[FocoosDetections]:
         logits = output[0]
         if isinstance(logits, np.ndarray):
             logits = torch.from_numpy(logits)
         model_output = ClassificationModelOutput(logits=logits, loss=None)
-        return self.postprocess(model_output, inputs, **kwargs)
+        return self.postprocess(model_output, inputs, threshold=threshold, **kwargs)

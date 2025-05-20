@@ -183,14 +183,14 @@ class InferModel:
         return annotated_im
 
     def __call__(
-        self, image: Union[bytes, str, Path, np.ndarray, Image.Image]
+        self, image: Union[bytes, str, Path, np.ndarray, Image.Image], threshold: Optional[float] = None
     ) -> Tuple[FocoosDetections, Optional[np.ndarray]]:
-        return self.infer(image)
+        return self.infer(image, threshold)
 
     def infer(
         self,
         image: Union[bytes, str, Path, np.ndarray, Image.Image],
-        threshold: float = 0.5,
+        threshold: Optional[float] = None,
         annotate: bool = False,
     ) -> Tuple[FocoosDetections, Optional[np.ndarray]]:
         """
@@ -236,7 +236,7 @@ class InferModel:
         raw_detections = self.runtime(tensors)
 
         t2 = perf_counter()
-        detections = self.processor.export_postprocess(raw_detections, im0)
+        detections = self.processor.export_postprocess(raw_detections, im0, threshold=threshold)
         t3 = perf_counter()
         latency = {
             "inference": round(t2 - t1, 3),

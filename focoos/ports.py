@@ -836,8 +836,6 @@ class TrainerArgs:
         decoder_multiplier (float): Learning rate multiplier for decoder
         head_multiplier (float): Learning rate multiplier for head
         freeze_bn (bool): Whether to freeze batch norm
-        freeze_bn_bkb (bool): Whether to freeze backbone batch norm
-        reset_classifier (bool): Whether to reset classifier
         clip_gradients (float): Gradient clipping value
         size_divisibility (int): Input size divisibility requirement
         gather_metric_period (int): How often to gather metrics
@@ -883,8 +881,6 @@ class TrainerArgs:
     decoder_multiplier: float = 1.0
     head_multiplier: float = 1.0
     freeze_bn: bool = False
-    freeze_bn_bkb: bool = False
-    reset_classifier: bool = False
     clip_gradients: float = 0.1
     size_divisibility: int = 0
     # Training specific

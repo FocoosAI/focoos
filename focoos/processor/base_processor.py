@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Literal, Union
+from typing import Any, Literal, Optional, Union
 
 import numpy as np
 import torch
@@ -36,6 +36,7 @@ class Processor(ABC):
         outputs: ModelOutput,
         inputs: Union[torch.Tensor, np.ndarray, Image.Image, list[Image.Image], list[np.ndarray], list[torch.Tensor]],
         class_names: list[str] = [],
+        threshold: float = 0.5,
         **kwargs,
     ) -> list[FocoosDetections]:
         raise NotImplementedError("Post-processing is not implemented for this model.")
@@ -52,6 +53,7 @@ class Processor(ABC):
             list[np.ndarray],
             list[torch.Tensor],
         ],
+        threshold: Optional[float] = None,
         **kwargs,
     ) -> list[FocoosDetections]:
         raise NotImplementedError("Export post-processing is not implemented for this model.")

@@ -330,6 +330,7 @@ class BisenetFormerProcessor(Processor):
             list[torch.Tensor],
         ],
         class_names: list[str] = [],
+        threshold: Optional[float] = None,
         **kwargs,
     ) -> list[FocoosDetections]:
         masks = output[0]
@@ -345,5 +346,6 @@ class BisenetFormerProcessor(Processor):
             model_output,
             inputs,
             class_names,
+            threshold=threshold,
             **kwargs,
         )

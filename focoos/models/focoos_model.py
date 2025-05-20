@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -198,6 +198,7 @@ class FocoosModel:
         out_dir: Optional[str] = None,
         device: Literal["cuda", "cpu"] = "cuda",
         overwrite: bool = False,
+        image_size: Optional[Tuple[int, int]] = None,
     ) -> InferModel:
         if device is None:
             device = self.model.device
@@ -208,7 +209,10 @@ class FocoosModel:
         format = runtime_type.to_export_format()
         exportable_model = ExportableModel(self.model, device=device)
         os.makedirs(out_dir, exist_ok=True)
-        data = 128 * torch.randn(1, 3, self.model_info.im_size, self.model_info.im_size).to(device)
+        if image_size is None:
+            data = 128 * torch.randn(1, 3, self.model_info.im_size, self.model_info.im_size).to(device)
+        else:
+            data = 128 * torch.randn(1, 3, image_size[0], image_size[1]).to(device)
 
         export_model_name = ArtifactName.ONNX if format == ExportFormat.ONNX else ArtifactName.PT
         _out_file = os.path.join(out_dir, export_model_name)

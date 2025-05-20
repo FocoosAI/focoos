@@ -324,6 +324,7 @@ class MaskFormerProcessor(Processor):
             list[np.ndarray],
             list[torch.Tensor],
         ],
+        threshold: Optional[float] = None,
         class_names: list[str] = [],
         **kwargs,
     ) -> list[FocoosDetections]:
@@ -340,6 +341,7 @@ class MaskFormerProcessor(Processor):
             model_output,
             inputs,
             class_names,
+            threshold=threshold,
             **kwargs,
         )
 
