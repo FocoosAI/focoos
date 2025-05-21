@@ -29,7 +29,7 @@ from focoos.trainer.evaluation.get_eval import get_evaluator
 from focoos.trainer.evaluation.utils import print_csv_format
 from focoos.trainer.events import CommonMetricPrinter, EventStorage, JSONWriter, get_event_storage
 from focoos.trainer.hooks import hook
-from focoos.trainer.hooks.early_stop import EarlyStoppingHook
+from focoos.trainer.hooks.early_stop import EarlyStopException, EarlyStoppingHook
 from focoos.trainer.hooks.sync_to_hub import SyncToHubHook
 from focoos.trainer.hooks.visualization import VisualizationHook
 from focoos.trainer.solver import ema
@@ -641,6 +641,8 @@ class TrainerLoop:
                     self.run_step()
                     self.after_step()
                 self.iter += 1
+            except EarlyStopException as e:
+                logger.info(f"🚨 Early stopping triggered: {e}")
             except Exception as e:
                 logger.error(f"🚨 Exception during training: {e}")
                 raise e

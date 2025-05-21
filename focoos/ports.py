@@ -860,7 +860,7 @@ class TrainerArgs:
     log_period: int = 20
     samples: int = 9
     seed: int = 42
-    early_stop: bool = False
+    early_stop: bool = True
     patience: int = 10
     # EMA
     ema_enabled: bool = False
