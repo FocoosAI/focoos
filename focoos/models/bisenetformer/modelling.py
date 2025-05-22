@@ -304,7 +304,6 @@ class TransformerDecoder(nn.Module):
         assert mask_classification, "Only support mask classification model"
         self.mask_classification = mask_classification
         self.use_attn_masks = use_attn_masks
-        self.query_init = False
 
         # positional encoding
         N_steps = hidden_dim // 2
@@ -346,11 +345,11 @@ class TransformerDecoder(nn.Module):
             )
 
         self.num_queries = num_queries
-        if not self.query_init:
-            # learnable query features
-            self.query_feat = nn.Embedding(num_queries, hidden_dim)
-            # learnable query p.e.
-            self.query_embed = nn.Embedding(num_queries, hidden_dim)
+
+        # learnable query features
+        self.query_feat = nn.Embedding(num_queries, hidden_dim)
+        # learnable query p.e.
+        self.query_embed = nn.Embedding(num_queries, hidden_dim)
 
         # level embedding (we use 2 scale)
         self.num_feature_levels = min(2, dec_layers)
@@ -368,14 +367,6 @@ class TransformerDecoder(nn.Module):
         self.forward_prediction_heads = PredictionHeads(
             hidden_dim, num_classes, out_dim, nheads, mask_classification, use_attn_masks
         )
-
-        if self.query_init:
-            self.out_dim = out_dim
-            self.kernels = nn.Conv2d(in_channels=out_dim, out_channels=num_queries, kernel_size=1)
-            nn.init.kaiming_uniform_(self.kernels.weight, a=1)
-            if self.kernels.bias is not None:
-                nn.init.constant_(self.kernels.bias, 0)
-            self.proj = nn.Linear(out_dim, hidden_dim)
 
     def forward(self, x, mask_features, targets=None, mask=None):
         # x is a list of multi-scale feature
@@ -401,34 +392,17 @@ class TransformerDecoder(nn.Module):
 
         _, bs, _ = src[0].shape
 
-        if not self.query_init:
-            # QxNxC
-            query_embed = self.query_embed.weight.unsqueeze(1).repeat(1, bs, 1)
-            output = self.query_feat.weight.unsqueeze(1).repeat(1, bs, 1)
-        else:
-            query_embed = None
+        # QxNxC
+        query_embed = self.query_embed.weight.unsqueeze(1).repeat(1, bs, 1)
+        output = self.query_feat.weight.unsqueeze(1).repeat(1, bs, 1)
 
         predictions_class = []
         predictions_mask = []
 
-        if self.query_init:
-            outputs_mask = self.kernels(mask_features)
-            proposal_kernels = self.kernels.weight.clone()
-
-            output = proposal_kernels[None].expand(mask_features.shape[0], *proposal_kernels.size())
-            output = output.squeeze((3, 4)).permute(1, 0, 2)
-
-            if output.shape[-1] != self.out_dim:
-                output = self.proj(output)
-
-            outputs_class, outputs_mask, attn_mask = self.forward_prediction_heads(
-                output, outputs_mask, sizes=size_list[0], compute_masks=False
-            )
-        else:
-            # prediction heads on learnable query features
-            outputs_class, outputs_mask, attn_mask = self.forward_prediction_heads(
-                output, mask_features, sizes=size_list[0]
-            )
+        # prediction heads on learnable query features
+        outputs_class, outputs_mask, attn_mask = self.forward_prediction_heads(
+            output, mask_features, sizes=size_list[0]
+        )
         attn_mask = attn_mask[0] if self.use_attn_masks else None
         predictions_class.append(outputs_class)
         predictions_mask.append(outputs_mask)
@@ -618,7 +592,6 @@ class BisenetFormer(BaseModelNN):
             ),
             cls_sigmoid=self.config.cls_sigmoid,
         )
-        self.resolution = self.config.resolution
         self.top_k = self.config.num_queries
         self.register_buffer("pixel_mean", torch.Tensor(self.config.pixel_mean).view(-1, 1, 1), False)
         self.register_buffer("pixel_std", torch.Tensor(self.config.pixel_std).view(-1, 1, 1), False)

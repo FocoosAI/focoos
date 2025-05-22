@@ -37,6 +37,8 @@ class ModelRegistry:
         "fai-mf-m-coco-ins": os.path.join(REGISTRY_PATH, "fai-mf-m-coco-ins.json"),
         "fai-mf-s-coco-ins": os.path.join(REGISTRY_PATH, "fai-mf-s-coco-ins.json"),
         "bisenetformer-m-ade": os.path.join(REGISTRY_PATH, "bisenetformer-m-ade.json"),
+        "bisenetformer-l-ade": os.path.join(REGISTRY_PATH, "bisenetformer-l-ade.json"),
+        "bisenetformer-s-ade": os.path.join(REGISTRY_PATH, "bisenetformer-s-ade.json"),
     }
 
     @classmethod

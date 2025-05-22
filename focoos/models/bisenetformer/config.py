@@ -13,7 +13,6 @@ class BisenetFormerConfig(ModelConfig):
     num_classes: int
 
     num_queries: int = 100
-    resolution: int = 640
 
     # Image detector configuration
     pixel_mean: List[float] = field(default_factory=lambda: [123.675, 116.28, 103.53])
