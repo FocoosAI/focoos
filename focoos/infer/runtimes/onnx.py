@@ -1,6 +1,6 @@
 from pathlib import Path
 from time import perf_counter
-from typing import Union
+from typing import Tuple, Union
 
 import numpy as np
 import onnxruntime as ort
@@ -162,7 +162,7 @@ class ONNXRuntime(BaseRuntime):
             logger.warning(f"No GPU found, using CPU {device_name}.")
         return f"onnx.{self.active_provider}", str(device_name)
 
-    def benchmark(self, iterations: int = 50, size: int = 640) -> LatencyMetrics:
+    def benchmark(self, iterations: int = 50, size: Union[int, Tuple[int, int]] = 640) -> LatencyMetrics:
         """
         Benchmark the model performance.
 
@@ -177,10 +177,12 @@ class ONNXRuntime(BaseRuntime):
             LatencyMetrics: Performance metrics including FPS, mean, min, max, and std latencies.
         """
         engine, device_name = self.get_info()
+        if isinstance(size, int):
+            size = (size, size)
 
         logger.info(f"⏱️ Benchmarking latency on {device_name}, size: {size}x{size}..")
 
-        np_input = (255 * np.random.random((1, 3, size, size))).astype(self.dtype)
+        np_input = (255 * np.random.random((1, 3, size[0], size[1]))).astype(self.dtype)
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
 
@@ -202,7 +204,7 @@ class ONNXRuntime(BaseRuntime):
             max=round(durations.max().astype(float), 3),
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
-            im_size=size,
+            im_size=size[0],  # FIXME: this is a hack to get the im_size as int, assuming it's a square
             device=device_name,
         )
         logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")

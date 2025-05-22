@@ -1,4 +1,5 @@
 from time import perf_counter
+from typing import Tuple, Union
 
 import numpy as np
 import torch
@@ -78,7 +79,7 @@ class TorchscriptRuntime(BaseRuntime):
 
         return "torchscript", str(device_name)
 
-    def benchmark(self, iterations: int = 20, size: int = 640) -> LatencyMetrics:
+    def benchmark(self, iterations: int = 20, size: Union[int, Tuple[int, int]] = 640) -> LatencyMetrics:
         """
         Benchmark the model performance.
 
@@ -94,7 +95,10 @@ class TorchscriptRuntime(BaseRuntime):
         engine, device_name = self.get_info()
         logger.info(f"⏱️ Benchmarking latency on {device_name}, size: {size}x{size}..")
 
-        torch_input = torch.rand(1, 3, size, size, device=self.device)
+        if isinstance(size, int):
+            size = (size, size)
+
+        torch_input = torch.rand(1, 3, size[0], size[1], device=self.device)
         durations = []
 
         with torch.no_grad():

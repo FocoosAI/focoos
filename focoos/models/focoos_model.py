@@ -321,6 +321,25 @@ class FocoosModel:
         return len(incompatible.missing_keys) + len(incompatible.unexpected_keys)
 
     def benchmark(
+        self,
+        iterations: int = 50,
+        size: Optional[Union[int, Tuple[int, int]]] = None,
+        device: Literal["cuda", "cpu"] = "cuda",
+    ) -> LatencyMetrics:
+        """
+        Benchmark the model's inference performance over multiple iterations.
+        """
+        self.model.eval()
+
+        if size is None:
+            size = self.model_info.im_size
+        if isinstance(size, int):
+            size = (size, size)
+        model = self.model.to(device)
+        metrics = model.benchmark(size=size, iterations=iterations)
+        return metrics
+
+    def end2end_benchmark(
         self, iterations: int = 50, size: Optional[int] = None, device: Literal["cuda", "cpu"] = "cuda"
     ) -> LatencyMetrics:
         """

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Tuple, Union
 
 import numpy as np
 import torch
@@ -71,15 +71,10 @@ class BaseModelNN(ABC, nn.Module):
 
         return incompatible
 
-    def benchmark(self, iterations: int = 50, size: int = 640) -> LatencyMetrics:
-        try:
-            model = self.cuda()
-        except Exception:
-            logger.warning("Unable to use CUDA")
-        logger.info(f"⏱️ Benchmarking latency on {model.device}, size: {size}x{size}..")
+    def benchmark(self, iterations: int = 50, size: Tuple[int, int] = (640, 640)) -> LatencyMetrics:
+        logger.info(f"⏱️ Benchmarking latency on {self.device}, size: {size}x{size}..")
         # warmup
-        data = 128 * torch.randn(1, 3, size, size).to(model.device)
-
+        data = 128 * torch.randn(1, 3, size[0], size[1]).to(self.device)
         durations = []
         for _ in range(iterations):
             start = torch.cuda.Event(enable_timing=True)
@@ -98,7 +93,7 @@ class BaseModelNN(ABC, nn.Module):
             max=round(durations.max().astype(float), 3),
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
-            im_size=size,
+            im_size=size[0],  # FIXME: this is a hack to get the im_size as int, assuming it's a square
             device=str(self.device),
         )
         logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")

@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any
+from typing import Any, Tuple, Union
 
 import numpy as np
 import torch
@@ -52,7 +52,7 @@ class BaseRuntime:
         pass
 
     @abstractmethod
-    def benchmark(self, iterations: int, size: float) -> LatencyMetrics:
+    def benchmark(self, iterations: int, size: Union[int, Tuple[int, int]]) -> LatencyMetrics:
         """
         Benchmark the model performance.
 

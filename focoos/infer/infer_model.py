@@ -254,7 +254,19 @@ class InferModel:
         )
         return res, im
 
-    def benchmark(self, iterations: int = 50, size: Optional[int] = None) -> LatencyMetrics:
+    def benchmark(self, iterations: int = 50, size: Optional[Union[int, Tuple[int, int]]] = None) -> LatencyMetrics:
+        """
+        Benchmark the model's inference performance over multiple iterations.
+        """
+        if size is None:
+            size = self.model_info.im_size
+        if isinstance(size, int):
+            size = (size, size)
+        return self.runtime.benchmark(iterations, size)
+
+    def end2end_benchmark(
+        self, iterations: int = 50, size: Optional[Union[int, Tuple[int, int]]] = None
+    ) -> LatencyMetrics:
         """
         Benchmark the model's inference performance over multiple iterations.
 
@@ -271,7 +283,7 @@ class InferModel:
 
             focoos = Focoos()
             model = focoos.get_local_model(model_ref="<model_ref>")
-            metrics = model.benchmark(iterations=10, size=640)
+            metrics = model.end2end_benchmark(iterations=10, size=640)
 
             # Access latency metrics
             print(f"FPS: {metrics.fps}")
@@ -283,11 +295,13 @@ class InferModel:
         """
         if size is None:
             size = self.model_info.im_size
+        if isinstance(size, int):
+            size = (size, size)
 
         engine, device = self.runtime.get_info()
         logger.info(f"⏱️ Benchmarking latency on {device}, size: {size}x{size}..")
 
-        np_input = (255 * np.random.random((size, size, 3))).astype(np.uint8)
+        np_input = (255 * np.random.random((size[0], size[1], 3))).astype(np.uint8)
 
         durations = []
         for step in range(iterations + 5):
@@ -307,7 +321,7 @@ class InferModel:
             max=round(durations.max().astype(float), 3),
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
-            im_size=size,
+            im_size=size[0],  # FIXME: this is a hack to get the im_size as int, assuming it's a square
             device=device,
         )
         logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")
