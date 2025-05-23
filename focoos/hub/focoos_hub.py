@@ -422,7 +422,6 @@ class FocoosHUB:
                 "name": model_info.name,
                 "focoos_model": model_info.focoos_model,
                 "description": model_info.description,
-                "model_family": model_info.model_family,
                 "config": model_info.config if model_info.config else {},
                 "task": model_info.task,
                 "classes": model_info.classes,
