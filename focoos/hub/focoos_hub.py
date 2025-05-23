@@ -14,6 +14,7 @@ Exceptions:
 """
 
 import os
+from dataclasses import asdict
 from typing import Optional
 
 from focoos.config import FOCOOS_CONFIG
@@ -22,8 +23,8 @@ from focoos.hub.remote_dataset import RemoteDataset
 from focoos.hub.remote_model import RemoteModel
 from focoos.ports import (
     MODELS_DIR,
+    ArtifactName,
     DatasetPreview,
-    ModelExtension,
     ModelInfo,
     ModelPreview,
     RemoteModelInfo,
@@ -280,13 +281,14 @@ class FocoosHUB:
             raise ValueError(f"Failed to list datasets: {res.status_code} {res.text}")
         return [DatasetPreview.from_json(dataset) for dataset in res.json()]
 
-    def _download_model(self, model_ref: str, format: ModelExtension = ModelExtension.ONNX) -> str:
+    def download_model_pth(self, model_ref: str, skip_if_exists: bool = True) -> str:
         """
         Downloads a model from the Focoos API.
 
         Args:
             model_ref (str): Reference identifier for the model.
-            format (ModelFormat): Format of the model to download. Defaults to ModelFormat.ONNX.
+            skip_if_exists (bool): If True, skips the download if the model file already exists.
+                Defaults to True.
 
         Returns:
             str: Path to the downloaded model file.
@@ -295,15 +297,14 @@ class FocoosHUB:
             ValueError: If the API request fails or the download fails.
         """
         model_dir = os.path.join(MODELS_DIR, model_ref)
-        model_path = os.path.join(model_dir, f"model.{format.value}")
-        metadata_path = os.path.join(model_dir, "focoos_metadata.json")
-        if os.path.exists(model_path) and os.path.exists(metadata_path):
+        model_pth_path = os.path.join(model_dir, ArtifactName.WEIGHTS)
+        if os.path.exists(model_pth_path) and skip_if_exists:
             logger.info("📥 Model already downloaded")
-            return model_path
+            return model_pth_path
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
         ## download model metadata
-        res = self.api_client.get(f"models/{model_ref}/download?format={format.value}")
+        res = self.api_client.get(f"models/{model_ref}/download?format=pth")
         if res.status_code != 200:
             logger.error(f"Failed to retrieve download url for model: {res.status_code} {res.text}")
             raise ValueError(f"Failed to retrieve download url for model: {res.status_code} {res.text}")
@@ -311,24 +312,19 @@ class FocoosHUB:
         download_data = res.json()
 
         download_uri = download_data["download_uri"]
-
         ## download model from Focoos Cloud
         logger.debug(f"Model URI: {download_uri}")
         logger.info("📥 Downloading model from Focoos Cloud.. ")
         try:
-            model_path = self.api_client.download_ext_file(download_uri, model_dir)
-            metadata = RemoteModelInfo.from_json(download_data["model_metadata"])
-            with open(metadata_path, "w") as f:
-                f.write(metadata.model_dump_json())
-            logger.debug(f"Dumped metadata to {metadata_path}")
+            model_pth_path = self.api_client.download_ext_file(download_uri, model_dir, skip_if_exists=skip_if_exists)
         except Exception as e:
             logger.error(f"Failed to download model: {e}")
             raise ValueError(f"Failed to download model: {e}")
-        if model_path is None:
+        if model_pth_path is None:
             logger.error(f"Failed to download model: {res.status_code} {res.text}")
             raise ValueError(f"Failed to download model: {res.status_code} {res.text}")
 
-        return model_path
+        return model_pth_path
 
     def list_remote_datasets(self, include_shared: bool = False) -> list[DatasetPreview]:
         """
@@ -419,16 +415,20 @@ class FocoosHUB:
             model = focoos.new_model(name="my-model", focoos_model="fai-model-ref", description="my-model-description")
             ```
         """
+
         res = self.api_client.post(
             "models/local-model",
             data={
                 "name": model_info.name,
                 "focoos_model": model_info.focoos_model,
                 "description": model_info.description,
+                "model_family": model_info.model_family,
                 "config": model_info.config if model_info.config else {},
                 "task": model_info.task,
                 "classes": model_info.classes,
                 "im_size": model_info.im_size,
+                "train_args": asdict(model_info.train_args) if model_info.train_args else None,
+                "focoos_version": model_info.focoos_version,
             },
         )
         if res.status_code in [200, 201]:

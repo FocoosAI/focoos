@@ -5,7 +5,7 @@ from abc import ABC
 from collections import OrderedDict
 from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime
-from enum import Enum
+from enum import Enum, StrEnum
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
 
@@ -274,20 +274,22 @@ class RemoteModelInfo(PydanticBase):
     ref: str
     name: str
     description: Optional[str] = None
+    is_managed: bool
     owner_ref: str
     focoos_model: str
+    config: Optional[dict] = None
     task: Task
     created_at: datetime
     updated_at: datetime
     status: ModelStatus
     model_family: Optional[str] = None
     metrics: Optional[dict] = None
-    latencies: Optional[list[dict]] = None
     classes: Optional[list[str]] = None
     im_size: Optional[int] = None
     training_info: Optional[TrainingInfo] = None
-    location: Optional[str] = None
     dataset: Optional[DatasetPreview] = None
+    hyperparameters: Optional[dict] = None
+    focoos_version: Optional[str] = None
 
 
 class FocoosDet(PydanticBase):
@@ -700,7 +702,7 @@ class Metrics:
     best_valid_metric: Optional[dict] = None
 
 
-class ModelFamily(str, Enum):
+class ModelFamily(StrEnum):
     """Enumerazione delle famiglie di modelli disponibili"""
 
     DETR = "fai_detr"
@@ -1055,18 +1057,30 @@ class ModelInfo(DictClass):
     updated_at: Optional[str] = None
 
     @classmethod
-    def from_json(cls, path: str):
+    def from_json(cls, data: Union[str, dict]):
         """
         Load ModelInfo from a JSON file.
 
         Args:
-            path (str): Path to the JSON file containing model metadata.
+            path (Optional[str]): Path to the JSON file containing model metadata.
+            data (Optional[dict]): Dictionary containing model metadata.
 
         Returns:
             ModelInfo: An instance of ModelInfo populated with data from the file.
         """
-        with open(path, encoding="utf-8") as f:
-            model_info_json = json.load(f)
+        assert isinstance(data, dict) or isinstance(data, str), "data must be a dictionary or a path to a JSON file"
+        if isinstance(data, str):
+            with open(data, encoding="utf-8") as f:
+                model_info_json = json.load(f)
+        else:
+            model_info_json = data
+
+        training_info = None
+        if "training_info" in model_info_json and model_info_json["training_info"] is not None:
+            training_info = TrainingInfo(
+                **{k: v for k, v in model_info_json["training_info"].items() if k in TrainingInfo.__dataclass_fields__}
+            )
+
         model_info = cls(
             name=model_info_json["name"],
             ref=model_info_json.get("ref", None),
@@ -1089,9 +1103,7 @@ class ModelInfo(DictClass):
             updated_at=model_info_json.get("updated_at", None),
             focoos_version=model_info_json.get("focoos_version", None),
             val_metrics=model_info_json.get("val_metrics", None),
-            training_info=TrainingInfo(**model_info_json["training_info"])
-            if "training_info" in model_info_json and model_info_json["training_info"] is not None
-            else None,
+            training_info=training_info,
         )
         return model_info
 
