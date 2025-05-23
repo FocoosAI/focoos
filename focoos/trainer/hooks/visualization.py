@@ -202,7 +202,7 @@ class VisualizationHook(HookBase):
     def iter(self):
         try:
             return self.trainer.iter
-        except (AttributeError, TypeError):
+        except Exception:
             return 0
 
     def after_step(self):
@@ -215,7 +215,7 @@ class VisualizationHook(HookBase):
     def after_train(self):
         try:
             # This condition is to prevent the eval from running after a failed training
-            if self.iteration + 1 >= self.trainer.max_iter:
+            if self.trainer.max_iter is not None and self.iter + 1 >= self.trainer.max_iter:
                 self._visualize()
         except (AttributeError, TypeError):
             # In case self.trainer is None
