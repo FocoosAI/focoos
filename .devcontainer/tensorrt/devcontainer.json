@@ -11,6 +11,13 @@
         "gpu": "optional"
     },
     "workspaceFolder": "${localWorkspaceFolder}",
+    "mounts": [
+        {
+            "source": "/home/ubuntu/.aws",
+            "target": "/root/.aws",
+            "type": "bind"
+        }
+    ],
     "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
     "postCreateCommand": "uv pip install -e .[tensorrt,dev]",
     "remoteEnv": {
