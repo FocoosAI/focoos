@@ -159,6 +159,11 @@ def test_export(model_name: str):
                     logger.warning(f"Error processing input with resolution {res}: {e}")
                     successful_exports[runtime_type]["resolutions"][res] = False
 
+            latency = exported_model.benchmark()
+            logger.info(f"============ model {model_name} {runtime_type} =============")
+            logger.info(f"benchmark results: {latency}")
+            logger.info(f"===========================================================")
+
     for runtime_type in successful_exports:
         if successful_exports[runtime_type]["export"]:
             logger.info(f"✅ EXPORT TEST DONE, model {model_name} successfully exported and tested.")
