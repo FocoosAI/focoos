@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from focoos.hub.remote_model import RemoteModel
-from focoos.ports import ArtifactName, HubSyncLocalTraining, ModelInfo, ModelStatus, StatusTransition
+from focoos.ports import ArtifactName, HubSyncLocalTraining, ModelInfo, ModelStatus
 from focoos.trainer.hooks.base import HookBase
 from focoos.utils.logger import get_logger
 
@@ -68,6 +68,7 @@ class SyncToHubHook(HookBase):
 
     def after_train(self):
         exc_type, exc_value, exc_traceback = sys.exc_info()
+        status = ModelStatus.TRAINING_COMPLETED
         if exc_type is not None:
             logger.error(
                 f"Exception during training, status set to TRAINING_ERROR: {str(exc_type.__name__)} {str(exc_value)}"
@@ -81,7 +82,7 @@ class SyncToHubHook(HookBase):
                 if self.model_info.training_info.status_transitions is None:
                     self.model_info.training_info.status_transitions = []
                 self.model_info.training_info.status_transitions.append(
-                    StatusTransition(
+                    dict(
                         status=status,
                         timestamp=datetime.now().isoformat(),
                         detail=f"{str(exc_type.__name__)}:  {str(exc_value)}",
@@ -91,7 +92,7 @@ class SyncToHubHook(HookBase):
         self.model_info.dump_json(os.path.join(self.output_dir, ArtifactName.INFO))
         self._sync_train_job(
             sync_info=HubSyncLocalTraining(
-                status=ModelStatus.TRAINING_COMPLETED,
+                status=status,
                 iterations=self.iteration,
                 training_info=self.model_info.training_info,
             ),

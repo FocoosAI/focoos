@@ -19,7 +19,6 @@ from focoos.ports import (
     ModelInfo,
     ModelStatus,
     RuntimeType,
-    StatusTransition,
     TrainerArgs,
     TrainingInfo,
 )
@@ -74,7 +73,7 @@ class FocoosModel:
             main_status=ModelStatus.TRAINING_STARTING,
             start_time=datetime.now().isoformat(),
             status_transitions=[
-                StatusTransition(
+                dict(
                     status=ModelStatus.TRAINING_STARTING,
                     timestamp=datetime.now().isoformat(),
                 )

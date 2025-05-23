@@ -21,7 +21,7 @@ from focoos.data.loaders import build_detection_test_loader, build_detection_tra
 from focoos.hub.remote_model import RemoteModel
 from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.layers.norm import FrozenBatchNorm2d
-from focoos.ports import ArtifactName, ModelInfo, ModelStatus, StatusTransition, Task, TrainerArgs, TrainingInfo
+from focoos.ports import ArtifactName, ModelInfo, ModelStatus, Task, TrainerArgs, TrainingInfo
 from focoos.processor.base_processor import Processor
 from focoos.trainer.checkpointer import Checkpointer
 from focoos.trainer.evaluation.evaluator import inference_on_dataset
@@ -538,7 +538,7 @@ class FocoosTrainer:
             self.model_info.training_info.failure_reason = detail
 
         self.model_info.training_info.status_transitions.append(
-            StatusTransition(
+            dict(
                 status=new_status,
                 timestamp=datetime.now().isoformat(),
                 detail=detail,

@@ -177,7 +177,7 @@ class TrainingInfo:
     volume_size: Optional[int] = None
     main_status: Optional[str] = None
     failure_reason: Optional[str] = None
-    status_transitions: Optional[list[StatusTransition]] = None
+    status_transitions: Optional[list[dict]] = None
     start_time: Optional[str] = None
     end_time: Optional[str] = None
     artifact_location: Optional[str] = None
