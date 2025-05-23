@@ -236,7 +236,9 @@ class InferModel:
         raw_detections = self.runtime(tensors)
 
         t2 = perf_counter()
-        detections = self.processor.export_postprocess(raw_detections, im0, threshold=threshold)
+        detections = self.processor.export_postprocess(
+            raw_detections, im0, threshold=threshold, class_names=self.model_info.classes
+        )
         t3 = perf_counter()
         latency = {
             "inference": round(t2 - t1, 3),
