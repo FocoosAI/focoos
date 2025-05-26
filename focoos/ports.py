@@ -1092,7 +1092,9 @@ class ModelInfo(DictClass):
             focoos_model=model_info_json.get("focoos_model", None),
             config=model_info_json["config"],
             description=model_info_json.get("description", None),
-            train_args=TrainerArgs(**model_info_json["train_args"])
+            train_args=TrainerArgs(
+                **{k: v for k, v in model_info_json["train_args"].items() if k in TrainerArgs.__dataclass_fields__}
+            )
             if "train_args" in model_info_json and model_info_json["train_args"] is not None
             else None,
             weights_uri=model_info_json.get("weights_uri", None),

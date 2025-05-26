@@ -1,12 +1,15 @@
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Literal, Optional, Tuple, Union
+from urllib.parse import urlparse
 
 import numpy as np
 import torch
 from PIL import Image
 
 from focoos.data.datasets.map_dataset import MapDataset
+from focoos.hub.api_client import ApiClient
 from focoos.hub.focoos_hub import FocoosHUB
 from focoos.infer.infer_model import InferModel
 from focoos.models.base_model import BaseModelNN
@@ -45,6 +48,10 @@ class FocoosModel:
         self.model = model
         self.model_info = model_info
         self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)
+        if self.model_info.weights_uri:
+            self._load_weights()
+        else:
+            logger.warning(f"⚠️ Model {self.model_info.name} has no pretrained weights")
 
     def __str__(self):
         return f"{self.model_info.name} ({self.model_info.model_family.value})"
@@ -52,13 +59,13 @@ class FocoosModel:
     def __repr__(self):
         return f"{self.model_info.name} ({self.model_info.model_family.value})"
 
-    def _setup_model_info_for_training(self, train_args: TrainerArgs, data_train: MapDataset, data_val: MapDataset):
+    def _setup_model_for_training(self, train_args: TrainerArgs, data_train: MapDataset, data_val: MapDataset):
         device = get_cpu_name()
         system_info = get_system_info()
         if system_info.gpu_info and system_info.gpu_info.devices and len(system_info.gpu_info.devices) > 0:
             device = system_info.gpu_info.devices[0].gpu_name
         self.model_info.ref = None
-        self.model_info.name = train_args.run_name.strip()
+
         self.model_info.train_args = train_args  # type: ignore
         self.model_info.val_dataset = data_val.dataset.metadata.name
         self.model_info.val_metrics = None
@@ -82,6 +89,8 @@ class FocoosModel:
 
         self.model_info.classes = data_train.dataset.metadata.classes
         self.model_info.config["num_classes"] = len(data_train.dataset.metadata.classes)
+        self._reload_model()
+        self.model_info.name = train_args.run_name.strip()
         assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
 
     def train(self, args: TrainerArgs, data_train: MapDataset, data_val: MapDataset, hub: Optional[FocoosHUB] = None):
@@ -95,10 +104,7 @@ class FocoosModel:
             data_val: Validation dataset
         """
 
-        # hub.create_model(self.model_info)
-        # hub.sync_training_job(args.output_dir, [ArtifactName.WEIGHTS, ArtifactName.INFO, ArtifactName.METRICS])
-
-        self._setup_model_info_for_training(args, data_train, data_val)
+        self._setup_model_for_training(args, data_train, data_val)
         assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
         assert self.model_info.config["num_classes"] == data_train.dataset.metadata.num_classes, (
             "Number of classes mismatch between model and dataset."
@@ -119,6 +125,7 @@ class FocoosModel:
                 dist_url="auto",
                 args=(args, data_train, data_val, self.model, self.processor, self.model_info, remote_model),
             )
+
             logger.info("Training done, resuming main process.")
             # here i should restore the best model and config since in DDP it is not updated
             final_folder = os.path.join(args.output_dir, args.run_name)
@@ -129,10 +136,9 @@ class FocoosModel:
                 raise FileNotFoundError(f"Training did not end correctly, model file not found at {model_path}")
             if not os.path.exists(metadata_path):
                 raise FileNotFoundError(f"Training did not end correctly, metadata file not found at {metadata_path}")
-            logger.info(f"Reloading weights from {model_path}")
-            weights = torch.load(model_path)
-            self.load_weights(weights)
             self.model_info = ModelInfo.from_json(metadata_path)
+            logger.info(f"Reloading weights from {self.model_info.weights_uri}")
+            self._reload_model()
         else:
             run_train(args, data_train, data_val, self.model, self.processor, self.model_info, remote_model)
 
@@ -191,9 +197,6 @@ class FocoosModel:
         self,
         runtime_type: RuntimeType = RuntimeType.ONNX_CUDA32,
         onnx_opset: int = 17,
-        onnx_dynamic: bool = True,
-        model_fuse: bool = True,
-        fp16: bool = False,
         out_dir: Optional[str] = None,
         device: Literal["cuda", "cpu"] = "cuda",
         overwrite: bool = False,
@@ -314,9 +317,62 @@ class FocoosModel:
         output_fdet = processor.postprocess(output, inputs, class_names=class_names, **kwargs)
         return output_fdet
 
-    def load_weights(self, weights: dict) -> int:
-        # Merge with load weights of checkpointer
-        incompatible = self.model.load_state_dict(weights, strict=False)
+    def _reload_model(self):
+        torch.cuda.empty_cache()
+        model_class = self.model.__class__
+        model = model_class(self.model_info.config)  # type: ignore
+        self.model = model
+        self._load_weights()
+
+    def _load_weights(self) -> int:
+        """
+        Load model weights from the specified URI.
+
+        This method loads the model weights from either a local path or a remote URL,
+        depending on the value of `self.model_info.weights_uri`. If the weights are remote,
+        they are downloaded to a local directory. The method then loads the weights into
+        the model, allowing for missing or unexpected keys (non-strict loading).
+
+        Returns:
+            int: The total number of missing or unexpected keys encountered during loading.
+                 Returns 0 if no weights are loaded or an error occurs.
+
+        Raises:
+            FileNotFoundError: If the weights file cannot be found at the specified path.
+            Exception: If any other error occurs during loading, it is logged and 0 is returned.
+        """
+        if not self.model_info.weights_uri:
+            logger.warning(f"⚠️ Model {self.model_info.name} has no pretrained weights")
+            return 0
+
+        # Determine if weights are remote or local
+        parsed_uri = urlparse(self.model_info.weights_uri)
+        is_remote = bool(parsed_uri.scheme and parsed_uri.netloc)
+
+        # Get weights path
+        if is_remote:
+            logger.info(f"Downloading weights from remote URL: {self.model_info.weights_uri}")
+            model_dir = Path(MODELS_DIR) / self.model_info.name
+            weights_path = ApiClient().download_ext_file(
+                self.model_info.weights_uri, str(model_dir), skip_if_exists=True
+            )
+        else:
+            logger.info(f"Using weights from local path: {self.model_info.weights_uri}")
+            weights_path = self.model_info.weights_uri
+
+        try:
+            if not os.path.exists(weights_path):
+                raise FileNotFoundError(f"Weights file not found: {weights_path}")
+
+            # Load weights and extract model state if needed
+            state_dict = torch.load(weights_path, map_location="cpu", weights_only=True)
+            weights_dict = state_dict.get("model", state_dict) if isinstance(state_dict, dict) else state_dict
+
+        except Exception as e:
+            logger.error(f"Error loading weights for {self.model_info.name}: {str(e)}")
+            return 0
+
+        incompatible = self.model.load_state_dict(weights_dict, strict=False)
         return len(incompatible.missing_keys) + len(incompatible.unexpected_keys)
 
     def benchmark(

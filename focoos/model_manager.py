@@ -1,11 +1,8 @@
 import importlib
 import os
 from dataclasses import fields
-from pathlib import Path
 from typing import Callable, Dict, Optional, Tuple, Type
-from urllib.parse import urlparse
 
-from focoos.hub.api_client import ApiClient
 from focoos.hub.focoos_hub import FocoosHUB
 from focoos.model_registry.model_registry import ModelRegistry
 from focoos.models.focoos_model import BaseModelNN, FocoosModel
@@ -149,13 +146,6 @@ class ModelManager:
         model_info.config = config
         nn_model = model_class(model_info.config)
         model = FocoosModel(nn_model, model_info)
-        if model_info.weights_uri:
-            weights = ArtifactsManager.get_weights_dict(model_info)
-            if weights:
-                model.load_weights(weights)
-                logger.info(f"✅ Weights loaded for model {model_info.name}")
-        else:
-            logger.warning(f"⚠️ Model {model_info.name} has no pretrained weights")
         return model
 
     @classmethod
@@ -464,63 +454,3 @@ class ConfigBackboneManager:
         config_class = cls.get_model_class(config_dict["model_type"])
         return_config = config_class(**config_dict)
         return return_config
-
-
-class ArtifactsManager:
-    """
-    Manager for handling model artifacts such as weights.
-
-    The ArtifactsManager provides utilities for loading and managing model artifacts,
-    particularly weights files. It handles both local and remote (URL-based) artifacts,
-    and provides download and caching functionality.
-    """
-
-    @staticmethod
-    def get_weights_dict(model_info: ModelInfo) -> Optional[dict]:
-        """
-        Load weights for a given model.
-
-        This method handles loading model weights from either local paths or remote URLs.
-        For remote weights, it downloads them to a local cache directory. It then loads
-        the weights into memory and extracts the model state if needed.
-
-        Args:
-            model_info: ModelInfo object containing model metadata including weights_uri
-
-        Returns:
-            Optional[dict]: Dictionary of weights or None if not available or on error
-
-        Raises:
-            FileNotFoundError: If the weights file cannot be found
-            Various exceptions: If there are issues downloading or loading the weights
-        """
-        if not model_info.weights_uri:
-            logger.warning(f"⚠️ Model {model_info.name} has no pretrained weights")
-            return None
-
-        # Determine if weights are remote or local
-        parsed_uri = urlparse(model_info.weights_uri)
-        is_remote = bool(parsed_uri.scheme and parsed_uri.netloc)
-
-        # Get weights path
-        if is_remote:
-            logger.info(f"Downloading weights from remote URL: {model_info.weights_uri}")
-            model_dir = Path(MODELS_DIR) / model_info.name
-            weights_path = ApiClient().download_ext_file(model_info.weights_uri, str(model_dir), skip_if_exists=True)
-        else:
-            logger.info(f"Using weights from local path: {model_info.weights_uri}")
-            weights_path = model_info.weights_uri
-
-        try:
-            import torch
-
-            if not os.path.exists(weights_path):
-                raise FileNotFoundError(f"Weights file not found: {weights_path}")
-
-            # Load weights and extract model state if needed
-            state_dict = torch.load(weights_path, map_location="cpu", weights_only=True)
-            return state_dict.get("model", state_dict) if isinstance(state_dict, dict) else state_dict
-
-        except Exception as e:
-            logger.error(f"Error loading weights for {model_info.name}: {str(e)}")
-            return None
