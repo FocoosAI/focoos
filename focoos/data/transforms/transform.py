@@ -180,11 +180,11 @@ class RotationTransform(Transform):
             interp: cv2 interpolation method, default cv2.INTER_LINEAR
         """
         super().__init__()
-        image_center = np.array((w / 2, h / 2))
+        self.image_center = np.array((w / 2, h / 2))
         if center is None:
-            center = image_center
+            center = self.image_center
         if interp is None:
-            interp = cv2.INTER_LINEAR
+            self.interp = cv2.INTER_LINEAR
         abs_cos, abs_sin = (
             abs(np.cos(np.deg2rad(angle))),
             abs(np.sin(np.deg2rad(angle))),
@@ -195,9 +195,6 @@ class RotationTransform(Transform):
         else:
             bound_w, bound_h = w, h
 
-        self.rm_coords = self.create_rotation_matrix()
-        # Needed because of this problem https://github.com/opencv/opencv/issues/11784
-        self.rm_image = self.create_rotation_matrix(offset=-0.5)
         self.bound_w = bound_w
         self.bound_h = bound_h
         self.angle = angle
@@ -206,6 +203,10 @@ class RotationTransform(Transform):
         self.interp = interp
         self.h = h
         self.w = w
+
+        self.rm_coords = self.create_rotation_matrix()
+        # Needed because of this problem https://github.com/opencv/opencv/issues/11784
+        self.rm_image = self.create_rotation_matrix(offset=-0.5)
 
     def apply_image(self, img, interp=None):
         """
