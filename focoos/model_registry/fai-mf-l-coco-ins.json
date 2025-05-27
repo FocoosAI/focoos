@@ -129,7 +129,6 @@
         "mask_threshold": 0.5,
         "predict_all_pixels": false,
         "use_mask_score": true,
-        "filter_empty_masks": true,
         "threshold": 0.5,
         "top_k": 300,
         "criterion_deep_supervision": true,

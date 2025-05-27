@@ -27,6 +27,7 @@ class Processor(ABC):
         inputs: Union[torch.Tensor, np.ndarray, Image.Image, list[Image.Image], list[np.ndarray], list[torch.Tensor]],
         device: Union[Literal["cuda", "cpu"], torch.device] = "cuda",
         dtype: torch.dtype = torch.float32,
+        image_size: Optional[int] = None,
     ) -> tuple[torch.Tensor, Any]:
         raise NotImplementedError("Pre-processing is not implemented for this model.")
 

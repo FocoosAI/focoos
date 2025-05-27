@@ -1,7 +1,7 @@
 import copy
 import math
 from collections import OrderedDict
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict
 
 import torch
 import torch.nn as nn
@@ -107,6 +107,91 @@ class CSPRepLayer(nn.Module):
         return self.conv3(x_1 + x_2)
 
 
+class PositionEmbeddingSine(nn.Module):
+    """Sinusoidal positional embedding module.
+
+    This is a standard version of the position embedding, similar to the one
+    used by the 'Attention is all you need' paper, generalized to work on images.
+    """
+
+    def __init__(
+        self,
+        num_pos_feats: int = 64,
+        temperature: int = 10000,
+        scale: float = 2 * math.pi,
+        eps: float = 1e-6,
+        offset: float = 0.0,
+        normalize: bool = False,
+    ):
+        """Initialize sinusoidal positional embedding.
+
+        Args:
+            num_pos_feats: Number of positional features
+            temperature: Temperature parameter for the embedding
+            scale: Scale factor for normalized coordinates
+            eps: Small constant for numerical stability
+            offset: Offset for coordinate normalization
+            normalize: Whether to normalize coordinates
+        """
+        super().__init__()
+        if normalize:
+            assert isinstance(scale, (float, int)), (
+                f"when normalize is set, scale should be provided and in float or int type, found {type(scale)}"
+            )
+        self.num_pos_feats = num_pos_feats
+        self.temperature = temperature
+        self.normalize = normalize
+        self.scale = scale
+        self.eps = eps
+        self.offset = offset
+
+    def forward(self, x, mask=None):
+        """Generate positional embeddings for input tensor.
+
+        Args:
+            x: Input tensor
+            mask: Optional mask tensor
+
+        Returns:
+            Positional embedding tensor
+        """
+        if mask is None:
+            mask = torch.zeros((x.size(0), x.size(2), x.size(3)), device=x.device, dtype=torch.bool)
+        not_mask = ~mask
+        y_embed = not_mask.cumsum(1, dtype=torch.float32) - 1
+        x_embed = not_mask.cumsum(2, dtype=torch.float32) - 1
+        if self.normalize:
+            y_embed = (y_embed + self.offset) / (y_embed[:, -1:, :] + self.eps) * self.scale
+            x_embed = (x_embed + self.offset) / (x_embed[:, :, -1:] + self.eps) * self.scale
+
+        dim_t = torch.arange(self.num_pos_feats, dtype=torch.float32, device=mask.device)
+        dim_t = self.temperature ** (2 * torch.div(dim_t, 2, rounding_mode="floor") / self.num_pos_feats)
+        pos_x = x_embed[:, :, :, None] / dim_t
+        pos_y = y_embed[:, :, :, None] / dim_t
+
+        # use view as mmdet instead of flatten for dynamically exporting to ONNX
+        B, H, W = mask.size()
+        pos_x_sin = pos_x[:, :, :, 0::2].sin().view(B, H * W, -1)
+        pos_x_cos = pos_x[:, :, :, 1::2].cos().view(B, H * W, -1)
+        pos_y_sin = pos_y[:, :, :, 0::2].sin().view(B, H * W, -1)
+        pos_y_cos = pos_y[:, :, :, 1::2].cos().view(B, H * W, -1)
+        pos = torch.cat((pos_y_sin, pos_y_cos, pos_x_sin, pos_x_cos), dim=2)
+        return pos
+
+    def __repr__(self, _repr_indent=4):
+        """Return string representation of the module."""
+        head = "Positional encoding " + self.__class__.__name__
+        body = [
+            "num_pos_feats: {}".format(self.num_pos_feats),
+            "temperature: {}".format(self.temperature),
+            "normalize: {}".format(self.normalize),
+            "scale: {}".format(self.scale),
+        ]
+        # _repr_indent = 4
+        lines = [head] + [" " * _repr_indent + line for line in body]
+        return "\n".join(lines)
+
+
 class Encoder(nn.Module):
     def __init__(
         self,
@@ -122,7 +207,6 @@ class Encoder(nn.Module):
         pe_temperature=10000,
         expansion=1.0,
         depth_mult=1.0,
-        resolution=640,
     ):
         super().__init__()
 
@@ -137,13 +221,6 @@ class Encoder(nn.Module):
         self.use_encoder_idx = use_encoder_idx
         self.num_encoder_layers = num_encoder_layers
         self.pe_temperature = pe_temperature
-        if resolution is not None:
-            if isinstance(resolution, int):
-                self.eval_spatial_size = (resolution, resolution)
-            else:
-                self.eval_spatial_size = resolution
-        else:
-            self.eval_spatial_size = None
 
         self.in_features = ["res3", "res4", "res5"]
         self.in_channels = self.in_channels[1:]
@@ -171,6 +248,7 @@ class Encoder(nn.Module):
         self.encoder = nn.ModuleList(
             [TransformerEncoder(copy.deepcopy(encoder_layer), num_encoder_layers) for _ in range(len(use_encoder_idx))]
         )
+        self.pe_layer = PositionEmbeddingSine(num_pos_feats=feat_dim // 2, temperature=10000, normalize=False)
 
         # top-down fpn
         self.lateral_convs = nn.ModuleList()
@@ -212,45 +290,9 @@ class Encoder(nn.Module):
         if self.mask_features.bias is not None:
             nn.init.constant_(self.mask_features.bias, 0)
 
-        self._reset_parameters()
-
     @property
     def padding_constraints(self) -> Dict[str, int]:
         return self.backbone.padding_constraints
-
-    def _reset_parameters(self):
-        if self.eval_spatial_size:
-            for idx in self.use_encoder_idx:
-                stride = self.in_strides[idx]
-                pos_embed = self.build_2d_sincos_position_embedding(
-                    self.eval_spatial_size[1] // stride,
-                    self.eval_spatial_size[0] // stride,
-                    self.feat_dim,
-                    self.pe_temperature,
-                )
-                setattr(self, f"pos_embed{idx}", pos_embed)
-                # self.register_buffer(f'pos_embed{idx}', pos_embed)
-
-    @staticmethod
-    def build_2d_sincos_position_embedding(w, h, embed_dim=256, temperature=10000.0):
-        """ """
-        # FIXME: using int(w) and int(h) leads to a traceble model without dynamic axes!
-        # The entire function may be substituted by PositionalEmbeddingSine
-        # from anyma.models.layers.position_encoding import PositionEmbeddingSine
-        # pe_layer = PositionEmbeddingSine(N_steps, normalize=False/True)
-        # pos_embed = pe_layer(proj_feats[enc_ind]).flatten(2).transpose(1, 2)
-        grid_w = torch.arange(int(w), dtype=torch.float32)
-        grid_h = torch.arange(int(h), dtype=torch.float32)
-        grid_w, grid_h = torch.meshgrid(grid_w, grid_h, indexing="ij")
-        assert embed_dim % 4 == 0, "Embed dimension must be divisible by 4 for 2D sin-cos position embedding"
-        pos_dim = embed_dim // 4
-        omega = torch.arange(pos_dim, dtype=torch.float32) / pos_dim
-        omega = 1.0 / (temperature**omega)
-
-        out_w = grid_w.flatten()[..., None] @ omega[None]
-        out_h = grid_h.flatten()[..., None] @ omega[None]
-
-        return torch.concat([out_w.sin(), out_w.cos(), out_h.sin(), out_h.cos()], dim=1)[None, :, :]
 
     def forward(self, images: torch.Tensor):
         features = self.backbone(images)
@@ -266,14 +308,7 @@ class Encoder(nn.Module):
                 # flatten [B, C, H, W] to [B, HxW, C]
                 src_flatten = proj_feats[enc_ind].flatten(2).permute(0, 2, 1)
 
-                if self.training or self.eval_spatial_size is None:
-                    pos_embed = self.build_2d_sincos_position_embedding(w, h, self.feat_dim, self.pe_temperature).to(
-                        src_flatten.device
-                    )
-                else:
-                    pos_embed = getattr(self, f"pos_embed{enc_ind}", None)
-                    if pos_embed is not None:
-                        pos_embed = pos_embed.to(src_flatten.device)
+                pos_embed = self.pe_layer(proj_feats[enc_ind])
 
                 memory = self.encoder[i](src_flatten, pos_embed=pos_embed)
                 proj_feats[enc_ind] = memory.permute(0, 2, 1).reshape(-1, self.feat_dim, h, w).contiguous()
@@ -332,14 +367,14 @@ class DETRHead(nn.Module):
         self.num_classes = num_classes
         self.mask_on = mask_on
 
-    def layers(self, features, targets: list[DETRTargets] = []):
+    def layers(self, features):
         _, multi_scale_features = features
-        predictions = self.predictor(feats=multi_scale_features, targets=targets)
+        predictions = self.predictor(feats=multi_scale_features)
 
         return predictions
 
     def forward(self, features, targets: list[DETRTargets] = []):
-        outputs = self.layers(features, targets)
+        outputs = self.layers(features)
 
         loss = None
         if targets is not None and len(targets) > 0:
@@ -992,7 +1027,6 @@ class TransformerPredictor(nn.Module):
         position_embed_type: str = "sine",
         num_scales: int = 3,
         num_decoder_points: int = 4,
-        resolution: Optional[Union[int, Tuple[int, int]]] = None,
         eval_idx: int = -1,
     ):
         super().__init__()
@@ -1016,13 +1050,7 @@ class TransformerPredictor(nn.Module):
         self.num_classes = num_classes
         self.num_queries = num_queries
         self.dec_layers = dec_layers
-        if resolution is not None:
-            if isinstance(resolution, int):
-                self.eval_spatial_size = (resolution, resolution)
-            else:
-                self.eval_spatial_size = resolution
-        else:
-            self.eval_spatial_size = None
+
         self.eps = 1e-2
         # !fixme: generalize to any feat stride.
         self.feat_strides = [32, 16, 8]
@@ -1060,11 +1088,9 @@ class TransformerPredictor(nn.Module):
         self.dec_bbox_classifier = nn.ModuleList(
             [MLP(hidden_dim, hidden_dim, 4, num_layers=3) for _ in range(dec_layers)]
         )
+        self.spatial_shapes = [[int(640 / s), int(640 / s)] for s in self.feat_strides]
 
-        # init encoder output anchors and valid_mask
-        if self.eval_spatial_size:
-            self.anchors, self.valid_mask = self._generate_anchors()
-
+        self.anchors, self.valid_mask = self._generate_anchors(self.spatial_shapes)
         self._reset_parameters(num_classes=num_classes + 1)
 
     def _reset_parameters(self, num_classes):
@@ -1130,11 +1156,7 @@ class TransformerPredictor(nn.Module):
         level_start_index.pop()
         return (feat_flatten, spatial_shapes, level_start_index)
 
-    def _generate_anchors(self, spatial_shapes=None, grid_size=0.05, dtype=torch.float32, device="cpu"):
-        if spatial_shapes is None:
-            spatial_shapes = [
-                [int(self.eval_spatial_size[0] / s), int(self.eval_spatial_size[1] / s)] for s in self.feat_strides
-            ]
+    def _generate_anchors(self, spatial_shapes, grid_size=0.05, dtype=torch.float32, device="cpu"):
         anchors = []
         for lvl, (h, w) in enumerate(spatial_shapes):
             grid_y, grid_x = torch.meshgrid(  # 40x40 -> 00000, 11111, 2222, 3333, ...,
@@ -1158,15 +1180,16 @@ class TransformerPredictor(nn.Module):
 
     def _get_decoder_input(self, memory, spatial_shapes):
         # prepare input for decoder
-        if self.training or self.eval_spatial_size is None:
+        # with torch.no_grad():
+        if self.spatial_shapes is None or self.spatial_shapes != spatial_shapes:
             anchors, valid_mask = self._generate_anchors(spatial_shapes, device=memory.device)
+            self.anchors = anchors
+            self.valid_mask = valid_mask
+            self.spatial_shapes = spatial_shapes
         else:
-            anchors, valid_mask = (
-                self.anchors.to(memory.device),
-                self.valid_mask.to(memory.device),
-            )
+            anchors, valid_mask = self.anchors.to(memory.device), self.valid_mask.to(memory.device)
 
-        memory = valid_mask.to(memory.dtype) * memory
+        memory = valid_mask.to(memory.dtype) * memory  # type: ignore
 
         output_memory = self.enc_output(memory)
 
@@ -1198,7 +1221,7 @@ class TransformerPredictor(nn.Module):
 
         return target, reference_points_unact.detach(), enc_topk_bboxes, enc_topk_logits
 
-    def forward(self, feats, targets: list[DETRTargets] = []):
+    def forward(self, feats):
         # input projection and embedding
         (memory, spatial_shapes, level_start_index) = self._get_encoder_input(feats)
 
@@ -1254,7 +1277,6 @@ class FAIDetr(BaseModelNN):
             nhead=self.config.pixel_decoder_nhead,
             dim_feedforward=self.config.pixel_decoder_dim_feedforward,
             num_encoder_layers=self.config.pixel_decoder_num_encoder_layers,
-            resolution=self.config.resolution,
         )
         self.head = DETRHead(
             in_channels=self.config.transformer_predictor_out_dim,
@@ -1292,12 +1314,10 @@ class FAIDetr(BaseModelNN):
                 nhead=self.config.transformer_predictor_nhead,
                 dec_layers=self.config.transformer_predictor_dec_layers,
                 dim_feedforward=self.config.transformer_predictor_dim_feedforward,
-                resolution=self.config.resolution,
             ),
             mask_on=False,
             cls_sigmoid=True,
         )
-        self.resolution = self.config.resolution
         self.register_buffer("pixel_mean", torch.Tensor(self.config.pixel_mean).view(-1, 1, 1), False)
         self.register_buffer("pixel_std", torch.Tensor(self.config.pixel_std).view(-1, 1, 1), False)
         self.size_divisibility = self.config.size_divisibility

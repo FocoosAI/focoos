@@ -200,7 +200,7 @@ class FocoosModel:
         out_dir: Optional[str] = None,
         device: Literal["cuda", "cpu"] = "cuda",
         overwrite: bool = False,
-        image_size: Optional[Tuple[int, int]] = None,
+        image_size: Optional[int] = None,
     ) -> InferModel:
         if device is None:
             device = self.model.device
@@ -214,14 +214,17 @@ class FocoosModel:
         if image_size is None:
             data = 128 * torch.randn(1, 3, self.model_info.im_size, self.model_info.im_size).to(device)
         else:
-            data = 128 * torch.randn(1, 3, image_size[0], image_size[1]).to(device)
+            data = 128 * torch.randn(1, 3, image_size, image_size).to(device)
+            self.model_info.im_size = image_size
 
         export_model_name = ArtifactName.ONNX if format == ExportFormat.ONNX else ArtifactName.PT
         _out_file = os.path.join(out_dir, export_model_name)
 
         dynamic_axes = self.processor.get_dynamic_axes()
 
-        # spec = InputSpec(tensors=[TensorSpec([Dim("batch", min=1, max=64), 3, 224, 224])])
+        # Hack to warm up the model and record the spacial shapes if needed
+        self.model(data)
+
         if not overwrite and os.path.exists(_out_file):
             logger.info(f"Model file {_out_file} already exists. Set overwrite to True to overwrite.")
             return InferModel(model_dir=out_dir, model_info=self.model_info, runtime_type=runtime_type)
@@ -283,6 +286,7 @@ class FocoosModel:
                 else:
                     raise ValueError(f"Failed to export {format} model")
 
+        # Fixme: this may override the model_info with the one from the exportable model
         self.model_info.dump_json(os.path.join(out_dir, ArtifactName.INFO))
         return InferModel(model_dir=out_dir, model_info=self.model_info, runtime_type=runtime_type)
 
@@ -297,7 +301,7 @@ class FocoosModel:
             list[torch.Tensor],
         ],
         **kwargs,
-    ) -> list[FocoosDetections]:
+    ) -> FocoosDetections:
         model = self.model.eval()
         processor = self.processor.eval()
         try:
@@ -305,7 +309,10 @@ class FocoosModel:
         except Exception:
             logger.warning("Unable to use CUDA")
         images, _ = processor.preprocess(
-            inputs, device=model.device, dtype=model.dtype
+            inputs,
+            device=model.device,
+            dtype=model.dtype,
+            image_size=self.model_info.im_size,
         )  # second output is targets that we're not using
         with torch.no_grad():
             try:
@@ -315,7 +322,9 @@ class FocoosModel:
                 output = model.forward(images)
         class_names = self.model_info.classes
         output_fdet = processor.postprocess(output, inputs, class_names=class_names, **kwargs)
-        return output_fdet
+
+        # FIXME: we don't support batching yet
+        return output_fdet[0]
 
     def _reload_model(self):
         torch.cuda.empty_cache()

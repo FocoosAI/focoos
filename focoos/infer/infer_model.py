@@ -38,12 +38,10 @@ from focoos.ports import (
     ModelInfo,
     RemoteModelInfo,
     RuntimeType,
-    Task,
 )
 from focoos.processor.processor_manager import ProcessorManager
 from focoos.utils.logger import get_logger
 from focoos.utils.vision import (
-    fai_detections_to_sv,
     image_preprocess,
 )
 
@@ -152,47 +150,16 @@ class InferModel:
             raise FileNotFoundError(f"Model info file not found: {model_info_path}")
         return ModelInfo.from_json(model_info_path)
 
-    def _annotate(self, im: np.ndarray, detections: sv.Detections) -> np.ndarray:
-        """
-        Annotates the input image with detection or segmentation results.
-
-        Args:
-            im (np.ndarray): The input image to annotate.
-            detections (sv.Detections): Detected objects or segmented regions.
-
-        Returns:
-            np.ndarray: The annotated image with bounding boxes or masks.
-        """
-        if len(detections.xyxy) == 0:
-            logger.warning("No detections found, skipping annotation")
-            return im
-        classes = self.model_info.classes
-        labels = [
-            f"{classes[int(class_id)] if classes is not None else str(class_id)}: {confid * 100:.0f}%"
-            for class_id, confid in zip(detections.class_id, detections.confidence)  # type: ignore
-        ]
-        if self.model_info.task == Task.DETECTION:
-            annotated_im = self.box_annotator.annotate(scene=im.copy(), detections=detections)
-
-            annotated_im = self.label_annotator.annotate(scene=annotated_im, detections=detections, labels=labels)
-        elif self.model_info.task in [
-            Task.SEMSEG,
-            Task.INSTANCE_SEGMENTATION,
-        ]:
-            annotated_im = self.mask_annotator.annotate(scene=im.copy(), detections=detections)
-        return annotated_im
-
     def __call__(
         self, image: Union[bytes, str, Path, np.ndarray, Image.Image], threshold: Optional[float] = None
-    ) -> Tuple[FocoosDetections, Optional[np.ndarray]]:
+    ) -> FocoosDetections:
         return self.infer(image, threshold)
 
     def infer(
         self,
         image: Union[bytes, str, Path, np.ndarray, Image.Image],
         threshold: Optional[float] = None,
-        annotate: bool = False,
-    ) -> Tuple[FocoosDetections, Optional[np.ndarray]]:
+    ) -> FocoosDetections:
         """
         Run inference on an input image and optionally annotate the results.
 
@@ -201,16 +168,9 @@ class InferModel:
                 This can be a byte array, file path, or a PIL Image object, or a NumPy array representing the image.
             threshold (float, optional): The confidence threshold for detections. Defaults to 0.5.
                 Detections with confidence scores below this threshold will be discarded.
-            annotate (bool, optional): Whether to annotate the image with detection results. Defaults to False.
-                If set to True, the method will return the image with bounding boxes or segmentation masks.
 
         Returns:
-            Tuple[FocoosDetections, Optional[np.ndarray]]: A tuple containing:
-                - `FocoosDetections`: The detections from the inference, represented as a custom object (`FocoosDetections`).
-                This includes the details of the detected objects such as class, confidence score, and bounding box (if applicable).
-                - `Optional[np.ndarray]`: The annotated image, if `annotate=True`.
-                This will be a NumPy array representation of the image with drawn bounding boxes or segmentation masks.
-                If `annotate=False`, this value will be `None`.
+            FocoosDetections: The detections from the inference, represented as a custom object (`FocoosDetections`).
 
         Raises:
             ValueError: If the model is not deployed locally (i.e., `self.runtime` is `None`).
@@ -221,16 +181,15 @@ class InferModel:
 
             focoos = Focoos()
             model = focoos.get_local_model(model_ref="<model_ref>")
-            detections, annotated_image = model.infer(image, threshold=0.5, annotate=True)
+            detections = model.infer(image, threshold=0.5)
             ```
         """
         assert self.runtime is not None, "Model is not deployed (locally)"
-        resize = self.model_info.im_size
-        resize = None
+
         t0 = perf_counter()
-        im1, im0 = image_preprocess(image, resize=resize)
-        tensors, _ = self.processor.preprocess(inputs=im1, device="cuda")
-        logger.debug(f"Input image size: {im0.shape}, Resize to: {resize}")
+        im1, im0 = image_preprocess(image)
+        tensors, _ = self.processor.preprocess(inputs=im1, device="cuda", image_size=self.model_info.im_size)
+        logger.debug(f"Input image size: {im0.shape}")
         t1 = perf_counter()
 
         raw_detections = self.runtime(tensors)
@@ -247,14 +206,11 @@ class InferModel:
         }
         res = detections[0]  #!TODO  check for batching
         res.latency = latency
-        im = None
-        if annotate:
-            im = self._annotate(im0, fai_detections_to_sv(res, im0.shape[:2]))
 
         logger.debug(
             f"Found {len(res)} detections. Inference time: {(t2 - t1) * 1000:.0f}ms, preprocess: {(t1 - t0) * 1000:.0f}ms, postprocess: {(t3 - t2) * 1000:.0f}ms"
         )
-        return res, im
+        return res
 
     def benchmark(self, iterations: int = 50, size: Optional[Union[int, Tuple[int, int]]] = None) -> LatencyMetrics:
         """

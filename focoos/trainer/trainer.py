@@ -97,6 +97,7 @@ class FocoosTrainer:
 
         _to_delete = ["metrics.json", "preview", "model_info.json"]
 
+        # TODO: this delete the files if they already exist, but we should not do this during model.test()
         if comm.is_main_process():
             for file in _to_delete:
                 if os.path.exists(os.path.join(self.output_dir, file)):

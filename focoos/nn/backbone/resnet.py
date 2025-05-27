@@ -8,8 +8,11 @@ import torch.nn.functional as F
 from focoos.nn.layers.base import _get_activation_fn as get_activation
 from focoos.nn.layers.conv import ConvNormLayer
 from focoos.nn.layers.norm import FrozenBatchNorm2d
+from focoos.utils.logger import get_logger
 
 from .base import BackboneConfig, BaseBackbone
+
+logger = get_logger("Backbone")
 
 resnet_cfg = {
     18: [2, 2, 2, 2],
@@ -225,7 +228,7 @@ class ResNet(BaseBackbone):
         if pretrained:
             state = torch.hub.load_state_dict_from_url(donwload_url[depth])
             self.load_state_dict(state)
-            print(f"Load PResNet{depth} state_dict")
+            logger.info(f"Load ResNet{depth} state_dict")
 
         self._out_features = ["res2", "res3", "res4", "res5"]
         self._out_feature_strides = {self._out_features[j]: self.out_strides[j] for j in range(4)}

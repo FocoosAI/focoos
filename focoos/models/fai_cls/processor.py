@@ -39,7 +39,7 @@ class ClassificationProcessor(Processor):
         ],
         device: torch.device,
         dtype: torch.dtype,
-        resolution: Optional[int] = 640,
+        image_size: Optional[int] = None,
     ) -> Tuple[torch.Tensor, List[ClassificationTargets]]:
         """Process input images for model inference.
 
@@ -70,9 +70,9 @@ class ClassificationProcessor(Processor):
         if self.training:
             raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
         images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
-        if resolution is not None:
+        if image_size is not None:
             images_torch = torch.nn.functional.interpolate(
-                images_torch, size=resolution, mode="bilinear", align_corners=False
+                images_torch, size=(image_size, image_size), mode="bilinear", align_corners=False
             )
         return images_torch, targets
 

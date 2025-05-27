@@ -148,6 +148,7 @@ def fai_detections_to_sv(inference_output: FocoosDetections, im0_shape: tuple) -
     confidence = np.array([d.conf for d in inference_output.detections])
     if xyxy.shape[0] == 0:
         xyxy = np.zeros((0, 4))
+
     _masks = []
     if len(inference_output.detections) > 0 and inference_output.detections[0].mask:
         _masks = [np.zeros(im0_shape, dtype=bool) for _ in inference_output.detections]
@@ -167,6 +168,12 @@ def fai_detections_to_sv(inference_output: FocoosDetections, im0_shape: tuple) -
         confidence=confidence,
         mask=masks,
     )
+
+
+def trim_mask(mask: np.ndarray, bbox: np.ndarray) -> np.ndarray:
+    x1, y1, x2, y2 = map(int, bbox)
+    y2, x2 = min(y2, mask.shape[0]), min(x2, mask.shape[1])  # type: ignore
+    return mask[y1:y2, x1:x2]
 
 
 def binary_mask_to_base64(binary_mask: np.ndarray) -> str:
@@ -232,7 +239,6 @@ def sv_to_fai_detections(detections: sv.Detections, classes: Optional[list[str]]
             y2 = min(y2 + 2, mask.shape[0])
             cropped_mask = mask[y1:y2, x1:x2]
             mask = binary_mask_to_base64(cropped_mask)
-
         det = FocoosDet(
             cls_id=int(cls_id) if cls_id is not None else None,
             bbox=[int(x) for x in xyxy],
@@ -380,3 +386,37 @@ def instance_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf
         class_id=cls_ids,
         confidence=confs,
     )
+
+
+def annotate_image(
+    im: Union[np.ndarray, Image.Image], detections: FocoosDetections, task: Task, classes: Optional[list[str]] = None
+) -> Image.Image:
+    if isinstance(im, Image.Image):
+        im = np.array(im)
+    label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
+    box_annotator = sv.BoxAnnotator()
+    mask_annotator = sv.MaskAnnotator()
+
+    sv_detections = fai_detections_to_sv(detections, im.shape[:2])
+    if len(sv_detections.xyxy) == 0:
+        print("No detections found, skipping annotation")
+        return Image.fromarray(im)
+
+    if task == Task.DETECTION:
+        annotated_im = box_annotator.annotate(scene=im.copy(), detections=sv_detections)
+
+    elif task in [
+        Task.SEMSEG,
+        Task.INSTANCE_SEGMENTATION,
+    ]:
+        annotated_im = mask_annotator.annotate(scene=im.copy(), detections=sv_detections)
+
+    # Fixme: get the classes from the detections
+    if classes is not None:
+        labels = [
+            f"{classes[int(class_id)] if classes is not None else str(class_id)}: {confid * 100:.0f}%"
+            for class_id, confid in zip(sv_detections.class_id, sv_detections.confidence)  # type: ignore
+        ]
+        annotated_im = label_annotator.annotate(scene=annotated_im, detections=sv_detections, labels=labels)
+
+    return Image.fromarray(annotated_im)

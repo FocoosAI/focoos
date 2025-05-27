@@ -39,7 +39,6 @@ class BisenetFormerConfig(ModelConfig):
     mask_threshold: float = 0.5
     predict_all_pixels: bool = False
     use_mask_score: bool = False
-    filter_empty_masks: bool = False
     threshold: float = 0.5
 
     # Loss configuration
