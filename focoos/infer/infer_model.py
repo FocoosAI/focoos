@@ -36,7 +36,6 @@ from focoos.ports import (
     LatencyMetrics,
     ModelExtension,
     ModelInfo,
-    RemoteModelInfo,
     RuntimeType,
 )
 from focoos.processor.processor_manager import ProcessorManager
@@ -127,19 +126,6 @@ class InferModel:
             self.model_info,
             FOCOOS_CONFIG.warmup_iter,
         )
-
-    def _read_metadata(self) -> RemoteModelInfo:
-        """
-        Reads the model metadata from a JSON file.
-
-        Returns:
-            ModelMetadata: Metadata for the model.
-
-        Raises:
-            FileNotFoundError: If the metadata file does not exist in the model directory.
-        """
-        metadata_path = os.path.join(self.model_dir, "focoos_metadata.json")
-        return RemoteModelInfo.from_json(metadata_path)
 
     def _read_model_info(self) -> ModelInfo:
         """
