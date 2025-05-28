@@ -193,49 +193,6 @@ class FocoosHUB:
             raise ValueError(f"Failed to list models: {res.status_code} {res.text}")
         return [ModelPreview.from_json(r) for r in res.json()]
 
-    # def get_infer_model(
-    #     self,
-    #     model_ref: str,
-    #     runtime_type: Optional[RuntimeTypes] = RuntimeTypes.ONNX_CUDA32,
-    # ) -> InferModel:
-    #     """
-    #     Retrieves a model for local inference.
-
-    #     Downloads the model if it does not already exist in the local cache.
-
-    #     Args:
-    #         model_ref (str): Reference identifier for the model.
-    #         runtime_type (Optional[RuntimeTypes]): Runtime type for the model. Defaults to
-    #             RuntimeTypes.ONNX_CUDA32.
-
-    #     Returns:
-    #         InferModel: An instance of the model configured for local inference.
-
-    #     Raises:
-    #         ValueError: If the model download fails.
-
-    #     Notes:
-    #         The model is cached in the directory specified by MODELS_DIR.
-
-    #     Example:
-    #         ```python
-    #         from focoos import FocoosHUB, RuntimeTypes
-
-    #         focoos = FocoosHUB()
-    #         model = focoos.get_infer_model(model_ref="user-or-fai-model-ref", runtime_type=RuntimeTypes.ONNX_CUDA32)
-    #         results, annotated_image = model.infer("image.jpg", threshold=0.5, annotate=True)  # inference is local!
-    #         ```
-    #     """
-    #     runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
-    #     model_dir = os.path.join(MODELS_DIR, model_ref)
-    #     format = ModelExtension.from_runtime_type(runtime_type)
-    #     if not os.path.exists(os.path.join(model_dir, f"model.{format.value}")):
-    #         self._download_model(
-    #             model_ref,
-    #             format=format,
-    #         )
-    #     return InferModel(model_dir, runtime_type)
-
     def get_remote_model(self, model_ref: str) -> RemoteModel:
         """
         Retrieves a remote model instance for cloud-based inference.
@@ -252,7 +209,7 @@ class FocoosHUB:
 
             focoos = FocoosHUB()
             model = focoos.get_remote_model(model_ref="fai-model-ref")
-            results, annotated_image = model.infer("image.jpg", threshold=0.5, annotate=True)  # inference is remote!
+            results = model.infer("image.jpg", threshold=0.5)  # inference is remote!
             ```
         """
         return RemoteModel(model_ref, self.api_client)

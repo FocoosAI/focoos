@@ -22,11 +22,11 @@ import time
 from dataclasses import asdict
 from pathlib import Path
 from time import sleep
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 import cv2
 import numpy as np
-import supervision as sv
+from PIL import Image
 
 from focoos.hub.api_client import ApiClient
 from focoos.ports import (
@@ -37,12 +37,10 @@ from focoos.ports import (
     Metrics,
     ModelStatus,
     RemoteModelInfo,
-    Task,
     TrainingInfo,
 )
 from focoos.utils.logger import get_logger
 from focoos.utils.metrics import MetricsVisualizer, parse_metrics
-from focoos.utils.vision import fai_detections_to_sv, image_loader
 
 logger = get_logger()
 
@@ -54,11 +52,7 @@ class RemoteModel:
     Attributes:
         model_ref (str): Reference ID for the model.
         api_client (ApiClient): Client for making HTTP requests.
-        max_deploy_wait (int): Maximum wait time for model deployment.
-        metadata (ModelMetadata): Metadata of the model.
-        label_annotator (LabelAnnotator): Annotator for adding labels to images.
-        box_annotator (sv.BoxAnnotator): Annotator for drawing bounding boxes.
-        mask_annotator (sv.MaskAnnotator): Annotator for drawing masks on images.
+        model_info (RemoteModelInfo): Model information of the model.
     """
 
     def __init__(
@@ -78,13 +72,10 @@ class RemoteModel:
         """
         self.model_ref = model_ref
         self.api_client = api_client
-        self.metadata: RemoteModelInfo = self.get_info()
+        self.model_info: RemoteModelInfo = self.get_info()
 
-        self.label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
-        self.box_annotator = sv.BoxAnnotator()
-        self.mask_annotator = sv.MaskAnnotator()
         logger.info(
-            f"[RemoteModel]: ref: {self.model_ref} name: {self.metadata.name} description: {self.metadata.description} status: {self.metadata.status}"
+            f"[RemoteModel]: ref: {self.model_ref} name: {self.model_info.name} description: {self.model_info.description} status: {self.model_info.status}"
         )
 
     @property
@@ -237,69 +228,30 @@ class RemoteModel:
             return Metrics()  # noqa: F821
         return Metrics(**res.json())
 
-    def _annotate(self, im: np.ndarray, detections: sv.Detections) -> np.ndarray:
-        """
-        Annotate an image with detection results.
-
-        This method adds visual annotations to the provided image based on the model's detection results.
-        It handles different tasks (e.g., object detection, semantic segmentation, instance segmentation)
-        and uses the corresponding annotator (bounding box, label, or mask) to draw on the image.
-
-        Args:
-            im (np.ndarray): The image to be annotated, represented as a NumPy array.
-            detections (sv.Detections): The detection results to be annotated, including class IDs and confidence scores.
-
-        Returns:
-            np.ndarray: The annotated image as a NumPy array.
-        """
-
-        if len(detections.xyxy) == 0:
-            logger.warning("No detections found, skipping annotation")
-            return im
-
-        if self.metadata.task in [Task.SEMSEG, Task.INSTANCE_SEGMENTATION]:
-            return self.mask_annotator.annotate(scene=im.copy(), detections=detections)
-
-        if detections.class_id is None:
-            raise ValueError("Class IDs are not available in the detections")
-        if detections.confidence is None:
-            raise ValueError("Confidence scores are not available in the detections")
-
-        classes = self.metadata.classes
-        annotated_im = self.box_annotator.annotate(scene=im.copy(), detections=detections)
-        labels = [
-            f"{classes[int(class_id)] if classes is not None else str(class_id)}: {confid * 100:.0f}%"
-            for class_id, confid in zip(detections.class_id, detections.confidence)
-        ]
-        annotated_im = self.label_annotator.annotate(scene=annotated_im, detections=detections, labels=labels)
-        return annotated_im
+    def __call__(
+        self, image: Union[str, Path, np.ndarray, bytes, Image.Image], threshold: float = 0.5
+    ) -> FocoosDetections:
+        return self.infer(image, threshold)
 
     def infer(
         self,
-        image: Union[str, Path, np.ndarray, bytes],
+        image: Union[str, Path, np.ndarray, bytes, Image.Image],
         threshold: float = 0.5,
-        annotate: bool = False,
-    ) -> Tuple[FocoosDetections, Optional[np.ndarray]]:
+    ) -> FocoosDetections:
         """
         Perform inference on the provided image using the remote model.
 
         This method sends an image to the remote model for inference and retrieves the detection results.
-        Optionally, it can annotate the image with the detection results.
 
         Args:
             image (Union[str, Path, np.ndarray, bytes]): The image to infer on, which can be a file path,
                 a string representing the path, a NumPy array, or raw bytes.
             threshold (float, optional): The confidence threshold for detections. Defaults to 0.5.
                 Detections with confidence scores below this threshold will be discarded.
-            annotate (bool, optional): Whether to annotate the image with the detection results. Defaults to False.
-                If set to True, the method will return the image with bounding boxes or segmentation masks.
 
         Returns:
-            Tuple[FocoosDetections, Optional[np.ndarray]]:
-                - FocoosDetections: The detection results including class IDs, confidence scores, bounding boxes,
-                  and segmentation masks (if applicable).
-                - Optional[np.ndarray]: The annotated image if `annotate` is True, else None.
-                  This will be a NumPy array representation of the image with drawn bounding boxes or segmentation masks.
+            FocoosDetections: The detection results including class IDs, confidence scores, bounding boxes,
+                and segmentation masks (if applicable).
 
         Raises:
             FileNotFoundError: If the provided image file path is invalid.
@@ -310,9 +262,8 @@ class RemoteModel:
             from focoos import Focoos
 
             focoos = Focoos()
-
             model = focoos.get_remote_model("my-model")
-            results, annotated_image = model.infer("image.jpg", threshold=0.5, annotate=True)
+            results = model.infer("image.jpg", threshold=0.5)
 
             # Print detection results
             for det in results.detections:
@@ -322,6 +273,9 @@ class RemoteModel:
                     print("Instance segmentation mask included")
             ```
         """
+        if isinstance(image, Image.Image):
+            image = np.array(image)
+
         image_bytes = None
         if isinstance(image, str) or isinstance(image, Path):
             if not os.path.exists(image):
@@ -348,12 +302,8 @@ class RemoteModel:
             logger.debug(
                 f"Found {len(detections.detections)} detections. Inference Request time: {(t1 - t0) * 1000:.0f}ms"
             )
-            preview = None
-            if annotate:
-                im0 = image_loader(image)
-                sv_detections = fai_detections_to_sv(detections, im0.shape[:-1])
-                preview = self._annotate(im0, sv_detections)
-            return detections, preview
+
+            return detections
         else:
             logger.error(f"Failed to infer: {res.status_code} {res.text}")
             raise ValueError(f"Failed to infer: {res.status_code} {res.text}")
