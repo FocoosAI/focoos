@@ -10,12 +10,14 @@ venv:
 	@uv venv --python=python3.12
 
 install: .uv .pre-commit
-	@uv pip install -e ".[dev,docs]" --no-cache-dir
+	@uv sync --all-extras
 	@pre-commit install
 
-install-gpu: .uv .pre-commit
-	@uv pip install -e ".[dev,cuda,tensorrt,torch,docs]" --no-cache-dir
+install-cpu: .uv .pre-commit
+	@uv sync --extra dev --extra docs --extra cpu
 	@pre-commit install
+
+
 
 docs:
 	@mkdocs build --clean

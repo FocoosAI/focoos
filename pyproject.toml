@@ -51,13 +51,14 @@ dependencies = [
     "shapely~=2.1.0",
     "fvcore~=0.1.4",
     "pycocotools~=2.0.8",
-    "faster_coco_eval~=1.6.5",
+    "faster_coco_eval~=1.6.6",
     "tensorboard~=2.19.0",
-    "onnx~=1.17.0",
-    "onnxslim~=0.1.51",
+    "onnx~=1.18.0",
+    "onnxslim~=0.1.53",
     "coolname~=2.2.0",
-    "onnxscript~=0.2.5",
+    "onnxscript~=0.2.7",
     "orjson~=3.10.18",
+    "gradio~=5.31.0",
 ]
 
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]
@@ -69,9 +70,9 @@ keywords = [
 ]
 
 [project.optional-dependencies]
-cpu = ["onnxruntime==1.21.1"]
-cuda = ["onnxruntime-gpu==1.21.1"]
-tensorrt = ["onnxruntime-gpu==1.21.1","tensorrt==10.5.0"]
+cpu = ["onnxruntime==1.22.0"]
+cuda = ["onnxruntime-gpu==1.22.0"]
+tensorrt = ["onnxruntime-gpu==1.22.0","tensorrt==10.5.0"]
 torch = ["torch==2.7.0","torchvision"]
 dev = [
     "pytest",
@@ -79,7 +80,6 @@ dev = [
     "pytest-mock",
     "ruff",
     "python-dotenv",
-    "gradio~=5.25.2",
     "pre-commit~=4.2.0",
     "sniffio~=1.3.1",
     "ipykernel~=6.29.5",
