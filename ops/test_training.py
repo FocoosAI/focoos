@@ -5,11 +5,18 @@ from typing import List, Optional, Union
 
 from focoos.data.auto_dataset import AutoDataset
 from focoos.data.default_aug import get_default_by_task
+from focoos.hub.api_client import ApiClient
 from focoos.model_manager import ModelManager
-from focoos.ports import DATASETS_DIR, DatasetLayout, DatasetSplitType, Task, TrainerArgs
+from focoos.ports import DATASETS_DIR, DatasetLayout, DatasetSplitType, RuntimeType, Task, TrainerArgs
 from focoos.utils.logger import get_logger
 
 logger = get_logger("TestTraning")
+
+datasets = [
+    "chess-coco-detection.zip",
+    "fire-coco-instseg.zip",
+    "balloons-coco-sem.zip",
+]
 
 
 def list_files_with_extensions_recursively(
@@ -40,27 +47,22 @@ def list_files_with_extensions_recursively(
     return [path for path in file_paths if path.is_file()]
 
 
-def get_dataset(task: Task, ds_folder: str = DATASETS_DIR):
+def get_dataset(task: Task):
     if task == Task.SEMSEG:
-        ds_name = "pizza"
+        ds_name = "balloons-coco-sem.zip"
         layout = DatasetLayout.ROBOFLOW_SEG
+
     elif task == Task.DETECTION:
-        ds_name = "aquarium"
+        ds_name = "chess-coco-detection.zip"
         layout = DatasetLayout.ROBOFLOW_COCO
     elif task == Task.INSTANCE_SEGMENTATION:
-        ds_name = "fruits"
+        ds_name = "fire-coco-instseg.zip"
         layout = DatasetLayout.ROBOFLOW_COCO
     else:
         raise ValueError(f"Error: task {task} not supported")
-
-    logger.info(f"Dataset folder: {ds_folder}")
-    if not os.path.exists(os.path.join(ds_folder, ds_name)):
-        if not os.path.exists(ds_folder):
-            logger.warning(f"Dataset folder {ds_folder} not found, creating it")
-            os.makedirs(ds_folder)
-        logger.warning(f"Dataset {ds_name} not found in {ds_folder}, downloading from hub")
-        # FIXME: here we need to download the dataset from HUB
-
+    url = f"https://public.focoos.ai/datasets/{ds_name}"
+    api_client = ApiClient()
+    api_client.download_ext_file(url, DATASETS_DIR, skip_if_exists=True)
     return ds_name, layout
 
 
@@ -85,16 +87,16 @@ def train(model_name: str):
     model = ModelManager.get(model_name, num_classes=train_dataset.dataset.metadata.num_classes)
 
     _temp_dir = tempfile.mkdtemp()
-    out_dir = os.path.join(_temp_dir, "output")
+    # out_dir = os.path.join(_temp_dir, "output")
     logger.info(f"Created temporary directory for training output: {_temp_dir}")
 
     # Configure training arguments
     trainer_args = TrainerArgs(
         run_name=model_name + "_test",
-        output_dir=out_dir,
+        # output_dir=out_dir,
         amp_enabled=True,
         batch_size=8,
-        max_iters=100,
+        max_iters=50,
         eval_period=50,
         learning_rate=1e-4,
         scheduler="MULTISTEP",
@@ -104,17 +106,16 @@ def train(model_name: str):
 
     # Start training
     model.train(trainer_args, train_dataset, valid_dataset)
+    infer = model.export(runtime_type=RuntimeType.ONNX_CUDA32, overwrite=True)
+    infer.benchmark(iterations=50)
+    infer = model.export(runtime_type=RuntimeType.TORCHSCRIPT_32, overwrite=True)
+    infer.benchmark(iterations=50)
 
     out_dir = trainer_args.output_dir
     files = list_files_with_extensions_recursively(out_dir)
-    files_to_check = ["log.txt", "model_final.pth", "model_info.json", "metrics.json"]
+    files_to_check = ["log.txt", "model_final.pth", "model_info.json", "metrics.json", "model.onnx", "model.pt"]
     for file in files_to_check:
-        file_found = False
-        for full_path in files:
-            if os.path.basename(full_path) == file:
-                file_found = True
-                break
-        assert file_found, f"File {file} not found in {out_dir}"
+        assert any(os.path.basename(f) == file for f in files), f"File {file} not found in {out_dir}"
 
     print(f"✅ TEST DONE, {files_to_check} correctly found in {out_dir}.")
 
