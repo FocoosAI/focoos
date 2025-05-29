@@ -101,7 +101,7 @@ def train(model_name: str):
         learning_rate=1e-4,
         scheduler="MULTISTEP",
         weight_decay=0.0,
-        workers=4,
+        workers=1,
     )
 
     # Start training
