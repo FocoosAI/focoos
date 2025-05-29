@@ -85,20 +85,16 @@ class DetectionDatasetMapper(DatasetMapper):
         use_bbox = True if not (use_mask or use_bbox) else use_bbox
 
         # USER: Implement additional transformations if you have other types of data
-        if self.is_train:
-            annos = [
-                utils.transform_instance_annotations(
-                    obj,
-                    transforms,
-                    image_shape,
-                    keypoint_hflip_indices=self.keypoint_hflip_indices,
-                )
-                for obj in dataset_dict.pop("annotations")
-                if obj.get("iscrowd", 0) == 0
-            ]
-        else:
-            # we don't augment the boxes if we are in inference mode
-            annos = [obj for obj in dataset_dict.pop("annotations") if obj.get("iscrowd", 0) == 0]
+        annos = [
+            utils.transform_instance_annotations(
+                obj,
+                transforms,
+                image_shape,
+                keypoint_hflip_indices=self.keypoint_hflip_indices,
+            )
+            for obj in dataset_dict.pop("annotations")
+            if obj.get("iscrowd", 0) == 0
+        ]
 
         instances: Instances = utils.annotations_to_instances(annos, image_shape)
         # After transforms such as cropping are applied, the bounding box may no longer
@@ -134,7 +130,7 @@ class DetectionDatasetMapper(DatasetMapper):
         image = utils.read_image(dataset_dict["file_name"], format=self.image_format)
         self.check_image_size(dataset_dict, image)
 
-        if "annotations" in dataset_dict and self.is_train:
+        if "annotations" in dataset_dict:
             # filter crowd annotations
             annotations = [obj for obj in dataset_dict["annotations"] if obj.get("iscrowd", 0) == 0]
             if len(annotations) > 0 and "bbox" in annotations[0]:
@@ -168,7 +164,7 @@ class DetectionDatasetMapper(DatasetMapper):
         # Therefore it's important to use torch.Tensor.
         dataset_dict["image"] = torch.as_tensor(np.ascontiguousarray(image.transpose(2, 0, 1)))
 
-        if "annotations" in dataset_dict and self.is_train:
+        if "annotations" in dataset_dict:
             # there is a problem here with image_shape (annotations are not transformed)
             self._transform_annotations(dataset_dict, transforms, image_shape)
 

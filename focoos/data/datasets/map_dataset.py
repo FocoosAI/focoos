@@ -7,6 +7,7 @@ from PIL import Image
 
 from focoos.data.datasets.dict_dataset import DictDataset
 from focoos.data.mappers.mapper import DatasetMapper
+from focoos.data.transforms import augmentation as A
 from focoos.ports import Task
 from focoos.utils.logger import get_logger
 
@@ -67,7 +68,11 @@ class MapDataset(data.Dataset):
             if retry_count >= 3:
                 self.logger.warning("Failed to apply `_map_func` for idx: {}, retry count: {}".format(idx, retry_count))
 
-    def show_sample_image(self, index=None):
+    def show_sample_image(self, index=None, use_augmentations=True):
+        if not use_augmentations:
+            current_augmentations = self.mapper.augmentations
+            self.mapper.augmentations = A.AugmentationList([])
+
         index = index or random.randint(0, len(self.dataset))
         task = self.dataset.metadata.task
         classes = self.dataset.metadata.classes
@@ -108,5 +113,8 @@ class MapDataset(data.Dataset):
                 for class_id in sv_detections.class_id  # type: ignore
             ]
             annotated_im = label_annotator.annotate(scene=annotated_im, detections=sv_detections, labels=labels)
+
+        if not use_augmentations:
+            self.mapper.augmentations = current_augmentations
 
         return Image.fromarray(annotated_im)
