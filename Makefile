@@ -10,11 +10,11 @@ venv:
 	@uv venv --python=python3.12
 
 install: .uv .pre-commit
-	@uv sync --all-extras
+	@uv sync --extra onnx --extra tensorrt --extra dev --extra docs
 	@pre-commit install
 
 install-cpu: .uv .pre-commit
-	@uv sync --extra dev --extra docs --extra cpu
+	@uv sync --extra onnx-cpu --extra dev --extra docs
 	@pre-commit install
 
 

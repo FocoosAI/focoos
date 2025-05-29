@@ -47,8 +47,9 @@ def get_cuda_version() -> Optional[str]:
                     cuda_version = line.split(":")[-1].strip()
                     cuda_version = cuda_version.split()[0]
                     return cuda_version
-    except FileNotFoundError as err:
-        logger.warning("nvidia-smi command not found: %s", err)
+    except FileNotFoundError:
+        logger.warning("nvidia-smi not available")
+        return None
 
 
 def get_gpu_info() -> GPUInfo:

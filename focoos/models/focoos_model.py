@@ -204,7 +204,9 @@ class FocoosModel:
     ) -> InferModel:
         if device is None:
             device = self.model.device
-
+        if device == "cuda" and not torch.cuda.is_available():
+            device = "cpu"
+            logger.warning("CUDA is not available. Using CPU for export.")
         if out_dir is None:
             out_dir = os.path.join(MODELS_DIR, self.model_info.name)
 

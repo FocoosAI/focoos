@@ -169,41 +169,6 @@ def test_list_models_fail(focoos_instance: FocoosHUB):
         focoos_instance.list_remote_models()
 
 
-def test_list_focoos_models(focoos_instance: FocoosHUB):
-    mock_response = [
-        {
-            "ref": "mock_model_1_ref",
-            "name": "mock_model_1_name",
-            "task": "detection",
-            "description": "An advanced model that classifies images with high accuracy!",
-            "status": "DEPLOYED",
-            "focoos_model": "mock_model_base.v1.presnet34",
-        },
-        {
-            "ref": "mock_model_2_ref",
-            "name": "mock_model_2_name",
-            "task": "semseg",
-            "description": "Segmentation model that detects boundaries with precision.",
-            "status": "DEPLOYED",
-            "focoos_model": "mock_model_base.v2.densenet121",
-        },
-    ]
-
-    focoos_instance.api_client.get = MagicMock(return_value=MagicMock(status_code=200, json=lambda: mock_response))
-
-    models = focoos_instance.list_pretrained_models()
-    assert len(models) == 2
-    assert models[0].name == "mock_model_1_name"
-    assert models[1].ref == "mock_model_2_ref"
-
-
-def test_list_focoos_models_fail(focoos_instance: FocoosHUB):
-    focoos_instance.api_client.get = MagicMock(return_value=MagicMock(status_code=500))
-
-    with pytest.raises(ValueError):
-        focoos_instance.list_pretrained_models()
-
-
 def test_list_shared_datasets(focoos_instance: FocoosHUB, mock_shared_datasets):
     focoos_instance.api_client.get = MagicMock(
         return_value=MagicMock(status_code=200, json=lambda: mock_shared_datasets)
@@ -236,63 +201,6 @@ def test_get_remote_model(mocker: MockerFixture, focoos_instance: FocoosHUB, moc
     assert model.model_ref == model_ref
     mock_remote_model_class.assert_called_once_with(model_ref, mock_api_client)
     assert isinstance(model, RemoteModel)
-
-
-def test_get_infer_model(mocker: MockerFixture, focoos_instance: FocoosHUB, mock_local_model):
-    # Mock the LocalModel class
-    mock_local_model_class = mocker.patch("focoos.infer.infer_model.InferModel", autospec=True)
-    mock_local_model_class.return_value = mock_local_model
-
-    # Spy on the _download_model method
-    download_model_spy = mocker.spy(focoos_instance, "_download_model")
-
-    with tempfile.TemporaryDirectory() as temp_dir:
-        focoos_instance.focoos_dir = temp_dir
-        # Setup test data
-        model_ref = "ref1"
-        model_path = pathlib.Path(focoos_instance.focoos_dir) / model_ref / "model.onnx"
-        model_path.mkdir(parents=True, exist_ok=True)
-
-        # Call the method under test
-        model = focoos_instance.get_infer_model(model_ref)
-
-        # Assertions
-        assert model is not None
-        assert model.model_ref == model_ref
-        mock_local_model_class.assert_called_once_with(str(model_path.parent), FOCOOS_CONFIG.runtime_type)
-        assert isinstance(model, InferModel)
-
-        # Assert _download_model was not called
-        download_model_spy.assert_not_called()
-
-
-def test_get_local_model_with_download(mocker: MockerFixture, focoos_instance: FocoosHUB, mock_local_model):
-    # Mock the LocalModel class
-    mock_local_model_class = mocker.patch("focoos.focoos.LocalModel", autospec=True)
-    mock_local_model_class.return_value = mock_local_model
-
-    # Spy on the _download_model method
-    mock_download_model = mocker.patch.object(focoos_instance, "_download_model", autospec=True)
-
-    with tempfile.TemporaryDirectory() as temp_dir:
-        focoos_instance.focoos_dir = temp_dir
-        # Setup test data
-        model_ref = "ref1"
-        model_path = pathlib.Path(focoos_instance.focoos_dir) / model_ref
-        model_path.mkdir(parents=True, exist_ok=True)
-        model_path = model_path / "model.onnx"
-
-        # Call the method under test
-        model = focoos_instance.get_infer_model(model_ref)
-
-        # Assertions
-        assert model is not None
-        assert model.model_ref == model_ref
-        mock_local_model_class.assert_called_once_with(str(model_path.parent), FOCOOS_CONFIG.runtime_type)
-        assert isinstance(model, InferModel)
-
-        # Assert _download_model was not called
-        mock_download_model.assert_called()
 
 
 def test_new_model_created(

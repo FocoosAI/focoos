@@ -1,9 +1,9 @@
 {
-    "name": "Focoos GPU (OnnxRuntime,Torch)",
+    "name": "Focoos GPU (OnnxRuntime, CUDA)",
     "build": {
+        "target": "focoos-gpu",
         "context": "../..",
         "dockerfile": "../../Dockerfile",
-        "target": "focoos-torch"
     },
     "shutdownAction": "none",
     "remoteUser": "root",
@@ -12,7 +12,7 @@
     },
     "workspaceFolder": "${localWorkspaceFolder}",
     "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
-    "postCreateCommand": "uv pip install -e .[torch,dev]",
+    "postCreateCommand": "uv pip install -e .[onnx,dev]",
     "remoteEnv": {
         "UV_SYSTEM_PYTHON": "true"
     },
@@ -41,7 +41,6 @@
             "version": "os-provided",
             "ppa": "false"
         },
-        // "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
         "ghcr.io/iterative/features/nvtop:1": {},
     },
     "customizations": {

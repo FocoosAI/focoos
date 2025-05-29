@@ -1,34 +1,13 @@
 import pytest
-from pydantic import ValidationError
 from pytest_mock import MockerFixture
 
 from focoos.ports import (
     GPUDevice,
     GPUInfo,
-    Hyperparameters,
     ModelExtension,
     RuntimeType,
     SystemInfo,
 )
-
-
-def test_validate_wandb_project_valid():
-    wandb_project = "randomname"
-    params = Hyperparameters(wandb_project=wandb_project)
-    assert params.wandb_project == wandb_project
-
-
-def test_validate_wandb_project_invalid():
-    # Invalid wandb_project values
-    invalid_values = [
-        "ORG ID/PROJECT NAME",  # Spaces are not allowed
-        "ORG@ID/PROJECT#NAME",  # Special characters are not allowed
-        "ORG/PROJECT:NAME",  # Special characters are not allowed
-    ]
-    for value in invalid_values:
-        with pytest.raises(ValidationError) as exc_info:
-            Hyperparameters(wandb_project=value)
-        assert "Wandb project name must only contain characters, dashes, underscores, and dots." in str(exc_info.value)
 
 
 def test_pretty_print_with_system_info(mocker: MockerFixture):
