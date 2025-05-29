@@ -7,7 +7,7 @@ from pytest_mock import MockerFixture
 from focoos.infer.runtimes.load_runtime import ORT_AVAILABLE, TORCH_AVAILABLE, load_runtime
 from focoos.infer.runtimes.onnx import ONNXRuntime
 from focoos.infer.runtimes.torchscript import TorchscriptRuntime
-from focoos.ports import OnnxRuntimeOpts, RemoteModelInfo, RuntimeType, TorchscriptRuntimeOpts
+from focoos.ports import ModelInfo, OnnxRuntimeOpts, RuntimeType, TorchscriptRuntimeOpts
 
 
 def test_runtime_availability():
@@ -122,7 +122,7 @@ def test_load_runtime(mocker: MockerFixture, tmp_path, runtime_type, expected_op
     model_path = model_path.as_posix()
 
     # mock model metadata
-    mock_model_metadata = MagicMock(spec=RemoteModelInfo)
+    mock_model_metadata = MagicMock(spec=ModelInfo)
 
     # mock opts
     if runtime_type == RuntimeType.TORCHSCRIPT_32:
@@ -141,7 +141,7 @@ def test_load_runtime(mocker: MockerFixture, tmp_path, runtime_type, expected_op
     runtime = load_runtime(
         runtime_type=runtime_type,
         model_path=model_path,
-        model_metadata=mock_model_metadata,
+        model_info=mock_model_metadata,
         warmup_iter=warmup_iter,
     )
 
@@ -158,6 +158,6 @@ def test_load_unavailable_runtime(mocker: MockerFixture):
     mocker.patch("focoos.infer.runtimes.load_runtime.ORT_AVAILABLE", False)
     mocker.patch("focoos.infer.runtimes.load_runtime.TORCH_AVAILABLE", False)
     with pytest.raises(ImportError):
-        load_runtime(RuntimeType.TORCHSCRIPT_32, "fake_model_path", MagicMock(spec=RemoteModelInfo), 2)
+        load_runtime(RuntimeType.TORCHSCRIPT_32, "fake_model_path", MagicMock(spec=ModelInfo), 2)
     with pytest.raises(ImportError):
-        load_runtime(RuntimeType.ONNX_CUDA32, "fake_model_path", MagicMock(spec=RemoteModelInfo), 2)
+        load_runtime(RuntimeType.ONNX_CUDA32, "fake_model_path", MagicMock(spec=ModelInfo), 2)

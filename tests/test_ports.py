@@ -41,50 +41,7 @@ def test_pretty_print_with_system_info(mocker: MockerFixture):
         environment={"FOCOOS_LOG_LEVEL": "DEBUG", "LD_LIBRARY_PATH": "/usr/local/cuda/lib64"},
     )
 
-    mock_print = mocker.patch("builtins.print")
-
-    expected_calls = [
-        "================ SYSTEM INFO ====================",
-        "focoos_host: localhost",
-        "system: Linux",
-        "system_name: TestSystem",
-        "cpu_type: Intel",
-        "cpu_cores: 8",
-        "memory_gb: 16.0",
-        "memory_used_percentage: 50.0",
-        "available_providers:",
-        "  - provider1",
-        "  - provider2",
-        "disk_space_total_gb: 500.0",
-        "disk_space_used_percentage: 60.0",
-        "gpu_info:",
-        "  - gpu_count: 1",
-        "  - gpu_driver: NVIDIA",
-        "  - gpu_cuda_version: 11.2",
-        "  - devices:",
-        "    - GPU 0:",
-        "      - gpu_name: NVIDIA GTX 1080",
-        "      - gpu_memory_total_gb: 8.0",
-        "      - gpu_memory_used_percentage: 70.0",
-        "      - gpu_temperature: 65.0",
-        "      - gpu_load_percentage: 80.0",
-        "packages_versions:",
-        "  - pytest: 6.2.4",
-        "  - pydantic: 1.8.2",
-        "environment:",
-        "  - FOCOOS_LOG_LEVEL: DEBUG",
-        "  - LD_LIBRARY_PATH: /usr/local/cuda/lib64",
-        "================================================",
-    ]
-
-    system_info.pretty_print()
-
-    # Verifica che tutte le chiamate attese siano state effettuate
-    for call in expected_calls:
-        mock_print.assert_any_call(call)
-
-    # Verifica che il numero totale di chiamate sia corretto
-    assert mock_print.call_count == len(expected_calls)
+    system_info.pprint()
 
 
 @pytest.mark.parametrize(

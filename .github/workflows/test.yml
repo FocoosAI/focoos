@@ -41,7 +41,7 @@ jobs:
         with:
           python-version:  ${{ matrix.python-version }}
       - name: 📦 Install dev dependencies
-        run: uv pip install .[cpu,dev]
+        run: uv sync --extra dev --extra onnx-cpu
       - name: 🧪 Run test
         run: make test
       - name: 📊 Generate test coverage report
@@ -71,7 +71,7 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
       - name: 📦 Install dev dependencies
-        run: uv sync --extra dev --extra torch --extra cuda
+        run: uv sync --extra dev --extra onnx
       - name: 🧪 Run e2e tests
         run: uv run ops/test_training.py --model ${{ matrix.model }}
       - name: 🧹 Minimize uv cache

@@ -223,6 +223,8 @@ def get_system_info() -> SystemInfo:
     except Exception as e:
         logger.warning(f"Error getting torch cuda home: {e}")
         torch_info = None
+
+    ort_providers = ort.get_available_providers() if ort else None
     return SystemInfo(
         focoos_host=FOCOOS_CONFIG.default_host_url,
         focoos_version=focoos_version,
@@ -232,7 +234,7 @@ def get_system_info() -> SystemInfo:
         pytorch_info=torch_info,
         cpu_type=system_info.machine,
         cpu_cores=psutil.cpu_count(logical=True),
-        available_onnx_providers=ort.get_available_providers() if ort else None,
+        available_onnx_providers=ort_providers,
         memory_gb=round(memory_info.total / (1024**3), 3),
         memory_used_percentage=round(memory_info.percent, 3),
         disk_space_total_gb=round(disk_info.total / (1024**3), 3),
