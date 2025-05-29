@@ -13,7 +13,7 @@ from focoos.ports import ModelStatus, RemoteModelInfo, Task
 @pytest.fixture
 def mock_api_client():
     """Fixture to create a mock ApiClient."""
-    with patch("focoos.focoos.ApiClient") as MockApiClient:
+    with patch("focoos.hub.api_client.ApiClient") as MockApiClient:
         mock_client = MockApiClient.return_value
         yield mock_client
 
@@ -60,11 +60,10 @@ def mock_metadata():
         updated_at=datetime.datetime.now(),
         status=ModelStatus.DEPLOYED,
         metrics={"accuracy": 0.95},
-        latencies=[{"inference": 0.1}],
         classes=["class_0", "class_1"],
         im_size=640,
         hyperparameters=None,
         training_info=None,
-        location=None,
         dataset=None,
+        is_managed=False,
     )

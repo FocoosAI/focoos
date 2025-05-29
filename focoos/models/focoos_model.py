@@ -202,8 +202,6 @@ class FocoosModel:
         overwrite: bool = False,
         image_size: Optional[int] = None,
     ) -> InferModel:
-        if device is None:
-            device = self.model.device
         if device == "cuda" and not torch.cuda.is_available():
             device = "cpu"
             logger.warning("CUDA is not available. Using CPU for export.")
@@ -229,7 +227,7 @@ class FocoosModel:
 
         if not overwrite and os.path.exists(_out_file):
             logger.info(f"Model file {_out_file} already exists. Set overwrite to True to overwrite.")
-            return InferModel(model_dir=out_dir, model_info=self.model_info, runtime_type=runtime_type)
+            return InferModel(model_dir=out_dir, runtime_type=runtime_type)
 
         if format == "onnx":
             with torch.no_grad():
@@ -290,7 +288,7 @@ class FocoosModel:
 
         # Fixme: this may override the model_info with the one from the exportable model
         self.model_info.dump_json(os.path.join(out_dir, ArtifactName.INFO))
-        return InferModel(model_dir=out_dir, model_info=self.model_info, runtime_type=runtime_type)
+        return InferModel(model_dir=out_dir, runtime_type=runtime_type)
 
     def __call__(
         self,

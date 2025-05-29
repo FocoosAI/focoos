@@ -1,6 +1,5 @@
 from unittest.mock import MagicMock
 
-import numpy as np
 import pytest
 from pytest_mock import MockerFixture
 
@@ -12,18 +11,6 @@ from focoos.ports import Metrics, ModelStatus, RemoteModelInfo, Task, TrainingIn
 def _get_mock_remote_model(mocker: MockerFixture, mock_api_client, image_ndarray, mock_metadata: RemoteModelInfo):
     mock_api_client.get = MagicMock(return_value=MagicMock(status_code=200, json=lambda: mock_metadata.model_dump()))
     model = RemoteModel(model_ref="test_model_ref", api_client=mock_api_client)
-
-    # Mock BoxAnnotator
-    mock_box_annotator = mocker.patch("focoos.remote_model.sv.BoxAnnotator", autospec=True)
-    mock_box_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
-
-    # Mock LabelAnnotator
-    mock_label_annotator = mocker.patch("focoos.remote_model.sv.LabelAnnotator", autospec=True)
-    mock_label_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
-
-    # Mock MaskAnnotator
-    mock_mask_annotator = mocker.patch("focoos.remote_model.sv.MaskAnnotator", autospec=True)
-    mock_mask_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
 
     return model
 
@@ -97,18 +84,6 @@ def test_train_logs_ok(mock_remote_model: RemoteModel):
         )
         result = mock_remote_model.train_logs()
         assert result == ["log1", "log2"]
-
-
-def test_delete_model_fail(mock_remote_model: RemoteModel):
-    with pytest.raises(ValueError):
-        mock_remote_model.api_client.delete = MagicMock(return_value=MagicMock(status_code=500))
-        mock_remote_model.delete_model()
-
-
-def test_delete_model_ok(mock_remote_model: RemoteModel):
-    with tests.not_raises(Exception):
-        mock_remote_model.api_client.delete = MagicMock(return_value=MagicMock(status_code=204))
-        mock_remote_model.delete_model()
 
 
 def test_train_metrics_fail(mock_remote_model: RemoteModel):
@@ -221,7 +196,7 @@ def test_notebook_monitor_train_running(mock_remote_model: RemoteModel, mocker):
         "time.time",
         side_effect=[1000 + i * 30 for i in range(10)],  # Provide enough values for all time.time() calls
     )
-    mock_sleep = mocker.patch("focoos.remote_model.sleep")
+    mock_sleep = mocker.patch("focoos.hub.remote_model.sleep")
     # mock_time = mocker.patch("focoos.remote_model.time")
     mock_clear = mocker.patch("IPython.display.clear_output")
 
@@ -260,7 +235,7 @@ def test_notebook_monitor_train_max_runtime(mock_remote_model: RemoteModel, mock
     """Test that monitoring stops when max runtime is exceeded."""
     # Mock time module
     mocker.patch(
-        "focoos.remote_model.time",
+        "focoos.hub.remote_model.time",
         **{
             "time": mocker.Mock(side_effect=[1000, 40000]),  # First call for start_time, second for check
             "sleep": mocker.Mock(),  # Prevent actual sleeping

@@ -51,7 +51,6 @@ class InferModel:
     def __init__(
         self,
         model_dir: Union[str, Path],
-        model_info: Optional[ModelInfo] = None,
         runtime_type: Optional[RuntimeType] = None,
     ):
         """
@@ -101,10 +100,8 @@ class InferModel:
         # Load metadata and set model reference
         # self.metadata: RemoteModelInfo = self._read_metadata()
 
-        if model_info is None:
-            self.model_info: ModelInfo = self._read_model_info()
-        else:
-            self.model_info: ModelInfo = model_info
+        self.model_info: ModelInfo = self._read_model_info()
+
         try:
             from focoos.model_manager import ConfigManager
 

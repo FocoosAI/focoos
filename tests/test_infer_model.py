@@ -90,7 +90,7 @@ def test_initialization_fail_no_model_dir():
 
 
 def test_init_file_not_found(mocker: MockerFixture):
-    mocker.patch("focoos.local_model.os.path.exists", return_value=False)
+    mocker.patch("focoos.infer.infer_model.os.path.exists", return_value=False)
     with pytest.raises(FileNotFoundError):
         InferModel(model_dir="fakedir", runtime_type=RuntimeType.ONNX_CPU)
 

@@ -226,7 +226,7 @@ class RemoteModel:
         if res.status_code != 200:
             logger.warning(f"Failed to get metrics: {res.status_code} {res.text}")
             return Metrics()  # noqa: F821
-        return Metrics(**res.json())
+        return Metrics(**{k: v for k, v in res.json().items() if k in Metrics.__dataclass_fields__})
 
     def __call__(
         self, image: Union[str, Path, np.ndarray, bytes, Image.Image], threshold: float = 0.5

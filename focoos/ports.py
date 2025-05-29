@@ -717,7 +717,9 @@ class DictClass(OrderedDict):
         """
         Convert self to a tuple containing all the attributes/keys that are not `None`.
         """
-        return tuple(self[k] for k in self.keys())
+        return tuple(
+            self[k] for k in self.keys() if self[k] is not None
+        )  # without this check we are unable to export models with None values
 
     def __getitem__(self, k):
         if isinstance(k, str):
@@ -751,8 +753,9 @@ class DictClass(OrderedDict):
 
         for _field in class_fields:
             v = getattr(self, _field.name)
-            if v is not None:
-                self[_field.name] = v
+            # if v is not None:  # without this check we are unable to export models with None values
+            #    self[_field.name] = v
+            self[_field.name] = v
 
     def __reduce__(self):
         state_dict = {field.name: getattr(self, field.name) for field in fields(self)}
