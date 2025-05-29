@@ -129,3 +129,6 @@ class RemoteDataset:
         path = self.api_client.download_ext_file(url, path, skip_if_exists=True)
         logger.info(f"✅ Dataset data downloaded to {path}")
         return path
+
+    def __str__(self):
+        return f"RemoteDataset(ref={self.ref}, name={self.name}, task={self.task}, layout={self.layout})"

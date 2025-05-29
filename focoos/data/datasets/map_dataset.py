@@ -1,9 +1,13 @@
 import random
 
+import numpy as np
+import supervision as sv
 import torch.utils.data as data
+from PIL import Image
 
 from focoos.data.datasets.dict_dataset import DictDataset
 from focoos.data.mappers.mapper import DatasetMapper
+from focoos.ports import Task
 from focoos.utils.logger import get_logger
 
 
@@ -62,3 +66,47 @@ class MapDataset(data.Dataset):
 
             if retry_count >= 3:
                 self.logger.warning("Failed to apply `_map_func` for idx: {}, retry count: {}".format(idx, retry_count))
+
+    def show_sample_image(self, index=None):
+        index = index or random.randint(0, len(self.dataset))
+        task = self.dataset.metadata.task
+        classes = self.dataset.metadata.classes
+
+        label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
+        box_annotator = sv.BoxAnnotator()
+        mask_annotator = sv.MaskAnnotator()
+        sample = self[index]
+
+        im = np.array(sample.image).transpose(1, 2, 0)
+
+        sv_detections = sv.Detections(
+            xyxy=sample["instances"].boxes.tensor.numpy(),
+            class_id=sample["instances"].classes.numpy(),
+            confidence=np.ones_like(sample["instances"].classes.numpy()),
+            mask=sample["instances"].masks.tensor.numpy()
+            if task in [Task.INSTANCE_SEGMENTATION, Task.SEMSEG]
+            else None,
+        )
+
+        if len(sv_detections.xyxy) == 0:
+            print("No detections found, skipping annotation")
+            return Image.fromarray(im)
+
+        if task == Task.DETECTION:
+            annotated_im = box_annotator.annotate(scene=im.copy(), detections=sv_detections)
+
+        elif task in [
+            Task.SEMSEG,
+            Task.INSTANCE_SEGMENTATION,
+        ]:
+            annotated_im = mask_annotator.annotate(scene=im.copy(), detections=sv_detections)
+
+        # Fixme: get the classes from the detections
+        if classes is not None:
+            labels = [
+                f"{classes[int(class_id)] if classes is not None else str(class_id)}"
+                for class_id in sv_detections.class_id  # type: ignore
+            ]
+            annotated_im = label_annotator.annotate(scene=annotated_im, detections=sv_detections, labels=labels)
+
+        return Image.fromarray(annotated_im)
