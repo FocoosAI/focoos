@@ -3,7 +3,6 @@ import csv
 import json
 import os
 import random
-import shutil
 from copy import copy
 from dataclasses import asdict
 from pathlib import Path
@@ -334,6 +333,87 @@ class DictDataset(Dataset):
         return cls(dicts=dataset_dicts, task=task, metadata=metadata)
 
     @classmethod
+    def from_segmentation(cls, ds_dir: str, task: Task, serialize: bool = True):
+        """
+        ds_dir is up to the split.
+        root/
+            test/
+                ..
+            valid/
+                ..
+            train/
+                annotations.json
+                your_format_here/
+
+        JSON FORMAT:
+        {
+            "images": [
+                {
+                    "id": 0,
+                    "file_name": "im0.jpeg",
+                    "height": 1024,
+                    "width": 1024
+                },
+            ],
+            "annotations": [
+                {
+                   "image_id": 0,
+                   "file_name": "im0.png",
+                }
+            ]
+            "categories": [
+                {
+                    "id": 0,
+                    "name": "custom_class",
+                    "color": "none", [optional]
+                    "is_thing": True,  [optional]
+                },
+            ]
+        }
+        """
+        logger = get_logger(__name__)
+
+        with open(os.path.join(ds_dir, "annotations.json")) as f:
+            json_info = json.load(f)
+
+        images = dict()
+        for info in json_info["images"]:
+            images[info["id"]] = info["file_name"]
+
+        dataset_dicts = []
+        for ann in json_info["annotations"]:
+            image_id = ann["image_id"]
+
+            image_file = os.path.join(ds_dir, images[image_id])
+            label_file = os.path.join(ds_dir, ann["file_name"])
+
+            dataset_dicts.append(DetectronDict(file_name=image_file, sem_seg_file_name=label_file, image_id=image_id))
+
+        logger.info("Loaded {} images with semantic segmentation from {}".format(len(dataset_dicts), ds_dir))
+
+        # This is only useful for metadata
+        categories = json_info["categories"]
+        # All the classes are stuff, only a subset is thing
+        stuff_dataset_id_to_contiguous_id = {}
+
+        for i, cat in enumerate(categories):
+            stuff_dataset_id_to_contiguous_id[cat["id"]] = i
+
+        # Create dataset metadata
+        metadata = DatasetMetadata(
+            num_classes=len(categories),
+            stuff_classes=[k["name"] for k in categories],
+            _stuff_colors=[k["color"] for k in categories],
+            stuff_dataset_id_to_contiguous_id=stuff_dataset_id_to_contiguous_id,
+            task=Task.SEMSEG,
+            count=len(dataset_dicts),
+            name=Path(ds_dir).name,
+            image_root=ds_dir,
+        )
+
+        return cls(dicts=dataset_dicts, task=Task.SEMSEG, metadata=metadata, serialize=serialize)
+
+    @classmethod
     def from_roboflow_seg(cls, ds_dir: str, task: Task):
         """
         root/
@@ -460,18 +540,10 @@ class DictDataset(Dataset):
                 out_img = out_img.resize(size=resize)
             return out_img
 
-    def split(
-        self,
-        ratio: float,
-        new_root: str,
-        split1_name: str = "training",
-        split2_name: str = "validation",
-        shuffle: bool = True,
-    ) -> Tuple[str, str]:
-        random.seed(42)
+    def split(self, ratio: float, shuffle: bool = True, seed: int = 42) -> Tuple["DictDataset", "DictDataset"]:
+        random.seed(seed)
         _dicts = copy(self.dicts)
-        split1_path = os.path.join(new_root, split1_name)
-        split2_path = os.path.join(new_root, split2_name)
+
         if shuffle:
             random.shuffle(_dicts)  # type: ignore
         split_idx = int(len(_dicts) * ratio)
@@ -492,22 +564,7 @@ class DictDataset(Dataset):
             thing_classes=self.metadata.thing_classes,
             stuff_classes=self.metadata.stuff_classes,
         )
-        os.makedirs(split1_path, exist_ok=True)
-        os.makedirs(split2_path, exist_ok=True)
-        meta1.dump_json(os.path.join(split1_path, "focoos_meta.json"))
-        meta2.dump_json(os.path.join(split2_path, "focoos_meta.json"))
 
-        # copy files
-        for split_path, split in [(split1_path, split1), (split2_path, split2)]:
-            # create dirs
-            im_path = os.path.join(split_path, "img")
-            mask_path = os.path.join(split_path, "mask")
-            os.makedirs(im_path, exist_ok=True)
-            os.makedirs(mask_path, exist_ok=True)
-            for data in split:
-                im = data.file_name
-                mask = data.sem_seg_file_name
-                shutil.copy(im, im_path)
-                shutil.copy(mask, mask_path)  # type: ignore
-
-        return split1_path, split2_path
+        return DictDataset(dicts=split1, task=self.metadata.task, metadata=meta1), DictDataset(
+            dicts=split2, task=self.metadata.task, metadata=meta2
+        )
