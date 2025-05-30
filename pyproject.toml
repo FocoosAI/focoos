@@ -43,7 +43,6 @@ dependencies = [
     "numpy~=2.2.1",
     "scipy~=1.14.1",
     "psutil~=7.0.0",
-    "setuptools~=75.7.0",
     "matplotlib~=3.10.1",
     "colorama~=0.4.6",
     "ipython",
@@ -52,10 +51,7 @@ dependencies = [
     "pycocotools~=2.0.8",
     "faster_coco_eval~=1.6.6",
     "tensorboard~=2.19.0",
-    "onnx~=1.18.0",
-    "onnxslim~=0.1.53",
-    "coolname~=2.2.0",
-    "onnxscript~=0.2.7",
+
     "orjson~=3.10.18",
     "gradio~=5.31.0",
     "torch~=2.7.0",
@@ -72,8 +68,8 @@ keywords = [
 
 [project.optional-dependencies]
 tensorrt = ["tensorrt==10.5.0"]
-onnx = ["onnxruntime-gpu==1.22.0"]
-onnx-cpu = ["onnxruntime==1.22.0"]
+onnx = ["onnxruntime-gpu==1.22.0", "onnx>=1.17.0", "onnxslim~=0.1.54", "onnxscript~=0.2.7"]
+onnx-cpu = ["onnxruntime==1.22.0","onnx>=1.18.0", "onnxslim~=0.1.54", "onnxscript~=0.2.7"]
 
 dev = [
     "pytest",

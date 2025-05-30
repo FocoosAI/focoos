@@ -61,7 +61,7 @@ def load_runtime(
     else:
         if not ORT_AVAILABLE:
             logger.error(
-                "⚠️ onnxruntime not found =(  please install focoos with one of 'cpu', 'cuda', 'tensorrt' extra. See https://focoosai.github.io/focoos/setup/ for more details"
+                "⚠️ onnxruntime not found =(  please install focoos with one of 'onnx', 'onnx-cpu', extra. See https://focoosai.github.io/focoos/setup/ for more details"
             )
             raise ImportError("onnxruntime not found")
         from focoos.infer.runtimes.onnx import ONNXRuntime
