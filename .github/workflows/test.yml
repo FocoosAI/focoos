@@ -39,6 +39,7 @@ jobs:
           pytest-xml-coverage-path: ./tests/coverage.xml
           junitxml-path: ./tests/junit.xml
           report-only-changed-files: true
+          hide-report: true
   model-tests:
     runs-on: actions-runner-cuda12
     steps:

@@ -33,7 +33,7 @@ run-pre-commit: .pre-commit
 	@pre-commit run --all-files
 
 test:
-	@uv run pytest -s tests --cov=focoos --cov-report="xml:tests/coverage.xml" --cov-report=html --junitxml=./tests/junit.xml && rm -f .coverage
+	@uv run pytest -s tests --cov=focoos --cov-report=term-missing:skip-covered --cov-report="xml:tests/coverage.xml" --cov-report=html --junitxml=./tests/junit.xml && rm -f .coverage
 
 tox:
 	tox
