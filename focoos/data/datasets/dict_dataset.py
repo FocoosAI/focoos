@@ -18,7 +18,6 @@ from focoos.ports import (
     DetectronDict,
     Task,
 )
-from focoos.utils.cmap_builder import cmap_builder
 from focoos.utils.logger import get_logger
 from focoos.utils.system import list_files_with_extensions
 
