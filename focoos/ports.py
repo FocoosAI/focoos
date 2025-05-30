@@ -5,7 +5,7 @@ from abc import ABC
 from collections import OrderedDict
 from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime
-from enum import Enum, StrEnum
+from enum import Enum
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
 
@@ -702,7 +702,7 @@ class Metrics:
     best_valid_metric: Optional[dict] = None
 
 
-class ModelFamily(StrEnum):
+class ModelFamily(str, Enum):
     """Enumerazione delle famiglie di modelli disponibili"""
 
     DETR = "fai_detr"

@@ -117,9 +117,9 @@ class ModelManager:
         Args:
             model_family: The ModelFamily enum value to ensure is registered
         """
-        if model_family in cls._models_family_map:
+        if model_family.value in cls._models_family_map:
             return
-        family_module = importlib.import_module(f"focoos.models.{model_family}")
+        family_module = importlib.import_module(f"focoos.models.{model_family.value}")
         for attr_name in dir(family_module):
             if attr_name.startswith("_register"):
                 register_func = getattr(family_module, attr_name)
