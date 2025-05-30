@@ -1,4 +1,3 @@
-import concurrent.futures
 import csv
 import json
 import os
@@ -9,12 +8,10 @@ from pathlib import Path
 from typing import Optional, Tuple, Union
 
 import numpy as np
-import tqdm
 from PIL import Image
 from torch.utils.data import Dataset
 
 from focoos.data.datasets.serialize import TorchSerializedDataset
-from focoos.data.transforms.resize_short_length import resize_shortest_length
 from focoos.ports import (
     DatasetMetadata,
     DatasetSplitType,
@@ -49,6 +46,7 @@ class DictDataset(Dataset):
         for i, d in enumerate(dicts):
             d.image_id = i
 
+        self.serialize = serialize
         self.dicts: Union[TorchSerializedDataset, list[DetectronDict]] = (
             TorchSerializedDataset(dicts) if serialize else dicts
         )
@@ -409,6 +407,7 @@ class DictDataset(Dataset):
             count=len(dataset_dicts),
             name=Path(ds_dir).name,
             image_root=ds_dir,
+            ignore_label=255,
         )
 
         return cls(dicts=dataset_dicts, task=Task.SEMSEG, metadata=metadata, serialize=serialize)
@@ -426,7 +425,6 @@ class DictDataset(Dataset):
                 im0.jpeg
                 im0_mask.png
         """
-        print(f"ds_dir: {ds_dir}")
         im_files = []
 
         for im in list_files_with_extensions(base_dir=ds_dir, extensions=["jpg", "jpeg", "png"]):
@@ -446,7 +444,7 @@ class DictDataset(Dataset):
         dicts = []
         im_files.sort()
 
-        for im in tqdm.tqdm(im_files):
+        for im in im_files:
             mask = im.replace(".jpg", "_mask.png")
             if not os.path.exists(mask):
                 raise ValueError(f"Mask file {mask} does not exist")
@@ -461,84 +459,10 @@ class DictDataset(Dataset):
             name=Path(ds_dir).parent.stem,
             count=len(im_files),
             image_root=ds_dir,
+            ignore_label=255,
         )
 
         return cls(dicts=dicts, task=task, metadata=metadata)
-
-    def clone_resize_shortest_length(self, new_dir: str, new_shortest_length: int = 1024, max_size=2048):
-        """
-        Clone and resize DatasetDict images and masks to a new directory with a specified shortest length. and max size
-
-        Parameters:
-            new_dir (str): The directory path where the cloned and resized images and masks will be saved.
-            new_shortest_length (int, optional): The new shortest length to resize the images and masks to. Defaults to 1024.
-            max_size: The maximum size for the resized images and masks. Defaults to 2048.
-        """
-        logger = get_logger(__name__)
-        logger.info("[START RESIZE] clone_resize_shortest_length ")
-        pool = concurrent.futures.ThreadPoolExecutor(max_workers=150)
-        os.makedirs(new_dir, exist_ok=True)
-        # !TODO generalize for other task
-        im_dir = os.path.join(new_dir, "img")
-        mask_dir = os.path.join(new_dir, "mask")
-        metadata_path = os.path.join(new_dir, "focoos_meta.json")
-        os.makedirs(im_dir, exist_ok=True)
-        os.makedirs(mask_dir, exist_ok=True)
-        orig_meta = self.metadata
-
-        for data in tqdm.tqdm(self.dicts):  # type: ignore
-            im_file = data.file_name
-            mask_file = data.sem_seg_file_name
-            pool.submit(
-                resize_shortest_length,
-                im_file,
-                im_dir,
-                new_shortest_length,
-                max_size,
-                False,
-            )
-            pool.submit(
-                resize_shortest_length,
-                mask_file,
-                mask_dir,
-                new_shortest_length,
-                max_size,
-                True,
-            )
-        pool.shutdown(wait=True)
-        count = len(list_files_with_extensions(base_dir=im_dir, extensions=["png", "jpeg", "jpg"]))
-        metadata = DatasetMetadata(
-            count=count,
-            num_classes=orig_meta.num_classes,
-            task=orig_meta.task,
-            thing_classes=orig_meta.thing_classes,
-            stuff_classes=orig_meta.stuff_classes,
-        )
-
-        metadata.dump_json(metadata_path)
-        logger.info("[END resize]")
-
-    def get_annotated_sample(self, idx: int, resize: Optional[tuple] = None) -> Optional[Image.Image]:
-        # !TODO generalize for other tasks
-        if idx > len(self.dicts):
-            return None
-        else:
-            cmap = cmap_builder()
-            im_file = self.dicts[idx].file_name
-            mask_file = self.dicts[idx].sem_seg_file_name
-            if mask_file is None:
-                self.logger.warning(f"Mask file {mask_file} is None for image {im_file}")
-                return None
-            mask_im = Image.open(mask_file)
-            orig_im = Image.open(im_file).convert("RGB")
-            mask = np.array(mask_im, dtype=np.uint8)
-            output_colored = cmap[mask]
-
-            out_img = Image.fromarray(output_colored)
-            out_img = Image.blend(orig_im, out_img, 0.7)
-            if resize:
-                out_img = out_img.resize(size=resize)
-            return out_img
 
     def split(self, ratio: float, shuffle: bool = True, seed: int = 42) -> Tuple["DictDataset", "DictDataset"]:
         random.seed(seed)
@@ -568,3 +492,14 @@ class DictDataset(Dataset):
         return DictDataset(dicts=split1, task=self.metadata.task, metadata=meta1), DictDataset(
             dicts=split2, task=self.metadata.task, metadata=meta2
         )
+
+    def merge(self, other: "DictDataset") -> "DictDataset":
+        assert self.metadata.task == other.metadata.task, "Tasks must match"
+        assert not self.serialize and not other.serialize, "Serializations must be disabled"
+        return DictDataset(dicts=self.dicts + other.dicts, task=self.metadata.task, metadata=self.metadata)
+
+    def __str__(self):
+        return f"DictDataset(task={self.metadata.task}, num_classes={self.metadata.num_classes}, count={self.metadata.count})"
+
+    def __repr__(self):
+        return self.__str__()

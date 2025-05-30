@@ -68,7 +68,7 @@ class MapDataset(data.Dataset):
             if retry_count >= 3:
                 self.logger.warning("Failed to apply `_map_func` for idx: {}, retry count: {}".format(idx, retry_count))
 
-    def show_sample_image(self, index=None, use_augmentations=True):
+    def preview(self, index=None, use_augmentations=True):
         if not use_augmentations:
             current_augmentations = self.mapper.augmentations
             self.mapper.augmentations = A.AugmentationList([])
@@ -84,13 +84,22 @@ class MapDataset(data.Dataset):
 
         im = np.array(sample.image).transpose(1, 2, 0)
 
+        num_samples = sample["instances"].classes.shape[0]
+        if task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION]:
+            xyxy = sample["instances"].boxes.tensor.numpy()
+        else:
+            xyxy = np.zeros((num_samples, 4))
+
+        if task in [Task.SEMSEG, Task.INSTANCE_SEGMENTATION]:
+            masks = sample["instances"].masks.tensor.numpy()
+        else:
+            masks = None
+
         sv_detections = sv.Detections(
-            xyxy=sample["instances"].boxes.tensor.numpy(),
+            xyxy=xyxy,
             class_id=sample["instances"].classes.numpy(),
             confidence=np.ones_like(sample["instances"].classes.numpy()),
-            mask=sample["instances"].masks.tensor.numpy()
-            if task in [Task.INSTANCE_SEGMENTATION, Task.SEMSEG]
-            else None,
+            mask=masks,
         )
 
         if len(sv_detections.xyxy) == 0:

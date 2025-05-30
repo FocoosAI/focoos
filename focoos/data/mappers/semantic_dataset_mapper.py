@@ -42,11 +42,10 @@ class SemanticDatasetMapper(DatasetMapper):
         is_train=True,
         *,
         augmentations,
-        image_format,
-        ignore_label,
+        image_format="RGB",
+        ignore_label=255,
     ):
         """
-        NOTE: this interface is experimental.
         Args:
             is_train: for training or inference
             augmentations: a list of augmentations or deterministic transforms to apply
