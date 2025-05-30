@@ -335,9 +335,9 @@ def get_annotation_dict_from_json_file(json_file: str, image_id, start_annotatio
             class_id = class_to_id[annotation["classTitle"]] + 1  # in COCO the 0 is ignored
             bbox = annotation["points"]["exterior"]
             bbox = np.array(
-                [bbox[0][0], bbox[0][1], bbox[1][0], bbox[1][1]], dtype=np.float32
+                [bbox[0][0], bbox[0][1], bbox[1][0] - bbox[0][0], bbox[1][1] - bbox[0][1]], dtype=np.float32
             )  # Convert to xyxy format
-            area = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])  # Calculate area from xyxy coordinates
+            area = bbox[2] * bbox[3]  # Calculate area from xyxy coordinates
             annotations.append(
                 {
                     "id": annotation_id,
