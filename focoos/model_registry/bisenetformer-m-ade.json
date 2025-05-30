@@ -199,7 +199,7 @@
         "head_out_dim": 96,
         "cls_sigmoid": false,
         "postprocessing_type": "semantic",
-        "top_k": 300,
+        "top_k": 100,
         "mask_threshold": 0.5,
         "predict_all_pixels": true,
         "use_mask_score": false,

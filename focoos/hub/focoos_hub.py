@@ -268,7 +268,10 @@ class FocoosHUB:
 
         download_data = res.json()
 
-        download_uri = download_data["download_uri"]
+        download_uri = download_data.get("download_uri")
+        if download_uri is None:
+            logger.error(f"Failed to retrieve download url for model: {res.status_code} {res.text}")
+            raise ValueError(f"Failed to retrieve download url for model: {res.status_code} {res.text}")
         ## download model from Focoos Cloud
         logger.debug(f"Model URI: {download_uri}")
         logger.info("📥 Downloading model from Focoos Cloud.. ")

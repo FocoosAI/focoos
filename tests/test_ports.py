@@ -15,8 +15,8 @@ from focoos.ports import (
 
 
 @dataclass
-class TestDictDataclass(DictClass):
-    """Dataclass di test per verificare il comportamento di DictClass"""
+class DictDataclassTest(DictClass):
+    """Test dataclass to verify DictClass behavior"""
 
     name: str
     value: int
@@ -24,195 +24,204 @@ class TestDictDataclass(DictClass):
     default_field: str = "default"
 
 
-class TestDictClass:
-    """Test suite per la classe DictClass"""
+def test_dataclass_initialization_with_required_fields():
+    """Check that a dataclass inheriting from DictClass initializes correctly with required fields"""
+    test_obj = DictDataclassTest(name="test", value=42)
 
-    def test_dataclass_initialization_with_required_fields(self):
-        """Verifica che una dataclass che eredita da DictClass si inizializzi correttamente"""
-        test_obj = TestDictDataclass(name="test", value=42)
+    assert test_obj.name == "test"
+    assert test_obj.value == 42
+    assert test_obj.optional_field is None
+    assert test_obj.default_field == "default"
 
-        assert test_obj.name == "test"
-        assert test_obj.value == 42
-        assert test_obj.optional_field is None
-        assert test_obj.default_field == "default"
 
-    def test_dataclass_initialization_with_all_fields(self):
-        """Verifica che una dataclass si inizializzi con tutti i campi specificati"""
-        test_obj = TestDictDataclass(name="complete_test", value=100, optional_field="optional", default_field="custom")
+def test_dataclass_initialization_with_all_fields():
+    """Check that a dataclass initializes with all specified fields"""
+    test_obj = DictDataclassTest(name="complete_test", value=100, optional_field="optional", default_field="custom")
 
-        assert test_obj.name == "complete_test"
-        assert test_obj.value == 100
-        assert test_obj.optional_field == "optional"
-        assert test_obj.default_field == "custom"
+    assert test_obj.name == "complete_test"
+    assert test_obj.value == 100
+    assert test_obj.optional_field == "optional"
+    assert test_obj.default_field == "custom"
 
-    def test_dict_like_access_with_string_keys(self):
-        """Verifica che l'oggetto possa essere usato come un dizionario con chiavi stringa"""
-        test_obj = TestDictDataclass(name="dict_test", value=123)
 
-        assert test_obj["name"] == "dict_test"
-        assert test_obj["value"] == 123
-        assert test_obj["optional_field"] is None
-        assert test_obj["default_field"] == "default"
+def test_dict_like_access_with_string_keys():
+    """Check that the object can be used as a dictionary with string keys"""
+    test_obj = DictDataclassTest(name="dict_test", value=123)
 
-    def test_dict_like_access_with_integer_indices(self):
-        """Verifica che l'oggetto supporti l'accesso tramite indici numerici"""
-        test_obj = TestDictDataclass(name="index_test", value=456)
-        tuple_representation = test_obj.to_tuple()
+    assert test_obj["name"] == "dict_test"
+    assert test_obj["value"] == 123
+    assert test_obj["optional_field"] is None
+    assert test_obj["default_field"] == "default"
 
-        # Verifica che l'accesso tramite indice restituisca elementi della tupla
-        assert len(tuple_representation) > 0
-        assert test_obj[0] == tuple_representation[0]
-        if len(tuple_representation) > 1:
-            assert test_obj[1] == tuple_representation[1]
 
-    def test_to_tuple_method(self):
-        """Verifica che il metodo to_tuple restituisca una tupla con tutti i valori non None"""
-        test_obj = TestDictDataclass(name="tuple_test", value=789, optional_field="present")
-        result_tuple = test_obj.to_tuple()
+def test_dict_like_access_with_integer_indices():
+    """Check that the object supports access via integer indices"""
+    test_obj = DictDataclassTest(name="index_test", value=456)
+    tuple_representation = test_obj.to_tuple()
 
-        assert isinstance(result_tuple, tuple)
-        assert len(result_tuple) == 4  # name, value, optional_field, default_field
-        assert "tuple_test" in result_tuple
-        assert 789 in result_tuple
-        assert "present" in result_tuple
-        assert "default" in result_tuple
+    # Check that access by index returns tuple elements
+    assert len(tuple_representation) > 0
+    assert test_obj[0] == tuple_representation[0]
+    if len(tuple_representation) > 1:
+        assert test_obj[1] == tuple_representation[1]
 
-    def test_to_tuple_with_none_values(self):
-        """Verifica che to_tuple non includa i valori None"""
-        test_obj = TestDictDataclass(name="none_test", value=0, optional_field=None)
-        result_tuple = test_obj.to_tuple()
 
-        assert isinstance(result_tuple, tuple)
-        assert "none_test" in result_tuple
-        assert 0 in result_tuple
-        assert None not in result_tuple
-        assert "default" in result_tuple
+def test_to_tuple_method():
+    """Check that the to_tuple method returns a tuple with all non-None values"""
+    test_obj = DictDataclassTest(name="tuple_test", value=789, optional_field="present")
+    result_tuple = test_obj.to_tuple()
 
-    def test_setattr_updates_dict_and_attribute(self):
-        """Verifica che __setattr__ aggiorni sia l'attributo che l'entry del dizionario"""
-        test_obj = TestDictDataclass(name="setattr_test", value=111)
+    assert isinstance(result_tuple, tuple)
+    assert len(result_tuple) == 4  # name, value, optional_field, default_field
+    assert "tuple_test" in result_tuple
+    assert 789 in result_tuple
+    assert "present" in result_tuple
+    assert "default" in result_tuple
 
-        # Modifica un valore esistente
-        test_obj.name = "updated_name"
-        assert test_obj.name == "updated_name"
-        assert test_obj["name"] == "updated_name"
 
-        # Modifica un valore opzionale
-        test_obj.optional_field = "new_optional"
-        assert test_obj.optional_field == "new_optional"
-        assert test_obj["optional_field"] == "new_optional"
+def test_to_tuple_with_none_values():
+    """Check that to_tuple does not include None values"""
+    test_obj = DictDataclassTest(name="none_test", value=0, optional_field=None)
+    result_tuple = test_obj.to_tuple()
 
-    def test_setitem_updates_dict_and_attribute(self):
-        """Verifica che __setitem__ aggiorni sia l'entry del dizionario che l'attributo"""
-        test_obj = TestDictDataclass(name="setitem_test", value=222)
+    assert isinstance(result_tuple, tuple)
+    assert "none_test" in result_tuple
+    assert 0 in result_tuple
+    assert None not in result_tuple
+    assert "default" in result_tuple
 
-        # Modifica tramite accesso a dizionario
-        test_obj["name"] = "dict_updated_name"
-        assert test_obj.name == "dict_updated_name"
-        assert test_obj["name"] == "dict_updated_name"
 
-        test_obj["value"] = 999
-        assert test_obj.value == 999
-        assert test_obj["value"] == 999
+def test_setattr_updates_dict_and_attribute():
+    """Check that __setattr__ updates both the attribute and the dictionary entry"""
+    test_obj = DictDataclassTest(name="setattr_test", value=111)
 
-    def test_dictionary_behavior_inheritance(self):
-        """Verifica che l'oggetto si comporti come un OrderedDict"""
-        test_obj = TestDictDataclass(name="dict_behavior", value=333)
+    # Modify an existing value
+    test_obj.name = "updated_name"
+    assert test_obj.name == "updated_name"
+    assert test_obj["name"] == "updated_name"
 
-        # Test keys(), values(), items()
-        keys = list(test_obj.keys())
-        values = list(test_obj.values())
-        items = list(test_obj.items())
+    # Modify an optional value
+    test_obj.optional_field = "new_optional"
+    assert test_obj.optional_field == "new_optional"
+    assert test_obj["optional_field"] == "new_optional"
 
-        assert "name" in keys
-        assert "value" in keys
-        assert "dict_behavior" in values
-        assert 333 in values
-        assert ("name", "dict_behavior") in items
-        assert ("value", 333) in items
 
-    def test_post_init_populates_dict_from_dataclass_fields(self):
-        """Verifica che __post_init__ popoli correttamente il dizionario dai campi della dataclass"""
-        test_obj = TestDictDataclass(name="post_init_test", value=444)
+def test_setitem_updates_dict_and_attribute():
+    """Check that __setitem__ updates both the dictionary entry and the attribute"""
+    test_obj = DictDataclassTest(name="setitem_test", value=222)
 
-        # Verifica che tutti i campi siano presenti nel dizionario
-        expected_fields = ["name", "value", "optional_field", "default_field"]
-        for field in expected_fields:
-            assert field in test_obj
+    # Modify via dictionary access
+    test_obj["name"] = "dict_updated_name"
+    assert test_obj.name == "dict_updated_name"
+    assert test_obj["name"] == "dict_updated_name"
 
-        # Verifica che i valori corrispondano
-        assert test_obj["name"] == "post_init_test"
-        assert test_obj["value"] == 444
-        assert test_obj["optional_field"] is None
-        assert test_obj["default_field"] == "default"
+    test_obj["value"] = 999
+    assert test_obj.value == 999
+    assert test_obj["value"] == 999
 
-    def test_reduce_method_for_serialization(self):
-        """Verifica che __reduce__ permetta la serializzazione corretta dell'oggetto"""
-        test_obj = TestDictDataclass(name="reduce_test", value=555)
 
-        # Test del metodo __reduce__
-        reduce_result = test_obj.__reduce__()
+def test_dictionary_behavior_inheritance():
+    """Check that the object behaves like an OrderedDict"""
+    test_obj = DictDataclassTest(name="dict_behavior", value=333)
 
-        assert isinstance(reduce_result, tuple)
-        assert len(reduce_result) == 3
+    # Test keys(), values(), items()
+    keys = list(test_obj.keys())
+    values = list(test_obj.values())
+    items = list(test_obj.items())
 
-        constructor, args, state = reduce_result
-        assert constructor == TestDictDataclass.__new__
-        assert args == (TestDictDataclass,)
-        assert isinstance(state, dict)
-        assert "name" in state
-        assert "value" in state
+    assert "name" in keys
+    assert "value" in keys
+    assert "dict_behavior" in values
+    assert 333 in values
+    assert ("name", "dict_behavior") in items
+    assert ("value", 333) in items
 
-    def test_getitem_with_invalid_key_raises_error(self):
-        """Verifica che l'accesso con chiave inesistente sollevi un'eccezione"""
-        test_obj = TestDictDataclass(name="error_test", value=666)
 
-        with pytest.raises(KeyError):
-            _ = test_obj["nonexistent_key"]
+def test_post_init_populates_dict_from_dataclass_fields():
+    """Check that __post_init__ correctly populates the dictionary from dataclass fields"""
+    test_obj = DictDataclassTest(name="post_init_test", value=444)
 
-    def test_getitem_with_invalid_index_raises_error(self):
-        """Verifica che l'accesso con indice non valido sollevi un'eccezione"""
-        test_obj = TestDictDataclass(name="index_error_test", value=777)
+    # Check that all fields are present in the dictionary
+    expected_fields = ["name", "value", "optional_field", "default_field"]
+    for field in expected_fields:
+        assert field in test_obj
 
-        with pytest.raises(IndexError):
-            _ = test_obj[10]  # Indice fuori range
+    # Check that values match
+    assert test_obj["name"] == "post_init_test"
+    assert test_obj["value"] == 444
+    assert test_obj["optional_field"] is None
+    assert test_obj["default_field"] == "default"
 
-    @pytest.mark.parametrize(
-        "name,value,optional_field,expected_length",
-        [
-            ("test1", 1, None, 4),
-            ("test2", 2, "optional", 4),
-            ("test3", 3, "another", 4),
-        ],
-    )
-    def test_parametrized_dict_creation(
-        self, name: str, value: int, optional_field: Optional[str], expected_length: int
-    ):
-        """Test parametrizzato per verificare la creazione di oggetti DictClass con diversi parametri"""
-        test_obj = TestDictDataclass(name=name, value=value, optional_field=optional_field)
 
-        assert len(test_obj) == expected_length
-        assert test_obj.name == name
-        assert test_obj.value == value
-        assert test_obj.optional_field == optional_field
+def test_reduce_method_for_serialization():
+    """Check that __reduce__ allows correct serialization of the object"""
+    test_obj = DictDataclassTest(name="reduce_test", value=555)
 
-    def test_none_value_handling_in_setattr(self):
-        """Verifica che __setattr__ gestisca correttamente i valori None"""
-        test_obj = TestDictDataclass(name="none_handling", value=888)
+    # Test the __reduce__ method
+    reduce_result = test_obj.__reduce__()
 
-        # Imposta un valore a None
-        test_obj.optional_field = None
-        assert test_obj.optional_field is None
-        assert test_obj["optional_field"] is None
+    assert isinstance(reduce_result, tuple)
+    assert len(reduce_result) == 3
 
-        # Riporta il valore a un valore non None
-        test_obj.optional_field = "not_none_anymore"
-        assert test_obj.optional_field == "not_none_anymore"
-        assert test_obj["optional_field"] == "not_none_anymore"
+    constructor, args, state = reduce_result
+    assert constructor == DictDataclassTest.__new__
+    assert args == (DictDataclassTest,)
+    assert isinstance(state, dict)
+    assert "name" in state
+    assert "value" in state
+
+
+def test_getitem_with_invalid_key_raises_error():
+    """Check that access with a non-existent key raises an exception"""
+    test_obj = DictDataclassTest(name="error_test", value=666)
+
+    with pytest.raises(KeyError):
+        _ = test_obj["nonexistent_key"]
+
+
+def test_getitem_with_invalid_index_raises_error():
+    """Check that access with an invalid index raises an exception"""
+    test_obj = DictDataclassTest(name="index_error_test", value=777)
+
+    with pytest.raises(IndexError):
+        _ = test_obj[10]  # Out of range index
+
+
+@pytest.mark.parametrize(
+    "name,value,optional_field,expected_length",
+    [
+        ("test1", 1, None, 4),
+        ("test2", 2, "optional", 4),
+        ("test3", 3, "another", 4),
+    ],
+)
+def test_parametrized_dict_creation(name: str, value: int, optional_field: Optional[str], expected_length: int):
+    """Parametrized test to verify creation of DictClass objects with different parameters"""
+    test_obj = DictDataclassTest(name=name, value=value, optional_field=optional_field)
+
+    assert len(test_obj) == expected_length
+    assert test_obj.name == name
+    assert test_obj.value == value
+    assert test_obj.optional_field == optional_field
+
+
+def test_none_value_handling_in_setattr():
+    """Check that __setattr__ correctly handles None values"""
+    test_obj = DictDataclassTest(name="none_handling", value=888)
+
+    # Set a value to None
+    test_obj.optional_field = None
+    assert test_obj.optional_field is None
+    assert test_obj["optional_field"] is None
+
+    # Set the value back to a non-None value
+    test_obj.optional_field = "not_none_anymore"
+    assert test_obj.optional_field == "not_none_anymore"
+    assert test_obj["optional_field"] == "not_none_anymore"
 
 
 def test_pretty_print_with_system_info(mocker: MockerFixture):
-    """Verifica che pretty_print formatti correttamente tutte le informazioni di sistema"""
+    """Check that pretty_print correctly formats all system information"""
 
     gpu_devices = [
         GPUDevice(

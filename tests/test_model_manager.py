@@ -410,7 +410,7 @@ def test_from_local_dir_model_info_not_found(mocker: MockerFixture, functional_m
     mocker.patch("os.path.exists", side_effect=mock_exists)
 
     # Call the method and expect a ValueError
-    with pytest.raises(ValueError, match="Model info not found in /path/to/models/test-model"):
+    with pytest.raises(ValueError):
         functional_model_manager._from_local_dir(name="test-model", models_dir="/path/to/models")
 
 

@@ -130,7 +130,7 @@
         "predict_all_pixels": false,
         "use_mask_score": true,
         "threshold": 0.5,
-        "top_k": 300,
+        "top_k": 100,
         "criterion_deep_supervision": true,
         "criterion_eos_coef": 0.1,
         "criterion_num_points": 12544,
