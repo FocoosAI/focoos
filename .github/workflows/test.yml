@@ -5,18 +5,6 @@ on:
 env:
   UV_SYSTEM_PYTHON: 1
 jobs:
-  generate-models-matrix:
-    runs-on: ubuntu-latest
-    outputs:
-      models-matrix: ${{ steps.set-models-matrix.outputs.matrix }}
-    steps:
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
-      - name: 📋 Generate model list
-        id: set-models-matrix
-        run: |
-          MODELS=$(find ./focoos/model_registry -maxdepth 1 -type f -name "*.json" | xargs -n1 basename | sed 's/\.json$//' | jq -R -s 'split("\n") | map(select(length > 0)) | {model: .}' -c)
-          echo "matrix=$MODELS" >> $GITHUB_OUTPUT
   code-tests:
     permissions:
       id-token: write # This is required for requesting the JWT
@@ -51,11 +39,7 @@ jobs:
           pytest-xml-coverage-path: ./tests/coverage.xml
           junitxml-path: ./tests/junit.xml
           report-only-changed-files: true
-  e2e-tests:
-    needs: [generate-models-matrix]
-    strategy:
-      fail-fast: True
-      matrix: ${{ fromJson(needs.generate-models-matrix.outputs.models-matrix) }}
+  model-tests:
     runs-on: actions-runner-cuda12
     steps:
       - name: 📥 Checkout Repository
@@ -63,7 +47,7 @@ jobs:
       - name: 🐍 Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version:  3.12
+          python-version: 3.12
       - name: 🐍 Setup uv
         uses: astral-sh/setup-uv@v4
         with:
@@ -72,7 +56,23 @@ jobs:
           cache-dependency-glob: "uv.lock"
       - name: 📦 Install dev dependencies
         run: uv sync --extra dev --extra onnx
-      - name: 🧪 Run e2e tests
-        run: uv run ops/test_training.py --model ${{ matrix.model }}
+      - name: 🧪 Run e2e tests for all models
+        run: |
+          echo "🔍 Discovering models in model registry..."
+          MODELS=$(find ./focoos/model_registry -maxdepth 1 -type f -name "*.json" | xargs -n1 basename | sed 's/\.json$//')
+
+          if [ -z "$MODELS" ]; then
+            echo "⚠️  No models found in registry"
+            exit 1
+          fi
+
+          echo "📋 Found models: $(echo "$MODELS" | tr '\n' ' ')"
+
+          for model in $MODELS; do
+            echo "🧪 Testing model: $model"
+            uv run ops/test_training.py --model "$model"
+          done
+
+          echo "✅ All model tests completed successfully"
       - name: 🧹 Minimize uv cache
         run: uv cache prune --ci

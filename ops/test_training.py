@@ -123,9 +123,12 @@ def train(model_name: str):
 if __name__ == "__main__":
     import argparse
 
+    import torch
+
     parser = argparse.ArgumentParser(description="Train a pretrained model")
     parser.add_argument("--model", type=str, required=True, help="Name of the model to train")
 
     args = parser.parse_args()
     logger.info(f"Training model: {args.model}")
+    torch.cuda.empty_cache()
     train(args.model)
