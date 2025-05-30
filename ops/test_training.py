@@ -76,10 +76,14 @@ def train(model_name: str):
 
     # Initialize dataset
     auto_dataset = AutoDataset(dataset_name=dataset_name, task=task, layout=layout)
-    resolution = model.model_info.im_size
+    resolution = 640
 
     # Get default augmentations for the specified task
     train_augs, val_augs = get_default_by_task(task, resolution)
+
+    train_augs.crop_size = resolution
+    train_augs.crop = True
+
     train_dataset = auto_dataset.get_split(augs=train_augs.get_augmentations(), split=DatasetSplitType.TRAIN)
     valid_dataset = auto_dataset.get_split(augs=val_augs.get_augmentations(), split=DatasetSplitType.VAL)
 
@@ -101,7 +105,7 @@ def train(model_name: str):
         learning_rate=1e-4,
         scheduler="MULTISTEP",
         weight_decay=0.0,
-        workers=1,
+        workers=4,
     )
 
     # Start training
@@ -117,7 +121,7 @@ def train(model_name: str):
     for file in files_to_check:
         assert any(os.path.basename(f) == file for f in files), f"File {file} not found in {out_dir}"
 
-    print(f"✅ TEST DONE, {files_to_check} correctly found in {out_dir}.")
+    print(f"✅ {model_name} TEST DONE, {files_to_check} correctly found in {out_dir}. ======================")
 
 
 if __name__ == "__main__":
@@ -129,6 +133,6 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, required=True, help="Name of the model to train")
 
     args = parser.parse_args()
-    logger.info(f"Training model: {args.model}")
+    logger.info(f"🚀 Start training test: {args.model} =================================================")
     torch.cuda.empty_cache()
     train(args.model)
