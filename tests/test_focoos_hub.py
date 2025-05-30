@@ -271,6 +271,14 @@ def test_new_model_fail(focoos_instance: FocoosHUB, sample_model_info: ModelInfo
 
 def test_download_model_pth_already_exists(focoos_instance: FocoosHUB):
     model_ref = "ref1"
+    focoos_instance.api_client.get = MagicMock(
+        return_value=MagicMock(
+            status_code=200,
+            json=lambda: {
+                "download_uri": "https://fake.com/model_final.pth",
+            },
+        ),
+    )
     with tempfile.TemporaryDirectory() as models_dir_tmp:
         # Patch MODELS_DIR in the focoos_hub module
         with patch("focoos.hub.focoos_hub.MODELS_DIR", models_dir_tmp):
