@@ -1,7 +1,7 @@
 FROM python:3.12-slim-bullseye AS focoos-cpu
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 LABEL authors="focoos.ai"
-RUN apt-get update && \
+RUN apt-get update --fix-missing && \
     apt-get install -y --no-install-recommends \
     build-essential git ffmpeg libsm6 libxext6 gcc libmagic1 wget make cmake
 WORKDIR /app

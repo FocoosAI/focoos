@@ -137,6 +137,7 @@ class FocoosModel:
             if not os.path.exists(metadata_path):
                 raise FileNotFoundError(f"Training did not end correctly, metadata file not found at {metadata_path}")
             self.model_info = ModelInfo.from_json(metadata_path)
+
             logger.info(f"Reloading weights from {self.model_info.weights_uri}")
             self._reload_model()
         else:
@@ -327,9 +328,14 @@ class FocoosModel:
         return output_fdet[0]
 
     def _reload_model(self):
+        from focoos.model_manager import ConfigManager  # here to avoid circular import
+
         torch.cuda.empty_cache()
         model_class = self.model.__class__
-        model = model_class(self.model_info.config)  # type: ignore
+        # without the next line, the inner config may be not a ModelConfig but a dict
+        config = ConfigManager.from_dict(self.model_info.model_family, self.model_info.config)
+        self.model_info.config = config
+        model = model_class(config)
         self.model = model
         self._load_weights()
 
