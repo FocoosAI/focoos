@@ -155,7 +155,9 @@ class SemSegEvaluator(DatasetEvaluator):
         for i, name in enumerate(self._class_names):
             res[f"ACC-{name}"] = 100 * acc[i]
 
+        res = {k: (v if np.isfinite(v) else None) for k, v in res.items()}
         results = OrderedDict({"sem_seg": res})
+
         logger.info(results)
         return results
 

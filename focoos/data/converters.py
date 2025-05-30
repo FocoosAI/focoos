@@ -523,7 +523,7 @@ def convert_supervisely_dataset_to_coco(
         None: Creates a new directory with COCO-formatted annotations and copies images to the new structure.
     """
     dataset_path = os.path.join(dataset_root, dataset_name)
-    new_dataset_path = os.path.join(dataset_root, dataset_name + "_coco")
+    new_dataset_path = os.path.join(dataset_root, new_name)
 
     class_to_id = get_classes(os.path.join(dataset_path, "meta.json"), ignore_classes=ignore_classes)
 
