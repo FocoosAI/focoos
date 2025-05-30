@@ -1,8 +1,9 @@
+import json
+from dataclasses import asdict
 from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
-import supervision as sv
 from pytest_mock import MockerFixture
 
 from focoos.infer.infer_model import InferModel
@@ -12,75 +13,67 @@ from focoos.ports import (
     FocoosDet,
     FocoosDetections,
     LatencyMetrics,
-    RemoteModelInfo,
+    ModelFamily,
+    ModelInfo,
     RuntimeType,
     Task,
 )
 
 
 @pytest.fixture
-def mock_model_dir(tmp_path, mock_metadata: RemoteModelInfo):
+def mock_model_info():
+    """Fixture to provide a mock ModelInfo for testing."""
+    return ModelInfo(
+        name="test-model",
+        model_family=ModelFamily.DETR,
+        classes=["class_0", "class_1"],
+        im_size=640,
+        task=Task.DETECTION,
+        config={},
+        ref="test_model_ref",
+        focoos_model="test_focoos_model",
+        description="A test model for unit tests",
+    )
+
+
+@pytest.fixture
+def mock_model_dir(tmp_path, mock_model_info: ModelInfo):
     model_dir = tmp_path / "model"
     model_dir.mkdir()
-    metadata_path = model_dir / "focoos_metadata.json"
-    metadata_path.write_text(mock_metadata.model_dump_json())
+    model_info_path = model_dir / "model_info.json"
+    model_info_path.write_text(json.dumps(asdict(mock_model_info)))
     (model_dir / "model.onnx").touch()
+    (model_dir / "model.pt").touch()
     return model_dir
 
 
 @pytest.fixture
-def mock_local_model_onnx(mocker: MockerFixture, mock_model_dir, image_ndarray):
+def mock_local_model_onnx(mocker: MockerFixture, mock_model_dir):
     # Mock get_runtime
     mock_runtime = MagicMock(spec=ONNXRuntime)
-    mock_get_runtime = mocker.patch("focoos.infer.runtimes.load_runtime.load_runtime", mock_runtime)
+    mock_get_runtime = mocker.patch("focoos.infer.infer_model.load_runtime")
     mock_get_runtime.return_value = mock_runtime
-    mocker.patch("focoos.infer.runtimes.load_runtime.os.path.exists", return_value=True)
+
+    # Mock processor and config manager
+    mocker.patch("focoos.infer.infer_model.ProcessorManager.get_processor")
+    mocker.patch("focoos.model_manager.ConfigManager.from_dict")
+
     model = InferModel(model_dir=mock_model_dir, runtime_type=RuntimeType.ONNX_CPU)
-
-    # Mock BoxAnnotator
-    mock_box_annotator = mocker.patch("focoos.infer.runtimes.sv.BoxAnnotator", autospec=True)
-    mock_box_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
-
-    # Mock LabelAnnotator
-    mock_label_annotator = mocker.patch("focoos.infer.runtimes.sv.LabelAnnotator", autospec=True)
-    mock_label_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
-
-    # Mock MaskAnnotator
-    mock_mask_annotator = mocker.patch("focoos.infer.runtimes.sv.MaskAnnotator", autospec=True)
-    mock_mask_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
-
-    # Inject mock annotators into the local model
-    model.box_annotator = mock_box_annotator
-    model.label_annotator = mock_label_annotator
-    model.mask_annotator = mock_mask_annotator
     return model
 
 
 @pytest.fixture
-def mock_local_model_torch(mocker: MockerFixture, mock_model_dir, image_ndarray):
+def mock_local_model_torch(mocker: MockerFixture, mock_model_dir):
     # Mock get_runtime
     mock_runtime = MagicMock(spec=TorchscriptRuntime)
-    mock_get_runtime = mocker.patch("focoos.infer.runtimes.load_runtime.load_runtime", mock_runtime)
+    mock_get_runtime = mocker.patch("focoos.infer.infer_model.load_runtime")
     mock_get_runtime.return_value = mock_runtime
-    mocker.patch("focoos.infer.runtimes.load_runtime.os.path.exists", return_value=True)
+
+    # Mock processor and config manager
+    mocker.patch("focoos.infer.infer_model.ProcessorManager.get_processor")
+    mocker.patch("focoos.model_manager.ConfigManager.from_dict")
+
     model = InferModel(model_dir=mock_model_dir, runtime_type=RuntimeType.TORCHSCRIPT_32)
-
-    # Mock BoxAnnotator
-    mock_box_annotator = mocker.patch("focoos.local_model.sv.BoxAnnotator", autospec=True)
-    mock_box_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
-
-    # Mock LabelAnnotator
-    mock_label_annotator = mocker.patch("focoos.local_model.sv.LabelAnnotator", autospec=True)
-    mock_label_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
-
-    # Mock MaskAnnotator
-    mock_mask_annotator = mocker.patch("focoos.local_model.sv.MaskAnnotator", autospec=True)
-    mock_mask_annotator.annotate = MagicMock(return_value=np.zeros_like(image_ndarray))
-
-    # Inject mock annotators into the local model
-    model.box_annotator = mock_box_annotator
-    model.label_annotator = mock_label_annotator
-    model.mask_annotator = mock_mask_annotator
     return model
 
 
@@ -95,16 +88,16 @@ def test_init_file_not_found(mocker: MockerFixture):
         InferModel(model_dir="fakedir", runtime_type=RuntimeType.ONNX_CPU)
 
 
-def test_initialization_onnx(mock_local_model_onnx: InferModel, mock_model_dir, mock_metadata):
+def test_initialization_onnx(mock_local_model_onnx: InferModel, mock_model_dir, mock_model_info):
     assert mock_local_model_onnx.model_dir == mock_model_dir
-    assert mock_local_model_onnx.model_info == mock_metadata
-    assert isinstance(mock_local_model_onnx.runtime, ONNXRuntime)
+    assert mock_local_model_onnx.model_info.name == mock_model_info.name
+    assert isinstance(mock_local_model_onnx.runtime, MagicMock)
 
 
-def test_initialization_torch(mock_local_model_torch: InferModel, mock_model_dir, mock_metadata):
+def test_initialization_torch(mock_local_model_torch: InferModel, mock_model_dir, mock_model_info):
     assert mock_local_model_torch.model_dir == mock_model_dir
-    assert mock_local_model_torch.model_info == mock_metadata
-    assert isinstance(mock_local_model_torch.runtime, TorchscriptRuntime)
+    assert mock_local_model_torch.model_info.name == mock_model_info.name
+    assert isinstance(mock_local_model_torch.runtime, MagicMock)
 
 
 def test_benchmark(mock_local_model_onnx: InferModel):
@@ -114,8 +107,8 @@ def test_benchmark(mock_local_model_onnx: InferModel):
     result = mock_local_model_onnx.benchmark(iterations, size)
 
     assert result is not None
-    assert isinstance(result, LatencyMetrics)
-    mock_local_model_onnx.runtime.benchmark.assert_called_once_with(iterations, size)
+    assert isinstance(result, MagicMock)
+    mock_local_model_onnx.runtime.benchmark.assert_called_once_with(iterations, (size, size))
 
 
 @pytest.fixture
@@ -131,130 +124,138 @@ def mock_focoos_detections():
     )
 
 
-@pytest.fixture
-def mock_sv_detections() -> sv.Detections:
-    return sv.Detections(
-        xyxy=np.array([[2, 8, 16, 32], [4, 10, 18, 34]]),
-        class_id=np.array([0, 1]),
-        confidence=np.array([0.8, 0.9]),
-    )
-
-
-@pytest.fixture
-def mock_runtime_detections() -> list[np.ndarray]:
-    return [np.array([[2, 8, 16, 32], [4, 10, 18, 34]]), np.array([0, 1]), np.array([0.8, 0.9])]
-
-
-def test_annotate_detection_metadata_classes_none(
-    image_ndarray: np.ndarray, mock_local_model_onnx: InferModel, mock_sv_detections
-):
-    mock_local_model_onnx.model_info.classes = None
-    annotated_im = mock_local_model_onnx._annotate(image_ndarray, mock_sv_detections)
-    assert annotated_im is not None
-    assert isinstance(annotated_im, np.ndarray)
-    mock_local_model_onnx.box_annotator.annotate.assert_called_once()
-    mock_local_model_onnx.label_annotator.annotate.assert_called_once()
-    mock_local_model_onnx.mask_annotator.annotate.assert_not_called()
-
-
-def test_annotate_detection(image_ndarray: np.ndarray, mock_local_model_onnx: InferModel, mock_sv_detections):
-    annotated_im = mock_local_model_onnx._annotate(image_ndarray, mock_sv_detections)
-    assert annotated_im is not None
-    assert isinstance(annotated_im, np.ndarray)
-    mock_local_model_onnx.box_annotator.annotate.assert_called_once()
-    mock_local_model_onnx.label_annotator.annotate.assert_called_once()
-    mock_local_model_onnx.mask_annotator.annotate.assert_not_called()
-
-
-def test_annotate_semseg(image_ndarray: np.ndarray, mock_local_model_onnx: InferModel, mock_sv_detections):
-    mock_local_model_onnx.model_info.task = Task.SEMSEG
-    annotated_im = mock_local_model_onnx._annotate(image_ndarray, mock_sv_detections)
-    assert annotated_im is not None
-    assert isinstance(annotated_im, np.ndarray)
-    mock_local_model_onnx.box_annotator.annotate.asser_not_called()
-    mock_local_model_onnx.label_annotator.annotate.asser_not_called()
-    mock_local_model_onnx.mask_annotator.annotate.assert_called_once()
-
-
-def mock_infer_setup(
+def test_infer_onnx(
     mocker: MockerFixture,
-    mock_local_model: InferModel,
+    mock_local_model_onnx: InferModel,
     image_ndarray: np.ndarray,
-    mock_sv_detections: sv.Detections,
-    mock_runtime_detections: list[np.ndarray],
     mock_focoos_detections: FocoosDetections,
-    annotate: bool,
 ):
-    """Setup for mocking the infer method."""
-    # Mock image_preprocess
-    mock_image_preprocess = mocker.patch("focoos.local_model.image_preprocess")
+    # Mock image preprocessing
+    mock_image_preprocess = mocker.patch("focoos.infer.infer_model.image_preprocess")
     mock_image_preprocess.return_value = (image_ndarray, image_ndarray)
 
-    # Mock sv_to_focoos_detections
-    mock_sv_to_focoos_detections = mocker.patch("focoos.local_model.sv_to_fai_detections")
-    mock_sv_to_focoos_detections.return_value = mock_focoos_detections.detections
+    # Mock processor methods
+    mock_local_model_onnx.processor.preprocess = MagicMock(return_value=(MagicMock(), None))
+    mock_local_model_onnx.processor.export_postprocess = MagicMock(return_value=[mock_focoos_detections])
 
-    # mock postprocess
-    mock_postprocess = mocker.patch.object(mock_local_model, "postprocess_fn")
-    mock_postprocess.return_value = mock_sv_detections
-
-    # Mock _annotate
-    mock_annotate = mocker.patch.object(mock_local_model, "_annotate", autospec=True)
-    if annotate:
-        mock_annotate.return_value = image_ndarray
-    else:
-        mock_annotate.return_value = None  # No annotation if False
-
-    # Mock runtime
-    class MockRuntime(MagicMock):
-        def __call__(self, *args, **kwargs):
-            return mock_runtime_detections
-
-    mock_runtime_call = mocker.patch.object(MockRuntime, "__call__", return_value=mock_runtime_detections)
-    mock_local_model.runtime = MockRuntime(spec=ONNXRuntime)
-
-    return (
-        mock_image_preprocess,
-        mock_runtime_call,
-        mock_sv_to_focoos_detections,
-        mock_annotate,
-    )
-
-
-@pytest.mark.parametrize("annotate", [(False, None)])
-def test_infer_onnx(
-    mocker,
-    mock_local_model_onnx,
-    image_ndarray,
-    mock_sv_detections,
-    mock_focoos_detections,
-    mock_runtime_detections,
-    annotate,
-):
-    # Arrange
-    *mock_to_call_once, mock_annotate = mock_infer_setup(
-        mocker,
-        mock_local_model_onnx,
-        image_ndarray,
-        mock_sv_detections,
-        mock_runtime_detections,
-        mock_focoos_detections,
-        annotate,
-    )
+    # Mock runtime call
+    mock_local_model_onnx.runtime = MagicMock()
+    mock_local_model_onnx.runtime.return_value = MagicMock()
 
     # Act
-    out, im = mock_local_model_onnx.infer(image=image_ndarray, annotate=annotate)
+    result = mock_local_model_onnx.infer(image=image_ndarray, threshold=0.5)
 
     # Assertions
-    assert out is not None
-    assert isinstance(out, FocoosDetections)
+    assert result is not None
+    assert isinstance(result, FocoosDetections)
+    mock_image_preprocess.assert_called_once()
+    mock_local_model_onnx.processor.preprocess.assert_called_once()
+    mock_local_model_onnx.processor.export_postprocess.assert_called_once()
 
-    for mock_obj in mock_to_call_once:
-        mock_obj.assert_called_once()
-    if annotate:
-        mock_annotate.assert_called_once()
-        assert im is not None
-        assert isinstance(im, np.ndarray)
-    else:
-        mock_annotate.assert_not_called()
-        assert im is None
+
+def test_infer_torch(
+    mocker: MockerFixture,
+    mock_local_model_torch: InferModel,
+    image_ndarray: np.ndarray,
+    mock_focoos_detections: FocoosDetections,
+):
+    # Mock image preprocessing
+    mock_image_preprocess = mocker.patch("focoos.infer.infer_model.image_preprocess")
+    mock_image_preprocess.return_value = (image_ndarray, image_ndarray)
+
+    # Mock processor methods
+    mock_local_model_torch.processor.preprocess = MagicMock(return_value=(MagicMock(), None))
+    mock_local_model_torch.processor.export_postprocess = MagicMock(return_value=[mock_focoos_detections])
+
+    # Mock runtime call
+    mock_local_model_torch.runtime = MagicMock()
+    mock_local_model_torch.runtime.return_value = MagicMock()
+
+    # Act
+    result = mock_local_model_torch.infer(image=image_ndarray, threshold=0.5)
+
+    # Assertions
+    assert result is not None
+    assert isinstance(result, FocoosDetections)
+    mock_image_preprocess.assert_called_once()
+    mock_local_model_torch.processor.preprocess.assert_called_once()
+    mock_local_model_torch.processor.export_postprocess.assert_called_once()
+
+
+def test_call_method(
+    mocker: MockerFixture,
+    mock_local_model_onnx: InferModel,
+    image_ndarray: np.ndarray,
+    mock_focoos_detections: FocoosDetections,
+):
+    # Mock the infer method
+    mock_infer = mocker.patch.object(mock_local_model_onnx, "infer", return_value=mock_focoos_detections)
+
+    # Act
+    result = mock_local_model_onnx(image=image_ndarray, threshold=0.5)
+
+    # Assertions
+    assert result is not None
+    assert isinstance(result, FocoosDetections)
+    mock_infer.assert_called_once_with(image_ndarray, 0.5)
+
+
+def test_end2end_benchmark(mocker: MockerFixture, mock_local_model_onnx: InferModel):
+    # Mock runtime.get_info
+    mock_local_model_onnx.runtime.get_info = MagicMock(return_value=("ONNX", "CPU"))
+
+    # Mock the infer method instead of __call__ to avoid the actual inference logic
+    mock_infer = mocker.patch.object(mock_local_model_onnx, "infer", return_value=MagicMock())
+
+    # Act
+    result = mock_local_model_onnx.end2end_benchmark(iterations=5, size=640)
+
+    # Assertions
+    assert result is not None
+    assert isinstance(result, LatencyMetrics)
+    assert result.engine == "ONNX"
+    assert result.device == "CPU"
+    assert result.im_size == 640
+    # The method adds 5 warmup iterations, so total calls = iterations + 5
+    assert mock_infer.call_count == 10  # 5 iterations + 5 warmup iterations
+
+
+def test_read_model_info_file_not_found(mocker: MockerFixture, tmp_path):
+    # Create model directory without model_info.json
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+
+    # Mock os.path.exists to return False for model.onnx check but True for directory
+    def mock_exists(path):
+        if "model.onnx" in str(path):
+            return True
+        if "model_info.json" in str(path):
+            return False
+        return True
+
+    mocker.patch("focoos.infer.infer_model.os.path.exists", side_effect=mock_exists)
+
+    with pytest.raises(FileNotFoundError, match="Model info file not found"):
+        InferModel(model_dir=model_dir, runtime_type=RuntimeType.ONNX_CPU)
+
+
+def test_benchmark_with_default_size(mock_local_model_onnx: InferModel):
+    mock_local_model_onnx.runtime.benchmark.return_value = MagicMock(spec=LatencyMetrics)
+    iterations = 10
+
+    result = mock_local_model_onnx.benchmark(iterations)
+
+    assert result is not None
+    mock_local_model_onnx.runtime.benchmark.assert_called_once_with(
+        iterations, (mock_local_model_onnx.model_info.im_size, mock_local_model_onnx.model_info.im_size)
+    )
+
+
+def test_benchmark_with_tuple_size(mock_local_model_onnx: InferModel):
+    mock_local_model_onnx.runtime.benchmark.return_value = MagicMock(spec=LatencyMetrics)
+    iterations, size = 10, (800, 600)
+
+    result = mock_local_model_onnx.benchmark(iterations, size)
+
+    assert result is not None
+    mock_local_model_onnx.runtime.benchmark.assert_called_once_with(iterations, size)

@@ -74,14 +74,18 @@ class RemoteDataset:
         presigned_url = presigned_url.json()
         fields = {k: v for k, v in presigned_url["fields"].items()}
         logger.info(f"📤 Uploading file {file_name}..")
-        fields["file"] = (file_name, open(path, "rb"), "application/zip")
 
-        res = self.api_client.external_post(
-            presigned_url["url"],
-            files=fields,
-            data=presigned_url["fields"],
-            stream=True,
-        )
+        # Use context manager to properly handle file closure
+        with open(path, "rb") as file_obj:
+            fields["file"] = (file_name, file_obj, "application/zip")
+
+            res = self.api_client.external_post(
+                presigned_url["url"],
+                files=fields,
+                data=presigned_url["fields"],
+                stream=True,
+            )
+
         logger.info("✅ Upload file done.")
         if res.status_code not in [200, 201, 204]:
             raise ValueError(f"Failed to upload dataset: {res.status_code} {res.text}")

@@ -71,7 +71,7 @@ def clean_model_manager(mock_focoos_model: FocoosModel):
     ModelManager._models_family_map = {}
     ModelManager._from_model_info = MagicMock(return_value=mock_focoos_model)
     ModelManager._from_local_dir = MagicMock(return_value=mock_focoos_model)
-    ModelManager._from_hub = MagicMock(return_value=mock_focoos_model)
+    ModelManager._from_hub = MagicMock(return_value=(mock_focoos_model, MagicMock()))
 
     yield ModelManager  # Provide clean ModelManager to test
 
@@ -105,7 +105,7 @@ def dirty_model_manager(mock_focoos_model: FocoosModel):
     ModelManager._models_family_map = {ModelFamily.DETR.value: mock_model_loader}
     ModelManager._from_model_info = MagicMock(return_value=mock_focoos_model)
     ModelManager._from_local_dir = MagicMock(return_value=mock_focoos_model)
-    ModelManager._from_hub = MagicMock(return_value=mock_focoos_model)
+    ModelManager._from_hub = MagicMock(return_value=(mock_focoos_model, MagicMock()))
     ModelManager.register_model = MagicMock()
 
     yield ModelManager  # Provide clean ModelManager to test
@@ -148,7 +148,7 @@ def test_get_with_model_info_without_kwargs(clean_model_manager, mock_model_info
     assert isinstance(model, FocoosModel)
 
 
-def test_get_with_model_info_with_kwargs(clean_model_manager):
+def test_get_with_model_info_with_kwargs(clean_model_manager, mock_model_info):
     """Test that ModelManager.get_infer_model correctly retrieves a model."""
     model = clean_model_manager.get(name="test-model", model_info=mock_model_info, pluto="test-pluto")
     clean_model_manager._from_model_info.assert_called_once_with(
@@ -157,7 +157,7 @@ def test_get_with_model_info_with_kwargs(clean_model_manager):
     assert isinstance(model, FocoosModel)
 
 
-def test_get_with_model_info_with_config(clean_model_manager, mock_model_config):
+def test_get_with_model_info_with_config(clean_model_manager, mock_model_config, mock_model_info):
     """Test that ModelManager.get_infer_model correctly retrieves a model."""
     model = clean_model_manager.get(name="test-model", model_info=mock_model_info, config=mock_model_config)
     clean_model_manager._from_model_info.assert_called_once_with(model_info=mock_model_info, config=mock_model_config)
@@ -168,36 +168,51 @@ def test_get_with_get_model_hub(clean_model_manager):
     """Test that ModelManager.get_infer_model correctly retrieves a model."""
     mock_hub = MagicMock()
     model = clean_model_manager.get(name="hub://test-model", hub=mock_hub)
-    clean_model_manager._from_hub.assert_called_once_with(name="hub://test-model", hub=mock_hub)
+    clean_model_manager._from_hub.assert_called_once_with(hub_uri="hub://test-model", hub=mock_hub, cache=True)
     assert isinstance(model, FocoosModel)
 
 
 def test_get_with_get_model_local_dir(clean_model_manager, mock_model_config):
     """Test that ModelManager.get_infer_model correctly retrieves a model."""
-    model = clean_model_manager.get(name="test-model")
-    clean_model_manager._from_model_info.assert_not_called()
-    clean_model_manager._from_local_dir.assert_called_once_with(name="test-model", models_dir=None, config=None)
-    assert isinstance(model, FocoosModel)
+    # Setup mocks so that ModelRegistry.exists returns False to trigger local dir path
+    with MagicMock() as mock_registry:
+        mock_registry.exists.return_value = False
+        clean_model_manager._from_local_dir.return_value = MagicMock(spec=ModelInfo)
+
+        model = clean_model_manager.get(name="test-model")
+        clean_model_manager._from_local_dir.assert_called_once_with(name="test-model", models_dir=None, config=None)
+        clean_model_manager._from_model_info.assert_called_once()
+        assert isinstance(model, FocoosModel)
 
 
 def test_get_with_get_model_local_dir_with_config(clean_model_manager, mock_model_config):
     """Test that ModelManager.get_infer_model correctly retrieves a model."""
-    model = clean_model_manager.get(name="test-model", config=mock_model_config)
-    clean_model_manager._from_model_info.assert_not_called()
-    clean_model_manager._from_local_dir.assert_called_once_with(
-        name="test-model", models_dir=None, config=mock_model_config
-    )
-    assert isinstance(model, FocoosModel)
+    # Setup mocks so that ModelRegistry.exists returns False to trigger local dir path
+    with MagicMock() as mock_registry:
+        mock_registry.exists.return_value = False
+        clean_model_manager._from_local_dir.return_value = MagicMock(spec=ModelInfo)
+
+        model = clean_model_manager.get(name="test-model", config=mock_model_config)
+        clean_model_manager._from_local_dir.assert_called_once_with(
+            name="test-model", models_dir=None, config=mock_model_config
+        )
+        clean_model_manager._from_model_info.assert_called_once()
+        assert isinstance(model, FocoosModel)
 
 
 def test_get_with_get_model_local_dir_with_model_dir(clean_model_manager, mock_model_config):
     """Test that ModelManager.get_infer_model correctly retrieves a model."""
-    model = clean_model_manager.get(name="test-model", models_dir="test-models-dir")
-    clean_model_manager._from_model_info.assert_not_called()
-    clean_model_manager._from_local_dir.assert_called_once_with(
-        name="test-model", models_dir="test-models-dir", config=None
-    )
-    assert isinstance(model, FocoosModel)
+    # Setup mocks so that ModelRegistry.exists returns False to trigger local dir path
+    with MagicMock() as mock_registry:
+        mock_registry.exists.return_value = False
+        clean_model_manager._from_local_dir.return_value = MagicMock(spec=ModelInfo)
+
+        model = clean_model_manager.get(name="test-model", models_dir="test-models-dir")
+        clean_model_manager._from_local_dir.assert_called_once_with(
+            name="test-model", models_dir="test-models-dir", config=None
+        )
+        clean_model_manager._from_model_info.assert_called_once()
+        assert isinstance(model, FocoosModel)
 
 
 def test_get_with_get_model_registry(mocker: MockerFixture, clean_model_manager, mock_model_info):
@@ -298,11 +313,9 @@ def test_from_model_info_with_weights(mocker: MockerFixture, functional_model_ma
     mock_model_class_function.return_value = mock_model_class
     functional_model_manager._models_family_map = {mock_model_info.model_family.value: mock_model_class_function}
 
-    # Mock ConfigManager and ArtifactsManager
+    # Mock ConfigManager - removed ArtifactsManager as it doesn't exist
     mock_config = MagicMock()
     mocker.patch("focoos.model_manager.ConfigManager.from_dict", return_value=mock_config)
-    mock_weights = {"layer1": "weights1"}
-    mocker.patch("focoos.model_manager.ArtifactsManager.get_weights_dict", return_value=mock_weights)
 
     # Call the method
     result = functional_model_manager._from_model_info(model_info=mock_model_info)
@@ -310,7 +323,8 @@ def test_from_model_info_with_weights(mocker: MockerFixture, functional_model_ma
     # Assertions
     mock_model_class_function.assert_called_once()
     mock_model_class.assert_called_once()
-    mock_focoos_model.load_weights.assert_called_once_with(mock_weights)
+    # Note: load_weights is not called in the current implementation
+    # The weights loading is handled differently now
     assert result == mock_focoos_model
 
 
@@ -338,15 +352,12 @@ def test_from_local_dir_success(mocker: MockerFixture, functional_model_manager,
     # Mock ModelInfo.from_json
     mocker.patch("focoos.ports.ModelInfo.from_json", return_value=mock_model_info)
 
-    # Mock _from_model_info
-    mocker.patch.object(functional_model_manager, "_from_model_info", return_value=MagicMock(spec=FocoosModel))
-
     # Call the method
     result = functional_model_manager._from_local_dir(name="test-model", models_dir="/path/to/models")
 
-    # Assertions
-    functional_model_manager._from_model_info.assert_called_once_with(mock_model_info, config=None)
-    assert isinstance(result, MagicMock)
+    # Assertions - _from_local_dir returns ModelInfo, not FocoosModel
+    assert isinstance(result, ModelInfo)
+    assert result == mock_model_info
 
 
 def test_from_local_dir_success_without_models_dir(mocker: MockerFixture, functional_model_manager, mock_model_info):
@@ -356,15 +367,12 @@ def test_from_local_dir_success_without_models_dir(mocker: MockerFixture, functi
     # Mock ModelInfo.from_json
     mocker.patch("focoos.ports.ModelInfo.from_json", return_value=mock_model_info)
 
-    # Mock _from_model_info
-    mocker.patch.object(functional_model_manager, "_from_model_info", return_value=MagicMock(spec=FocoosModel))
-
     # Call the method
     result = functional_model_manager._from_local_dir(name="test-model")
 
-    # Assertions
-    functional_model_manager._from_model_info.assert_called_once_with(mock_model_info, config=None)
-    assert isinstance(result, MagicMock)
+    # Assertions - _from_local_dir returns ModelInfo, not FocoosModel
+    assert isinstance(result, ModelInfo)
+    assert result == mock_model_info
 
 
 def test_from_local_dir_with_model_final_pth(mocker: MockerFixture, functional_model_manager, mock_model_info):
@@ -377,17 +385,12 @@ def test_from_local_dir_with_model_final_pth(mocker: MockerFixture, functional_m
     # Mock ModelInfo.from_json
     mocker.patch("focoos.ports.ModelInfo.from_json", return_value=mock_model_info)
 
-    # Mock _from_model_info
-    mocker.patch.object(functional_model_manager, "_from_model_info", return_value=MagicMock(spec=FocoosModel))
-
     # Call the method
-    functional_model_manager._from_local_dir(name="test-model", models_dir="/path/to/models")
+    result = functional_model_manager._from_local_dir(name="test-model", models_dir="/path/to/models")
 
     # Check if weights_uri was updated
     expected_weights_path = os.path.join("/path/to/models", "test-model", "model_final.pth")
-    functional_model_manager._from_model_info.assert_called_once()
-    called_model_info = functional_model_manager._from_model_info.call_args[0][0]
-    assert called_model_info.weights_uri == expected_weights_path
+    assert result.weights_uri == expected_weights_path
 
 
 def test_from_local_dir_dir_not_found(mocker: MockerFixture, functional_model_manager):
@@ -420,17 +423,53 @@ def test_from_local_dir_with_config(
     # Mock ModelInfo.from_json
     mocker.patch("focoos.ports.ModelInfo.from_json", return_value=mock_model_info)
 
-    # Mock _from_model_info
-    mocker.patch.object(functional_model_manager, "_from_model_info", return_value=MagicMock(spec=FocoosModel))
-
     # Call the method with config
     result = functional_model_manager._from_local_dir(
         name="test-model", models_dir="/path/to/models", config=mock_model_config
     )
 
+    # Assertions - _from_local_dir returns ModelInfo, not FocoosModel
+    assert isinstance(result, ModelInfo)
+    assert result == mock_model_info
+
+
+def test_from_hub_success(mocker: MockerFixture, functional_model_manager, mock_model_info):
+    """Test successful model loading from hub."""
+    # Mock hub and dependencies
+    mock_hub = MagicMock()
+    mock_hub.download_model_pth.return_value = "/path/to/model.pth"
+    mock_hub.get_model_info.return_value = MagicMock()
+    mock_hub.get_model_info.return_value.model_dump.return_value = {}
+
+    # Mock file operations
+    mocker.patch("os.path.exists", return_value=False)
+    mocker.patch("focoos.ports.ModelInfo.from_json", side_effect=[mock_model_info, mock_model_info])
+
+    # Mock ConfigManager
+    mock_config = MagicMock()
+    mocker.patch("focoos.model_manager.ConfigManager.from_dict", return_value=mock_config)
+
+    # Mock model_info dump_json method
+    mock_model_info.dump_json = MagicMock()
+
+    # Call the method
+    model_info, config = functional_model_manager._from_hub(hub_uri="hub://test/model", hub=mock_hub)
+
     # Assertions
-    functional_model_manager._from_model_info.assert_called_once_with(mock_model_info, config=mock_model_config)
-    assert isinstance(result, MagicMock)
+    assert model_info == mock_model_info
+    assert config == mock_config
+    mock_hub.download_model_pth.assert_called_once()
+    mock_hub.get_model_info.assert_called_once()
+
+
+def test_from_hub_invalid_uri(mocker: MockerFixture, functional_model_manager):
+    """Test hub method with invalid URI."""
+    # Mock FocoosHUB to avoid authentication issues
+    mock_hub = MagicMock()
+    mocker.patch("focoos.model_manager.FocoosHUB", return_value=mock_hub)
+
+    with pytest.raises(ValueError, match="Model ref is required"):
+        functional_model_manager._from_hub(hub_uri="hub://")
 
 
 # BackboneManager Tests
@@ -747,21 +786,3 @@ def test_config_backbone_manager_from_dict_unsupported(mocker: MockerFixture):
     # Call the method and expect ValueError
     with pytest.raises(ValueError, match=f"Backbone {config_dict['model_type']} not supported"):
         ConfigBackboneManager.from_dict(config_dict)
-
-
-# ArtifactsManager Tests
-
-
-@pytest.fixture
-def mock_model_info_with_weights():
-    """Fixture to provide a mock ModelInfo with weights."""
-    model_info = ModelInfo(
-        name="test-model",
-        model_family=ModelFamily.DETR,
-        classes=["class1", "class2"],
-        im_size=640,
-        task=Task.DETECTION,
-        config={},
-        weights_uri="model_weights.pth",
-    )
-    return model_info

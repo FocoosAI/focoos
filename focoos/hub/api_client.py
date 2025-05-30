@@ -37,7 +37,8 @@ class ApiClient:
             api_key (str): The API key for authorization.
             host_url (str): The base URL for the API.
         """
-        self.api_key = api_key or FOCOOS_CONFIG.focoos_api_key
+        # Use provided api_key if not None, otherwise use config
+        self.api_key = api_key if api_key is not None else FOCOOS_CONFIG.focoos_api_key
         self.host_url = host_url or FOCOOS_CONFIG.default_host_url
 
         self.default_headers = {
@@ -46,7 +47,7 @@ class ApiClient:
         }
 
     def _check_api_key(self):
-        if not self.api_key:
+        if not self.api_key or (isinstance(self.api_key, str) and self.api_key.strip() == ""):
             raise ValueError("API key is required")
 
     def external_get(self, path: str, params: Optional[dict] = None, stream: bool = False):

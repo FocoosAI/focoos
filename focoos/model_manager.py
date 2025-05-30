@@ -74,14 +74,21 @@ class ModelManager:
             ValueError: If the model cannot be found or loaded
         """
         if model_info is not None:
+            # Load model directly from provided ModelInfo
             return cls._from_model_info(model_info=model_info, config=config, **kwargs)
 
+        # If name starts with "hub://", load from Focoos Hub
         if name.startswith("hub://"):
-            model_info, config = cls._from_hub(hub_uri=name, hub=hub, cache=cache, **kwargs)
-        elif ModelRegistry.exists(name):  # Pretrained models
+            model_info, hub_config = cls._from_hub(hub_uri=name, hub=hub, cache=cache, **kwargs)
+            if config is None:
+                config = hub_config  # Use hub config if no config is provided
+        # If model exists in ModelRegistry, load as pretrained model
+        elif ModelRegistry.exists(name):
             model_info = ModelRegistry.get_model_info(name)
+        # Otherwise, attempt to load from a local directory
         else:
             model_info = cls._from_local_dir(name=name, models_dir=models_dir, config=config, **kwargs)
+        # Load model from the resolved ModelInfo
         return cls._from_model_info(model_info=model_info, config=config, **kwargs)
 
     @classmethod

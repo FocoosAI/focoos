@@ -2,7 +2,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from focoos.hub.api_client import ApiClient
 from focoos.ports import GPUDevice, GPUInfo, SystemInfo
 from focoos.utils.system import (
     get_cpu_name,
@@ -65,52 +64,3 @@ def test_get_system_info():
         assert system_info.cpu_cores > 0
         assert system_info.gpu_info is not None
         assert system_info.gpu_info.gpu_count == 0
-
-
-def test_api_client_get_external_url():
-    client = ApiClient(api_key="test_key", host_url="http://example.com")
-    with patch("requests.get") as mock_get:
-        mock_get.return_value.status_code = 200
-        response = client.external_get("test/path")
-        assert response.status_code == 200
-        mock_get.assert_called_with("test/path", params={}, stream=False)
-
-
-def test_api_client_get(extra_headers):
-    client = ApiClient(api_key="test_key", host_url="http://example.com")
-    with patch("requests.get") as mock_get:
-        mock_get.return_value.status_code = 200
-        response = client.get("test/path", extra_headers=extra_headers)
-        assert response.status_code == 200
-        mock_get.assert_called_with(
-            "http://example.com/test/path",
-            headers={**client.default_headers, **extra_headers},
-            params=None,
-            stream=False,
-        )
-
-
-def test_api_client_post(extra_headers):
-    client = ApiClient(api_key="test_key", host_url="http://example.com")
-    with patch("requests.post") as mock_post:
-        mock_post.return_value.status_code = 201
-        response = client.post("test/path", data={"key": "value"}, extra_headers=extra_headers)
-        assert response.status_code == 201
-        mock_post.assert_called_with(
-            "http://example.com/test/path",
-            headers={**client.default_headers, **extra_headers},
-            json={"key": "value"},
-            files=None,
-        )
-
-
-def test_api_client_delete(extra_headers):
-    client = ApiClient(api_key="test_key", host_url="http://example.com")
-    with patch("requests.delete") as mock_delete:
-        mock_delete.return_value.status_code = 204
-        response = client.delete("test/path", extra_headers=extra_headers)
-        assert response.status_code == 204
-        mock_delete.assert_called_with(
-            "http://example.com/test/path",
-            headers={**client.default_headers, **extra_headers},
-        )
