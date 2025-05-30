@@ -1,5 +1,5 @@
 {
-    "name": "Focoos GPU (OnnxRuntime, Torch, TensorRT)",
+    "name": "Focoos GPU (OnnxRuntime, TensorRT)",
     "build": {
         "context": "../..",
         "dockerfile": "../../Dockerfile",

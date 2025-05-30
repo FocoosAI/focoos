@@ -45,17 +45,17 @@ nav:
   - Focoos Models:
       - Overview: models.md
       - Semantic segmentation:
-        - fai-m2f-l-ade: models/fai-m2f-l-ade.md
-        - fai-m2f-m-ade: models/fai-m2f-m-ade.md
-        - fai-m2f-s-ade: models/fai-m2f-s-ade.md
+        - fai-mf-l-ade: models/fai-mf-l-ade.md
+        - fai-mf-m-ade: models/fai-mf-m-ade.md
+        - fai-mf-s-ade: models/fai-mf-s-ade.md
       - Object detection:
-        - fai-rtdetr-l-coco: models/fai-rtdetr-l-coco.md
-        - fai-rtdetr-m-coco: models/fai-rtdetr-m-coco.md
-        - fai-rtdetr-s-coco: models/fai-rtdetr-s-coco.md
-        - fai-rtdetr-n-coco: models/fai-rtdetr-n-coco.md
-        - fai-rtdetr-m-obj365: models/fai-rtdetr-m-obj365.md
+        - fai-detr-l-coco: models/fai-detr-l-coco.md
+        - fai-detr-m-coco: models/fai-detr-m-coco.md
+        - fai-detr-s-coco: models/fai-detr-s-coco.md
+        - fai-detr-n-coco: models/fai-detr-n-coco.md
+        - fai-detr-l-obj365: models/fai-detr-l-obj365.md
       - Instance_segmentation:
-        - fai-m2f-l-coco-ins: models/fai-m2f-l-coco-ins.md
+        - fai-mf-l-coco-ins: models/fai-mf-l-coco-ins.md
   - API Reference:
       - Focoos: api/focoos.md
       - Config: api/config.md

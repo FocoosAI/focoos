@@ -56,8 +56,8 @@ from PIL import Image
 # Initialize the Focoos client with your API key
 focoos = Focoos(api_key="<YOUR-API-KEY>")
 
-# Get the remote model (fai-rtdetr-m-obj365) from Focoos API
-model = focoos.get_remote_model("fai-rtdetr-m-obj365")
+# Get the remote model (fai-detr-l-obj365) from Focoos API
+model = focoos.get_remote_model("fai-detr-l-obj365")
 
 # Run inference on an image
 detections, preview = model.infer(image_path, annotate=True)
@@ -79,7 +79,7 @@ from focoos.ports import Hyperparameters
 
 focoos = Focoos(api_key="<YOUR-API-KEY>")
 model = focoos.new_model(name="awesome",
-                         focoos_model="fai-rtdetr-m-obj365",
+                         focoos_model="fai-detr-l-obj365",
                          description="An awesome model")
 
 res = model.train(

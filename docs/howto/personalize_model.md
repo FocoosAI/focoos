@@ -78,7 +78,7 @@ An example of how to create a model is the following:
 model = focoos.new_model(
     name="my-model",
     description="my-model-description",
-    focoos_model="fai-rtdetr-m-obj365",
+    focoos_model="fai-detr-l-obj365",
 )
 ```
 This function will return a new [`RemoteModel`](/focoos/api/remote_model/#focoos.remote_model.RemoteModel) object that you can use to train the model and to perform remote inference.

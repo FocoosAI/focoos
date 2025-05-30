@@ -2,7 +2,7 @@
 
 This section covers how to perform inference using the [Focoos Models](../models.md) on the cloud or locally using the `focoos` library.
 
-As a reference, the following example demonstrates how to perform inference using the [`fai-rtdetr-m-obj365`](../models/fai-rtdetr-m-obj365.md) model, but you can use any of the models listed in the [models](../models.md) section.
+As a reference, the following example demonstrates how to perform inference using the [`fai-detr-l-obj365`](../models/fai-detr-l-obj365.md) model, but you can use any of the models listed in the [models](../models.md) section.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/main/notebooks/inference.ipynb)
 
