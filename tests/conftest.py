@@ -56,6 +56,7 @@ def mock_metadata():
         owner_ref="test_owner",
         focoos_model="test_focoos_model",
         task=Task.DETECTION,
+        is_managed=False,
         created_at=datetime.datetime.now(),
         updated_at=datetime.datetime.now(),
         status=ModelStatus.DEPLOYED,
@@ -65,5 +66,4 @@ def mock_metadata():
         hyperparameters=None,
         training_info=None,
         dataset=None,
-        is_managed=False,
     )

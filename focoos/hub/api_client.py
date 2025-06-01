@@ -218,8 +218,6 @@ class ApiClient:
             logger.error(f"Failed to download file {file_name}: {res.status_code} {res.text}")
             raise ValueError(f"Failed to download file {file_name}: {res.status_code} {res.text}")
 
-        if not os.path.exists(file_dir):
-            os.makedirs(file_dir)
         file_path = os.path.join(file_dir, file_name)
         if skip_if_exists and os.path.exists(file_path):
             logger.debug(f"📥 File already exists: {file_path}")

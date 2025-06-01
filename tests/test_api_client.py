@@ -134,6 +134,19 @@ def test_api_client_patch(api_client):
         )
 
 
+def test_api_client_patch_with_headers(api_client):
+    extra_headers = {"Authorization": "Bearer token"}
+    with patch("requests.patch") as mock_patch:
+        mock_patch.return_value.status_code = 200
+        response = api_client.patch("test/path", data={"key": "value"}, extra_headers=extra_headers)
+        assert response.status_code == 200
+        mock_patch.assert_called_with(
+            "http://example.com/test/path",
+            headers={**api_client.default_headers, **extra_headers},
+            json={"key": "value"},
+        )
+
+
 def test_api_client_external_post():
     client = ApiClient(api_key="test_key", host_url="http://example.com")
     with patch("requests.post") as mock_post:
@@ -254,3 +267,36 @@ def test_api_client_download_ext_file_invalid_directory(api_client):
         # Try to use a file as directory
         with pytest.raises(ValueError, match="Path is not a directory"):
             api_client.download_ext_file("http://example.com/file.txt", temp_file.name)
+
+
+def test_api_client_download_ext_file_creates_directory(api_client):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create path to non-existing subdirectory
+        non_existing_dir = os.path.join(temp_dir, "new_subdir", "nested_dir")
+
+        with patch("requests.get") as mock_get:
+            # Mock successful response
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.headers = {"content-length": "1024"}
+            mock_response.iter_content.return_value = [b"test content"]
+            mock_get.return_value = mock_response
+
+            # Test download to non-existing directory
+            file_path = api_client.download_ext_file(
+                "http://example.com/file.txt", non_existing_dir, file_name="test_file.txt"
+            )
+
+            # Verify directory was created
+            assert os.path.exists(non_existing_dir)
+            assert os.path.isdir(non_existing_dir)
+
+            # Verify file was downloaded to the created directory
+            expected_file_path = os.path.join(non_existing_dir, "test_file.txt")
+            assert file_path == expected_file_path
+            assert os.path.exists(file_path)
+
+            # Verify file content
+            with open(file_path, "r") as f:
+                content = f.read()
+                assert content == "test content"
