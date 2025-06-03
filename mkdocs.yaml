@@ -35,27 +35,21 @@ nav:
   - Focoos AI:
       - Welcome: index.md
       - Installation: setup.md
-      - Models: models.md
-  - How To:
-      - Manage Dataset: howto/create_dataset.md
-      - Create and Train Model: howto/personalize_model.md
-      - Manage Models: howto/manage_models.md
-      - Use Model: howto/use_model.md
-      - Manage User: howto/manage_user.md
-  - Focoos Models:
-      - Overview: models.md
-      - Semantic segmentation:
-        - fai-mf-l-ade: models/fai-mf-l-ade.md
-        - fai-mf-m-ade: models/fai-mf-m-ade.md
-        - fai-mf-s-ade: models/fai-mf-s-ade.md
-      - Object detection:
-        - fai-detr-l-coco: models/fai-detr-l-coco.md
-        - fai-detr-m-coco: models/fai-detr-m-coco.md
-        - fai-detr-s-coco: models/fai-detr-s-coco.md
-        - fai-detr-n-coco: models/fai-detr-n-coco.md
-        - fai-detr-l-obj365: models/fai-detr-l-obj365.md
-      - Instance_segmentation:
-        - fai-mf-l-coco-ins: models/fai-mf-l-coco-ins.md
+      - QuickStart: concepts.md
+
+  - Training: training.md
+
+  - Inference: inference.md
+
+  - Models:
+      - Overview: models/models.md
+      - BisenetFormer: models/bisenet.md
+      - FAI_CLS: models/fai_cls.md
+      - FAI_DETR: models/fai_detr.md
+      - FAI_MF: models/fai_mf.md
+
+  - Contribute: development/contributing.md
+
   - API Reference:
       - model_manager: api/model_manager.md
       - base_model: api/base_model.md
