@@ -96,3 +96,4 @@ site/
 /datasets/
 /examples/
 notebooks/test.ipynb
+gradio/output/

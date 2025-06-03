@@ -420,3 +420,37 @@ def annotate_image(
         annotated_im = label_annotator.annotate(scene=annotated_im, detections=sv_detections, labels=labels)
 
     return Image.fromarray(annotated_im)
+
+
+def annotate_frame(
+    im: np.ndarray, detections: FocoosDetections, task: Task, classes: Optional[list[str]] = None
+) -> np.ndarray:
+    if isinstance(im, Image.Image):
+        im = np.array(im)
+    label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
+    box_annotator = sv.BoxAnnotator()
+    mask_annotator = sv.MaskAnnotator()
+
+    sv_detections = fai_detections_to_sv(detections, im.shape[:2])
+    if len(sv_detections.xyxy) == 0:
+        print("No detections found, skipping annotation")
+        return im
+
+    if task == Task.DETECTION:
+        annotated_im = box_annotator.annotate(scene=im.copy(), detections=sv_detections)
+
+    elif task in [
+        Task.SEMSEG,
+        Task.INSTANCE_SEGMENTATION,
+    ]:
+        annotated_im = mask_annotator.annotate(scene=im.copy(), detections=sv_detections)
+
+    # Fixme: get the classes from the detections
+    if classes is not None:
+        labels = [
+            f"{classes[int(class_id)] if classes is not None else str(class_id)}: {confid * 100:.0f}%"
+            for class_id, confid in zip(sv_detections.class_id, sv_detections.confidence)  # type: ignore
+        ]
+        annotated_im = label_annotator.annotate(scene=annotated_im, detections=sv_detections, labels=labels)
+
+    return annotated_im
