@@ -10,19 +10,13 @@ REGISTRY_PATH = os.path.dirname(__file__)
 
 
 class ModelRegistry:
-    """Central registry of pretrained models
+    """Central registry of pretrained models.
 
     This class serves as a centralized registry for all pretrained models in the Focoos system.
-    It provides methods to access model information, list available models, and display model details.
+    It provides methods to access model information, list available models, and check model existence.
 
     Attributes:
-        _pretrained_models (Dict[str, ModelInfo]): Dictionary of pretrained models with model name as key
-        _user_models (Dict[str, ModelInfo]): Dictionary of user-defined models with model name as key
-
-    Methods:
-        get_model_info: Retrieves model information by name
-        list_models: Lists all available models, optionally filtered by model family
-        print_model_details: Displays detailed information about a specific model
+        _pretrained_models (Dict[str, str]): Dictionary mapping model names to their JSON file paths.
     """
 
     _pretrained_models: Dict[str, str] = {
@@ -41,7 +35,19 @@ class ModelRegistry:
 
     @classmethod
     def get_model_info(cls, model_name: str) -> ModelInfo:
-        """Get the model information for a given model name"""
+        """Get the model information for a given model name.
+
+        Args:
+            model_name (str): The name of the model to retrieve information for.
+                Can be either a pretrained model name or a path to a JSON file.
+
+        Returns:
+            ModelInfo: The model information object containing model details.
+
+        Raises:
+            ValueError: If the model is not found in the registry and the provided
+                path does not exist.
+        """
         if model_name in cls._pretrained_models:
             return ModelInfo.from_json(cls._pretrained_models[model_name])
         if not os.path.exists(model_name):
@@ -51,10 +57,22 @@ class ModelRegistry:
 
     @classmethod
     def list_models(cls) -> list[str]:
-        """List all available models"""
+        """List all available pretrained models.
+
+        Returns:
+            list[str]: A list of all available pretrained model names.
+        """
         return list(cls._pretrained_models.keys())
 
     @classmethod
     def exists(cls, model_name: str) -> bool:
-        """Check if a model exists in the registry"""
+        """Check if a model exists in the registry.
+
+        Args:
+            model_name (str): The name of the model to check.
+
+        Returns:
+            bool: True if the model exists in the pretrained models registry,
+                False otherwise.
+        """
         return model_name in cls._pretrained_models

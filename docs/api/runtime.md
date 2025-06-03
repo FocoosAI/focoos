@@ -1,3 +1,0 @@
-# Runtime
-
-::: focoos.runtime

@@ -1,1 +1,0 @@
-::: focoos.remote_model

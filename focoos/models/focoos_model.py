@@ -35,16 +35,57 @@ logger = get_logger("FocoosModel")
 
 
 class ExportableModel(torch.nn.Module):
+    """A wrapper class for making models exportable to different formats.
+
+    This class wraps a BaseModelNN model to make it compatible with export formats
+    like ONNX and TorchScript by handling the output formatting.
+
+    Args:
+        model: The base model to wrap for export.
+        device: The device to move the model to. Defaults to "cuda".
+    """
+
     def __init__(self, model: BaseModelNN, device="cuda"):
+        """Initialize the ExportableModel.
+
+        Args:
+            model: The base model to wrap for export.
+            device: The device to move the model to. Defaults to "cuda".
+        """
         super().__init__()
         self.model = model.eval().to(device)
 
     def forward(self, x):
+        """Forward pass through the wrapped model.
+
+        Args:
+            x: Input tensor to pass through the model.
+
+        Returns:
+            Model output converted to tuple format for export compatibility.
+        """
         return self.model(x).to_tuple()
 
 
 class FocoosModel:
+    """Main model class for Focoos computer vision models.
+
+    This class provides a high-level interface for training, testing, exporting,
+    and running inference with Focoos models. It handles model configuration,
+    weight loading, preprocessing, and postprocessing.
+
+    Args:
+        model: The underlying neural network model.
+        model_info: Metadata and configuration information for the model.
+    """
+
     def __init__(self, model: BaseModelNN, model_info: ModelInfo):
+        """Initialize the FocoosModel.
+
+        Args:
+            model: The underlying neural network model.
+            model_info: Metadata and configuration information for the model.
+        """
         self.model = model
         self.model_info = model_info
         self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)
@@ -54,12 +95,32 @@ class FocoosModel:
             logger.warning(f"⚠️ Model {self.model_info.name} has no pretrained weights")
 
     def __str__(self):
+        """Return string representation of the model.
+
+        Returns:
+            String containing model name and family.
+        """
         return f"{self.model_info.name} ({self.model_info.model_family.value})"
 
     def __repr__(self):
+        """Return detailed string representation of the model.
+
+        Returns:
+            String containing model name and family.
+        """
         return f"{self.model_info.name} ({self.model_info.model_family.value})"
 
     def _setup_model_for_training(self, train_args: TrainerArgs, data_train: MapDataset, data_val: MapDataset):
+        """Set up the model and metadata for training.
+
+        This method configures the model information with training parameters,
+        device information, dataset metadata, and initializes training status.
+
+        Args:
+            train_args: Training configuration arguments.
+            data_train: Training dataset.
+            data_val: Validation dataset.
+        """
         device = get_cpu_name()
         system_info = get_system_info()
         if system_info.gpu_info and system_info.gpu_info.devices and len(system_info.gpu_info.devices) > 0:
@@ -94,15 +155,25 @@ class FocoosModel:
         assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
 
     def train(self, args: TrainerArgs, data_train: MapDataset, data_val: MapDataset, hub: Optional[FocoosHUB] = None):
-        from focoos.trainer.trainer import run_train
+        """Train the model on the provided datasets.
 
-        """Train the model.
+        This method handles both single-GPU and multi-GPU distributed training.
+        It sets up the model for training, optionally syncs with Focoos Hub,
+        and manages the training process.
 
         Args:
-            train_args: Training arguments
-            data_train: Training dataset
-            data_val: Validation dataset
+            args: Training configuration and hyperparameters.
+            data_train: Training dataset containing images and annotations.
+            data_val: Validation dataset for model evaluation.
+            hub: Optional Focoos Hub instance for model syncing.
+
+        Raises:
+            AssertionError: If task mismatch between model and dataset.
+            AssertionError: If number of classes mismatch between model and dataset.
+            AssertionError: If num_gpus is 0 (GPU training is required).
+            FileNotFoundError: If training artifacts are not found after completion.
         """
+        from focoos.trainer.trainer import run_train
 
         self._setup_model_for_training(args, data_train, data_val)
         assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
@@ -144,14 +215,21 @@ class FocoosModel:
             run_train(args, data_train, data_val, self.model, self.processor, self.model_info, remote_model)
 
     def test(self, args: TrainerArgs, data_test: MapDataset):
-        from focoos.trainer.trainer import run_test
+        """Test the model on the provided test dataset.
 
-        """Test the model.
+        This method evaluates the model performance on a test dataset,
+        supporting both single-GPU and multi-GPU testing.
 
         Args:
-            args: Test arguments
-            data_test: Test dataset
+            args: Test configuration arguments.
+            data_test: Test dataset for model evaluation.
+
+        Raises:
+            AssertionError: If task mismatch between model and dataset.
+            AssertionError: If num_gpus is 0 (GPU testing is required).
         """
+        from focoos.trainer.trainer import run_test
+
         self.model_info.val_dataset = data_test.dataset.metadata.name
         self.model_info.val_metrics = None
         self.model_info.classes = data_test.dataset.metadata.classes
@@ -176,22 +254,47 @@ class FocoosModel:
 
     @property
     def device(self):
+        """Get the device where the model is located.
+
+        Returns:
+            The device (CPU or CUDA) where the model is currently located.
+        """
         return self.model.device
 
     @property
     def resolution(self):
+        """Get the input resolution of the model.
+
+        Returns:
+            The input image resolution expected by the model.
+        """
         return self.model_info.config["resolution"]
 
     @property
     def config(self) -> dict:
+        """Get the model configuration.
+
+        Returns:
+            Dictionary containing the model configuration parameters.
+        """
         return self.model_info.config
 
     @property
     def classes(self):
+        """Get the class names the model can predict.
+
+        Returns:
+            List of class names that the model was trained to recognize.
+        """
         return self.model_info.classes
 
     @property
     def task(self):
+        """Get the computer vision task type.
+
+        Returns:
+            The type of computer vision task (e.g., detection, classification).
+        """
         return self.model_info.task
 
     def export(
@@ -203,11 +306,30 @@ class FocoosModel:
         overwrite: bool = False,
         image_size: Optional[int] = None,
     ) -> InferModel:
+        """Export the model to different runtime formats.
+
+        This method exports the model to formats like ONNX or TorchScript
+        for deployment and inference optimization.
+
+        Args:
+            runtime_type: Target runtime format for export.
+            onnx_opset: ONNX opset version to use for ONNX export.
+            out_dir: Output directory for exported model. If None, uses default location.
+            device: Device to use for export ("cuda" or "cpu").
+            overwrite: Whether to overwrite existing exported model files.
+            image_size: Custom image size for export. If None, uses model's default size.
+
+        Returns:
+            InferModel instance for the exported model.
+
+        Raises:
+            ValueError: If unsupported PyTorch version or export format.
+        """
         if device == "cuda" and not torch.cuda.is_available():
             device = "cpu"
             logger.warning("CUDA is not available. Using CPU for export.")
         if out_dir is None:
-            out_dir = os.path.join(MODELS_DIR, self.model_info.name)
+            out_dir = os.path.join(MODELS_DIR, self.model_info.ref or self.model_info.name)
 
         format = runtime_type.to_export_format()
         exportable_model = ExportableModel(self.model, device=device)
@@ -303,6 +425,18 @@ class FocoosModel:
         ],
         **kwargs,
     ) -> FocoosDetections:
+        """Run inference on input images.
+
+        This method performs end-to-end inference including preprocessing,
+        model forward pass, and postprocessing to return detections.
+
+        Args:
+            inputs: Input images in various formats (PIL, numpy, torch tensor, or lists).
+            **kwargs: Additional arguments passed to postprocessing.
+
+        Returns:
+            FocoosDetections containing the detection results.
+        """
         model = self.model.eval()
         processor = self.processor.eval()
         try:
@@ -328,6 +462,11 @@ class FocoosModel:
         return output_fdet[0]
 
     def _reload_model(self):
+        """Reload the model with updated configuration.
+
+        This method recreates the model instance with the current configuration
+        and reloads the weights. Used when configuration changes during training.
+        """
         from focoos.model_manager import ConfigManager  # here to avoid circular import
 
         torch.cuda.empty_cache()
@@ -340,8 +479,7 @@ class FocoosModel:
         self._load_weights()
 
     def _load_weights(self) -> int:
-        """
-        Load model weights from the specified URI.
+        """Load model weights from the specified URI.
 
         This method loads the model weights from either a local path or a remote URL,
         depending on the value of `self.model_info.weights_uri`. If the weights are remote,
@@ -349,12 +487,11 @@ class FocoosModel:
         the model, allowing for missing or unexpected keys (non-strict loading).
 
         Returns:
-            int: The total number of missing or unexpected keys encountered during loading.
-                 Returns 0 if no weights are loaded or an error occurs.
+            The total number of missing or unexpected keys encountered during loading.
+            Returns 0 if no weights are loaded or an error occurs.
 
         Raises:
             FileNotFoundError: If the weights file cannot be found at the specified path.
-            Exception: If any other error occurs during loading, it is logged and 0 is returned.
         """
         if not self.model_info.weights_uri:
             logger.warning(f"⚠️ Model {self.model_info.name} has no pretrained weights")
@@ -396,8 +533,18 @@ class FocoosModel:
         size: Optional[Union[int, Tuple[int, int]]] = None,
         device: Literal["cuda", "cpu"] = "cuda",
     ) -> LatencyMetrics:
-        """
-        Benchmark the model's inference performance over multiple iterations.
+        """Benchmark the model's inference performance.
+
+        This method measures the raw model inference latency without
+        preprocessing and postprocessing overhead.
+
+        Args:
+            iterations: Number of iterations to run for benchmarking.
+            size: Input image size. If None, uses model's default size.
+            device: Device to run benchmarking on ("cuda" or "cpu").
+
+        Returns:
+            LatencyMetrics containing performance statistics.
         """
         self.model.eval()
 
@@ -412,8 +559,18 @@ class FocoosModel:
     def end2end_benchmark(
         self, iterations: int = 50, size: Optional[int] = None, device: Literal["cuda", "cpu"] = "cuda"
     ) -> LatencyMetrics:
-        """
-        Benchmark the model's inference performance over multiple iterations.
+        """Benchmark the complete end-to-end inference pipeline.
+
+        This method measures the full inference latency including preprocessing,
+        model forward pass, and postprocessing steps.
+
+        Args:
+            iterations: Number of iterations to run for benchmarking.
+            size: Input image size. If None, uses model's default size.
+            device: Device to run benchmarking on ("cuda" or "cpu").
+
+        Returns:
+            LatencyMetrics containing end-to-end performance statistics.
         """
         if size is None:
             size = self.model_info.im_size
