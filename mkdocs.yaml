@@ -58,6 +58,7 @@ nav:
         - fai-mf-l-coco-ins: models/fai-mf-l-coco-ins.md
   - API Reference:
       - model_manager: api/model_manager.md
+      - base_model: api/base_model.md
       - focoos_model: api/focoos_model.md
       - model_registry: api/model_registry.md
       - infer_model: api/infer_model.md
