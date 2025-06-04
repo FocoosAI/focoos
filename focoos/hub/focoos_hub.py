@@ -214,30 +214,6 @@ class FocoosHUB:
         """
         return RemoteModel(model_ref, self.api_client)
 
-    def list_shared_datasets(self) -> list[DatasetPreview]:
-        """
-        Lists datasets shared with the user by others.
-
-        Returns:
-            list[DatasetPreview]: List of shared datasets.
-
-        Raises:
-            ValueError: If the API request fails.
-
-        Example:
-            ```python
-            from focoos import FocoosHUB
-
-            focoos = FocoosHUB()
-            shared_datasets = focoos.list_shared_datasets()
-            ```
-        """
-        res = self.api_client.get("datasets/shared")
-        if res.status_code != 200:
-            logger.error(f"Failed to list datasets: {res.status_code} {res.text}")
-            raise ValueError(f"Failed to list datasets: {res.status_code} {res.text}")
-        return [DatasetPreview.from_json(dataset) for dataset in res.json()]
-
     def download_model_pth(self, model_ref: str, skip_if_exists: bool = True) -> str:
         """
         Downloads a model from the Focoos API.
