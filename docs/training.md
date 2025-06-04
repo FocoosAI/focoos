@@ -27,7 +27,7 @@ In this guide, we will perform the following steps:
 
 ## 0. \[Optional\] Connect to the Focoos Hub
 
-Focoos can be used without having an accont on the [Focoos Hub](app.focoos.ai). With it, you will unlock additional functionalities, as we will see below. If you have it, just connect to the HUB.
+Focoos can be used without having an accont on the [Focoos Hub](http://app.focoos.ai). With it, you will unlock additional functionalities, as we will see below. If you have it, just connect to the HUB.
 ```
 from focoos.hub import FocoosHUB
 
@@ -41,7 +41,7 @@ Before starting the training, we need to get a dataset. You can either use a loc
 
 ### \[Optional\] Download the data from the Hub
 If you want to download a dataset from the hub, you can use it to directly store it in your local environment.
-Check the reference of your dataset on the platform and use it in the following cell. If you want to try an example dataset, just use one of the many available on the [Focoos Hub](app.focoos.ai).
+Check the reference of your dataset on the platform and use it in the following cell. If you want to try an example dataset, just use one of the many available on the [Focoos Hub](http://app.focoos.ai).
 
 ```python
 dataset_ref = "<YOUR-DATASET-REFERENCE>"
@@ -53,7 +53,7 @@ dataset_path = dataset.download_data()
 
 ### Get the training dataset
 
-Now that we downloaded the dataset, we can magically 🪄 instanciate the dataset using the [`AutoDataset`]() as will be used in the training. You can optionally specify aumgentations for the training using the [`DatasetAugmentation`]() dataclass.
+Now that we downloaded the dataset, we can magically 🪄 instanciate the dataset using the [`AutoDataset`](focoos/api/auto_dataset/#focoos.data.auto_dataset.AutoDataset) as will be used in the training. You can optionally specify aumgentations for the training using the [`DatasetAugmentation`](focoos/api/auto_dataset/#focoos.data.default_aug.DatasetAugmentations) dataclass.
 
 ```python
 from focoos.data.auto_dataset import AutoDataset
@@ -83,7 +83,7 @@ model = ModelManager.get("hub://" + model_ref, hub=hub)
 ```
 
 ### Select the hyper-parameters
-The next step is to create a [`TrainerArgs`]() with the hyper-parameters such as the learning rate, the number of iterations and so on.
+The next step is to create a [`TrainerArgs`](focoos/api/ports/#focoos.ports.TrainerArgs) with the hyper-parameters such as the learning rate, the number of iterations and so on.
 Optionally, if you are using the hub, you can specify `sync_to_hub=True` to track the experiment on the Focoos Hub.
 
 ```python
