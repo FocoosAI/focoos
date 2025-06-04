@@ -1,12 +1,16 @@
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Optional, Tuple
 
+import torch
 import torch.nn as nn
 
 from focoos.nn.layers.conv import Conv2d
 from focoos.nn.layers.norm import get_norm
+from focoos.utils.logger import get_logger
 
 from .base import BackboneConfig, BaseBackbone
+
+logger = get_logger("Backbone")
 
 
 class InvertedResidual(nn.Module):
@@ -102,6 +106,7 @@ class MobileNetV2Config(BackboneConfig):
     frozen_stages: int = -1
     norm: str = "BN"
     model_type: str = "mobilenet_v2"
+    backbone_url: Optional[str] = "https://public.focoos.ai/pretrained_models/backbones/mobilenet_v2.pth"
 
 
 class MobileNetV2(BaseBackbone):
@@ -198,6 +203,11 @@ class MobileNetV2(BaseBackbone):
                 self._out_feature_channels[res_block] = out_channels
             self.add_module(layer_name, inverted_res_layer)
             self.layers.append(layer_name)
+
+        if config.use_pretrained and config.backbone_url:
+            state = torch.hub.load_state_dict_from_url(config.backbone_url)
+            self.load_state_dict(state)
+            logger.info("Load MobileNetV2 state_dict")
 
     def make_layer(self, out_channels, num_blocks, stride, dilation, expand_ratio):
         """Stack InvertedResidual blocks to build a layer for MobileNetV2.

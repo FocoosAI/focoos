@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -7,8 +7,11 @@ from torch.nn.init import trunc_normal_
 
 from focoos.nn.layers.misc import DropPath
 from focoos.nn.layers.norm import LayerNorm
+from focoos.utils.logger import get_logger
 
 from .base import BackboneConfig, BaseBackbone, ShapeSpec
+
+logger = get_logger("Backbone")
 
 
 class GRN(nn.Module):
@@ -58,14 +61,54 @@ class Block(nn.Module):
         return x
 
 
+CONFIGS = {
+    "atto": {
+        "depths": [2, 2, 6, 2],
+        "embed_dims": [40, 80, 160, 320],
+        "url": "https://public.focoos.ai/pretrained_models/backbones/convnextv2_atto.pth",
+    },
+    "femto": {
+        "depths": [2, 2, 6, 2],
+        "embed_dims": [48, 96, 192, 384],
+        "url": "https://public.focoos.ai/pretrained_models/backbones/convnextv2_femto.pth",
+    },
+    "pico": {
+        "depths": [2, 2, 6, 2],
+        "embed_dims": [64, 128, 256, 512],
+        "url": "https://public.focoos.ai/pretrained_models/backbones/convnextv2_pico.pth",
+    },
+    "nano": {
+        "depths": [2, 2, 8, 2],
+        "embed_dims": [80, 160, 320, 640],
+        "url": "https://public.focoos.ai/pretrained_models/backbones/convnextv2_nano.pth",
+    },
+    "tiny": {
+        "depths": [3, 3, 9, 3],
+        "embed_dims": [96, 192, 384, 768],
+        "url": "https://public.focoos.ai/pretrained_models/backbones/convnextv2_tiny.pth",
+    },
+    "base": {
+        "depths": [3, 3, 27, 3],
+        "embed_dims": [128, 256, 512, 1024],
+        "url": "https://public.focoos.ai/pretrained_models/backbones/convnextv2_base.pth",
+    },
+    "large": {
+        "depths": [3, 3, 27, 3],
+        "embed_dims": [192, 384, 768, 1536],
+        "url": "https://public.focoos.ai/pretrained_models/backbones/convnextv2_large.pth",
+    },
+}
+
+
 @dataclass
 class ConvNeXtV2Config(BackboneConfig):
     """ConvNeXt V2 configuration"""
 
-    in_chans: int = 3
-    depths: Tuple[int, ...] = (3, 3, 9, 3)
-    embed_dims: Tuple[int, ...] = (96, 192, 384, 768)
+    model_type: str = "convnextv2"
+    model_size: Optional[str] = "atto"
     drop_path_rate: float = 0.0
+    depths: Optional[Tuple[int, ...]] = None
+    embed_dims: Optional[Tuple[int, ...]] = None
 
 
 class ConvNeXtV2(BaseBackbone):
@@ -77,10 +120,19 @@ class ConvNeXtV2(BaseBackbone):
 
     def __init__(self, config: ConvNeXtV2Config):
         super().__init__(config)
+        in_chans = 3
 
-        in_chans = config.in_chans
-        depths = config.depths
-        dims = config.embed_dims
+        if config.model_size:
+            depths = CONFIGS[config.model_size]["depths"]
+            dims = CONFIGS[config.model_size]["embed_dims"]
+            backbone_url = config.backbone_url or CONFIGS[config.model_size]["url"]
+        else:
+            backbone_url = config.backbone_url
+            depths = config.depths
+            dims = config.embed_dims
+            assert depths is not None and dims is not None, (
+                "depths and embed_dims must be provided if model_size is not provided"
+            )
         drop_path_rate = config.drop_path_rate
 
         self.depths = depths
@@ -104,6 +156,11 @@ class ConvNeXtV2(BaseBackbone):
             stage = nn.Sequential(*[Block(dim=dims[i], drop_path=dp_rates[cur + j]) for j in range(depths[i])])
             self.stages.append(stage)
             cur += depths[i]
+
+        if config.use_pretrained and backbone_url:
+            state = torch.hub.load_state_dict_from_url(backbone_url)
+            self.load_state_dict(state)
+            logger.info(f"Load ConvNeXtV2{config.model_size} state_dict")
 
         self._out_features = ["res2", "res3", "res4", "res5"]
 

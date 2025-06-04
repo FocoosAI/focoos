@@ -1,12 +1,16 @@
 import math
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Literal, Optional
 
 import torch
 import torch.nn as nn
 from torch.nn import init
 
+from focoos.utils.logger import get_logger
+
 from .base import BackboneConfig, BaseBackbone
+
+logger = get_logger("Backbone")
 
 
 class ConvX(nn.Module):
@@ -177,38 +181,53 @@ class STDCConfig(BackboneConfig):
     model_type: str = "stdc"
     block_num: int = 4
     block_type: str = "cat"
-    use_conv_last: bool = False
+    backbone_url: Optional[str] = None
+    size: Optional[Literal["small", "large"]] = None
 
 
 class STDC(BaseBackbone):
     def __init__(self, config: STDCConfig):
         super().__init__(config)
 
-        if config.block_type == "cat":
+        if config.size == "small":
+            config.backbone_url = "https://public.focoos.ai/pretrained_models/backbones/stdc_small.pth"
+            layers = [2, 2, 2]
+            base = 64
+            block_num = 4
+            block_type = "cat"
+        elif config.size == "large":
+            config.backbone_url = "https://public.focoos.ai/pretrained_models/backbones/stdc_large.pth"
+            layers = [4, 5, 3]
+            base = 64
+            block_num = 4
+            block_type = "cat"
+        else:
+            base = config.base
+            layers = config.layers
+            block_num = config.block_num
+            block_type = config.block_type
+
+        if block_type == "cat":
             block = CatBottleneck
-        elif config.block_type == "add":
+        elif block_type == "add":
             block = AddBottleneck
-        self.in_chans = config.in_chans
-        self.use_conv_last = config.use_conv_last
-        self.features = self._make_layers(config.base, config.layers, config.block_num, block)
 
         if config.layers != [2, 2, 2] and config.layers != [4, 5, 3]:
-            config.layers = [4, 5, 3]
-        if config.layers == [2, 2, 2]:
-            self.x2 = nn.Sequential(self.features[:1])
-            self.x4 = nn.Sequential(self.features[1:2])
-            self.x8 = nn.Sequential(self.features[2:4])
-            self.x16 = nn.Sequential(self.features[4:6])
-            self.x32 = nn.Sequential(self.features[6:])
-        elif config.layers == [4, 5, 3]:
-            self.x2 = nn.Sequential(self.features[:1])
-            self.x4 = nn.Sequential(self.features[1:2])
-            self.x8 = nn.Sequential(self.features[2:6])
-            self.x16 = nn.Sequential(self.features[6:11])
-            self.x32 = nn.Sequential(self.features[11:])
+            raise ValueError(f"Invalid layers: {config.layers}. The layers should be [2, 2, 2] or [4, 5, 3].")
 
-        if self.use_conv_last:
-            self.conv_last = ConvX(config.base * 16, max(1024, config.base * 16), 1, 1)
+        self.in_chans = config.in_chans
+        self.features = self._make_layers(base, layers, block_num, block)
+
+        if config.layers == [2, 2, 2]:
+            self.out_ids = 2, 4, 6, -1
+
+        elif config.layers == [4, 5, 3]:
+            self.out_ids = 2, 6, 11, -1
+
+        if config.use_pretrained and config.backbone_url:
+            state = torch.hub.load_state_dict_from_url(config.backbone_url)
+            self.load_state_dict(state)
+            logger.info("Load STDC state_dict")
 
         self._out_features = config.out_features
 
@@ -219,10 +238,10 @@ class STDC(BaseBackbone):
             "res5": 32,
         }
         self._out_feature_channels = {
-            "res2": config.base,
-            "res3": config.base * 4,
-            "res4": config.base * 8,
-            "res5": config.base * 16,
+            "res2": base,
+            "res3": base * 4,
+            "res4": base * 8,
+            "res5": base * 16,
         }
 
     def init_params(self):
@@ -270,22 +289,10 @@ class STDC(BaseBackbone):
         return nn.Sequential(*features)
 
     def forward(self, x):
-        outs = {}
-        feat2 = self.x2(x)
-        feat4 = self.x4(feat2)
-        outs["res2"] = feat4
-
-        feat8 = self.x8(feat4)
-        outs["res3"] = feat8
-
-        feat16 = self.x16(feat8)
-        outs["res4"] = feat16
-
-        feat32 = self.x32(feat16)
-        outs["res5"] = feat32
-
-        if self.use_conv_last:
-            feat32 = self.conv_last(feat32)
-            outs["res5"] = feat32
-
+        outs = []
+        for i, layer in enumerate(self.features):
+            x = layer(x)
+            if i in self.out_ids:
+                outs.append(x)
+        outs = {f"res{i + 2}": outs[i] for i in range(len(outs))}
         return outs

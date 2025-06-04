@@ -23,10 +23,10 @@ resnet_cfg = {
 }
 
 donwload_url = {
-    18: "https://github.com/lyuwenyu/storage/releases/download/v0.1/ResNet18_vd_pretrained_from_paddle.pth",
-    34: "https://github.com/lyuwenyu/storage/releases/download/v0.1/ResNet34_vd_pretrained_from_paddle.pth",
-    50: "https://github.com/lyuwenyu/storage/releases/download/v0.1/ResNet50_vd_ssld_v2_pretrained_from_paddle.pth",
-    101: "https://github.com/lyuwenyu/storage/releases/download/v0.1/ResNet101_vd_ssld_pretrained_from_paddle.pth",
+    18: "https://public.focoos.ai/pretrained_models/backbones/resnet18.pth",
+    34: "https://public.focoos.ai/pretrained_models/backbones/resnet34.pt",
+    50: "https://public.focoos.ai/pretrained_models/backbones/resnet50.pt",
+    101: "https://public.focoos.ai/pretrained_models/backbones/resnet101.pt",
 }
 
 
@@ -158,7 +158,6 @@ class ResnetConfig(BackboneConfig):
     freeze_norm: bool = True
     model_type: str = "resnet"
     act: str = "relu"
-    pretrained: bool = False
 
 
 class ResNet(BaseBackbone):
@@ -174,7 +173,8 @@ class ResNet(BaseBackbone):
         act = config.act
         freeze_at = config.freeze_at
         freeze_norm = config.freeze_norm
-        pretrained = config.pretrained
+        use_pretrained = config.use_pretrained
+        backbone_url = config.backbone_url if config.backbone_url else donwload_url[depth]
 
         block_nums = resnet_cfg[depth]
         ch_in = 64
@@ -225,8 +225,8 @@ class ResNet(BaseBackbone):
         if freeze_norm:
             self._freeze_norm(self)
 
-        if pretrained:
-            state = torch.hub.load_state_dict_from_url(donwload_url[depth])
+        if use_pretrained:
+            state = torch.hub.load_state_dict_from_url(backbone_url)
             self.load_state_dict(state)
             logger.info(f"Load ResNet{depth} state_dict")
 

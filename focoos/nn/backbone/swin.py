@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Literal, Optional, Tuple
 
 import numpy as np
 import torch
@@ -9,8 +9,11 @@ import torch.utils.checkpoint as checkpoint
 from torch.nn.init import trunc_normal_
 
 from focoos.nn.layers.misc import DropPath, to_2tuple
+from focoos.utils.logger import get_logger
 
 from .base import BackboneConfig, BaseBackbone, ShapeSpec
+
+logger = get_logger("Backbone")
 
 
 def window_partition(x, window_size):
@@ -516,6 +519,7 @@ class SwinConfig(BackboneConfig):
         use_checkpoint (bool): Whether to use checkpointing to save memory. Default: False.
     """
 
+    model_size: Optional[Literal["tiny", "small", "base", "large"]] = None
     model_type: str = "swin"
     pretrain_img_size: int = 224
     patch_size: int = 4
@@ -537,6 +541,42 @@ class SwinConfig(BackboneConfig):
     use_checkpoint: bool = False
 
 
+SWIN_CONFIGS = {
+    "tiny": {
+        "embed_dims": 96,
+        "depths": [2, 2, 6, 2],
+        "pretr_image_size": 224,
+        "heads": [3, 6, 12, 24],
+        "w_size": 7,
+        "url": "https://public.focoos.ai/pretrained_models/backbones/swin_tiny.pth",
+    },
+    "small": {
+        "embed_dims": 96,
+        "depths": [2, 2, 18, 2],
+        "pretr_image_size": 224,
+        "heads": [3, 6, 12, 24],
+        "w_size": 7,
+        "url": "https://public.focoos.ai/pretrained_models/backbones/swin_small.pth",
+    },
+    "base": {
+        "embed_dims": 128,
+        "depths": [2, 2, 18, 2],
+        "pretr_image_size": 384,
+        "heads": [4, 8, 16, 32],
+        "w_size": 12,
+        "url": "https://public.focoos.ai/pretrained_models/backbones/swin_base.pth",
+    },
+    "large": {
+        "embed_dims": 192,
+        "depths": [2, 2, 18, 2],
+        "pretr_image_size": 384,
+        "heads": [6, 12, 24, 48],
+        "w_size": 12,
+        "url": "https://public.focoos.ai/pretrained_models/backbones/swin_large.pth",
+    },
+}
+
+
 class Swin(BaseBackbone):
     """Swin Transformer backbone.
     A PyTorch impl of : `Swin Transformer: Hierarchical Vision Transformer using Shifted Windows`  -
@@ -549,27 +589,48 @@ class Swin(BaseBackbone):
     ):
         super().__init__(config)
 
-        self.pretrain_img_size = config.pretrain_img_size
-        self.num_layers = len(config.depths)
-        self.embed_dim = config.embed_dim
+        if config.model_size is not None:
+            self.pretrain_img_size = SWIN_CONFIGS[config.model_size]["pretr_image_size"]
+            self.depths = SWIN_CONFIGS[config.model_size]["depths"]
+            self.num_heads = SWIN_CONFIGS[config.model_size]["heads"]
+            self.embed_dim = SWIN_CONFIGS[config.model_size]["embed_dims"]
+            self.window_size = SWIN_CONFIGS[config.model_size]["w_size"]
+            backbone_url = SWIN_CONFIGS[config.model_size]["url"]
+        else:
+            self.pretrain_img_size = config.pretrain_img_size
+            self.num_layers = len(config.depths)
+            self.embed_dim = config.embed_dim
+            self.num_heads = config.num_heads
+            self.window_size = config.window_size
+            backbone_url = config.backbone_url
+
         self.ape = config.ape
         self.patch_norm = config.patch_norm
         self.out_indices = config.out_indices
         self.frozen_stages = config.frozen_stages
         self.use_checkpoint = config.use_checkpoint
+        self.patch_size = config.patch_size
+        self.in_chans = config.in_chans
+        self.drop_rate = config.drop_rate
+        self.attn_drop_rate = config.attn_drop_rate
+        self.drop_path_rate = config.drop_path_rate
+        self.num_layers = len(self.depths)
+        self.mlp_ratio = config.mlp_ratio
+        self.qkv_bias = config.qkv_bias
+        self.qk_scale = config.qk_scale
 
         # split image into non-overlapping patches
         self.patch_embed = PatchEmbed(
-            patch_size=config.patch_size,
-            in_chans=config.in_chans,
+            patch_size=self.patch_size,
+            in_chans=self.in_chans,
             embed_dim=self.embed_dim,
             norm_layer=nn.LayerNorm if self.patch_norm else None,
         )
 
         # absolute position embedding
         if self.ape:
-            pretrain_img_size = to_2tuple(config.pretrain_img_size)
-            patch_size = to_2tuple(config.patch_size)
+            pretrain_img_size = to_2tuple(self.pretrain_img_size)
+            patch_size = to_2tuple(self.patch_size)
             patches_resolution = [
                 pretrain_img_size[0] // patch_size[0],  # type: ignore
                 pretrain_img_size[1] // patch_size[1],  # type: ignore
@@ -580,11 +641,11 @@ class Swin(BaseBackbone):
             )
             trunc_normal_(self.absolute_pos_embed, std=0.02)
 
-        self.pos_drop = nn.Dropout(p=config.drop_rate)
+        self.pos_drop = nn.Dropout(p=self.drop_rate)
 
         # stochastic depth
         dpr = [
-            x.item() for x in torch.linspace(0, config.drop_path_rate, sum(config.depths))
+            x.item() for x in torch.linspace(0, self.drop_path_rate, sum(self.depths))
         ]  # stochastic depth decay rule
 
         # build layers
@@ -592,18 +653,18 @@ class Swin(BaseBackbone):
         for i_layer in range(self.num_layers):
             layer = BasicLayer(
                 dim=int(self.embed_dim * 2**i_layer),
-                depth=config.depths[i_layer],
-                num_heads=config.num_heads[i_layer],
-                window_size=config.window_size,
-                mlp_ratio=config.mlp_ratio if isinstance(config.mlp_ratio, float) else config.mlp_ratio,
-                qkv_bias=config.qkv_bias,
-                qk_scale=config.qk_scale,
-                drop=config.drop_rate,
-                attn_drop=config.attn_drop_rate,
-                drop_path=dpr[sum(config.depths[:i_layer]) : sum(config.depths[: i_layer + 1])],  # type: ignore
+                depth=self.depths[i_layer],
+                num_heads=self.num_heads[i_layer],
+                window_size=self.window_size,
+                mlp_ratio=self.mlp_ratio if isinstance(self.mlp_ratio, float) else self.mlp_ratio,
+                qkv_bias=self.qkv_bias,
+                qk_scale=self.qk_scale,
+                drop=self.drop_rate,
+                attn_drop=self.attn_drop_rate,
+                drop_path=dpr[sum(self.depths[:i_layer]) : sum(self.depths[: i_layer + 1])],  # type: ignore
                 norm_layer=nn.LayerNorm,
                 downsample=PatchMerging if (i_layer < self.num_layers - 1) else None,
-                use_checkpoint=config.use_checkpoint,
+                use_checkpoint=self.use_checkpoint,
             )
             self.layers.append(layer)
 
@@ -611,10 +672,15 @@ class Swin(BaseBackbone):
         self.num_features = num_features
 
         # add a norm layer for each output
-        for i_layer in config.out_indices:
+        for i_layer in self.out_indices:
             layer = nn.LayerNorm(num_features[i_layer])
             layer_name = f"norm{i_layer}"
             self.add_module(layer_name, layer)
+
+        if config.use_pretrained and backbone_url:
+            state = torch.hub.load_state_dict_from_url(backbone_url)
+            self.load_state_dict(state, strict=False)
+            logger.info(f"Loaded pretrained weights from {backbone_url}")
 
         # Set output features
         self._out_features = ["res2", "res3", "res4", "res5"]
