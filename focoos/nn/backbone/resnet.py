@@ -158,6 +158,7 @@ class ResnetConfig(BackboneConfig):
     freeze_norm: bool = True
     model_type: str = "resnet"
     act: str = "relu"
+    pretrained: bool = False
 
 
 class ResNet(BaseBackbone):

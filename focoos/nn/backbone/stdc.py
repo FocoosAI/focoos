@@ -183,6 +183,7 @@ class STDCConfig(BackboneConfig):
     block_type: str = "cat"
     backbone_url: Optional[str] = None
     size: Optional[Literal["small", "large"]] = None
+    use_conv_last: bool = False
 
 
 class STDC(BaseBackbone):
@@ -218,11 +219,11 @@ class STDC(BaseBackbone):
         self.in_chans = config.in_chans
         self.features = self._make_layers(base, layers, block_num, block)
 
-        if config.layers == [2, 2, 2]:
-            self.out_ids = 2, 4, 6, -1
+        if layers == [2, 2, 2]:
+            self.out_ids = 1, 3, 5, 7
 
-        elif config.layers == [4, 5, 3]:
-            self.out_ids = 2, 6, 11, -1
+        elif layers == [4, 5, 3]:
+            self.out_ids = 1, 5, 10, 13
 
         if config.use_pretrained and config.backbone_url:
             state = torch.hub.load_state_dict_from_url(config.backbone_url)
