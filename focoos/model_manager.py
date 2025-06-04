@@ -87,7 +87,7 @@ class ModelManager:
             model_info = ModelRegistry.get_model_info(name)
         # Otherwise, attempt to load from a local directory
         else:
-            model_info = cls._from_local_dir(name=name, models_dir=models_dir, config=config, **kwargs)
+            model_info = cls._from_local_dir(name=name, models_dir=models_dir)
         # Load model from the resolved ModelInfo
         return cls._from_model_info(model_info=model_info, config=config, **kwargs)
 
@@ -156,9 +156,7 @@ class ModelManager:
         return model
 
     @classmethod
-    def _from_local_dir(
-        cls, name: str, models_dir: Optional[str] = None, config: Optional[ModelConfig] = None, **kwargs
-    ) -> ModelInfo:
+    def _from_local_dir(cls, name: str, models_dir: Optional[str] = None) -> ModelInfo:
         """
         Load a model from a local experiment directory.
 
@@ -168,8 +166,6 @@ class ModelManager:
         Args:
             name: Name or path of the model directory relative to models_dir
             models_dir: Base directory containing model directories (defaults to MODELS_DIR)
-            config: Optional model configuration to override the one in ModelInfo
-            **kwargs: Additional keyword arguments passed to the model configuration
 
         Returns:
             ModelInfo: The model information loaded from the local directory

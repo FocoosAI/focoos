@@ -87,7 +87,7 @@ from focoos.model_manager import ModelManager
 
 model_ref = "<YOUR-MODEL-REF>"
 
-model = ModelManager.get(model_ref)
+model = ModelManager.get(model_ref, hub=hub)
 ```
 
 Now, again, you can now run the model by simply passing it an image and visualize the results.

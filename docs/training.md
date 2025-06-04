@@ -79,7 +79,7 @@ The first step to personalize your model is to instance a model. You can get a m
 from focoos.model_manager import ModelManager
 
 model_ref = "<YOUR-MODEL-REF>"
-model = ModelManager.get("hub://" + model_ref)
+model = ModelManager.get("hub://" + model_ref, hub=hub)
 ```
 
 ### Select the hyper-parameters
