@@ -177,11 +177,12 @@ def test_get_with_get_model_local_dir(clean_model_manager, mock_model_config):
     # Setup mocks so that ModelRegistry.exists returns False to trigger local dir path
     with MagicMock() as mock_registry:
         mock_registry.exists.return_value = False
-        clean_model_manager._from_local_dir.return_value = MagicMock(spec=ModelInfo)
+        mock_model_info = MagicMock(spec=ModelInfo)
+        clean_model_manager._from_local_dir.return_value = mock_model_info
 
         model = clean_model_manager.get(name="test-model")
-        clean_model_manager._from_local_dir.assert_called_once_with(name="test-model", models_dir=None, config=None)
-        clean_model_manager._from_model_info.assert_called_once()
+        clean_model_manager._from_local_dir.assert_called_once_with(name="test-model", models_dir=None)
+        clean_model_manager._from_model_info.assert_called_once_with(model_info=mock_model_info, config=None)
         assert isinstance(model, FocoosModel)
 
 
@@ -190,13 +191,17 @@ def test_get_with_get_model_local_dir_with_config(clean_model_manager, mock_mode
     # Setup mocks so that ModelRegistry.exists returns False to trigger local dir path
     with MagicMock() as mock_registry:
         mock_registry.exists.return_value = False
-        clean_model_manager._from_local_dir.return_value = MagicMock(spec=ModelInfo)
+        mock_model_info = MagicMock(spec=ModelInfo)
+        clean_model_manager._from_local_dir.return_value = mock_model_info
 
         model = clean_model_manager.get(name="test-model", config=mock_model_config)
         clean_model_manager._from_local_dir.assert_called_once_with(
-            name="test-model", models_dir=None, config=mock_model_config
+            name="test-model",
+            models_dir=None,
         )
-        clean_model_manager._from_model_info.assert_called_once()
+        clean_model_manager._from_model_info.assert_called_once_with(
+            model_info=mock_model_info, config=mock_model_config
+        )
         assert isinstance(model, FocoosModel)
 
 
@@ -205,13 +210,15 @@ def test_get_with_get_model_local_dir_with_model_dir(clean_model_manager, mock_m
     # Setup mocks so that ModelRegistry.exists returns False to trigger local dir path
     with MagicMock() as mock_registry:
         mock_registry.exists.return_value = False
-        clean_model_manager._from_local_dir.return_value = MagicMock(spec=ModelInfo)
+        mock_model_info = MagicMock(spec=ModelInfo)
+        clean_model_manager._from_local_dir.return_value = mock_model_info
 
         model = clean_model_manager.get(name="test-model", models_dir="test-models-dir")
         clean_model_manager._from_local_dir.assert_called_once_with(
-            name="test-model", models_dir="test-models-dir", config=None
+            name="test-model",
+            models_dir="test-models-dir",
         )
-        clean_model_manager._from_model_info.assert_called_once()
+        clean_model_manager._from_model_info.assert_called_once_with(model_info=mock_model_info, config=None)
         assert isinstance(model, FocoosModel)
 
 
@@ -412,25 +419,6 @@ def test_from_local_dir_model_info_not_found(mocker: MockerFixture, functional_m
     # Call the method and expect a ValueError
     with pytest.raises(ValueError):
         functional_model_manager._from_local_dir(name="test-model", models_dir="/path/to/models")
-
-
-def test_from_local_dir_with_config(
-    mocker: MockerFixture, functional_model_manager, mock_model_info, mock_model_config
-):
-    # Mock os.path functions
-    mocker.patch("os.path.exists", return_value=True)
-
-    # Mock ModelInfo.from_json
-    mocker.patch("focoos.ports.ModelInfo.from_json", return_value=mock_model_info)
-
-    # Call the method with config
-    result = functional_model_manager._from_local_dir(
-        name="test-model", models_dir="/path/to/models", config=mock_model_config
-    )
-
-    # Assertions - _from_local_dir returns ModelInfo, not FocoosModel
-    assert isinstance(result, ModelInfo)
-    assert result == mock_model_info
 
 
 def test_from_hub_success(mocker: MockerFixture, functional_model_manager, mock_model_info):

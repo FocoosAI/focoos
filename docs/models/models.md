@@ -23,8 +23,6 @@ With the Focoos SDK, you can take advantage of a collection of foundational mode
 |------------|--------------|------------------|----------|---------|--------------|
 | [fai-detr-l-coco](models/fai-detr-l-coco.md) | [RT-DETR](https://github.com/lyuwenyu/RT-DETR) ([Resnet-50](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py)) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | bbox/AP: 53.06<br>bbox/AP50: 70.91 | 87 |
 | [fai-detr-m-coco](models/fai-detr-m-coco.md) | [RT-DETR](https://github.com/lyuwenyu/RT-DETR) ([STDC-2](https://github.com/MichaelFan01/STDC-Seg)) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | bbox/AP: 44.69<br>bbox/AP50: 61.63 | 181 |
-| [fai-detr-s-coco](models/fai-detr-s-coco.md) | [RT-DETR](https://github.com/lyuwenyu/RT-DETR) ([STDC-1](https://github.com/MichaelFan01/STDC-Seg)) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | bbox/AP: 42.58<br>bbox/AP50: 59.22 | 220 |
-| [fai-detr-n-coco](models/fai-detr-n-coco.md) | [RT-DETR](https://github.com/lyuwenyu/RT-DETR) ([STDC-1](https://github.com/MichaelFan01/STDC-Seg)) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | bbox/AP: 40.59<br>bbox/AP50: 56.69 | 269 |
 | [fai-detr-l-obj365](models/fai-detr-l-obj365.md) | [RT-DETR](https://github.com/lyuwenyu/RT-DETR) ([Resnet50](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py)) | Common Objects (365) | [Objects365](https://www.objects365.org/overview.html) | bbox/AP: 34.60<br>bbox/AP50: 45.81 | 87 |
 
 <small> AP = Average Precision averaged by class </small> <br>

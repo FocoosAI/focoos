@@ -197,24 +197,6 @@ def test_list_models_fail(focoos_instance: FocoosHUB):
         focoos_instance.list_remote_models()
 
 
-def test_list_shared_datasets(focoos_instance: FocoosHUB, mock_shared_datasets):
-    focoos_instance.api_client.get = MagicMock(
-        return_value=MagicMock(status_code=200, json=lambda: mock_shared_datasets)
-    )
-
-    res = focoos_instance.list_shared_datasets()
-
-    assert len(res) == 2
-    assert res[0].name == "Aeroscapes"
-    assert res[1].ref == "cce71b2050be4e28"
-
-
-def test_list_shared_datasets_fail(focoos_instance: FocoosHUB):
-    focoos_instance.api_client.get = MagicMock(return_value=MagicMock(status_code=500))
-    with pytest.raises(ValueError):
-        focoos_instance.list_shared_datasets()
-
-
 """
 unit tests get_model_by_name
 """

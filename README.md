@@ -81,7 +81,6 @@ args = TrainerArgs(
 
 model.train(args, train_dataset, valid_dataset)
 ```
-See more examples in the [how to](https://focoosai.github.io/focoos/how_to) section.
 
 
 ## Export and optimized Inference
