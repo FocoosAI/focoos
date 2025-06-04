@@ -1,0 +1,2387 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://focoosai.github.io/focoos/models/fai-mf-m-ade/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+    
+    
+      
+        <title>fai-mf-m-ade - Focoos AI SDK</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.342714a4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/custom.css">
+    
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono&display=swap">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-RP4PM5PGLN"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-RP4PM5PGLN",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-RP4PM5PGLN",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#fai-mf-m-ade" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Focoos AI SDK" class="md-header__button md-logo" aria-label="Focoos AI SDK" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Focoos AI SDK
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              fai-mf-m-ade
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/FocoosAI/focoos" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
+          
+  
+  
+  Focoos AI
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../hub/overview/" class="md-tabs__link">
+          
+  
+  
+  HUB
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../models/" class="md-tabs__link">
+          
+  
+  
+  Models
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../development/contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contribute
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/model_manager/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Focoos AI SDK" class="md-nav__button md-logo" aria-label="Focoos AI SDK" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    Focoos AI SDK
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/FocoosAI/focoos" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Focoos AI
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            Focoos AI
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Welcome
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Setup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../training/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Training
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concepts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    HUB
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            HUB
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../hub/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../hub/hub/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    HUB
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../hub/remote_inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Remote Inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Models
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Models
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fai_detr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    fai-detr
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fai_mf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    fai-mf
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fai_cls/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    fai-cls
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bisenetformer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    bisenetformer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Contribute
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/model_manager/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ModelManager
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    FocoosModel
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            FocoosModel
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/focoos_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    FocoosModel
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/base_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BaseModelNN
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/model_registry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ModelRegistry
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    InferModel
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_4">
+            <span class="md-nav__icon md-icon"></span>
+            InferModel
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/infer_model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    InferModel
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/runtimes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    runtimes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/processor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Processor
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/hub/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    FocoosHUB
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_7" id="__nav_5_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Trainer
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_7">
+            <span class="md-nav__icon md-icon"></span>
+            Trainer
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/trainer_evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/trainer_hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    hooks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/auto_dataset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AutoDataset
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/ports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ports
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    config
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#benchmark" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benchmark
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      Model Details
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Model Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#neural-network-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      Neural Network Architecture
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#losses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Losses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#output-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Output Format
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Classes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-are-you-waiting-try-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      What are you waiting? Try it!
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="fai-mf-m-ade">fai-mf-m-ade<a class="headerlink" href="#fai-mf-m-ade" title="Permanent link">#</a></h1>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">#</a></h2>
+<p>The models is a <a href="https://github.com/facebookresearch/Mask2Former">Mask2Former</a> model otimized by <a href="https://focoos.ai">FocoosAI</a> for the <a href="https://groups.csail.mit.edu/vision/datasets/ADE20K/">ADE20K dataset</a>. It is a semantic segmentation model able to segment 150 classes, comprising both stuff (sky, road, etc.) and thing (dog, cat, car, etc.).</p>
+<h2 id="benchmark">Benchmark<a class="headerlink" href="#benchmark" title="Permanent link">#</a></h2>
+<p><img alt="Benchmark Comparison" src="../fai-ade.png" />
+Note: FPS are computed on NVIDIA T4 using TensorRT and image size 640x640.</p>
+<h2 id="model-details">Model Details<a class="headerlink" href="#model-details" title="Permanent link">#</a></h2>
+<p>The model is based on the <a href="https://github.com/facebookresearch/Mask2Former">Mask2Former</a> architecture. It is a segmentation model that uses a transformer-based encoder-decoder architecture.
+Differently from traditional segmentation models (such as <a href="https://arxiv.org/abs/1802.02611">DeepLab</a>), Mask2Former uses a mask-classification approach, where the prediction is made by a set of segmentation mask with associated class probabilities.</p>
+<h3 id="neural-network-architecture">Neural Network Architecture<a class="headerlink" href="#neural-network-architecture" title="Permanent link">#</a></h3>
+<p>The <a href="https://arxiv.org/abs/2112.01527">Mask2Former</a> FocoosAI implementation optimize the original neural network architecture for improving the model's efficiency and performance. The original model is fully described in this <a href="https://arxiv.org/abs/2112.01527">paper</a>.</p>
+<p>Mask2Former is a hybrid model that uses three main components: a <em>backbone</em> for extracting features, a <em>pixel decoder</em> for upscaling the features, and a <em>transformer-based decoder</em> for generating the segmentation output.</p>
+<p><img alt="alt text" src="../mask2former.png" /></p>
+<p>In this implementation:</p>
+<ul>
+<li>the backbone is <a href="https://github.com/MichaelFan01/STDC-Seg">STDC-2</a> that show an amazing trade-off between performance and efficiency.</li>
+<li>the pixel decoder is a <a href="https://arxiv.org/abs/1612.03144">FPN</a> getting the features from the stage 2 (1/4 resolution), 3 (1/8 resolution), 4 (1/16 resolution) and 5 (1/32 resolution) of the backbone. Differently from the original paper, for the sake of portability, we removed the deformable attention modules in the pixel decoder, speeding up the inference while only marginally affecting the accuracy.</li>
+<li>the transformer decoder is a lighter version of the original, having only 3 decoder layers (instead of 9) and 100 learnable queries.</li>
+</ul>
+<h3 id="losses">Losses<a class="headerlink" href="#losses" title="Permanent link">#</a></h3>
+<p>We use the same losses as the original paper:</p>
+<ul>
+<li>loss_ce: Cross-entropy loss for the classification of the classes</li>
+<li>loss_dice: Dice loss for the segmentation of the classes</li>
+<li>loss_mask: A binary cross-entropy loss applied to the predicted segmentation masks</li>
+</ul>
+<p>These losses are applied to each output of the transformer decoder, meaning that we apply it on the output and on each auxiliary output of the 3 transformer decoder layers.
+Please refer to the <a href="https://arxiv.org/abs/2112.01527">Mask2Former paper</a> for more details.</p>
+<h3 id="output-format">Output Format<a class="headerlink" href="#output-format" title="Permanent link">#</a></h3>
+<p>The pre-processed output of the model is set of masks with associated class probabilities. In particular, the output is composed by three tensors:</p>
+<ul>
+<li>class_ids: a tensor of 100 elements containing the class id associated with each mask (such as 1 for wall, 2 for building, etc.)</li>
+<li>scores: a tensor of 100 elements containing the corresponding probability of the class_id</li>
+<li>masks: a tensor of shape (100, H, W) where H and W are the height and width of the input image and the values represent the index of the class_id associated with the pixel</li>
+</ul>
+<p>The model does not need NMS (non-maximum suppression) because the output is already a set of masks with associated class probabilities and has been trained to avoid overlapping masks.</p>
+<p>After the post-processing, the output is a <a href="https://github.com/FocoosAI/focoos/blob/4a317a269cb7758ea71b255faeba654d21182083/focoos/ports.py#L179">Focoos Detections</a> object containing the predicted masks with confidence greather than a specific threshold (0.5 by default).</p>
+<h2 id="classes">Classes<a class="headerlink" href="#classes" title="Permanent link">#</a></h2>
+<p>The model is pretrained on the <a href="https://groups.csail.mit.edu/vision/datasets/ADE20K/">ADE20K dataset</a> with 150 classes.</p>
+<div class="class-table" markdown>
+  <style>
+    .class-table {
+      max-height: 500px;
+      overflow-y: auto;
+      /* border: 1px solid #ccc; */
+      /* border-radius: 4px; */
+      padding: 1rem;
+      margin: 1rem 0;
+      background: rgba(0,0,0,0.05);
+      width: 95%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .class-table table {
+      width: 100%;
+    }
+    .class-table thead {
+      position: sticky;
+      top: 0;
+      background: #2b2b2b;
+      z-index: 1;
+    }
+  </style>
+<table>
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Class</th>
+      <th>mIoU</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>wall</td>
+      <td>75.369549</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>building</td>
+      <td>79.835995</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>sky</td>
+      <td>94.176995</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>floor</td>
+      <td>79.620841</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>tree</td>
+      <td>73.204506</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>ceiling</td>
+      <td>82.303035</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>road, route</td>
+      <td>80.822591</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>bed</td>
+      <td>87.573840</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>window</td>
+      <td>57.452584</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>grass</td>
+      <td>70.099493</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td>cabinet</td>
+      <td>56.903790</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td>sidewalk, pavement</td>
+      <td>62.247267</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td>person</td>
+      <td>79.460606</td>
+    </tr>
+    <tr>
+      <td>14</td>
+      <td>earth, ground</td>
+      <td>38.537802</td>
+    </tr>
+    <tr>
+      <td>15</td>
+      <td>door</td>
+      <td>43.930878</td>
+    </tr>
+    <tr>
+      <td>16</td>
+      <td>table</td>
+      <td>56.753292</td>
+    </tr>
+    <tr>
+      <td>17</td>
+      <td>mountain, mount</td>
+      <td>61.160462</td>
+    </tr>
+    <tr>
+      <td>18</td>
+      <td>plant</td>
+      <td>48.995487</td>
+    </tr>
+    <tr>
+      <td>19</td>
+      <td>curtain</td>
+      <td>71.951930</td>
+    </tr>
+    <tr>
+      <td>20</td>
+      <td>chair</td>
+      <td>52.852125</td>
+    </tr>
+    <tr>
+      <td>21</td>
+      <td>car</td>
+      <td>80.725703</td>
+    </tr>
+    <tr>
+      <td>22</td>
+      <td>water</td>
+      <td>51.233498</td>
+    </tr>
+    <tr>
+      <td>23</td>
+      <td>painting, picture</td>
+      <td>66.989493</td>
+    </tr>
+    <tr>
+      <td>24</td>
+      <td>sofa</td>
+      <td>58.103663</td>
+    </tr>
+    <tr>
+      <td>25</td>
+      <td>shelf</td>
+      <td>34.979205</td>
+    </tr>
+    <tr>
+      <td>26</td>
+      <td>house</td>
+      <td>36.828611</td>
+    </tr>
+    <tr>
+      <td>27</td>
+      <td>sea</td>
+      <td>51.219096</td>
+    </tr>
+    <tr>
+      <td>28</td>
+      <td>mirror</td>
+      <td>58.572852</td>
+    </tr>
+    <tr>
+      <td>29</td>
+      <td>rug</td>
+      <td>54.897799</td>
+    </tr>
+    <tr>
+      <td>30</td>
+      <td>field</td>
+      <td>29.053876</td>
+    </tr>
+    <tr>
+      <td>31</td>
+      <td>armchair</td>
+      <td>39.565663</td>
+    </tr>
+    <tr>
+      <td>32</td>
+      <td>seat</td>
+      <td>53.113668</td>
+    </tr>
+    <tr>
+      <td>33</td>
+      <td>fence</td>
+      <td>41.113128</td>
+    </tr>
+    <tr>
+      <td>34</td>
+      <td>desk</td>
+      <td>37.930189</td>
+    </tr>
+    <tr>
+      <td>35</td>
+      <td>rock, stone</td>
+      <td>44.940982</td>
+    </tr>
+    <tr>
+      <td>36</td>
+      <td>wardrobe, closet, press</td>
+      <td>39.897858</td>
+    </tr>
+    <tr>
+      <td>37</td>
+      <td>lamp</td>
+      <td>60.921356</td>
+    </tr>
+    <tr>
+      <td>38</td>
+      <td>tub</td>
+      <td>78.041637</td>
+    </tr>
+    <tr>
+      <td>39</td>
+      <td>rail</td>
+      <td>31.893878</td>
+    </tr>
+    <tr>
+      <td>40</td>
+      <td>cushion</td>
+      <td>53.029316</td>
+    </tr>
+    <tr>
+      <td>41</td>
+      <td>base, pedestal, stand</td>
+      <td>20.233620</td>
+    </tr>
+    <tr>
+      <td>42</td>
+      <td>box</td>
+      <td>18.276924</td>
+    </tr>
+    <tr>
+      <td>43</td>
+      <td>column, pillar</td>
+      <td>42.655306</td>
+    </tr>
+    <tr>
+      <td>44</td>
+      <td>signboard, sign</td>
+      <td>35.959448</td>
+    </tr>
+    <tr>
+      <td>45</td>
+      <td>chest of drawers, chest, bureau, dresser</td>
+      <td>36.521600</td>
+    </tr>
+    <tr>
+      <td>46</td>
+      <td>counter</td>
+      <td>29.353667</td>
+    </tr>
+    <tr>
+      <td>47</td>
+      <td>sand</td>
+      <td>38.729599</td>
+    </tr>
+    <tr>
+      <td>48</td>
+      <td>sink</td>
+      <td>72.303141</td>
+    </tr>
+    <tr>
+      <td>49</td>
+      <td>skyscraper</td>
+      <td>44.122387</td>
+    </tr>
+    <tr>
+      <td>50</td>
+      <td>fireplace</td>
+      <td>66.614683</td>
+    </tr>
+    <tr>
+      <td>51</td>
+      <td>refrigerator, icebox</td>
+      <td>72.137179</td>
+    </tr>
+    <tr>
+      <td>52</td>
+      <td>grandstand, covered stand</td>
+      <td>29.061628</td>
+    </tr>
+    <tr>
+      <td>53</td>
+      <td>path</td>
+      <td>26.629478</td>
+    </tr>
+    <tr>
+      <td>54</td>
+      <td>stairs</td>
+      <td>31.833328</td>
+    </tr>
+    <tr>
+      <td>55</td>
+      <td>runway</td>
+      <td>76.017706</td>
+    </tr>
+    <tr>
+      <td>56</td>
+      <td>case, display case, showcase, vitrine</td>
+      <td>37.452627</td>
+    </tr>
+    <tr>
+      <td>57</td>
+      <td>pool table, billiard table, snooker table</td>
+      <td>93.246039</td>
+    </tr>
+    <tr>
+      <td>58</td>
+      <td>pillow</td>
+      <td>54.689591</td>
+    </tr>
+    <tr>
+      <td>59</td>
+      <td>screen door, screen</td>
+      <td>58.096890</td>
+    </tr>
+    <tr>
+      <td>60</td>
+      <td>stairway, staircase</td>
+      <td>29.962829</td>
+    </tr>
+    <tr>
+      <td>61</td>
+      <td>river</td>
+      <td>15.010211</td>
+    </tr>
+    <tr>
+      <td>62</td>
+      <td>bridge, span</td>
+      <td>66.617580</td>
+    </tr>
+    <tr>
+      <td>63</td>
+      <td>bookcase</td>
+      <td>31.383789</td>
+    </tr>
+    <tr>
+      <td>64</td>
+      <td>blind, screen</td>
+      <td>39.221180</td>
+    </tr>
+    <tr>
+      <td>65</td>
+      <td>coffee table</td>
+      <td>63.300795</td>
+    </tr>
+    <tr>
+      <td>66</td>
+      <td>toilet, can, commode, crapper, pot, potty, stool, throne</td>
+      <td>84.038177</td>
+    </tr>
+    <tr>
+      <td>67</td>
+      <td>flower</td>
+      <td>35.994798</td>
+    </tr>
+    <tr>
+      <td>68</td>
+      <td>book</td>
+      <td>43.252042</td>
+    </tr>
+    <tr>
+      <td>69</td>
+      <td>hill</td>
+      <td>6.240850</td>
+    </tr>
+    <tr>
+      <td>70</td>
+      <td>bench</td>
+      <td>35.007473</td>
+    </tr>
+    <tr>
+      <td>71</td>
+      <td>countertop</td>
+      <td>56.592858</td>
+    </tr>
+    <tr>
+      <td>72</td>
+      <td>stove</td>
+      <td>74.866261</td>
+    </tr>
+    <tr>
+      <td>73</td>
+      <td>palm, palm tree</td>
+      <td>49.092486</td>
+    </tr>
+    <tr>
+      <td>74</td>
+      <td>kitchen island</td>
+      <td>32.353614</td>
+    </tr>
+    <tr>
+      <td>75</td>
+      <td>computer</td>
+      <td>57.673329</td>
+    </tr>
+    <tr>
+      <td>76</td>
+      <td>swivel chair</td>
+      <td>43.202283</td>
+    </tr>
+    <tr>
+      <td>77</td>
+      <td>boat</td>
+      <td>48.170742</td>
+    </tr>
+    <tr>
+      <td>78</td>
+      <td>bar</td>
+      <td>24.034261</td>
+    </tr>
+    <tr>
+      <td>79</td>
+      <td>arcade machine</td>
+      <td>11.467819</td>
+    </tr>
+    <tr>
+      <td>80</td>
+      <td>hovel, hut, hutch, shack, shanty</td>
+      <td>10.258017</td>
+    </tr>
+    <tr>
+      <td>81</td>
+      <td>bus</td>
+      <td>81.375072</td>
+    </tr>
+    <tr>
+      <td>82</td>
+      <td>towel</td>
+      <td>54.954106</td>
+    </tr>
+    <tr>
+      <td>83</td>
+      <td>light</td>
+      <td>53.256340</td>
+    </tr>
+    <tr>
+      <td>84</td>
+      <td>truck</td>
+      <td>29.656645</td>
+    </tr>
+    <tr>
+      <td>85</td>
+      <td>tower</td>
+      <td>36.864496</td>
+    </tr>
+    <tr>
+      <td>86</td>
+      <td>chandelier</td>
+      <td>63.787459</td>
+    </tr>
+    <tr>
+      <td>87</td>
+      <td>awning, sunshade, sunblind</td>
+      <td>23.610311</td>
+    </tr>
+    <tr>
+      <td>88</td>
+      <td>street lamp</td>
+      <td>29.944617</td>
+    </tr>
+    <tr>
+      <td>89</td>
+      <td>booth</td>
+      <td>29.360433</td>
+    </tr>
+    <tr>
+      <td>90</td>
+      <td>tv</td>
+      <td>61.512572</td>
+    </tr>
+    <tr>
+      <td>91</td>
+      <td>plane</td>
+      <td>53.270513</td>
+    </tr>
+    <tr>
+      <td>92</td>
+      <td>dirt track</td>
+      <td>4.206758</td>
+    </tr>
+    <tr>
+      <td>93</td>
+      <td>clothes</td>
+      <td>35.342074</td>
+    </tr>
+    <tr>
+      <td>94</td>
+      <td>pole</td>
+      <td>20.678348</td>
+    </tr>
+    <tr>
+      <td>95</td>
+      <td>land, ground, soil</td>
+      <td>3.195710</td>
+    </tr>
+    <tr>
+      <td>96</td>
+      <td>bannister, banister, balustrade, balusters, handrail</td>
+      <td>17.522631</td>
+    </tr>
+    <tr>
+      <td>97</td>
+      <td>escalator, moving staircase, moving stairway</td>
+      <td>20.889345</td>
+    </tr>
+    <tr>
+      <td>98</td>
+      <td>ottoman, pouf, pouffe, puff, hassock</td>
+      <td>47.003450</td>
+    </tr>
+    <tr>
+      <td>99</td>
+      <td>bottle</td>
+      <td>15.504667</td>
+    </tr>
+    <tr>
+      <td>100</td>
+      <td>buffet, counter, sideboard</td>
+      <td>26.077572</td>
+    </tr>
+    <tr>
+      <td>101</td>
+      <td>poster, posting, placard, notice, bill, card</td>
+      <td>30.691103</td>
+    </tr>
+    <tr>
+      <td>102</td>
+      <td>stage</td>
+      <td>11.744151</td>
+    </tr>
+    <tr>
+      <td>103</td>
+      <td>van</td>
+      <td>40.161822</td>
+    </tr>
+    <tr>
+      <td>104</td>
+      <td>ship</td>
+      <td>79.300311</td>
+    </tr>
+    <tr>
+      <td>105</td>
+      <td>fountain</td>
+      <td>0.112958</td>
+    </tr>
+    <tr>
+      <td>106</td>
+      <td>conveyer belt, conveyor belt, conveyer, conveyor, transporter</td>
+      <td>60.552373</td>
+    </tr>
+    <tr>
+      <td>107</td>
+      <td>canopy</td>
+      <td>25.086350</td>
+    </tr>
+    <tr>
+      <td>108</td>
+      <td>washer, automatic washer, washing machine</td>
+      <td>63.550537</td>
+    </tr>
+    <tr>
+      <td>109</td>
+      <td>plaything, toy</td>
+      <td>18.290597</td>
+    </tr>
+    <tr>
+      <td>110</td>
+      <td>pool</td>
+      <td>32.873865</td>
+    </tr>
+    <tr>
+      <td>111</td>
+      <td>stool</td>
+      <td>39.256308</td>
+    </tr>
+    <tr>
+      <td>112</td>
+      <td>barrel, cask</td>
+      <td>6.358771</td>
+    </tr>
+    <tr>
+      <td>113</td>
+      <td>basket, handbasket</td>
+      <td>29.850719</td>
+    </tr>
+    <tr>
+      <td>114</td>
+      <td>falls</td>
+      <td>57.657161</td>
+    </tr>
+    <tr>
+      <td>115</td>
+      <td>tent</td>
+      <td>93.717152</td>
+    </tr>
+    <tr>
+      <td>116</td>
+      <td>bag</td>
+      <td>10.629695</td>
+    </tr>
+    <tr>
+      <td>117</td>
+      <td>minibike, motorbike</td>
+      <td>56.217901</td>
+    </tr>
+    <tr>
+      <td>118</td>
+      <td>cradle</td>
+      <td>69.441302</td>
+    </tr>
+    <tr>
+      <td>119</td>
+      <td>oven</td>
+      <td>38.940583</td>
+    </tr>
+    <tr>
+      <td>120</td>
+      <td>ball</td>
+      <td>45.543376</td>
+    </tr>
+    <tr>
+      <td>121</td>
+      <td>food, solid food</td>
+      <td>52.779065</td>
+    </tr>
+    <tr>
+      <td>122</td>
+      <td>step, stair</td>
+      <td>10.843115</td>
+    </tr>
+    <tr>
+      <td>123</td>
+      <td>tank, storage tank</td>
+      <td>30.871163</td>
+    </tr>
+    <tr>
+      <td>124</td>
+      <td>trade name</td>
+      <td>27.908376</td>
+    </tr>
+    <tr>
+      <td>125</td>
+      <td>microwave</td>
+      <td>32.381977</td>
+    </tr>
+    <tr>
+      <td>126</td>
+      <td>pot</td>
+      <td>41.040635</td>
+    </tr>
+    <tr>
+      <td>127</td>
+      <td>animal</td>
+      <td>55.882266</td>
+    </tr>
+    <tr>
+      <td>128</td>
+      <td>bicycle</td>
+      <td>50.185374</td>
+    </tr>
+    <tr>
+      <td>129</td>
+      <td>lake</td>
+      <td>0.007605</td>
+    </tr>
+    <tr>
+      <td>130</td>
+      <td>dishwasher</td>
+      <td>58.970317</td>
+    </tr>
+    <tr>
+      <td>131</td>
+      <td>screen</td>
+      <td>60.016197</td>
+    </tr>
+    <tr>
+      <td>132</td>
+      <td>blanket, cover</td>
+      <td>26.963189</td>
+    </tr>
+    <tr>
+      <td>133</td>
+      <td>sculpture</td>
+      <td>27.667732</td>
+    </tr>
+    <tr>
+      <td>134</td>
+      <td>hood, exhaust hood</td>
+      <td>58.025458</td>
+    </tr>
+    <tr>
+      <td>135</td>
+      <td>sconce</td>
+      <td>39.341998</td>
+    </tr>
+    <tr>
+      <td>136</td>
+      <td>vase</td>
+      <td>31.185747</td>
+    </tr>
+    <tr>
+      <td>137</td>
+      <td>traffic light</td>
+      <td>23.810429</td>
+    </tr>
+    <tr>
+      <td>138</td>
+      <td>tray</td>
+      <td>7.244281</td>
+    </tr>
+    <tr>
+      <td>139</td>
+      <td>trash can</td>
+      <td>30.072544</td>
+    </tr>
+    <tr>
+      <td>140</td>
+      <td>fan</td>
+      <td>52.113861</td>
+    </tr>
+    <tr>
+      <td>141</td>
+      <td>pier</td>
+      <td>56.678802</td>
+    </tr>
+    <tr>
+      <td>142</td>
+      <td>crt screen</td>
+      <td>9.133357</td>
+    </tr>
+    <tr>
+      <td>143</td>
+      <td>plate</td>
+      <td>38.900407</td>
+    </tr>
+    <tr>
+      <td>144</td>
+      <td>monitor</td>
+      <td>3.323130</td>
+    </tr>
+    <tr>
+      <td>145</td>
+      <td>bulletin board</td>
+      <td>52.337659</td>
+    </tr>
+    <tr>
+      <td>146</td>
+      <td>shower</td>
+      <td>4.692180</td>
+    </tr>
+    <tr>
+      <td>147</td>
+      <td>radiator</td>
+      <td>43.811464</td>
+    </tr>
+    <tr>
+      <td>148</td>
+      <td>glass, drinking glass</td>
+      <td>14.036491</td>
+    </tr>
+    <tr>
+      <td>149</td>
+      <td>clock</td>
+      <td>25.044316</td>
+    </tr>
+    <tr>
+      <td>150</td>
+      <td>flag</td>
+      <td>40.007933</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+<h2 id="what-are-you-waiting-try-it">What are you waiting? Try it!<a class="headerlink" href="#what-are-you-waiting-try-it" title="Permanent link">#</a></h2>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">Focoos</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="c1"># Initialize the Focoos client with your API key</span>
+<span class="n">focoos</span> <span class="o">=</span> <span class="n">Focoos</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;FOCOOS_API_KEY&quot;</span><span class="p">))</span>
+
+<span class="c1"># Get the remote model (fai-mf-m-ade) from Focoos API</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">focoos</span><span class="o">.</span><span class="n">get_remote_model</span><span class="p">(</span><span class="s2">&quot;fai-mf-m-ade&quot;</span><span class="p">)</span>
+
+<span class="c1"># Run inference on an image</span>
+<span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="s2">&quot;./image.jpg&quot;</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+
+<span class="c1"># Output the predictions</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2024 FocoosAI
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/FocoosAI/focoos" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.linkedin.com/company/focoosai" target="_blank" rel="noopener" title="www.linkedin.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5m282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      
+    
+  </body>
+</html>
