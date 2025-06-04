@@ -52,15 +52,21 @@ nav:
 
   - API Reference:
       - model_manager: api/model_manager.md
-      - base_model: api/base_model.md
-      - focoos_model: api/focoos_model.md
+      - focoos_model:
+        - BaseModelNN: api/base_model.md
+        - FocoosModel: api/focoos_model.md
       - model_registry: api/model_registry.md
-      - infer_model: api/infer_model.md
-      - runtimes: api/runtimes.md
+      - infer:
+        - InferModel: api/infer_model.md
+        - runtimes: api/runtimes.md
       - processor: api/processor.md
+      - hub: api/hub.md
+      - trainer:
+        - evaluation: api/trainer_evaluation.md
+        - hooks: api/trainer_hooks.md
+      - dataset: api/auto_dataset.md
       - ports: api/ports.md
       - config: api/config.md
-      - hub: api/hub.md
 
 markdown_extensions:
   - pymdownx.highlight:

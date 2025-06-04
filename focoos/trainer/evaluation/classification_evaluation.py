@@ -14,8 +14,17 @@ logger = get_logger(__name__)
 
 
 class ClassificationEvaluator(DatasetEvaluator):
-    """
-    Evaluate classification metrics including accuracy, precision, recall, and F1 score.
+    """Evaluator for classification tasks with comprehensive metrics computation.
+
+    This evaluator computes various classification metrics including accuracy, precision,
+    recall, and F1 score both per-class and as macro/weighted averages. It supports
+    distributed evaluation across multiple processes.
+
+    Attributes:
+        dataset_dict (DictDataset): Dataset containing ground truth annotations.
+        metadata: Metadata from the dataset containing class information.
+        num_classes (int): Number of classes in the classification task.
+        class_names (List[str]): Names of the classes.
     """
 
     def __init__(
@@ -23,10 +32,13 @@ class ClassificationEvaluator(DatasetEvaluator):
         dataset_dict: DictDataset,
         distributed=True,
     ):
-        """
+        """Initialize the ClassificationEvaluator.
+
         Args:
-            dataset_dict: Dataset in DictDataset format containing the ground truth annotations
-            distributed: If True, evaluation will be distributed across multiple processes.
+            dataset_dict (DictDataset): Dataset in DictDataset format containing
+                the ground truth annotations.
+            distributed (bool, optional): If True, evaluation will be distributed
+                across multiple processes. Defaults to True.
         """
         self.dataset_dict = dataset_dict
         self.metadata = self.dataset_dict.metadata
@@ -40,21 +52,45 @@ class ClassificationEvaluator(DatasetEvaluator):
 
     @classmethod
     def from_datasetdict(cls, dataset_dict, **kwargs):
+        """Create ClassificationEvaluator instance from a dataset dictionary.
+
+        Args:
+            dataset_dict: Dataset dictionary containing the data and metadata.
+            **kwargs: Additional keyword arguments passed to the constructor.
+
+        Returns:
+            ClassificationEvaluator: New instance of the evaluator.
+        """
         return cls(dataset_dict=dataset_dict, **kwargs)
 
     def reset(self):
-        """Clear stored predictions and targets."""
+        """Clear stored predictions and targets.
+
+        This method resets the internal state of the evaluator by clearing
+        all accumulated predictions and ground truth targets.
+        """
         self._predictions = []
         self._targets = []
 
     def process(self, inputs: List[ClassificationDatasetDict], outputs: List[ClassificationModelOutput]):
-        """
-        Process the pair of inputs and outputs.
+        """Process a batch of inputs and outputs for evaluation.
+
+        This method extracts predictions and ground truth labels from the provided
+        inputs and outputs, then stores them for later evaluation.
 
         Args:
-            inputs: List of dictionaries, each containing a 'label' field with ground truth class label.
-            outputs: List of dictionaries, each containing a 'logits' field with the model's predicted class logits
-                    or ClassificationModelOutput instances.
+            inputs (List[ClassificationDatasetDict]): List of input dictionaries,
+                each containing ground truth information. Expected to have 'label'
+                field or 'annotations' with category_id.
+            outputs (List[ClassificationModelOutput]): List of model outputs,
+                each containing 'logits' field with predicted class logits or
+                ClassificationModelOutput instances.
+
+        Note:
+            - Ground truth labels are extracted from input['label'] or
+              input['annotations'][0]['category_id']
+            - Predictions are extracted from output['logits'] or output.logits
+            - Items with missing labels or logits are skipped with warnings
         """
         for input_item, output_item in zip(inputs, outputs):
             # Get ground truth label from input
@@ -99,16 +135,17 @@ class ClassificationEvaluator(DatasetEvaluator):
             self._targets.append(label)
 
     def _compute_confusion_matrix(self, y_true, y_pred, num_classes):
-        """
-        Compute confusion matrix.
+        """Compute confusion matrix for classification evaluation.
 
         Args:
-            y_true: Ground truth labels tensor
-            y_pred: Predicted labels tensor
-            num_classes: Number of classes
+            y_true (torch.Tensor): Ground truth labels tensor.
+            y_pred (torch.Tensor): Predicted labels tensor.
+            num_classes (int): Number of classes in the classification task.
 
         Returns:
-            torch.Tensor: Confusion matrix of shape (num_classes, num_classes)
+            torch.Tensor: Confusion matrix of shape (num_classes, num_classes).
+                Element [i,j] represents the number of samples with true label i
+                that were predicted as label j.
         """
         confusion_matrix = torch.zeros(num_classes, num_classes, dtype=torch.long)
         for t, p in zip(y_true, y_pred):
@@ -116,13 +153,29 @@ class ClassificationEvaluator(DatasetEvaluator):
         return confusion_matrix
 
     def evaluate(self):
-        """
-        Evaluate classification metrics.
+        """Evaluate classification metrics on accumulated predictions.
+
+        Computes comprehensive classification metrics including accuracy,
+        per-class precision/recall/F1, and macro/weighted averages.
 
         Returns:
-            OrderedDict: Dictionary containing evaluation metrics:
-                - Overall accuracy
-                - Per-class precision, recall, and F1 score
+            OrderedDict: Dictionary containing evaluation metrics with the following keys:
+                - 'Accuracy': Overall classification accuracy (%)
+                - 'Macro-Precision': Macro-averaged precision (%)
+                - 'Macro-Recall': Macro-averaged recall (%)
+                - 'Macro-F1': Macro-averaged F1 score (%)
+                - 'Weighted-Precision': Weighted precision (%)
+                - 'Weighted-Recall': Weighted recall (%)
+                - 'Weighted-F1': Weighted F1 score (%)
+                - 'Precision-{class_name}': Per-class precision (%)
+                - 'Recall-{class_name}': Per-class recall (%)
+                - 'F1-{class_name}': Per-class F1 score (%)
+
+        Note:
+            - In distributed mode, only the main process returns results
+            - All metrics are expressed as percentages
+            - Returns empty dict if no predictions are available
+            - Results are wrapped in 'classification' key for trainer compatibility
         """
         if self._distributed:
             synchronize()
