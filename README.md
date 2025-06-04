@@ -29,7 +29,6 @@ Ready to dive in? Get started with the setup in just a few simple steps!
 ## Installation
 **Install** the Focoos Python SDK (for more options, see [setup](https://focoosai.github.io/focoos/setup))
 
-**uv**
 ```bash linenums="0"
 uv pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
 ```
@@ -81,12 +80,13 @@ args = TrainerArgs(
 
 
 model.train(args, train_dataset, valid_dataset)
-
+```
 See more examples in the [how to](https://focoosai.github.io/focoos/how_to) section.
 
-```
+
 ## Export and optimized Inference
 
+```python
 from focoos.model_manager import ModelManager
 from focoos.ports import RuntimeType
 
@@ -94,6 +94,8 @@ from focoos.ports import RuntimeType
 model = ModelManager.get("fai-detr-l-obj365")
 infer_model = model.export(runtime_type=RuntimeType.TORCHSCRIPT_32)
 infer_model.benchmark()
+
+```
 
 # Our Models 🧠
 Focoos AI offers the best models in object detection, semantic and instance segmentation, and more is coming soon.
