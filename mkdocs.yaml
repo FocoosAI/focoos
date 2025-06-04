@@ -34,43 +34,40 @@ plugins:
 nav:
   - Focoos AI:
       - Welcome: index.md
-      - Installation: setup.md
-      - Main Concepts: concepts.md
-
+      - Setup: setup.md
+      - Inference: inference.md
+      - Training: training.md
+      - Concepts: concepts.md
   - HUB:
       - Overview: hub/overview.md
       - HUB: hub/hub.md
       - Remote Inference: hub/remote_inference.md
-
-  - Training: training.md
-
-  - Inference: inference.md
-
   - Models:
       - Overview: models/models.md
-      - bisenetformer: models/bisenetformer.md
       - fai-detr: models/fai_detr.md
       - fai-mf: models/fai_mf.md
       - fai-cls: models/fai_cls.md
+      - bisenetformer: models/bisenetformer.md
 
 
   - Contribute: development/contributing.md
 
   - API Reference:
-      - model_manager: api/model_manager.md
-      - focoos_model:
-        - BaseModelNN: api/base_model.md
+      - ModelManager: api/model_manager.md
+      - FocoosModel:
         - FocoosModel: api/focoos_model.md
-      - model_registry: api/model_registry.md
-      - infer:
+        - BaseModelNN: api/base_model.md
+
+      - ModelRegistry: api/model_registry.md
+      - InferModel:
         - InferModel: api/infer_model.md
         - runtimes: api/runtimes.md
-      - processor: api/processor.md
-      - hub: api/hub.md
-      - trainer:
+      - Processor: api/processor.md
+      - FocoosHUB: api/hub.md
+      - Trainer:
         - evaluation: api/trainer_evaluation.md
         - hooks: api/trainer_hooks.md
-      - dataset: api/auto_dataset.md
+      - AutoDataset: api/auto_dataset.md
       - ports: api/ports.md
       - config: api/config.md
 

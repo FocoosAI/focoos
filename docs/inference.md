@@ -24,10 +24,11 @@ In the following sections, we'll guide you through the different ways to use Foc
 ## 0. \[Optional\] Connect to the Focoos Hub
 
 Focoos can be used without having an accont on the [Focoos Hub](app.focoos.ai). With it, you will unlock additional functionalities, as we will see below. If you have it, just connect to the HUB.
-```
+
+```python
 from focoos.hub import FocoosHUB
 
-FOCOOS_API_KEY = None  # write here your API key
+FOCOOS_API_KEY = os.getenv("FOCOOS_API_KEY")  # write here your API key os set env variable FOCOOS_API_KEY, will be used as default
 hub = FocoosHUB(api_key=FOCOOS_API_KEY)
 ```
 
@@ -82,12 +83,35 @@ We will load a model and then run inference on a sample image.
 
 First, let's get a model. We need to use the `ModelManager` that will take care of instaciating the right model starting from a model reference (for example, the `fai-detr-l-obj365`). If you want to use a model from the Hub, please remember to add `hub://` as prefix to the model reference.
 
+=== "Pretrained Model"
+
+    ```python
+    from focoos.model_manager import ModelManager
+    model_name = "fai-detr-l-obj365"
+
+    model = ModelManager.get(model_name)
+    ```
+
+=== "HUB Model"
+
 ```python
 from focoos.model_manager import ModelManager
 
 model_ref = "<YOUR-MODEL-REF>"
 
-model = ModelManager.get(model_ref, hub=hub)
+
+model = ModelManager.get(f"hub://{model_ref}")
+```
+
+=== "Local Model "
+
+```python
+from focoos.model_manager import ModelManager
+
+model_path = "/path/to/model"
+
+
+model = ModelManager.get(model_path)
 ```
 
 Now, again, you can now run the model by simply passing it an image and visualize the results.

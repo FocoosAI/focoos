@@ -20,10 +20,10 @@ install-cpu: .uv .pre-commit
 
 
 docs:
-	@mkdocs build --clean
+	@uv run mkdocs build --clean
 
 serve-docs:
-	@mkdocs serve
+	@uv run mkdocs serve
 
 lint:
 	@ruff check ./focoos ./tests ./notebooks  --fix
