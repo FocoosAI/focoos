@@ -35,7 +35,7 @@ nav:
   - Focoos AI:
       - Welcome: index.md
       - Installation: setup.md
-      - QuickStart: concepts.md
+      - Main Concepts: concepts.md
 
   - HUB:
       - Overview: hub/overview.md
@@ -48,10 +48,11 @@ nav:
 
   - Models:
       - Overview: models/models.md
-      - BisenetFormer: models/bisenet.md
-      - FAI_CLS: models/fai_cls.md
-      - FAI_DETR: models/fai_detr.md
-      - FAI_MF: models/fai_mf.md
+      - bisenetformer: models/bisenetformer.md
+      - fai-detr: models/fai_detr.md
+      - fai-mf: models/fai_mf.md
+      - fai-cls: models/fai_cls.md
+
 
   - Contribute: development/contributing.md
 

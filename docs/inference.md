@@ -19,7 +19,7 @@ In the following sections, we'll guide you through the different ways to use Foc
 
 1. [🌍 Remote Inference](#1-remote-inference)
 2. [🔥 Pytorch Inference](#2-pytorch-inference)
-3. [🔨 Optimized Inference](#3-optmized-inference)
+3. [🔨 Optimized Inference](#3-optimized-inference)
 
 ## 0. \[Optional\] Connect to the Focoos Hub
 
@@ -75,7 +75,7 @@ from focoos.utils.vision import annotate_image
 annotate_image(image, detections, task=model.model_info.task, classes=model.model_info.classes).save("predictions.png")
 ```
 
-## 2. 🔥 Torch Inference
+## 2. 🔥 PyTorch Inference
 
 This section demonstrates how to perform local inference using a plain Pytorch model.
 We will load a model and then run inference on a sample image.

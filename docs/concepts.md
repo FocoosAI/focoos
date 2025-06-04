@@ -234,7 +234,7 @@ fast_detections = infer_model(image)
 ```
 ---
 
-## InferModel
+## Infer Model
 The `InferModel` class represents an optimized model for inference, typically created through the export process of a `FocoosModel`. It provides a streamlined interface focused on fast and efficient inference while maintaining the same input/output format as the original model.
 
 ### Key Features

@@ -33,7 +33,9 @@ With the Focoos SDK, you can take advantage of a collection of foundational mode
 
 | Model Name | Architecture | Domain (Classes) | Dataset | Metric | FPS Nvidia-T4 |
 |------------|--------------|------------------|----------|---------|--------------|
-| [fai-mf-l-coco-ins](models/fai-mf-l-coco-ins.md) | [Mask2Former](https://github.com/facebookresearch/Mask2Former) ([Resnet-50](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py)) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | segm/AP: 42.39<br>segm/AP50: 66.12 | 54 |
+| [fai-m2f-s-coco-ins](models/fai-m2f-s-coco-ins.md) | [Mask2Former](https://github.com/facebookresearch/Mask2Former) ([Resnet-50](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py)) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | segm/AP: 41.45<br>segm/AP50: 64.12 | 86 |
+| [fai-m2f-m-coco-ins](models/fai-m2f-m-coco-ins.md) | [Mask2Former](https://github.com/facebookresearch/Mask2Former) ([Resnet-101](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py)) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | segm/AP: 43.09<br>segm/AP50: 65.87 | 70 |
+| [fai-m2f-l-coco-ins](models/fai-m2f-l-coco-ins.md) | [Mask2Former](https://github.com/facebookresearch/Mask2Former) ([Resnet-101](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py)) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | segm/AP: 44.23<br>segm/AP50: 67.53 | 55 |
 
 <small> AP = Average Precision averaged by class </small> <br>
 <small> AP50 = Average Precision at IoU threshold 0.50 averaged by class </small> <br>

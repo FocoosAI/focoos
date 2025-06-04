@@ -22,8 +22,8 @@ In the following sections, we'll guide you through the process of training a mod
 In this guide, we will perform the following steps:
 
 1. [📦 Select dataset](#1-select-dataset)
-2. [🏃‍♂️ Train model](#2-train-model)
-3. [🧪 Test model](#3-test-model)
+2. [🏃‍♂️ Train model](#2-train-the-model)
+3. [🧪 Test model](#3-test-the-model)
 
 ## 0. \[Optional\] Connect to the Focoos Hub
 
@@ -41,7 +41,7 @@ Before starting the training, we need to get a dataset. You can either use a loc
 
 ### \[Optional\] Download the data from the Hub
 If you want to download a dataset from the hub, you can use it to directly store it in your local environment.
-Check the reference of your dataset on the platform and use it in the following cell. If you want to try an example dataset, you can use [Football Player Detection](https://app.focoos.ai/datasets/3a7cec8afb6b4780) with reference `3a7cec8afb6b4780`.
+Check the reference of your dataset on the platform and use it in the following cell. If you want to try an example dataset, just use one of the many available on the [Focoos Hub](app.focoos.ai).
 
 ```python
 dataset_ref = "<YOUR-DATASET-REFERENCE>"
