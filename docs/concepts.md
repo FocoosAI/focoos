@@ -15,7 +15,7 @@ The `FocoosModel` class is the main interface for working with computer vision m
 
 ### Loading Strategies
 
-The primary method for loading models is the `ModelManager.get()`. It supports multiple loading strategies based on the input parameters. The return value is a [Focoos Model](#focoosmodel).
+The primary method for loading models is using the `ModelManager.get()` (see [`ModelManager`](../api/model_manager/#focoos.model_manager.ModelManager)). It supports multiple loading strategies based on the input parameters. The return value is a [Focoos Model](#focoosmodel).
 
 The ModelManager employs different loading strategies based on the input:
 
@@ -102,7 +102,7 @@ model = ModelManager.get(
 
 #### 4. From ModelInfo Object
 
-The `ModelInfo` class represents comprehensive model metadata including architecture specifications, training configuration, class definitions, and performance metrics. This method provides the most programmatic control over model instantiation.
+The [`ModelInfo`](../api/ports/#focoos.ports.ModelInfo) class represents comprehensive model metadata including architecture specifications, training configuration, class definitions, and performance metrics. This method provides the most programmatic control over model instantiation.
 
 **When to use**: Programmatically construct models, work with dynamic configurations, integrate with custom model management systems, or when you need fine-grained control over model instantiation.
 
@@ -142,7 +142,7 @@ Performs end-to-end inference on input images with automatic preprocessing and p
 - NumPy arrays (`numpy.ndarray`)
 - PyTorch tensors (`torch.Tensor`)
 
-The input images are automatically preprocessed to the correct size and format required by the model. After inference, the raw model outputs are postprocessed into a standardized `FocoosDetections` format that provides easy access to:
+The input images are automatically preprocessed to the correct size and format required by the model. After inference, the raw model outputs are postprocessed into a standardized [`FocoosDetections`](../api/ports/#focoos.ports.FocoosDetections) format that provides easy access to:
 
 - Detected object classes and confidence scores
 - Bounding box coordinates
@@ -176,7 +176,7 @@ for detection in detections.detections:
 ### Training
 Trains the model on provided datasets. The training function accepts:
 
-- `args`: Training configuration ([TrainerArgs](../api/ports)) specifying the main hyperparameters, among which:
+- `args`: Training configuration ([TrainerArgs](../api/ports/#focoos.ports.TrainerArgs)) specifying the main hyperparameters, among which:
   - `run_name`: Name for the training run
   - `output_dir`: Name for the output folder
   - `num_gpus`: Number of GPUs to use (must be >= 1)
@@ -186,7 +186,7 @@ Trains the model on provided datasets. The training function accepts:
 - `data_val`: Validation dataset (MapDataset)
 - `hub`: Optional FocoosHUB instance for experiment tracking
 
-The data can be obtained using the [AutoDataset]() helper.
+The data can be obtained using the [AutoDataset](../api/auto_dataset/#focoos.data.auto_dataset.AutoDataset) helper.
 
 After the training is complete, the model will have updated weights and can be used for inference or export. Furthermore, in the `output_dir` can be found the model metadata (`model_info.json`) and the PyTorch weights (`model_final.pth`).
 
@@ -214,7 +214,7 @@ model.train(train_args, train_dataset, val_dataset, hub=hub)
 ### Model Export
 
 Exports the model to different runtime formats for optimized inference. The main function arguments are:
- - `runtime_type`: specify the target runtime and must be one of the supported (see [RuntimeType]())
+ - `runtime_type`: specify the target runtime and must be one of the supported (see [RuntimeType](../api/ports/#focoos.ports.RuntimeType))
  - `out_dir`: the destination folder for the exported model
  - `image_size`: the target image size, as an optional integer
 
@@ -246,7 +246,7 @@ The `InferModel` class represents an optimized model for inference, typically cr
 
 ### Initialization
 
-InferModel instances are typically created through the `export()` method of a [FocoosModel](#focoosmodel), which handles the model optimization and conversion process. This method allows you to specify the target runtime (e.g., ONNX, TensorRT) and the output directory for the exported model. The `export()` method returns an `InferModel` instance that is optimized for fast and efficient inference.
+InferModel instances are typically created through the `export()` method of a [FocoosModel](#focoosmodel), which handles the model optimization and conversion process. This method allows you to specify the target runtime (see the availables in [`Runtimetypes`](focoos/api/ports/#focoos.ports.RuntimeType)) and the output directory for the exported model. The `export()` method returns an `InferModel` instance that is optimized for fast and efficient inference.
 
 **Example:**
 ```python
@@ -268,7 +268,7 @@ Performs end-to-end inference on input images with automatic preprocessing and p
 - NumPy arrays (`numpy.ndarray`)
 - PyTorch tensors (`torch.Tensor`)
 
-The input images are automatically preprocessed to the correct size and format required by the model. After inference, the raw model outputs are postprocessed into a standardized `FocoosDetections` format that provides easy access to:
+The input images are automatically preprocessed to the correct size and format required by the model. After inference, the raw model outputs are postprocessed into a standardized [`FocoosDetections`](./api/ports/#focoos.ports.FocoosDetections) format that provides easy access to:
 
 - Detected object classes and confidence scores
 - Bounding box coordinates

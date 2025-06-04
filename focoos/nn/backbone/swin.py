@@ -602,6 +602,7 @@ class Swin(BaseBackbone):
             self.embed_dim = config.embed_dim
             self.num_heads = config.num_heads
             self.window_size = config.window_size
+            self.depths = config.depths
             backbone_url = config.backbone_url
 
         self.ape = config.ape

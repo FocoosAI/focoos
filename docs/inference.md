@@ -23,8 +23,7 @@ In the following sections, we'll guide you through the different ways to use Foc
 
 ## 0. \[Optional\] Connect to the Focoos Hub
 
-Focoos can be used without having an accont on the [Focoos Hub](app.focoos.ai). With it, you will unlock additional functionalities, as we will see below. If you have it, just connect to the HUB.
-
+Focoos can be used without having an accont on the [Focoos Hub](http://app.focoos.ai). With it, you will unlock additional functionalities, as we will see below. If you have it, just connect to the HUB.
 ```python
 from focoos.hub import FocoosHUB
 
@@ -140,7 +139,7 @@ In the following cells, we will export the previous model for one of these and r
 
 ### Torchscript
 
-We already provide multiple inference runtime, that you can see on the `RuntimeTypes` enum. Let's select Torchscript as an example.
+We already provide multiple inference runtime, that you can see on the [`RuntimeTypes`](focoos/api/ports/#focoos.ports.RuntimeType) enum. Let's select Torchscript as an example.
 
 ```python
 from focoos.ports import RuntimeType
@@ -170,7 +169,7 @@ But, let's see its latency, that should be substantially lower than the pure pyt
 optimized_model.benchmark(iterations=10, size=512)
 ```
 
-You can use different runtimes that may fit better your device, such as TensorRT. See the list of available Runtimes at [`RuntimeTypes`](). Please note that you need to install the relative packages for onnx and tensorRT for using them.
+You can use different runtimes that may fit better your device, such as TensorRT. See the list of available Runtimes at [`RuntimeTypes`](focoos/api/ports/#focoos.ports.RuntimeType). Please note that you need to install the relative packages for onnx and tensorRT for using them.
 
 ### ONNX with TensorRT
 ```python
