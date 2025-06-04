@@ -186,7 +186,8 @@ class RemoteModel:
         if res.status_code != 200:
             logger.error(f"Failed to get train info: {res.status_code} {res.text}")
             raise ValueError(f"Failed to get train info: {res.status_code} {res.text}")
-        return TrainingInfo(**res.json())
+        dct = {k: v for k, v in res.json().items() if k in TrainingInfo.__dataclass_fields__}
+        return TrainingInfo(**dct)
 
     def train_logs(self) -> list[str]:
         """

@@ -37,6 +37,11 @@ nav:
       - Installation: setup.md
       - QuickStart: concepts.md
 
+  - HUB:
+      - Overview: hub/overview.md
+      - HUB: hub/hub.md
+      - Remote Inference: hub/remote_inference.md
+
   - Training: training.md
 
   - Inference: inference.md
