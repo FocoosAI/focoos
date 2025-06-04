@@ -1,32 +1,35 @@
 from .config import FOCOOS_CONFIG
-from .focoos import Focoos
-from .local_model import LocalModel
+from .hub import ApiClient, FocoosHUB, RemoteDataset, RemoteModel
+from .infer.infer_model import InferModel
+from .infer.runtimes.load_runtime import load_runtime
+from .model_manager import ConfigManager, ModelManager
 from .ports import (
     DEV_API_URL,
     LOCAL_API_URL,
     PROD_API_URL,
     DatasetLayout,
+    DatasetMetadata,
     DatasetPreview,
+    DetectronDict,
     FocoosDet,
     FocoosDetections,
-    FocoosTask,
     GPUDevice,
     GPUInfo,
-    Hyperparameters,
     LatencyMetrics,
-    ModelMetadata,
+    ModelFamily,
+    ModelInfo,
     ModelPreview,
     ModelStatus,
     OnnxRuntimeOpts,
-    RuntimeTypes,
+    RemoteModelInfo,
+    RuntimeType,
     SystemInfo,
+    Task,
+    TrainerArgs,
     TrainingInfo,
-    TrainInstance,
 )
-from .remote_model import RemoteModel
-from .runtime import ONNXRuntime, load_runtime
-from .utils.api_client import ApiClient
-from .utils.logger import get_logger
+from .processor import ProcessorManager
+from .utils.logger import _setup_logging, get_logger
 from .utils.system import get_cuda_version, get_system_info
 from .utils.vision import (
     base64mask_to_mask,
@@ -39,31 +42,30 @@ from .utils.vision import (
     sv_to_fai_detections,
 )
 
+_setup_logging()
+
 __all__ = [
     "FOCOOS_CONFIG",
-    "Focoos",
-    "LocalModel",
+    "RemoteModel",
+    "InferModel",
     "RemoteModel",
     "FocoosDetections",
     "FocoosDet",
-    "FocoosTask",
-    "ModelMetadata",
+    "Task",
+    "RemoteModelInfo",
     "ModelStatus",
     "DatasetLayout",
     "DatasetPreview",
     "GPUDevice",
     "GPUInfo",
-    "Hyperparameters",
     "LatencyMetrics",
     "ModelPreview",
     "OnnxRuntimeOpts",
-    "RuntimeTypes",
+    "RuntimeType",
     "SystemInfo",
     "TrainingInfo",
-    "TrainInstance",
     "get_system_info",
     "get_cuda_version",
-    "ONNXRuntime",
     "load_runtime",
     "DEV_API_URL",
     "LOCAL_API_URL",
@@ -78,4 +80,15 @@ __all__ = [
     "sv_to_fai_detections",
     "get_logger",
     "ApiClient",
+    "RemoteDataset",
+    "RemoteModel",
+    "ModelInfo",
+    "TrainerArgs",
+    "DatasetMetadata",
+    "DetectronDict",
+    "ModelManager",
+    "ProcessorManager",
+    "ConfigManager",
+    "ModelFamily",
+    "FocoosHUB",
 ]

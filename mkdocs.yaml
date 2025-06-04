@@ -34,36 +34,42 @@ plugins:
 nav:
   - Focoos AI:
       - Welcome: index.md
-      - Installation: setup.md
-      - Models: models.md
-  - How To:
-      - Manage Dataset: howto/create_dataset.md
-      - Create and Train Model: howto/personalize_model.md
-      - Manage Models: howto/manage_models.md
-      - Use Model: howto/use_model.md
-      - Manage User: howto/manage_user.md
-  - Focoos Models:
-      - Overview: models.md
-      - Semantic segmentation:
-        - fai-m2f-l-ade: models/fai-m2f-l-ade.md
-        - fai-m2f-m-ade: models/fai-m2f-m-ade.md
-        - fai-m2f-s-ade: models/fai-m2f-s-ade.md
-      - Object detection:
-        - fai-rtdetr-l-coco: models/fai-rtdetr-l-coco.md
-        - fai-rtdetr-m-coco: models/fai-rtdetr-m-coco.md
-        - fai-rtdetr-s-coco: models/fai-rtdetr-s-coco.md
-        - fai-rtdetr-n-coco: models/fai-rtdetr-n-coco.md
-        - fai-rtdetr-m-obj365: models/fai-rtdetr-m-obj365.md
-      - Instance_segmentation:
-        - fai-m2f-l-coco-ins: models/fai-m2f-l-coco-ins.md
+      - Setup: setup.md
+      - Inference: inference.md
+      - Training: training.md
+      - Concepts: concepts.md
+  - HUB:
+      - Overview: hub/overview.md
+      - HUB: hub/hub.md
+      - Remote Inference: hub/remote_inference.md
+  - Models:
+      - Overview: models/models.md
+      - fai-detr: models/fai_detr.md
+      - fai-mf: models/fai_mf.md
+      - fai-cls: models/fai_cls.md
+      - bisenetformer: models/bisenetformer.md
+
+
+  - Contribute: development/contributing.md
+
   - API Reference:
-      - Focoos: api/focoos.md
-      - Config: api/config.md
-      - RemoteModel: api/remote_model.md
-      - LocalModel: api/local_model.md
-      - RemoteDataset: api/remote_dataset.md
-      - Runtime: api/runtime.md
-      - Ports: api/ports.md
+      - ModelManager: api/model_manager.md
+      - FocoosModel:
+        - FocoosModel: api/focoos_model.md
+        - BaseModelNN: api/base_model.md
+
+      - ModelRegistry: api/model_registry.md
+      - InferModel:
+        - InferModel: api/infer_model.md
+        - runtimes: api/runtimes.md
+      - Processor: api/processor.md
+      - FocoosHUB: api/hub.md
+      - Trainer:
+        - evaluation: api/trainer_evaluation.md
+        - hooks: api/trainer_hooks.md
+      - AutoDataset: api/auto_dataset.md
+      - ports: api/ports.md
+      - config: api/config.md
 
 markdown_extensions:
   - pymdownx.highlight:

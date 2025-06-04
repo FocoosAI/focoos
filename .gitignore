@@ -91,4 +91,10 @@ notebooks/.data
 /data
 tests/junit.xml
 notebooks/datasets
+notebooks/experiments
 site/
+/datasets/
+/examples/
+notebooks/test.ipynb
+gradio/output/
+tutorials/experiments

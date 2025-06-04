@@ -9,7 +9,7 @@
     "remoteUser": "root",
     "workspaceFolder": "${localWorkspaceFolder}",
     "workspaceMount": "source=${localWorkspaceFolder},target=${localWorkspaceFolder},type=bind",
-    "postCreateCommand": "uv pip install -e .[cpu,dev]",
+    "postCreateCommand": "uv pip install -e .[onnx-cpu,dev]",
     "remoteEnv": {
         "UV_SYSTEM_PYTHON": "true"
     },

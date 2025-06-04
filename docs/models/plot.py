@@ -40,7 +40,7 @@ for model, fps, metric in zip(data["Model"], data[f"FPS ({DEVICE})"], data[f"{ME
         ),
     )
 
-# Highlight our model (fai-m2f-s-ade)
+# Highlight our model (fai-mf-s-ade)
 our_models = data[data["Model"].str.startswith("fai")]
 for i, our_model in our_models.iterrows():
     plt.scatter(

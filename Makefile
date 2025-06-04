@@ -10,18 +10,20 @@ venv:
 	@uv venv --python=python3.12
 
 install: .uv .pre-commit
-	@uv pip install -e ".[dev,docs]" --no-cache-dir
+	@uv sync --extra onnx --extra tensorrt --extra dev --extra docs
 	@pre-commit install
 
-install-gpu: .uv .pre-commit
-	@uv pip install -e ".[dev,cuda,tensorrt,torch,docs]" --no-cache-dir
+install-cpu: .uv .pre-commit
+	@uv sync --extra onnx-cpu --extra dev --extra docs
 	@pre-commit install
+
+
 
 docs:
-	@mkdocs build --clean
+	@uv run mkdocs build --clean
 
 serve-docs:
-	@mkdocs serve
+	@uv run mkdocs serve
 
 lint:
 	@ruff check ./focoos ./tests ./notebooks  --fix
@@ -31,7 +33,7 @@ run-pre-commit: .pre-commit
 	@pre-commit run --all-files
 
 test:
-	@pytest -s --cov=focoos --cov-report="xml:tests/coverage.xml" --cov-report=html --junitxml=./tests/junit.xml   && rm -f .coverage
+	@uv run pytest -s tests --cov=focoos --cov-report=term-missing:skip-covered --cov-report="xml:tests/coverage.xml" --cov-report=html --junitxml=./tests/junit.xml && rm -f .coverage
 
 tox:
 	tox
