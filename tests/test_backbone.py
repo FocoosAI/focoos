@@ -11,7 +11,6 @@ BACKBONE_CONFIGS = {
     "stdc": {"model_type": "stdc", "use_pretrained": False, "base": 64, "layers": [4, 5, 3]},
     "swin": {"model_type": "swin", "use_pretrained": False},
     "mobilenet_v2": {"model_type": "mobilenet_v2", "use_pretrained": False},
-    "mit": {"model_type": "mit", "use_pretrained": False},
     "convnextv2": {"model_type": "convnextv2", "use_pretrained": False},
 }
 
