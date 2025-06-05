@@ -84,7 +84,7 @@ For each detected object:
 - `mask` (str): Base64-encoded binary mask
 - `label` (Optional[str]): Human-readable class name
 
-## Loss Functions
+## Losses
 
 The model employs three complementary loss functions as described in the [original paper](https://arxiv.org/abs/2112.01527):
 
@@ -106,6 +106,51 @@ Currently, you can find 5 fai-mf models on the Focoos Hub, 2 for semantic segmen
 
 | Model Name | Architecture | Dataset | Metric | FPS Nvidia-T4 |
 |------------|--------------|----------|---------|--------------|
-| fai-m2f-s-coco-ins | Mask2Former (Resnet-50) | COCO | segm/AP: 41.45<br>segm/AP50: 64.12 | 86 |
-| fai-m2f-m-coco-ins | Mask2Former (Resnet-101) | COCO | segm/AP: 43.09<br>segm/AP50: 65.87 | 70 |
-| fai-m2f-l-coco-ins | Mask2Former (Resnet-101) | COCO | segm/AP: 44.23<br>segm/AP50: 67.53 | 55 |
+| fai-mf-s-coco-ins | Mask2Former (Resnet-50) | COCO | segm/AP: 41.45<br>segm/AP50: 64.12 | 86 |
+| fai-mf-m-coco-ins | Mask2Former (Resnet-101) | COCO | segm/AP: 43.09<br>segm/AP50: 65.87 | 70 |
+| fai-mf-l-coco-ins | Mask2Former (Resnet-101) | COCO | segm/AP: 44.23<br>segm/AP50: 67.53 | 55 |
+
+## Example Usage
+
+### Quick Start with Pre-trained Model
+
+```python
+from focoos.model_manager import ModelManager
+
+# Load a pre-trained BisenetFormer model
+model = ModelManager.get("fai-mf-l-ade")
+
+# Run inference on an image
+image = Image.open("path/to/image.jpg")
+result = model(image)
+
+# Process results
+for detection in result.detections:
+    print(f"Class: {detection.label}, Confidence: {detection.conf:.3f}")
+```
+
+### Custom Model Configuration
+
+```python
+from focoos.models.fai_mf.config import MaskFormerConfig
+from focoos.models.fai_mf.modelling import FAIMaskFormer
+from focoos.nn.backbone.stdc import STDCConfig
+
+# Configure the backbone
+backbone_config = STDCConfig(
+    model_type="stdc",
+    use_pretrained=True,
+)
+
+# Configure the model
+config = MaskFormerConfig(
+    backbone_config=backbone_config,
+    num_classes=80,
+    num_queries=300,
+    transformer_predictor_dec_layers=3,
+    threshold=0.5,
+)
+
+# Create the model
+model = FAIMaskFormer(config)
+```

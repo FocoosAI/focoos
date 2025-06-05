@@ -1,13 +1,14 @@
-# BisenetFormer (Bilateral Segmentation Network with Transformer)
+# BisenetFormer
 
 ## Overview
 
-BisenetFormer is an advanced semantic segmentation model that combines the efficiency of BiSeNet (Bilateral Segmentation Network) with the power of transformer architectures. Developed by FocoosAI, this model is designed for real-time semantic segmentation tasks requiring both high accuracy and computational efficiency.
+[BisenetFormer](https://arxiv.org/abs/2404.09570) is an advanced segmentation model that combines the efficiency of BiSeNet (Bilateral Segmentation Network) with the power of transformer architectures. Developed by FocoosAI, this model is designed for real-time semantic segmentation tasks requiring both high accuracy and computational efficiency.
 
 The model employs a dual-path architecture where spatial details are preserved through one path while semantic information is processed through another, then fused with transformer-based attention mechanisms for superior segmentation performance.
 
 ## Neural Network Architecture
 
+![BisenetFormer Architecture](./bisenetformer.png)
 The BisenetFormer architecture consists of four main components working in concert:
 
 ### Backbone
@@ -37,7 +38,7 @@ The BisenetFormer architecture consists of four main components working in conce
   - Self-attention layers for feature refinement
   - Cross-attention layers for multi-scale feature integration
   - Feed-forward networks (FFN) for feature transformation
-  - 100 learnable object queries
+  - 100 learnable object queries (configurable)
 - **Layers**: Configurable number of decoder layers (default: 6)
 
 ## Configuration Parameters
@@ -46,11 +47,6 @@ The BisenetFormer architecture consists of four main components working in conce
 - `num_classes` (int): Number of segmentation classes
 - `num_queries` (int, default=100): Number of learnable object queries
 - `backbone_config` (BackboneConfig): Backbone network configuration
-
-### Image Preprocessing
-- `pixel_mean` (List[float]): RGB normalization means [123.675, 116.28, 103.53]
-- `pixel_std` (List[float]): RGB normalization standard deviations [58.395, 57.12, 57.375]
-- `size_divisibility` (int, default=0): Input size divisibility constraint
 
 ### Architecture Dimensions
 - `pixel_decoder_out_dim` (int, default=256): Pixel decoder output channels
@@ -66,21 +62,16 @@ The BisenetFormer architecture consists of four main components working in conce
 - `threshold` (float, default=0.5): Confidence threshold for detections
 - `top_k` (int, default=300): Maximum number of detections to return
 - `use_mask_score` (bool, default=False): Whether to use mask quality scores
-- `predict_all_pixels` (bool, default=False): Predict class for every pixel
-- `cls_sigmoid` (bool, default=False): Use sigmoid activation for classification
+- `predict_all_pixels` (bool, default=False): Predict class for every pixel, usually better for semantic segmentation
 
-### Loss Configuration
-- `criterion_deep_supervision` (bool, default=True): Enable deep supervision
-- `criterion_eos_coef` (float, default=0.1): End-of-sequence coefficient
-- `criterion_num_points` (int, default=12544): Number of sampling points
-- `weight_dict_loss_ce` (int, default=2): Cross-entropy loss weight
-- `weight_dict_loss_mask` (int, default=5): Mask loss weight
-- `weight_dict_loss_dice` (int, default=5): Dice loss weight
+## Losses
 
-### Hungarian Matcher Configuration
-- `matcher_cost_class` (int, default=2): Classification cost for matching
-- `matcher_cost_mask` (int, default=5): Mask cost for matching
-- `matcher_cost_dice` (int, default=5): Dice cost for matching
+The model employs three complementary loss functions as described in the [Mask2Former paper](https://arxiv.org/abs/2112.01527):
+
+1. **Cross-entropy Loss (`loss_ce`)**: Classification of object classes
+2. **Dice Loss (`loss_dice`)**: Shape-aware segmentation loss
+3. **Mask Loss (`loss_mask`)**: Binary cross-entropy on predicted masks
+
 
 ## Supported Tasks
 
@@ -96,65 +87,78 @@ The BisenetFormer architecture consists of four main components working in conce
 
 ## Model Outputs
 
-### Training Output (`BisenetFormerOutput`)
+### Internal Output (`BisenetFormerOutput`)
 - `masks` (torch.Tensor): Shape [B, num_queries, H, W] - Query mask predictions
 - `logits` (torch.Tensor): Shape [B, num_queries, num_classes] - Class predictions
 - `loss` (Optional[dict]): Training losses including:
-  - `loss_ce`: Cross-entropy classification loss
-  - `loss_mask`: Binary cross-entropy mask loss
-  - `loss_dice`: Dice coefficient loss
+    - `loss_ce`: Cross-entropy classification loss
+    - `loss_mask`: Binary cross-entropy mask loss
+    - `loss_dice`: Dice coefficient loss
 
 ### Inference Output (`FocoosDetections`)
 For each detected object:
+
 - `bbox` (List[float]): Bounding box coordinates [x1, y1, x2, y2]
 - `conf` (float): Confidence score
 - `cls_id` (int): Class identifier
 - `mask` (str): Base64-encoded binary mask
 - `label` (Optional[str]): Human-readable class name
 
-## Key Features
-
-### Efficiency Optimizations
-- **Bilateral Architecture**: Separate paths for spatial details and semantic context
-- **Attention Refinement**: ARM modules enhance feature quality without computational overhead
-- **Lightweight Transformer**: Reduced decoder complexity for faster inference
-
-### Performance Advantages
-- **Real-time Capable**: Optimized for efficient inference
-- **Multi-scale Processing**: Leverages features at multiple resolutions
-- **Context Preservation**: Global context path maintains semantic understanding
-- **Detail Retention**: Spatial path preserves fine-grained details
-
-### Training Features
-- **Deep Supervision**: Auxiliary losses at multiple decoder layers
-- **Hungarian Matching**: Optimal assignment between predictions and ground truth
-- **Flexible Loss Functions**: Combines classification, mask, and shape-aware losses
-
-## Architecture Innovations
-
-The BisenetFormer introduces several key innovations:
-
-1. **Hybrid Architecture**: Combines the efficiency of bilateral networks with transformer attention
-2. **Feature Fusion Module**: Intelligent fusion of spatial and context paths
-3. **Attention Refinement**: ARM modules refine features at multiple scales
-4. **Query-based Segmentation**: Transformer queries enable instance-aware segmentation
-
-This architecture achieves an optimal balance between accuracy and efficiency, making it suitable for both research and production deployments requiring real-time semantic segmentation capabilities.
 
 ## Available Models
-Currently, you can find 5 fai-mf models on the Focoos Hub, 2 for semantic segmentation and 3 for instance-segmentation.
 
-### Semantic Segmentation Models
-
-| Model Name | Architecture | Dataset | Metric | FPS Nvidia-T4 |
-|------------|--------------|----------|---------|--------------|
-| fai-mf-l-ade | Mask2Former (Resnet-101) | ADE20K | mIoU: 48.27<br>mAcc: 62.15 | 73 |
-| fai-mf-m-ade | Mask2Former (STDC-2) | ADE20K | mIoU: 45.32<br>mACC: 57.75 | 127 |
-
-### Instance Segmentation Models
+Currently, you can find 3 bisenetformer models on the Focoos Hub, all for the semantic segmentation task.
 
 | Model Name | Architecture | Dataset | Metric | FPS Nvidia-T4 |
 |------------|--------------|----------|---------|--------------|
-| fai-m2f-s-coco-ins | Mask2Former (Resnet-50) | COCO | segm/AP: 41.45<br>segm/AP50: 64.12 | 86 |
-| fai-m2f-m-coco-ins | Mask2Former (Resnet-101) | COCO | segm/AP: 43.09<br>segm/AP50: 65.87 | 70 |
-| fai-m2f-l-coco-ins | Mask2Former (Resnet-101) | COCO | segm/AP: 44.23<br>segm/AP50: 67.53 | 55 |
+| bisenetformer-l-ade | BisenetFormer (STDC-2) | ADE20K | mIoU: 45.07<br>mAcc: 58.03 | - |
+| bisenetformer-m-ade | BisenetFormer (STDC-2) | ADE20K | mIoU: 43.43<br>mACC: 57.01 | - |
+| bisenetformer-s-ade | BisenetFormer (STDC-1) | ADE20K | mIoU: 42.91<br>mACC: 56.55 | - |
+
+
+## Example Usage
+
+### Quick Start with Pre-trained Model
+
+```python
+from focoos.model_manager import ModelManager
+
+# Load a pre-trained BisenetFormer model
+model = ModelManager.get("bisenetformer-m-ade")
+
+# Run inference on an image
+image = Image.open("path/to/image.jpg")
+result = model(image)
+
+# Process results
+for detection in result.detections:
+    print(f"Class: {detection.label}, Confidence: {detection.conf:.3f}")
+```
+
+### Custom Model Configuration
+
+```python
+from focoos.models.bisenetformer.config import BisenetFormerConfig
+from focoos.models.bisenetformer.modelling import BisenetFormer
+from focoos.nn.backbone.stdc import STDCConfig
+
+# Configure the backbone
+backbone_config = STDCConfig(
+    model_type="stdc",
+    use_pretrained=True,
+)
+
+# Configure the BisenetFormer model
+config = BisenetFormerConfig(
+    backbone_config=backbone_config,
+    num_classes=150,  # ADE20K classes
+    num_queries=100,
+    postprocessing_type="semantic",
+    predict_all_pixels=True,  # Better for semantic segmentation
+    transformer_predictor_dec_layers=6,
+    threshold=0.5,
+)
+
+# Create the model
+model = BisenetFormer(config)
+```
