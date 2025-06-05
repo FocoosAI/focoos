@@ -253,6 +253,10 @@ class FocoosModel:
             run_test(args, data_test, self.model, self.processor, self.model_info)
 
     @property
+    def name(self):
+        return self.model_info.name
+
+    @property
     def device(self):
         """Get the device where the model is located.
 
