@@ -35,9 +35,9 @@ nav:
   - Focoos AI:
       - Welcome: index.md
       - Setup: setup.md
+      - Concepts: concepts.md
       - Inference: inference.md
       - Training: training.md
-      - Concepts: concepts.md
   - HUB:
       - Overview: hub/overview.md
       - HUB: hub/hub.md
@@ -48,8 +48,6 @@ nav:
       - fai-mf: models/fai_mf.md
       - bisenetformer: models/bisenetformer.md
       - fai-cls: models/fai_cls.md
-
-  - Contribute: development/contributing.md
 
   - API Reference:
       - ModelManager: api/model_manager.md
