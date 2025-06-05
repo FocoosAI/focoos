@@ -70,7 +70,7 @@ valid_dataset = auto_dataset.get_split(augs=val_augs.get_augmentations(), split=
 model = ModelManager.get("fai-detr-l-obj365")
 
 args = TrainerArgs(
-    run_name=f"{ds_name}-{model.model_info.name}",
+    run_name=f"{model.name}_{train_dataset.name}",
     batch_size=16,
     max_iters=50,
     eval_period=50,
