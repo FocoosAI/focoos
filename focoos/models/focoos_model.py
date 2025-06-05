@@ -303,7 +303,7 @@ class FocoosModel:
 
     def export(
         self,
-        runtime_type: RuntimeType = RuntimeType.ONNX_CUDA32,
+        runtime_type: RuntimeType = RuntimeType.TORCHSCRIPT_32,
         onnx_opset: int = 17,
         out_dir: Optional[str] = None,
         device: Literal["cuda", "cpu"] = "cuda",
