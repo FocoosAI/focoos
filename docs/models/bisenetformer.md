@@ -1,4 +1,4 @@
-# BisenetFormer (Bilateral Segmentation Network with Transformer)
+# BisenetFormer
 
 ## Overview
 
