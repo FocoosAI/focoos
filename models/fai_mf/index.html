@@ -14,7 +14,7 @@
         <link rel="prev" href="../fai_detr/">
       
       
-        <link rel="next" href="../fai_cls/">
+        <link rel="next" href="../bisenetformer/">
       
       
       <link rel="icon" href="../../assets/favicon.svg">
@@ -281,25 +281,6 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../development/contributing/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Contribute
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
     
     
       <li class="md-tabs__item">
@@ -459,6 +440,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Concepts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../inference/" class="md-nav__link">
         
   
@@ -488,29 +492,6 @@
   
   <span class="md-ellipsis">
     Training
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../concepts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Concepts
     
   </span>
   
@@ -962,9 +943,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#loss-functions" class="md-nav__link">
+  <a href="#losses" class="md-nav__link">
     <span class="md-ellipsis">
-      Loss Functions
+      Losses
     </span>
   </a>
   
@@ -1003,33 +984,43 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#example-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Example Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-start-with-pre-trained-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Start with Pre-trained Model
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-model-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Model Configuration
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../fai_cls/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    fai-cls
-    
-  </span>
-  
-
-      </a>
     </li>
   
 
@@ -1058,31 +1049,32 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
+              
+                
   
   
   
   
     <li class="md-nav__item">
-      <a href="../../development/contributing/" class="md-nav__link">
+      <a href="../fai_cls/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Contribute
+    fai-cls
     
   </span>
   
 
       </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -1105,10 +1097,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
             
   
   
@@ -1121,8 +1113,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             API Reference
           </label>
@@ -1169,10 +1161,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
         
           
-          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
             
   
   
@@ -1185,8 +1177,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_2">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
             <span class="md-nav__icon md-icon"></span>
             FocoosModel
           </label>
@@ -1287,10 +1279,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
         
           
-          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
             
   
   
@@ -1303,8 +1295,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_4">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
             <span class="md-nav__icon md-icon"></span>
             InferModel
           </label>
@@ -1428,10 +1420,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" >
         
           
-          <label class="md-nav__link" for="__nav_5_7" id="__nav_5_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
             
   
   
@@ -1444,8 +1436,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_7">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7">
             <span class="md-nav__icon md-icon"></span>
             Trainer
           </label>
@@ -1776,9 +1768,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#loss-functions" class="md-nav__link">
+  <a href="#losses" class="md-nav__link">
     <span class="md-ellipsis">
-      Loss Functions
+      Losses
     </span>
   </a>
   
@@ -1807,6 +1799,39 @@
   <a href="#instance-segmentation-models" class="md-nav__link">
     <span class="md-ellipsis">
       Instance Segmentation Models
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example Usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Example Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-start-with-pre-trained-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Start with Pre-trained Model
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-model-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom Model Configuration
     </span>
   </a>
   
@@ -1925,7 +1950,7 @@ Unlike traditional segmentation models such as <a href="https://arxiv.org/abs/18
 <li><code>mask</code> (str): Base64-encoded binary mask</li>
 <li><code>label</code> (Optional[str]): Human-readable class name</li>
 </ul>
-<h2 id="loss-functions">Loss Functions<a class="headerlink" href="#loss-functions" title="Permanent link">#</a></h2>
+<h2 id="losses">Losses<a class="headerlink" href="#losses" title="Permanent link">#</a></h2>
 <p>The model employs three complementary loss functions as described in the <a href="https://arxiv.org/abs/2112.01527">original paper</a>:</p>
 <ol>
 <li><strong>Cross-entropy Loss (<code>loss_ce</code>)</strong>: Classification of object classes</li>
@@ -1975,21 +2000,21 @@ Unlike traditional segmentation models such as <a href="https://arxiv.org/abs/18
 </thead>
 <tbody>
 <tr>
-<td>fai-m2f-s-coco-ins</td>
+<td>fai-mf-s-coco-ins</td>
 <td>Mask2Former (Resnet-50)</td>
 <td>COCO</td>
 <td>segm/AP: 41.45<br>segm/AP50: 64.12</td>
 <td>86</td>
 </tr>
 <tr>
-<td>fai-m2f-m-coco-ins</td>
+<td>fai-mf-m-coco-ins</td>
 <td>Mask2Former (Resnet-101)</td>
 <td>COCO</td>
 <td>segm/AP: 43.09<br>segm/AP50: 65.87</td>
 <td>70</td>
 </tr>
 <tr>
-<td>fai-m2f-l-coco-ins</td>
+<td>fai-mf-l-coco-ins</td>
 <td>Mask2Former (Resnet-101)</td>
 <td>COCO</td>
 <td>segm/AP: 44.23<br>segm/AP50: 67.53</td>
@@ -1997,6 +2022,75 @@ Unlike traditional segmentation models such as <a href="https://arxiv.org/abs/18
 </tr>
 </tbody>
 </table>
+<h2 id="example-usage">Example Usage<a class="headerlink" href="#example-usage" title="Permanent link">#</a></h2>
+<h3 id="quick-start-with-pre-trained-model">Quick Start with Pre-trained Model<a class="headerlink" href="#quick-start-with-pre-trained-model" title="Permanent link">#</a></h3>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.model_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelManager</span>
+
+<span class="c1"># Load a pre-trained BisenetFormer model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">ModelManager</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fai-mf-l-ade&quot;</span><span class="p">)</span>
+
+<span class="c1"># Run inference on an image</span>
+<span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;path/to/image.jpg&quot;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+<span class="c1"># Process results</span>
+<span class="k">for</span> <span class="n">detection</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">detections</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Class: </span><span class="si">{</span><span class="n">detection</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">, Confidence: </span><span class="si">{</span><span class="n">detection</span><span class="o">.</span><span class="n">conf</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<h3 id="custom-model-configuration">Custom Model Configuration<a class="headerlink" href="#custom-model-configuration" title="Permanent link">#</a></h3>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.models.fai_mf.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaskFormerConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">focoos.models.fai_mf.modelling</span><span class="w"> </span><span class="kn">import</span> <span class="n">FAIMaskFormer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">focoos.nn.backbone.stdc</span><span class="w"> </span><span class="kn">import</span> <span class="n">STDCConfig</span>
+
+<span class="c1"># Configure the backbone</span>
+<span class="n">backbone_config</span> <span class="o">=</span> <span class="n">STDCConfig</span><span class="p">(</span>
+    <span class="n">model_type</span><span class="o">=</span><span class="s2">&quot;stdc&quot;</span><span class="p">,</span>
+    <span class="n">use_pretrained</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Configure the model</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">MaskFormerConfig</span><span class="p">(</span>
+    <span class="n">backbone_config</span><span class="o">=</span><span class="n">backbone_config</span><span class="p">,</span>
+    <span class="n">num_classes</span><span class="o">=</span><span class="mi">80</span><span class="p">,</span>
+    <span class="n">num_queries</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+    <span class="n">transformer_predictor_dec_layers</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Create the model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">FAIMaskFormer</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
 
 
 
