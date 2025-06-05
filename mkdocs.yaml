@@ -46,9 +46,8 @@ nav:
       - Overview: models/models.md
       - fai-detr: models/fai_detr.md
       - fai-mf: models/fai_mf.md
-      - fai-cls: models/fai_cls.md
       - bisenetformer: models/bisenetformer.md
-
+      - fai-cls: models/fai_cls.md
 
   - Contribute: development/contributing.md
 
