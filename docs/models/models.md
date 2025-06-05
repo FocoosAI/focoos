@@ -35,9 +35,9 @@ With the Focoos SDK, you can take advantage of a collection of foundational mode
 
 | Model Name | Architecture | Domain (Classes) | Dataset | Metric | FPS Nvidia-T4 |
 |------------|--------------|------------------|----------|---------|--------------|
-| [fai-m2f-s-coco-ins](fai_mf.md) | [Mask2Former](https://github.com/facebookresearch/Mask2Former) ([Resnet-50](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py)) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | segm/AP: 41.45<br>segm/AP50: 64.12 | 86 |
-| [fai-m2f-m-coco-ins](fai_mf.md) | [Mask2Former](https://github.com/facebookresearch/Mask2Former) ([Resnet-101](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py)) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | segm/AP: 43.09<br>segm/AP50: 65.87 | 70 |
-| [fai-m2f-l-coco-ins](fai_mf.md) | [Mask2Former](https://github.com/facebookresearch/Mask2Former) ([Resnet-101](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py)) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | segm/AP: 44.23<br>segm/AP50: 67.53 | 55 |
+| [fai-mf-s-coco-ins](fai_mf.md) | [Mask2Former](https://github.com/facebookresearch/Mask2Former) ([Resnet-50](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py)) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | segm/AP: 41.45<br>segm/AP50: 64.12 | 86 |
+| [fai-mf-m-coco-ins](fai_mf.md) | [Mask2Former](https://github.com/facebookresearch/Mask2Former) ([Resnet-101](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py)) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | segm/AP: 43.09<br>segm/AP50: 65.87 | 70 |
+| [fai-mf-l-coco-ins](fai_mf.md) | [Mask2Former](https://github.com/facebookresearch/Mask2Former) ([Resnet-101](https://github.com/pytorch/vision/blob/main/torchvision/models/resnet.py)) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | segm/AP: 44.23<br>segm/AP50: 67.53 | 55 |
 
 <small> AP = Average Precision averaged by class </small> <br>
 <small> AP50 = Average Precision at IoU threshold 0.50 averaged by class </small> <br>

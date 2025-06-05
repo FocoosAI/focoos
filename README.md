@@ -8,10 +8,10 @@ Focoos AI provides an advanced development platform designed to empower develope
 
 ## Overview
 
-<!-- Unlock the full potential of Focoos AI with the Focoos Python SDK! 🚀  -->
-The Focoos Python SDK is your gateway to easily access cutting-edge computer vision models and development tools. With just a few lines of code, you can **fine tune** pre-trained models tailored to your specific needs.
+<!-- Unlock the full potential of Focoos AI with the Focoos library! 🚀  -->
+The Focoos library is your gateway to easily access cutting-edge computer vision models and development tools. With just a few lines of code, you can **fine tune** pre-trained models tailored to your specific needs.
 
-Whether you're working in the cloud or on edge devices, the Focoos Python SDK seamlessly integrates into your workflow, accelerating development and simplifying the implementation of computer vision solutions.
+Whether you're working in the cloud or on edge devices, the Focoos library seamlessly integrates into your workflow, accelerating development and simplifying the implementation of computer vision solutions.
 
 ### Key Features 🔑
 
@@ -29,7 +29,7 @@ Whether you're working in the cloud or on edge devices, the Focoos Python SDK se
 Ready to dive in? Get started with the setup in just a few simple steps!
 
 ## Installation
-**Install** the Focoos Python SDK (for more options, see [setup](https://focoosai.github.io/focoos/setup))
+**Install** the Focoos library (for more options, see [setup](https://focoosai.github.io/focoos/setup))
 
 ```bash linenums="0"
 uv pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'

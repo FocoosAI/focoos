@@ -106,9 +106,9 @@ Currently, you can find 5 fai-mf models on the Focoos Hub, 2 for semantic segmen
 
 | Model Name | Architecture | Dataset | Metric | FPS Nvidia-T4 |
 |------------|--------------|----------|---------|--------------|
-| fai-m2f-s-coco-ins | Mask2Former (Resnet-50) | COCO | segm/AP: 41.45<br>segm/AP50: 64.12 | 86 |
-| fai-m2f-m-coco-ins | Mask2Former (Resnet-101) | COCO | segm/AP: 43.09<br>segm/AP50: 65.87 | 70 |
-| fai-m2f-l-coco-ins | Mask2Former (Resnet-101) | COCO | segm/AP: 44.23<br>segm/AP50: 67.53 | 55 |
+| fai-mf-s-coco-ins | Mask2Former (Resnet-50) | COCO | segm/AP: 41.45<br>segm/AP50: 64.12 | 86 |
+| fai-mf-m-coco-ins | Mask2Former (Resnet-101) | COCO | segm/AP: 43.09<br>segm/AP50: 65.87 | 70 |
+| fai-mf-l-coco-ins | Mask2Former (Resnet-101) | COCO | segm/AP: 44.23<br>segm/AP50: 67.53 | 55 |
 
 ## Example Usage
 
