@@ -1,6 +1,8 @@
 # 🚀 Focoos HUB Overview
 The Focoos HUB is a cloud-based platform that provides seamless integration between your local development environment and the Focoos AI ecosystem. It enables you to manage models, datasets, perform remote inference operations, and monitor training progress through a unified API.
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/main/tutorials/hub.ipynb)
+
 ## What is Focoos HUB?
 
 Focoos HUB serves as your gateway to:

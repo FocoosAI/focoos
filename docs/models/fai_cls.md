@@ -1,40 +1,202 @@
+# FAI-CLS (FocoosAI Classification)
 
 ## Overview
-The models is a [Mask2Former](https://github.com/facebookresearch/Mask2Former) model otimized by [FocoosAI](https://focoos.ai) for the [ADE20K dataset](https://groups.csail.mit.edu/vision/datasets/ADE20K/). It is a semantic segmentation model able to segment 150 classes, comprising both stuff (sky, road, etc.) and thing (dog, cat, car, etc.).
 
-## Model Details
-The model is based on the [Mask2Former](https://github.com/facebookresearch/Mask2Former) architecture. It is a segmentation model that uses a transformer-based encoder-decoder architecture.
-Differently from traditional segmentation models (such as [DeepLab](https://arxiv.org/abs/1802.02611)), Mask2Former uses a mask-classification approach, where the prediction is made by a set of segmentation mask with associated class probabilities.
+FAI-CLS is a versatile image classification model developed by FocoosAI that can utilize any backbone architecture for feature extraction. This model is designed for both single-label and multi-label image classification tasks, offering flexibility in architecture choices and training configurations.
 
-### Neural Network Architecture
-The [Mask2Former](https://arxiv.org/abs/2112.01527) FocoosAI implementation optimize the original neural network architecture for improving the model's efficiency and performance. The original model is fully described in this [paper](https://arxiv.org/abs/2112.01527).
+The model employs a simple yet effective approach: a configurable backbone extracts features from input images, followed by a classification head that produces class predictions. This design enables easy adaptation to different domains and datasets while maintaining high performance and computational efficiency.
 
-Mask2Former is a hybrid model that uses three main components: a *backbone* for extracting features, a *pixel decoder* for upscaling the features, and a *transformer-based decoder* for generating the segmentation output.
+## Neural Network Architecture
 
-![alt text](./mask2former.png)
+The FAI-CLS architecture consists of two main components:
 
-In this implementation:
+### Backbone
+- **Purpose**: Feature extraction from input images
+- **Design**: Configurable backbone network (ResNet, EfficientNet, STDC, etc.)
+- **Output**: High-level feature representations
+- **Feature Selection**: Uses specified feature level (default: "res5" for highest-level features)
+- **Flexibility**: Supports any backbone that provides the required output shape
 
- - the backbone is [STDC-1](https://github.com/MichaelFan01/STDC-Seg) that shows a trade-off tending to be more efficient.
- - the pixel decoder is a [FPN](https://arxiv.org/abs/1612.03144) getting the features from the stage 2 (1/4 resolution), 3 (1/8 resolution), 4 (1/16 resolution) and 5 (1/32 resolution) of the backbone. Differently from the original paper, for the sake of portability, we removed the deformable attention modules in the pixel decoder, speeding up the inference while only marginally affecting the accuracy.
- - the transformer decoder is a extremely light version of the original, having only 1 decoder layer (instead of 9) and 100 learnable queries.
+### Classification Head
+- **Architecture**: Multi-layer perceptron (MLP) with configurable depth
+- **Components**:
+  - Global Average Pooling (AdaptiveAvgPool2d) for spatial dimension reduction
+  - Flatten layer to convert 2D features to 1D
+  - Linear layers with ReLU activation
+  - Dropout for regularization
+  - Final linear layer for class predictions
+- **Configurations**:
+  - **Single Layer**: Direct mapping from features to classes
+  - **Two Layer**: Hidden layer with ReLU and dropout for better feature transformation
 
-### Losses
-We use the same losses as the original paper:
+## Configuration Parameters
 
-- loss_ce: Cross-entropy loss for the classification of the classes
-- loss_dice: Dice loss for the segmentation of the classes
-- loss_mask: A binary cross-entropy loss applied to the predicted segmentation masks
+### Core Model Parameters
+- `num_classes` (int): Number of classification classes
+- `backbone_config` (BackboneConfig): Backbone network configuration
 
-Please refer to the [Mask2Former paper](https://arxiv.org/abs/2112.01527) for more details.
+### Architecture Configuration
+- `hidden_dim` (int, default=512): Hidden layer dimension for two-layer classifier
+- `dropout_rate` (float, default=0.2): Dropout probability for regularization
+- `features` (str, default="res5"): Feature level to extract from backbone
+- `num_layers` (int, default=2): Number of classification layers (1 or 2)
 
-### Output Format
-The pre-processed output of the model is set of masks with associated class probabilities. In particular, the output is composed by three tensors:
+### Loss Configuration
+- `use_focal_loss` (bool, default=False): Use focal loss instead of cross-entropy
+- `focal_alpha` (float, default=0.75): Alpha parameter for focal loss
+- `focal_gamma` (float, default=2.0): Gamma parameter for focal loss
+- `label_smoothing` (float, default=0.0): Label smoothing factor
+- `multi_label` (bool, default=False): Enable multi-label classification
 
-- class_ids: a tensor of 100 elements containing the class id associated with each mask (such as 1 for wall, 2 for building, etc.)
-- scores: a tensor of 100 elements containing the corresponding probability of the class_id
-- masks: a tensor of shape (100, H, W) where H and W are the height and width of the input image and the values represent the index of the class_id associated with the pixel
+## Supported Tasks
 
-The model does not need NMS (non-maximum suppression) because the output is already a set of masks with associated class probabilities and has been trained to avoid overlapping masks.
+### Single-Label Classification
+- **Output**: Single class prediction per image
+- **Use Cases**:
+  - Image categorization (animals, objects, scenes)
+  - Medical image diagnosis
+  - Quality control in manufacturing
+  - Content moderation
+  - Agricultural crop classification
+- **Loss**: Cross-entropy or focal loss
+- **Configuration**: Set `multi_label=False`
 
-After the post-processing, the output is a [Focoos Detections](https://github.com/FocoosAI/focoos/blob/4a317a269cb7758ea71b255faeba654d21182083/focoos/ports.py#L179) object containing the predicted masks with confidence greather than a specific threshold (0.5 by default).
+### Multi-Label Classification
+- **Output**: Multiple class predictions per image
+- **Use Cases**:
+  - Multi-object recognition
+  - Image tagging and annotation
+  - Scene attribute recognition
+  - Medical condition classification
+  - Content-based image retrieval
+- **Loss**: Binary cross-entropy with logits
+- **Configuration**: Set `multi_label=True`
+
+## Model Outputs
+
+### Training Output (`ClassificationModelOutput`)
+- `logits` (torch.Tensor): Shape [B, num_classes] - Raw class predictions
+- `loss` (Optional[dict]): Training loss including:
+    - `loss_cls`: Classification loss (cross-entropy, focal, or BCE)
+
+### Inference Output
+For each detected object:
+
+- `conf` (float): Confidence score
+- `cls_id` (int): Class identifier
+- `label` (Optional[str]): Human-readable class name
+
+
+## Losses
+
+The model supports multiple loss function configurations:
+
+### Cross-Entropy Loss (Default)
+- **Use Case**: Standard single-label classification
+- **Features**: Optional label smoothing for better generalization
+- **Activation**: Softmax for probability distribution
+
+### Focal Loss
+- **Use Case**: Imbalanced datasets with hard-to-classify examples
+- **Parameters**:
+  - Alpha (α): Controls importance of rare class
+  - Gamma (γ): Focuses learning on hard examples
+- **Benefits**: Improved performance on imbalanced datasets
+
+### Binary Cross-Entropy Loss
+- **Use Case**: Multi-label classification tasks
+- **Features**: Independent probability for each class
+- **Activation**: Sigmoid for per-class probabilities
+
+## Architecture Variants
+
+### Single-Layer Classifier
+```
+AdaptiveAvgPool2d(1) → Flatten → Dropout → Linear(features → num_classes)
+```
+- **Benefits**: Faster inference, fewer parameters
+- **Use Case**: Simple datasets or when computational efficiency is critical
+
+### Two-Layer Classifier
+```
+AdaptiveAvgPool2d(1) → Flatten → Linear(features → hidden_dim) → ReLU → Dropout → Linear(hidden_dim → num_classes)
+```
+- **Benefits**: Better feature transformation, improved accuracy
+- **Use Case**: Complex datasets requiring more sophisticated feature processing
+
+## Training Strategies
+
+### Standard Training
+- Use cross-entropy loss with appropriate learning rate scheduling
+- Apply data augmentation for better generalization
+- Monitor validation accuracy for early stopping
+
+### Imbalanced Data
+- Enable focal loss with appropriate α and γ parameters
+- Consider class weighting strategies
+- Use stratified sampling for validation
+
+### Multi-Label Scenarios
+- Set `multi_label=True` in configuration
+- Use appropriate evaluation metrics (F1-score, mAP)
+- Consider threshold optimization for final predictions
+
+This flexible architecture makes FAI-CLS suitable for a wide range of image classification applications, from simple binary classification to complex multi-label scenarios, while maintaining computational efficiency and ease of use.
+
+
+## Example Usage
+
+### Single-Label Classification Setup
+
+```python
+from focoos.models.fai_cls.config import ClassificationConfig
+from focoos.models.fai_cls.modelling import FAIClassification
+from focoos.nn.backbone.resnet import ResnetConfig
+
+# Configure with ResNet backbone
+backbone_config = ResnetConfig(
+    model_type="resnet",
+    depth=50,
+    pretrained=True,
+)
+
+config = ClassificationConfig(
+    backbone_config=backbone_config,
+    num_classes=1000,  # ImageNet classes
+    resolution=224,
+    num_layers=2,
+    hidden_dim=512,
+    dropout_rate=0.2,
+)
+
+# Create model
+model = FAIClassification(config)
+```
+
+### Multi-Label Classification Setup
+
+```python
+from focoos.models.fai_cls.config import ClassificationConfig
+from focoos.models.fai_cls.modelling import FAIClassification
+from focoos.nn.backbone.resnet import ResnetConfig
+
+# Configure with ResNet backbone
+backbone_config = ResnetConfig(
+    model_type="resnet",
+    depth=50,
+    pretrained=True,
+)
+
+config = ClassificationConfig(
+    backbone_config=backbone_config,
+    num_classes=1000,  # ImageNet classes
+    resolution=224,
+    num_layers=2,
+    hidden_dim=512,
+    dropout_rate=0.2,
+    multi_label=True,
+)
+
+# Create model
+model = FAIClassification(config)
+```
