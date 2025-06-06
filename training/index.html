@@ -1682,14 +1682,14 @@ Optionally, if you are using the hub, you can specify <code>sync_to_hub=True</co
 <span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.ports</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrainerArgs</span>
 
 <span class="n">args</span> <span class="o">=</span> <span class="n">TrainerArgs</span><span class="p">(</span>
-    <span class="n">run_name</span><span class="o">=</span><span class="s2">&quot;football-tutorial&quot;</span><span class="p">,</span>  <span class="c1"># the name of the experiment</span>
-    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./experiments&quot;</span><span class="p">,</span>  <span class="c1"># the folder where the model is saved</span>
+    <span class="n">run_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">train_dataset</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># the name of the experiment</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./experiments&quot;</span><span class="p">,</span>  <span class="c1"># the folder where the model is saved, DEFAULT  ~/FocoosAI/models&quot;</span>
     <span class="n">batch_size</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>  <span class="c1"># how many images in each iteration</span>
     <span class="n">max_iters</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>  <span class="c1"># how many iterations lasts the training</span>
     <span class="n">eval_period</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># period after we eval the model on the validation (in iterations)</span>
     <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span>  <span class="c1"># learning rate</span>
     <span class="n">weight_decay</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span>  <span class="c1"># regularization strenght (set it properly to avoid under/over fitting)</span>
-    <span class="n">sync_to_hub</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># Use this to see the model under training on the platform</span>
+    <span class="n">sync_to_hub</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="c1"># Use this to sync model info, weights and metrics on the platform</span>
 <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
 <h3 id="train-the-model">Train the model<a class="headerlink" href="#train-the-model" title="Permanent link">#</a></h3>

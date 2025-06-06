@@ -2051,10 +2051,7 @@ once the model's performance on the validation set no longer improves.</p>
 <span class="normal">108</span>
 <span class="normal">109</span>
 <span class="normal">110</span>
-<span class="normal">111</span>
-<span class="normal">112</span>
-<span class="normal">113</span>
-<span class="normal">114</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SyncToHubHook</span><span class="p">(</span><span class="n">HookBase</span><span class="p">):</span>
+<span class="normal">111</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SyncToHubHook</span><span class="p">(</span><span class="n">HookBase</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">remote_model</span><span class="p">:</span> <span class="n">RemoteModel</span><span class="p">,</span>
@@ -2110,8 +2107,8 @@ once the model's performance on the validation set no longer improves.</p>
             <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">after_train</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Catch exception and sync training info, final weights will be synced in main trainer fn</span>
         <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">exc_traceback</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()</span>
-        <span class="n">status</span> <span class="o">=</span> <span class="n">ModelStatus</span><span class="o">.</span><span class="n">TRAINING_COMPLETED</span>
         <span class="k">if</span> <span class="n">exc_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Exception during training, status set to TRAINING_ERROR: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">exc_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">exc_value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -2131,23 +2128,20 @@ once the model's performance on the validation set no longer improves.</p>
                         <span class="n">detail</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">exc_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span><span class="si">}</span><span class="s2">:  </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">exc_value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">dump_json</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">ArtifactName</span><span class="o">.</span><span class="n">INFO</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sync_train_job</span><span class="p">(</span>
-            <span class="n">sync_info</span><span class="o">=</span><span class="n">HubSyncLocalTraining</span><span class="p">(</span>
-                <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
-                <span class="n">iterations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration</span><span class="p">,</span>
-                <span class="n">training_info</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">training_info</span><span class="p">,</span>
-            <span class="p">),</span>
-            <span class="n">upload_artifacts</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">ArtifactName</span><span class="o">.</span><span class="n">WEIGHTS</span><span class="p">,</span>
-                <span class="n">ArtifactName</span><span class="o">.</span><span class="n">LOGS</span><span class="p">,</span>
-                <span class="n">ArtifactName</span><span class="o">.</span><span class="n">PT</span><span class="p">,</span>
-                <span class="n">ArtifactName</span><span class="o">.</span><span class="n">ONNX</span><span class="p">,</span>
-                <span class="n">ArtifactName</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
-                <span class="n">ArtifactName</span><span class="o">.</span><span class="n">METRICS</span><span class="p">,</span>
-            <span class="p">],</span>
-        <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">dump_json</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">ArtifactName</span><span class="o">.</span><span class="n">INFO</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sync_train_job</span><span class="p">(</span>
+                <span class="n">sync_info</span><span class="o">=</span><span class="n">HubSyncLocalTraining</span><span class="p">(</span>
+                    <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+                    <span class="n">iterations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration</span><span class="p">,</span>
+                    <span class="n">training_info</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">training_info</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">upload_artifacts</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">ArtifactName</span><span class="o">.</span><span class="n">WEIGHTS</span><span class="p">,</span>
+                    <span class="n">ArtifactName</span><span class="o">.</span><span class="n">LOGS</span><span class="p">,</span>
+                    <span class="n">ArtifactName</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+                    <span class="n">ArtifactName</span><span class="o">.</span><span class="n">METRICS</span><span class="p">,</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_sync_train_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sync_info</span><span class="p">:</span> <span class="n">HubSyncLocalTraining</span><span class="p">,</span> <span class="n">upload_artifacts</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">ArtifactName</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
