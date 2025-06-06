@@ -23,6 +23,7 @@ ROOT_DIR = Path.home() / "FocoosAI"
 ROOT_DIR = str(ROOT_DIR) if os.name == "nt" else ROOT_DIR
 MODELS_DIR = os.path.join(ROOT_DIR, "models")
 DATASETS_DIR = os.path.join(ROOT_DIR, "datasets")
+PREDICT_DIR = os.path.join(ROOT_DIR, "predict")
 
 
 class PydanticBase(BaseModel, ABC):
@@ -464,6 +465,12 @@ class RuntimeType(str, Enum):
     ONNX_COREML = "onnx_coreml"
     TORCHSCRIPT_32 = "torchscript_32"
 
+    def __str__(self) -> str:
+        return self.value
+
+    def __repr__(self) -> str:
+        return self.value
+
     def to_export_format(self) -> ExportFormat:
         if self == RuntimeType.TORCHSCRIPT_32:
             return ExportFormat.TORCHSCRIPT
@@ -799,6 +806,11 @@ def get_gpus_count():
         return 0
 
 
+SchedulerType = Literal["POLY", "FIXED", "COSINE", "MULTISTEP"]
+OptimizerType = Literal["ADAMW", "SGD", "RMSPROP"]
+DeviceType = Literal["cuda", "cpu"]
+
+
 @dataclass
 class TrainerArgs:
     """Configuration class for unified model training.
@@ -876,9 +888,9 @@ class TrainerArgs:
     weight_decay: float = 0.02
     max_iters: int = 3000
     batch_size: int = 16
-    scheduler: Literal["POLY", "FIXED", "COSINE", "MULTISTEP"] = "MULTISTEP"
+    scheduler: SchedulerType = "MULTISTEP"
     scheduler_extra: Optional[dict] = None
-    optimizer: Literal["ADAMW", "SGD", "RMSPROP"] = "ADAMW"
+    optimizer: OptimizerType = "ADAMW"
     optimizer_extra: Optional[dict] = None
     weight_decay_norm: float = 0.0
     weight_decay_embed: float = 0.0
