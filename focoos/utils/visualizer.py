@@ -487,11 +487,10 @@ def _create_text_labels(classes, scores, class_names, is_crowd=None):
         list[str] or None
     """
     labels = None
-    if classes is not None:
-        if class_names is not None and len(class_names) > 0:
-            labels = [class_names[i] for i in classes]
-        else:
-            labels = [str(i) for i in classes]
+    if classes is not None and class_names is not None:
+        labels = [class_names[i] if i < len(class_names) else str(i) for i in classes]
+    else:
+        labels = [str(i) for i in classes]
     if scores is not None:
         if labels is None:
             labels = ["{:.0f}%".format(s * 100) for s in scores]

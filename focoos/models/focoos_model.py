@@ -152,6 +152,7 @@ class FocoosModel:
         self.model_info.config["num_classes"] = len(data_train.dataset.metadata.classes)
         self._reload_model()
         self.model_info.name = train_args.run_name.strip()
+        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)
         assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
 
     def train(self, args: TrainerArgs, data_train: MapDataset, data_val: MapDataset, hub: Optional[FocoosHUB] = None):
