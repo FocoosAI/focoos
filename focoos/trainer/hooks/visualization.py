@@ -125,75 +125,78 @@ class VisualizationHook(HookBase):
     def _visualize(self):
         training_mode = self.model.training
 
-        with ExitStack() as stack:
-            stack.enter_context(torch.no_grad())
-            stack.enter_context(inference_context(self.model))
-            stack.enter_context(inference_context(self.processor))
+        try:
+            with ExitStack() as stack:
+                stack.enter_context(torch.no_grad())
+                stack.enter_context(inference_context(self.model))
+                stack.enter_context(inference_context(self.processor))
 
-            storage = get_event_storage()
-            self.model.eval()
+                storage = get_event_storage()
+                self.model.eval()
 
-            all_visualized_images = []
+                all_visualized_images = []
 
-            for i in range(self.n_sample):
-                sample = self.samples[i]
-                sample["height"], sample["width"] = sample["image"].shape[-2:]
+                for i in range(self.n_sample):
+                    sample = self.samples[i]
+                    sample["height"], sample["width"] = sample["image"].shape[-2:]
 
-                samples = [sample]
-                images, _ = self.processor.preprocess(samples, device=self.model.device, dtype=self.model.dtype)
-                outputs = self.model(images)
-                prediction = self.processor.eval_postprocess(outputs, samples)[0]
+                    samples = [sample]
+                    images, _ = self.processor.preprocess(samples, device=self.model.device, dtype=self.model.dtype)
+                    outputs = self.model(images)
+                    prediction = self.processor.eval_postprocess(outputs, samples)[0]
 
-                visualizer = Visualizer(
-                    sample["image"].permute(1, 2, 0).cpu().numpy(),
-                    self.metadata,
-                    instance_mode=ColorMode.IMAGE,
-                )
-                if "panoptic_seg" in prediction:
-                    panoptic_seg, segments_info = prediction["panoptic_seg"]
-                    vis_output = visualizer.draw_panoptic_seg_predictions(
-                        panoptic_seg.to(self.cpu_device), segments_info
+                    visualizer = Visualizer(
+                        sample["image"].permute(1, 2, 0).cpu().numpy(),
+                        self.metadata,
+                        instance_mode=ColorMode.IMAGE,
                     )
-                elif "sem_seg" in prediction:
-                    vis_output = visualizer.draw_sem_seg(prediction["sem_seg"].argmax(dim=0).to(self.cpu_device))
-                elif "instances" in prediction:
-                    instances = prediction["instances"].to(self.cpu_device)
-                    # filter based on confidence - fixed at 0.5
-                    instances = instances[instances.scores > 0.5]
-                    vis_output = visualizer.draw_instance_predictions(predictions=instances)
-                else:
-                    vis_output = None
+                    if "panoptic_seg" in prediction:
+                        panoptic_seg, segments_info = prediction["panoptic_seg"]
+                        vis_output = visualizer.draw_panoptic_seg_predictions(
+                            panoptic_seg.to(self.cpu_device), segments_info
+                        )
+                    elif "sem_seg" in prediction:
+                        vis_output = visualizer.draw_sem_seg(prediction["sem_seg"].argmax(dim=0).to(self.cpu_device))
+                    elif "instances" in prediction:
+                        instances = prediction["instances"].to(self.cpu_device)
+                        # filter based on confidence - fixed at 0.5
+                        instances = instances[instances.scores > 0.5]
+                        vis_output = visualizer.draw_instance_predictions(predictions=instances)
+                    else:
+                        vis_output = None
 
-                if vis_output is not None:
-                    pred_img = vis_output.get_image()
-                    # Non salviamo più i singoli samples nello storage
-                    all_visualized_images.append(pred_img)
+                    if vis_output is not None:
+                        pred_img = vis_output.get_image()
+                        # Non salviamo più i singoli samples nello storage
+                        all_visualized_images.append(pred_img)
 
-            # Create and save mosaic if we have images and output directory
-            if all_visualized_images:
-                # Get current iteration for filename
-                try:
-                    current_iter = self.trainer.iter
-                except (AttributeError, TypeError):
-                    current_iter = 0
+                # Create and save mosaic if we have images and output directory
+                if all_visualized_images:
+                    # Get current iteration for filename
+                    try:
+                        current_iter = self.trainer.iter
+                    except (AttributeError, TypeError):
+                        current_iter = 0
 
-                # Create mosaic
-                mosaic = self._create_mosaic(all_visualized_images)
+                    # Create mosaic
+                    mosaic = self._create_mosaic(all_visualized_images)
 
-                if mosaic is not None:
-                    # Salva il mosaico nello storage invece dei singoli samples
-                    mosaic_transposed = mosaic.transpose(2, 0, 1)  # HWC -> CHW
-                    storage.put_image("Samples_Mosaic", mosaic_transposed)
+                    if mosaic is not None:
+                        # Salva il mosaico nello storage invece dei singoli samples
+                        mosaic_transposed = mosaic.transpose(2, 0, 1)  # HWC -> CHW
+                        storage.put_image("Samples_Mosaic", mosaic_transposed)
 
-                    # Save to disk if output_dir is provided
-                    if self.output_dir is not None:
-                        preview_dir = os.path.join(self.output_dir, "preview")
-                        os.makedirs(preview_dir, exist_ok=True)
+                        # Save to disk if output_dir is provided
+                        if self.output_dir is not None:
+                            preview_dir = os.path.join(self.output_dir, "preview")
+                            os.makedirs(preview_dir, exist_ok=True)
 
-                        # Include iteration in filename
-                        output_path = os.path.join(preview_dir, f"samples_iter_{current_iter}.jpg")
-                        encode_params = [cv2.IMWRITE_JPEG_QUALITY, 80]
-                        cv2.imwrite(output_path, mosaic, encode_params)
+                            # Include iteration in filename
+                            output_path = os.path.join(preview_dir, f"samples_iter_{current_iter}.jpg")
+                            encode_params = [cv2.IMWRITE_JPEG_QUALITY, 80]
+                            cv2.imwrite(output_path, mosaic, encode_params)
+        except Exception as e:
+            logger.warning(f"Exception during visualization hook: {e}")
 
         # set model back to training mode
         self.model.train(training_mode)

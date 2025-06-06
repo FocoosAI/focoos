@@ -21,7 +21,7 @@ from focoos.data.loaders import build_detection_test_loader, build_detection_tra
 from focoos.hub.remote_model import RemoteModel
 from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.layers.norm import FrozenBatchNorm2d
-from focoos.ports import ArtifactName, ModelInfo, ModelStatus, Task, TrainerArgs, TrainingInfo
+from focoos.ports import ArtifactName, HubSyncLocalTraining, ModelInfo, ModelStatus, Task, TrainerArgs, TrainingInfo
 from focoos.processor.base_processor import Processor
 from focoos.trainer.checkpointer import Checkpointer
 from focoos.trainer.evaluation.evaluator import inference_on_dataset
@@ -478,6 +478,19 @@ class FocoosTrainer:
         trainer_loop.train(start_iter=start_iter, max_iter=args.max_iters)
         self.finished = True
         self.finish()
+        if comm.is_main_process() and self.remote_model and self.args.sync_to_hub:
+            self.remote_model.sync_local_training_job(
+                local_training_info=HubSyncLocalTraining(
+                    status=ModelStatus.TRAINING_COMPLETED,
+                    iterations=self.args.max_iters,
+                    training_info=self.model_info.training_info,
+                ),
+                dir=self.output_dir,
+                upload_artifacts=[
+                    ArtifactName.WEIGHTS,
+                    ArtifactName.METRICS,
+                ],
+            )
 
     def test(self, restore_best: bool = False):
         """Run model evaluation on test set.
@@ -516,8 +529,6 @@ class FocoosTrainer:
             ):
                 self.model_info.val_metrics = raw_metrics
 
-        self.finished = True
-        self.finish()
         return eval_result
 
     def _update_training_info_and_dump(self, new_status: ModelStatus, detail: Optional[str] = None):
