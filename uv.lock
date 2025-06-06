@@ -671,6 +671,7 @@ dependencies = [
     { name = "torch" },
     { name = "torchvision" },
     { name = "tqdm" },
+    { name = "typer" },
 ]
 
 [package.optional-dependencies]
@@ -755,6 +756,7 @@ requires-dist = [
     { name = "tox", marker = "extra == 'dev'" },
     { name = "tox-uv", marker = "extra == 'dev'" },
     { name = "tqdm", specifier = "~=4.67.1" },
+    { name = "typer", specifier = ">=0.16.0" },
 ]
 provides-extras = ["tensorrt", "onnx", "onnx-cpu", "dev", "docs"]
 

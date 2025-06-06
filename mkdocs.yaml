@@ -70,6 +70,7 @@ nav:
       - AutoDataset: api/auto_dataset.md
       - ports: api/ports.md
       - config: api/config.md
+      - cli: api/cli.md
 
 markdown_extensions:
   - pymdownx.highlight:
