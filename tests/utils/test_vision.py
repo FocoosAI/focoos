@@ -279,6 +279,10 @@ def test_get_postprocess_fn():
     # Test detection task
     det_fn = get_postprocess_fn(Task.DETECTION)
     assert det_fn == det_postprocess, "Detection task should return det_postprocess function"
+    
+    # Test counting task
+    det_fn = get_postprocess_fn(Task.COUNTING)
+    assert det_fn == det_postprocess, "Detection task should return det_postprocess function"
 
     # Test instance segmentation task
     instance_fn = get_postprocess_fn(Task.INSTANCE_SEGMENTATION)

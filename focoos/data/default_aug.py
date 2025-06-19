@@ -239,7 +239,7 @@ classification_val_augs = DatasetAugmentations(
 def get_default_by_task(
     task: Task, resolution: int = 640, advanced: bool = False
 ) -> Tuple[DatasetAugmentations, DatasetAugmentations]:
-    if task == Task.DETECTION:
+    if task == Task.DETECTION  or task == Task.COUNTING:
         train, val = (
             detection_train_augs if not advanced else fai_detection_train_augs,
             detection_val_augs if not advanced else detection_val_augs,

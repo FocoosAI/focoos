@@ -171,7 +171,7 @@ class InferModel:
             f"{classes[int(class_id)] if classes is not None else str(class_id)}: {confid * 100:.0f}%"
             for class_id, confid in zip(detections.class_id, detections.confidence)  # type: ignore
         ]
-        if self.model_info.task == Task.DETECTION:
+        if self.model_info.task == Task.DETECTION or self.model_info.task == Task.COUNTING:
             annotated_im = self.box_annotator.annotate(scene=im.copy(), detections=detections)
 
             annotated_im = self.label_annotator.annotate(scene=annotated_im, detections=detections, labels=labels)

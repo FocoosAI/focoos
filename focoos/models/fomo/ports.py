@@ -8,7 +8,6 @@ from focoos.ports import ModelOutput
 
 @dataclass
 class FOMOModelOutput(ModelOutput):
-    boxes: torch.Tensor
     logits: torch.Tensor
     loss: Optional[dict]
 
@@ -17,3 +16,4 @@ class FOMOModelOutput(ModelOutput):
 class FOMOTargets:
     labels: torch.Tensor
     boxes: torch.Tensor
+    mask: torch.Tensor

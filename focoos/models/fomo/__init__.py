@@ -4,14 +4,14 @@ def _register_cls():
     from focoos.processor import ProcessorManager
 
     def load_model():
-        from focoos.models.fomo.modelling import Fomo
+        from focoos.models.fomo.modelling import FOMO
 
-        return Fomo
+        return FOMO
 
     def load_config():
-        from focoos.models.fomo.config import FomoConfig
+        from focoos.models.fomo.config import FOMOConfig
 
-        return FomoConfig
+        return FOMOConfig
 
     def load_processor():
         from focoos.models.fomo.processor import FOMOProcessor

@@ -22,5 +22,9 @@ def get_evaluator(dataset_dict: DictDataset, task: Task):
     # elif task == Task.PANOPTIC_SEGMENTATION:
     #     from focoos.trainer.evaluation.panoptic_evaluation import PanopticEvaluator
     #     return PanopticEvaluator.from_datasetdict(dataset_dict=dataset_dict)
+    elif task == Task.COUNTING:
+        from focoos.trainer.evaluation.counting_evaluation import CountingEvaluator
+
+        return CountingEvaluator.from_datasetdict(dataset_dict=dataset_dict)
     else:
         raise ValueError(f"Task {task} not supported")

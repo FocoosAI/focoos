@@ -1,12 +1,18 @@
+from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Tuple
 
+import torch
 import torch.nn as nn
 
 from focoos.nn.layers.conv import Conv2d
 from focoos.nn.layers.norm import get_norm
 
 from .base import BackboneConfig, BaseBackbone
+
+donwload_url = {
+    0: "https://download.pytorch.org/models/mobilenet_v2-b0353104.pth"
+}
 
 
 class InvertedResidual(nn.Module):
@@ -144,6 +150,7 @@ class MobileNetV2(BaseBackbone):
         self.widen_factor = config.widen_factor
         self.strides = config.strides
         self.dilations = config.dilations
+        self.pretrained = config.use_pretrained
         assert len(config.strides) == len(config.dilations) == len(self.arch_settings)
 
         if config.frozen_stages not in range(-1, 7):
@@ -198,6 +205,12 @@ class MobileNetV2(BaseBackbone):
                 self._out_feature_channels[res_block] = out_channels
             self.add_module(layer_name, inverted_res_layer)
             self.layers.append(layer_name)
+              
+        if self.pretrained:
+            state = torch.hub.load_state_dict_from_url(donwload_url[0])
+            new_state = self._remap_state_dict(state)
+            self.load_state_dict(new_state, strict=False)
+            print("Load MobileNetV2 state_dict")
 
     def make_layer(self, out_channels, num_blocks, stride, dilation, expand_ratio):
         """Stack InvertedResidual blocks to build a layer for MobileNetV2.
@@ -250,3 +263,97 @@ class MobileNetV2(BaseBackbone):
             layer.eval()
             for param in layer.parameters():
                 param.requires_grad = False
+                
+    def _remap_state_dict(self, downloaded_state_dict):
+        new_state = OrderedDict()
+
+        if 'features.0.0.weight' in downloaded_state_dict:
+            new_state['conv1.weight'] = downloaded_state_dict['features.0.0.weight']
+            new_state['conv1.norm.weight'] = downloaded_state_dict['features.0.1.weight']
+            new_state['conv1.norm.bias'] = downloaded_state_dict['features.0.1.bias']
+            new_state['conv1.norm.running_mean'] = downloaded_state_dict['features.0.1.running_mean']
+            new_state['conv1.norm.running_var'] = downloaded_state_dict['features.0.1.running_var']
+            new_state['conv1.norm.num_batches_tracked'] = downloaded_state_dict['features.0.1.num_batches_tracked']
+        else:
+            print("Warning: Initial convolution 'features.0.x' not found in downloaded state_dict.")
+
+        if 'features.1.conv.0.0.weight' in downloaded_state_dict:
+            new_state['layer1.0.conv.0.weight'] = downloaded_state_dict['features.1.conv.0.0.weight']
+            new_state['layer1.0.conv.0.norm.weight'] = downloaded_state_dict['features.1.conv.0.1.weight']
+            new_state['layer1.0.conv.0.norm.bias'] = downloaded_state_dict['features.1.conv.0.1.bias']
+            new_state['layer1.0.conv.0.norm.running_mean'] = downloaded_state_dict['features.1.conv.0.1.running_mean']
+            new_state['layer1.0.conv.0.norm.running_var'] = downloaded_state_dict['features.1.conv.0.1.running_var']
+            new_state['layer1.0.conv.0.norm.num_batches_tracked'] = downloaded_state_dict['features.1.conv.0.1.num_batches_tracked']
+
+            new_state['layer1.0.conv.1.weight'] = downloaded_state_dict['features.1.conv.1.weight']
+            new_state['layer1.0.conv.1.norm.weight'] = downloaded_state_dict['features.1.conv.2.weight']
+            new_state['layer1.0.conv.1.norm.bias'] = downloaded_state_dict['features.1.conv.2.bias']
+            new_state['layer1.0.conv.1.norm.running_mean'] = downloaded_state_dict['features.1.conv.2.running_mean']
+            new_state['layer1.0.conv.1.norm.running_var'] = downloaded_state_dict['features.1.conv.2.running_var']
+            new_state['layer1.0.conv.1.norm.num_batches_tracked'] = downloaded_state_dict['features.1.conv.2.num_batches_tracked']
+        else:
+            print("Warning: 'features.1.conv.x' (for user's layer1.0) not found in downloaded state_dict.")
+
+        user_layer_block_counts = {
+            1: 1, 
+            2: 2, 
+            3: 3, 
+            4: 4, 
+            5: 3, 
+            6: 3, 
+            7: 1, 
+        }
+
+        current_pytorch_feature_idx = 1
+
+        for user_layer_num in range(2, 8):
+            num_blocks_in_user_layer = user_layer_block_counts.get(user_layer_num, 0)
+            for user_block_idx_in_layer in range(num_blocks_in_user_layer):
+                current_pytorch_feature_idx += 1
+                
+                user_prefix = f"layer{user_layer_num}.{user_block_idx_in_layer}"
+                pytorch_block_prefix = f"features.{current_pytorch_feature_idx}"
+                
+                if f"{pytorch_block_prefix}.conv.0.0.weight" not in downloaded_state_dict:
+                    print(f"Warning: {pytorch_block_prefix}.conv.x (for user's {user_prefix}) not found in downloaded state_dict. Skipping this block.")
+                    continue
+
+                new_state[f"{user_prefix}.conv.0.weight"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.0.0.weight"]
+                new_state[f"{user_prefix}.conv.0.norm.weight"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.0.1.weight"]
+                new_state[f"{user_prefix}.conv.0.norm.bias"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.0.1.bias"]
+                new_state[f"{user_prefix}.conv.0.norm.running_mean"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.0.1.running_mean"]
+                new_state[f"{user_prefix}.conv.0.norm.running_var"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.0.1.running_var"]
+                new_state[f"{user_prefix}.conv.0.norm.num_batches_tracked"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.0.1.num_batches_tracked"]
+
+                new_state[f"{user_prefix}.conv.1.weight"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.1.0.weight"]
+                new_state[f"{user_prefix}.conv.1.norm.weight"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.1.1.weight"]
+                new_state[f"{user_prefix}.conv.1.norm.bias"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.1.1.bias"]
+                new_state[f"{user_prefix}.conv.1.norm.running_mean"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.1.1.running_mean"]
+                new_state[f"{user_prefix}.conv.1.norm.running_var"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.1.1.running_var"]
+                new_state[f"{user_prefix}.conv.1.norm.num_batches_tracked"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.1.1.num_batches_tracked"]
+
+                new_state[f"{user_prefix}.conv.2.weight"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.2.weight"]
+                new_state[f"{user_prefix}.conv.2.norm.weight"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.3.weight"]
+                new_state[f"{user_prefix}.conv.2.norm.bias"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.3.bias"]
+                new_state[f"{user_prefix}.conv.2.norm.running_mean"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.3.running_mean"]
+                new_state[f"{user_prefix}.conv.2.norm.running_var"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.3.running_var"]
+                new_state[f"{user_prefix}.conv.2.norm.num_batches_tracked"] = downloaded_state_dict[f"{pytorch_block_prefix}.conv.3.num_batches_tracked"]
+        
+        if 'features.18.0.weight' in downloaded_state_dict:
+            new_state['final_conv.weight'] = downloaded_state_dict['features.18.0.weight']
+            new_state['final_norm.weight'] = downloaded_state_dict['features.18.1.weight']
+            new_state['final_norm.bias'] = downloaded_state_dict['features.18.1.bias']
+            new_state['final_norm.running_mean'] = downloaded_state_dict['features.18.1.running_mean']
+            new_state['final_norm.running_var'] = downloaded_state_dict['features.18.1.running_var']
+            new_state['final_norm.num_batches_tracked'] = downloaded_state_dict['features.18.1.num_batches_tracked']
+        else:
+            print("Warning: Final convolution 'features.18.x' not found in downloaded state_dict. Your model's head might not be initialized.")
+
+        if 'classifier.1.weight' in downloaded_state_dict:
+            new_state['classifier.weight'] = downloaded_state_dict['classifier.1.weight']
+            if 'classifier.1.bias' in downloaded_state_dict:
+                 new_state['classifier.bias'] = downloaded_state_dict['classifier.1.bias']
+        else:
+            print("Warning: Classifier 'classifier.1.x' not found in downloaded state_dict. Your model's classifier might not be initialized.")
+            
+        return new_state

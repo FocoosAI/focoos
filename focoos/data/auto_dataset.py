@@ -94,7 +94,7 @@ class AutoDataset:
                 augmentations=augs,
                 is_train=not is_validation_split,
             )
-        elif self.task == Task.DETECTION:
+        elif self.task == Task.DETECTION or self.task == Task.COUNTING:
             return DetectionDatasetMapper(
                 image_format="RGB",
                 is_train=not is_validation_split,

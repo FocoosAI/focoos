@@ -135,12 +135,14 @@ class Task(str, Enum):
         - SEMSEG: Semantic segmentation
         - INSTANCE_SEGMENTATION: Instance segmentation
         - CLASSIFICATION: Image classification
+        - COUNTING: Counting objects
     """
 
     DETECTION = "detection"
     SEMSEG = "semseg"
     INSTANCE_SEGMENTATION = "instseg"
     CLASSIFICATION = "classification"
+    COUNTING = "counting"
 
 
 @dataclass
@@ -914,8 +916,8 @@ class DatasetMetadata:
 
     @property
     def classes(self) -> List[str]:  #!TODO: check if this is correct
-        if self.task == Task.DETECTION or self.task == Task.INSTANCE_SEGMENTATION:
-            assert self.thing_classes is not None, "thing_classes is required for detection and instance segmentation"
+        if self.task == Task.DETECTION or self.task == Task.INSTANCE_SEGMENTATION or self.task == Task.COUNTING:
+            assert self.thing_classes is not None, "thing_classes is required for detection, instance segmentation and counting"
             return self.thing_classes
         if self.task == Task.SEMSEG:
             # fixme: not sure for panoptic

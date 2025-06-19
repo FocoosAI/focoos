@@ -46,6 +46,8 @@ def get_dataset(task: Task, ds_folder: str = DATASETS_DIR):
         layout = DatasetLayout.ROBOFLOW_SEG
     elif task == Task.DETECTION:
         ds_name = "aquarium"
+    elif task == Task.COUNTING:
+        ds_name = "aquarium"
         layout = DatasetLayout.ROBOFLOW_COCO
     elif task == Task.INSTANCE_SEGMENTATION:
         ds_name = "fruits"

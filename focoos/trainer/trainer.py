@@ -27,7 +27,7 @@ from focoos.trainer.checkpointer import Checkpointer
 from focoos.trainer.evaluation.evaluator import inference_on_dataset
 from focoos.trainer.evaluation.get_eval import get_evaluator
 from focoos.trainer.evaluation.utils import print_csv_format
-from focoos.trainer.events import CommonMetricPrinter, EventStorage, JSONWriter, get_event_storage
+from focoos.trainer.events import CommonMetricPrinter, EventStorage, JSONWriter, TensorboardXWriter, get_event_storage
 from focoos.trainer.hooks import hook
 from focoos.trainer.hooks.early_stop import EarlyStoppingHook
 from focoos.trainer.hooks.sync_to_hub import SyncToHubHook
@@ -43,6 +43,7 @@ from focoos.utils.system import get_system_info
 # Mapping of task types to their primary evaluation metrics
 TASK_METRICS = {
     Task.DETECTION.value: "bbox/AP",
+    Task.COUNTING.value: "sem_seg/mIoU",
     Task.SEMSEG.value: "sem_seg/mIoU",
     Task.INSTANCE_SEGMENTATION.value: "segm/AP",
     Task.CLASSIFICATION.value: "classification/Accuracy",
@@ -75,6 +76,7 @@ class FocoosTrainer:
         self.args = args
         self.resume = args.resume
         self.finished = False
+        self._eval_counter = 0 # DEBUG
 
         self.args.run_name = self.args.run_name.strip()
         self.output_dir = os.path.join(self.args.output_dir, self.args.run_name)
@@ -254,7 +256,14 @@ class FocoosTrainer:
             self.data_val,
             num_workers=self.args.workers,
         )
-
+        """DEBUG"""
+        if True:
+            import os
+            self.data_evaluator._eval_counter += 1 # DEBUG
+            debug_dir = f"/home/ubuntu/focoos-1/notebooks/debug_outputs/eval_debug8test/eval_counter_{self._eval_counter}"
+            os.makedirs(debug_dir, exist_ok=True)
+            print(f"DEBUG: tensors saved to : {debug_dir}")
+        """DEBUG"""
         ret = inference_on_dataset(
             model,
             processor=self.processor,
@@ -328,7 +337,7 @@ class FocoosTrainer:
                             JSONWriter(
                                 os.path.join(self.ckpt_dir, "metrics.json"),
                             ),
-                            # TensorboardXWriter(self.output_dir),
+                            TensorboardXWriter(self.output_dir),
                         ],
                         period=args.log_period,
                     )
@@ -359,14 +368,14 @@ class FocoosTrainer:
                         period=args.checkpointer_period,
                         max_to_keep=args.checkpointer_max_to_keep,
                     ),
-                    VisualizationHook(
-                        model=self.model,  # type: ignore
-                        processor=self.processor,
-                        dataset=self.data_val,
-                        period=self.args.eval_period,
-                        n_sample=self.args.samples,
-                        output_dir=self.output_dir,
-                    ),
+                    # VisualizationHook( # DEBUG, hook disbaled
+                    #     model=self.model,  # type: ignore
+                    #     processor=self.processor,
+                    #     dataset=self.data_val,
+                    #     period=self.args.eval_period,
+                    #     n_sample=self.args.samples,
+                    #     output_dir=self.output_dir,
+                    # ),
                 ]
             )
             if self.args.sync_to_hub and self.remote_model:

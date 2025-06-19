@@ -139,7 +139,7 @@ def _load_dataset_split(
         task=task,
     )
 
-    if task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION]:
+    if task in [Task.DETECTION, Task.COUNTING, Task.INSTANCE_SEGMENTATION]:
         dataset_dict = load_coco_json(json_file_path, image_root_path, metadata, task=task)
         if split.filter_empty:
             dataset_dict = filter_images_with_only_crowd_annotations(dataset_dicts=dataset_dict)

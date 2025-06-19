@@ -100,3 +100,11 @@ aws/
 awscliv2.zip
 .vscode/launch.json
 notebooks/arduino_hackathon.ipynb
+notebooks/Dataset_test_augs.ipynb
+notebooks/wandb
+wandb
+notebooks/arduino_hackathon.py
+experiments
+notebooks/debug_outputs
+notebooks/mask_pred_result_0.pt
+notebooks/analysis.ipynb
