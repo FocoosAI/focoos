@@ -38,6 +38,7 @@ nav:
       - Inference: inference.md
       - Training: training.md
       - Concepts: concepts.md
+      - CLI: cli.md
   - HUB:
       - Overview: hub/overview.md
       - HUB: hub/hub.md
