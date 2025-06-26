@@ -111,3 +111,7 @@ See the list of our models in the [models](https://focoosai.github.io/focoos/mod
 ### Start now!
 By choosing Focoos AI, you can save time, reduce costs, and achieve superior model performance, all while ensuring the privacy and efficiency of your deployments.
 [Reach out to us](mailto:info@focoos.ai) to ask for your API key for free and power your computer vision projects. 🚀
+
+
+## ❤️ Contributors
+[![Contributors](https://contrib.rocks/image?repo=FocoosAI/focoos)](https://github.com/FocoosAI/focoos/graphs/contributors)
