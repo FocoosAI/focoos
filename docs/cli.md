@@ -4,14 +4,14 @@ A modern, comprehensive command-line interface for the Focoos computer vision fr
 
 ## 🚀 Features
 
-✅ **Modern CLI Design**: Built with Typer for rich, interactive command-line experience
-✅ **Comprehensive Coverage**: Complete access to all Focoos functionality
-✅ **Type Safety**: Built-in validation for arguments and options with helpful error messages
-✅ **Rich Output**: Colored output, progress indicators, and detailed feedback
-✅ **Flexible Configuration**: Extensive customization options for all operations
-✅ **Multi-Platform**: Cross-platform support (Linux, macOS, Windows)
-✅ **Programmatic API**: Commands can be used both via CLI and Python imports
-✅ **Hub Integration**: Seamless integration with Focoos Hub for model and dataset management
+- ✅ **Modern CLI Design**: Built with Typer for rich, interactive command-line experience
+- ✅ **Comprehensive Coverage**: Complete access to all Focoos functionality
+- ✅ **Type Safety**: Built-in validation for arguments and options with helpful error messages
+- ✅ **Rich Output**: Colored output, progress indicators, and detailed feedback
+- ✅ **Flexible Configuration**: Extensive customization options for all operations
+- ✅ **Multi-Platform**: Cross-platform support (Linux, macOS, Windows)
+- ✅ **Programmatic API**: Commands can be used both via CLI and Python imports
+- ✅ **Hub Integration**: Seamless integration with Focoos Hub for model and dataset management
 
 ## 📦 Installation
 
