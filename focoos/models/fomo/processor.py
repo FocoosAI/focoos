@@ -37,6 +37,7 @@ class FOMOProcessor(Processor):
         super().__init__(config)
         self.resolution = config.resolution
         self.mask_threshold = config.mask_threshold
+        self.loss_type = config.loss_type
 
     def preprocess(self, inputs: Union[
             torch.Tensor,
@@ -93,7 +94,7 @@ class FOMOProcessor(Processor):
     ) -> torch.Tensor:
         semseg = torch.einsum("qc,qhw->chw", mask_cls, mask_pred)
         return semseg
-
+    '''
     def postprocess(
         self, 
         outputs: FOMOModelOutput,
@@ -132,6 +133,25 @@ class FOMOProcessor(Processor):
             results.append(FocoosDetections(detections=detections))
                 
         return results
+    '''
+
+    def postprocess(
+        self, 
+        outputs: FOMOModelOutput,
+        inputs: Union[
+            torch.Tensor,
+            np.ndarray,
+            Image.Image,
+            list[Image.Image],
+            list[np.ndarray],
+            list[torch.Tensor],
+        ],
+        class_names: list[str] = [],
+        top_k: Optional[int] = None,
+        threshold: Optional[float] = 0.5,
+    ):
+                
+        return outputs.logits
     
     def eval_postprocess(
         self,
@@ -142,12 +162,18 @@ class FOMOProcessor(Processor):
         results = []
         mask_pred = (output.logits.sigmoid()).to(torch.float32)
         
-        for i in range(len(batched_inputs)):
-            mask_height, mask_width = tuple(mask_pred[i].shape[-2:])
-            background_mask = torch.zeros((mask_height, mask_width), dtype=torch.float32, device=mask_pred.device).unsqueeze(0).unsqueeze(0) + self.mask_threshold
-            mask_pred_result = torch.cat([background_mask, mask_pred], dim=1).squeeze(0)
-            results.append({'instances': mask_pred_result})
-            
+        if self.loss_type == "bce_loss":
+            for i in range(len(batched_inputs)):
+                mask_height, mask_width = tuple(mask_pred[i].shape[-2:])
+                background_mask = torch.zeros((mask_height, mask_width), dtype=torch.float32, device=mask_pred.device).unsqueeze(0).unsqueeze(0) + self.mask_threshold
+                mask_pred_result = torch.cat([background_mask, mask_pred], dim=1).squeeze(0)
+                results.append({'instances': mask_pred_result})
+        elif self.loss_type == "ce_loss":
+            for i in range(len(batched_inputs)):
+                results.append({'instances': mask_pred[i]})
+        else:
+            raise ValueError(f"Invalid loss type: {self.loss_type}")
+        
         return results
 
     def export_postprocess(

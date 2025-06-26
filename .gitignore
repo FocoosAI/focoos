@@ -108,3 +108,4 @@ experiments
 notebooks/debug_outputs
 notebooks/mask_pred_result_0.pt
 notebooks/analysis.ipynb
+notebooks/test_inference.ipynb

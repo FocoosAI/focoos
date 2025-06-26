@@ -104,27 +104,26 @@ class CountingEvaluator(DatasetEvaluator):
         """DEBUG"""
         if True:
             import os
-            debug_dir = f"/home/ubuntu/focoos-1/notebooks/debug_outputs/eval_debug8test/eval_counter_{self._eval_counter}"
+            debug_dir = f"/home/ubuntu/focoos-1/notebooks/debug_outputs/eval_debug13/eval_counter_{self._eval_counter}"
             os.makedirs(debug_dir, exist_ok=True)
         """DEBUG"""
         for input, output in zip(inputs, outputs):
-            output = output["instances"].argmax(dim=0).to(self._cpu_device)
-            pred = np.array(output, dtype=int)
+            pred = output["instances"].argmax(dim=0).to(self._cpu_device, dtype=torch.int32)
             gt_annotations = self.dataset_dict[input.image_id]["annotations"]
             gt_boxes = torch.stack([torch.tensor(ann["bbox"]) for ann in gt_annotations]) # XYWH_ABS format
             gt_classes = torch.stack([torch.tensor(ann["category_id"]) for ann in gt_annotations])
             gt_image_size = self.dataset_dict[input.image_id]["height"], self.dataset_dict[input.image_id]["width"]
             gt_mask = convert_boxes_to_gt_mask(gt_boxes, gt_classes, 
                                                gt_image_size=gt_image_size, 
-                                               output_image_size=output.shape
+                                               output_image_size=pred.shape
                                             )
 
             self._conf_matrix += np.bincount(
-                (self._num_classes + 1) * torch.from_numpy(pred.reshape(-1)) + gt_mask.reshape(-1),
+                (self._num_classes + 1) * pred.reshape(-1) + gt_mask.reshape(-1),
                 minlength=self._conf_matrix.size,
             ).reshape(self._conf_matrix.shape)
 
-            self._predictions.extend(self.encode_json_sem_seg(pred, input.file_name))
+            self._predictions.extend(self.encode_json_sem_seg(np.array(pred), input.file_name))
             
             """DEBUG"""
             if True:
@@ -149,7 +148,7 @@ class CountingEvaluator(DatasetEvaluator):
                     torch.save(gt_mask, gt_mask_save_path)
                     # Save the prediction mask
                     pred_save_path = os.path.join(debug_dir, f"{image_id}_pred_mask.pt")
-                    torch.save(torch.from_numpy(pred), pred_save_path)
+                    torch.save(pred, pred_save_path)
                     # print(f"DEBUG: tensors saved to : {debug_dir}")
             """DEBUG"""
 
