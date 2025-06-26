@@ -13,7 +13,7 @@ Usage:
 Available Commands:
     - `train`: Train a model on a dataset
     - `val`: Validate a model on a dataset
-    - `predict`: Run inference on images/videos
+    - `predict`: Run inference on images
     - `export`: Export a model to different formats
     - `benchmark`: Benchmark model performance
     - `version`: Show Focoos version information
@@ -23,7 +23,7 @@ Available Commands:
 Examples:
     Training a model:
     ```bash
-    focoos train --model fai-detr-m-coco --dataset coco8 --im-size 640
+    focoos train --model fai-detr-m-coco --dataset mydataset.zip --im-size 640
     ```
 
     Running inference:
@@ -33,7 +33,7 @@ Examples:
 
     Validating a model:
     ```bash
-    focoos val --model fai-detr-m-coco --dataset coco8 --im-size 640
+    focoos val --model fai-detr-m-coco --dataset mydataset.zip --im-size 640
     ```
 
     Exporting a model:
@@ -74,8 +74,9 @@ from focoos.cli.commands import (
     train_command,
     val_command,
 )
+from focoos.cli.commands.hub import app as hub_app
 from focoos.ports import (
-    PREDICT_DIR,
+    PREDICTIONS_DIR,
     DatasetLayout,
     DeviceType,
     ExportFormat,
@@ -235,7 +236,9 @@ def train(
     model: Annotated[str, typer.Option(help="Model name (required)")],
     dataset: Annotated[str, typer.Option(help="Dataset name (required)")],
     run_name: Annotated[Optional[str], typer.Option(help="Run name")] = None,
-    models_dir: Annotated[Optional[str], typer.Option(help="Models directory")] = None,
+    datasets_dir: Annotated[
+        Optional[str], typer.Option(help="Datasets directory (default: ~/FocoosAI/datasets/)")
+    ] = None,
     dataset_layout: Annotated[DatasetLayout, typer.Option(help="Dataset layout")] = DatasetLayout.ROBOFLOW_COCO,
     im_size: Annotated[int, typer.Option(help="Image size")] = 640,
     output_dir: Annotated[Optional[str], typer.Option(help="Output directory")] = None,
@@ -275,8 +278,7 @@ def train(
     size_divisibility: Annotated[int, typer.Option(help="Size divisibility")] = 0,
     gather_metric_period: Annotated[int, typer.Option(help="Metric gathering period")] = 1,
     zero_grad_before_forward: Annotated[bool, typer.Option(help="Zero gradients before forward pass")] = False,
-    sync_to_hub: Annotated[bool, typer.Option(help="Sync to HuggingFace Hub")] = False,
-    datasets_dir: Annotated[Optional[str], typer.Option(help="Custom datasets directory")] = None,
+    sync_to_hub: Annotated[bool, typer.Option(help="Sync to Focoos Hub")] = False,
 ):
     """Train a model with comprehensive configuration options.
 
@@ -297,12 +299,12 @@ def train(
             Can be specified in several ways:
             - **Pretrained model**: Simple model name like 'fai-detr-m-coco'
             - **Hub model**: Format 'hub://<model-ref>' for models from Focoos Hub
-            - **Local model**: Model name with --models-dir pointing to custom directory
             - **Default directory model**: Model name for models in default Focoos directory
-        dataset (str): Name of the dataset to train on (e.g., 'coco8').
+        dataset (str): Name of the dataset to train on (e.g., 'mydataset.zip').
         run_name (Optional[str]): Optional name for the training run. If not provided,
             generates a unique name using model name and UUID.
         models_dir (Optional[str]): Directory to save models.
+        datasets_dir (Optional[str]): Custom directory for datasets.
         dataset_layout (DatasetLayout): Layout format of the dataset. Defaults to ROBOFLOW_COCO.
         im_size (int): Input image size for training. Defaults to 640.
         output_dir (Optional[str]): Directory to save training outputs and logs.
@@ -345,33 +347,27 @@ def train(
         gather_metric_period (int): Frequency of metric gathering (in iterations). Defaults to 1.
         zero_grad_before_forward (bool): Whether to zero gradients before forward pass.
             Defaults to False.
-        sync_to_hub (bool): Whether to sync model to HuggingFace Hub. Defaults to False.
-        datasets_dir (Optional[str]): Custom directory for datasets.
+        sync_to_hub (bool): Whether to sync model to Focoos Hub. Defaults to False.
 
     Examples:
         Basic training with pretrained model:
         ```bash
-        focoos train --model fai-detr-m-coco --dataset coco8
+        focoos train --model fai-detr-m-coco --dataset mydataset.zip
         ```
 
         Training with model from Focoos Hub:
         ```bash
-        focoos train --model hub://<model-ref> --dataset coco8
-        ```
-
-        Training with local model in custom directory:
-        ```bash
-        focoos train --model my-custom-model --models-dir ./my_models --dataset coco8
+        focoos train --model hub://<model-ref> --dataset mydataset.zip
         ```
 
         Training with local model in default Focoos directory:
         ```bash
-        focoos train --model my-saved-model --dataset coco8
+        focoos train --model my-saved-model --dataset mydataset.zip
         ```
 
         Advanced training with custom parameters:
         ```bash
-        focoos train --model fai-detr-m-coco --dataset coco8 \
+        focoos train --model fai-detr-m-coco --dataset mydataset.zip \
                      --im-size 800 --batch-size 32 --learning-rate 1e-4 \
                      --max-iters 5000 --early-stop --patience 20
         ```
@@ -384,7 +380,7 @@ def train(
 
         Resume training from checkpoint:
         ```bash
-        focoos train --model fai-detr-m-coco --dataset coco8 \
+        focoos train --model fai-detr-m-coco --dataset mydataset.zip \
                      --resume --ckpt-dir ./checkpoints
         ```
 
@@ -398,69 +394,94 @@ def train(
         - [`focoos export`][focoos.cli.cli.export]: For model export
         - [Training Guide](../training.md): For detailed training documentation
     """
+    typer.echo("🔍 Training arguments:")
+    typer.echo(f"  Model: {model}")
+    typer.echo(f"  Dataset: {dataset}")
+    typer.echo(f"  Dataset layout: {dataset_layout}")
+    typer.echo(f"  Image size: {im_size}")
+    typer.echo(f"  Run name: {run_name}")
+    typer.echo(f"  Output dir: {output_dir}")
+    typer.echo(f"  Checkpoint dir: {ckpt_dir}")
+    typer.echo(f"  Init checkpoint: {init_checkpoint}")
+    typer.echo(f"  Resume: {resume}")
+    typer.echo(f"  Num GPUs: {num_gpus}")
+    typer.echo(f"  Device: {device}")
+    typer.echo(f"  Workers: {workers}")
+    typer.echo(f"  Batch size: {batch_size}")
+    typer.echo(f"  Scheduler: {scheduler}")
+    typer.echo(f"  Optimizer: {optimizer}")
+    typer.echo(f"  Weight decay norm: {weight_decay_norm}")
+    typer.echo(f"  Weight decay embed: {weight_decay_embed}")
+    typer.echo(f"  Backbone multiplier: {backbone_multiplier}")
+    typer.echo(f"  Decoder multiplier: {decoder_multiplier}")
+    typer.echo(f"  Head multiplier: {head_multiplier}")
 
-    # Cast to proper literal types
-    validated_device = cast(DeviceType, device)
-    assert device in get_args(DeviceType)
-    validated_scheduler = cast(SchedulerType, scheduler.upper())
-    assert scheduler in get_args(SchedulerType)
-    validated_optimizer = cast(OptimizerType, optimizer.upper())
-    assert optimizer in get_args(OptimizerType)
+    try:
+        # Cast to proper literal types
+        validated_device = cast(DeviceType, device)
+        assert device in get_args(DeviceType)
+        validated_scheduler = cast(SchedulerType, scheduler.upper())
+        assert scheduler in get_args(SchedulerType)
+        validated_optimizer = cast(OptimizerType, optimizer.upper())
+        assert optimizer in get_args(OptimizerType)
 
-    train_command(
-        model_name=model,
-        dataset_name=dataset,
-        models_dir=models_dir,
-        dataset_layout=dataset_layout,
-        im_size=im_size,
-        run_name=run_name or f"{model}-{uuid.uuid4()}",
-        output_dir=output_dir,
-        ckpt_dir=ckpt_dir,
-        init_checkpoint=init_checkpoint,
-        resume=resume,
-        num_gpus=num_gpus,
-        device=validated_device,
-        workers=workers,
-        amp_enabled=amp_enabled,
-        ddp_broadcast_buffers=ddp_broadcast_buffers,
-        ddp_find_unused=ddp_find_unused,
-        checkpointer_period=checkpointer_period,
-        checkpointer_max_to_keep=checkpointer_max_to_keep,
-        eval_period=eval_period,
-        log_period=log_period,
-        samples=samples,
-        seed=seed,
-        early_stop=early_stop,
-        patience=patience,
-        ema_enabled=ema_enabled,
-        ema_decay=ema_decay,
-        ema_warmup=ema_warmup,
-        learning_rate=learning_rate,
-        weight_decay=weight_decay,
-        max_iters=max_iters,
-        batch_size=batch_size,
-        scheduler=validated_scheduler,
-        optimizer=validated_optimizer,
-        weight_decay_norm=weight_decay_norm,
-        weight_decay_embed=weight_decay_embed,
-        backbone_multiplier=backbone_multiplier,
-        decoder_multiplier=decoder_multiplier,
-        head_multiplier=head_multiplier,
-        freeze_bn=freeze_bn,
-        clip_gradients=clip_gradients,
-        size_divisibility=size_divisibility,
-        gather_metric_period=gather_metric_period,
-        zero_grad_before_forward=zero_grad_before_forward,
-        sync_to_hub=sync_to_hub,
-        datasets_dir=datasets_dir,
-    )
+        train_command(
+            model_name=model,
+            dataset_name=dataset,
+            dataset_layout=dataset_layout,
+            im_size=im_size,
+            run_name=run_name or f"{model}-{uuid.uuid4()}",
+            output_dir=output_dir,
+            ckpt_dir=ckpt_dir,
+            init_checkpoint=init_checkpoint,
+            resume=resume,
+            num_gpus=num_gpus,
+            device=validated_device,
+            workers=workers,
+            amp_enabled=amp_enabled,
+            ddp_broadcast_buffers=ddp_broadcast_buffers,
+            ddp_find_unused=ddp_find_unused,
+            checkpointer_period=checkpointer_period,
+            checkpointer_max_to_keep=checkpointer_max_to_keep,
+            eval_period=eval_period,
+            log_period=log_period,
+            samples=samples,
+            seed=seed,
+            early_stop=early_stop,
+            patience=patience,
+            ema_enabled=ema_enabled,
+            ema_decay=ema_decay,
+            ema_warmup=ema_warmup,
+            learning_rate=learning_rate,
+            weight_decay=weight_decay,
+            max_iters=max_iters,
+            batch_size=batch_size,
+            scheduler=validated_scheduler,
+            optimizer=validated_optimizer,
+            weight_decay_norm=weight_decay_norm,
+            weight_decay_embed=weight_decay_embed,
+            backbone_multiplier=backbone_multiplier,
+            decoder_multiplier=decoder_multiplier,
+            head_multiplier=head_multiplier,
+            freeze_bn=freeze_bn,
+            clip_gradients=clip_gradients,
+            size_divisibility=size_divisibility,
+            gather_metric_period=gather_metric_period,
+            zero_grad_before_forward=zero_grad_before_forward,
+            sync_to_hub=sync_to_hub,
+            datasets_dir=datasets_dir,
+        )
+    except Exception as e:
+        typer.echo(f"❌ Training failed: {e}")
 
 
 @app.command("val")
 def val(
     model: Annotated[str, typer.Option(help="Model name (required)")],
     dataset: Annotated[str, typer.Option(help="Dataset name (required)")],
-    models_dir: Annotated[Optional[str], typer.Option(help="Models directory")] = None,
+    datasets_dir: Annotated[
+        Optional[str], typer.Option(help="Datasets directory (default: ~/FocoosAI/datasets/)")
+    ] = None,
     run_name: Annotated[Optional[str], typer.Option(help="Run name")] = None,
     dataset_layout: Annotated[DatasetLayout, typer.Option(help="Dataset layout")] = DatasetLayout.ROBOFLOW_COCO,
     im_size: Annotated[int, typer.Option(help="Image size")] = 640,
@@ -501,7 +522,6 @@ def val(
     size_divisibility: Annotated[int, typer.Option(help="Size divisibility")] = 0,
     gather_metric_period: Annotated[int, typer.Option(help="Gather metric period")] = 1,
     zero_grad_before_forward: Annotated[bool, typer.Option(help="Zero gradients before forward pass")] = False,
-    datasets_dir: Annotated[Optional[str], typer.Option(help="Datasets directory")] = None,
 ):
     """Validate a model on a dataset with comprehensive evaluation metrics.
 
@@ -522,9 +542,8 @@ def val(
             Can be specified in several ways:
             - **Pretrained model**: Simple model name like 'fai-detr-m-coco'
             - **Hub model**: Format 'hub://<model-ref>' for models from Focoos Hub
-            - **Local model**: Model name with --models-dir pointing to custom directory
             - **Default directory model**: Model name for models in default Focoos directory
-        dataset (str): Name of the dataset for validation (e.g., 'coco8').
+        dataset (str): Name of the dataset for validation (e.g., 'mydataset.zip').
         run_name (Optional[str]): Optional name for the validation run. If not provided,
             generates a unique name using model name and UUID.
         dataset_layout (DatasetLayout): Layout format of the dataset. Defaults to ROBOFLOW_COCO.
@@ -572,27 +591,22 @@ def val(
     Examples:
         Basic validation with pretrained model:
         ```bash
-        focoos val --model fai-detr-m-coco --dataset coco8
+        focoos val --model fai-detr-m-coco --dataset mydataset.zip
         ```
 
         Validation with model from Focoos Hub:
         ```bash
-        focoos val --model hub://<model-ref> --dataset coco8
-        ```
-
-        Validation with local model in custom directory:
-        ```bash
-        focoos val --model my-trained-model --models-dir ./trained_models --dataset coco8
+        focoos val --model hub://<model-ref> --dataset mydataset.zip
         ```
 
         Validation with local model in default Focoos directory:
         ```bash
-        focoos val --model my-checkpoint-model --dataset coco8
+        focoos val --model my-checkpoint-model --dataset mydataset.zip
         ```
 
         Validation with specific checkpoint:
         ```bash
-        focoos val --model fai-detr-m-coco --dataset coco8 \
+        focoos val --model fai-detr-m-coco --dataset mydataset.zip \
                    --init-checkpoint path/to/checkpoint.pth --im-size 800
         ```
 
@@ -604,7 +618,7 @@ def val(
 
         Validation with custom output directory:
         ```bash
-        focoos val --model fai-detr-m-coco --dataset coco8 \
+        focoos val --model fai-detr-m-coco --dataset mydataset.zip \
                    --output-dir ./validation_results
         ```
 
@@ -618,71 +632,103 @@ def val(
         - [`focoos predict`][focoos.cli.cli.predict]: For inference
         - [Validation Guide](../validation.md): For detailed validation documentation
     """
-    validated_device = cast(DeviceType, device)
-    assert device in get_args(DeviceType)
-    validated_scheduler = cast(SchedulerType, scheduler.upper())
-    assert scheduler in get_args(SchedulerType)
-    validated_optimizer = cast(OptimizerType, optimizer.upper())
-    assert optimizer in get_args(OptimizerType)
 
-    val_command(
-        model_name=model,
-        dataset_name=dataset,
-        models_dir=models_dir,
-        dataset_layout=dataset_layout,
-        im_size=im_size,
-        run_name=run_name or f"{model}-{uuid.uuid4()}",
-        output_dir=output_dir,
-        ckpt_dir=ckpt_dir,
-        init_checkpoint=init_checkpoint,
-        resume=resume,
-        num_gpus=num_gpus,
-        device=validated_device,
-        workers=workers,
-        amp_enabled=amp_enabled,
-        ddp_broadcast_buffers=ddp_broadcast_buffers,
-        ddp_find_unused=ddp_find_unused,
-        checkpointer_period=checkpointer_period,
-        checkpointer_max_to_keep=checkpointer_max_to_keep,
-        eval_period=eval_period,
-        log_period=log_period,
-        samples=samples,
-        seed=seed,
-        early_stop=early_stop,
-        patience=patience,
-        ema_enabled=ema_enabled,
-        ema_decay=ema_decay,
-        ema_warmup=ema_warmup,
-        learning_rate=learning_rate,
-        weight_decay=weight_decay,
-        max_iters=max_iters,
-        batch_size=batch_size,
-        scheduler=validated_scheduler,
-        optimizer=validated_optimizer,
-        weight_decay_norm=weight_decay_norm,
-        weight_decay_embed=weight_decay_embed,
-        backbone_multiplier=backbone_multiplier,
-        decoder_multiplier=decoder_multiplier,
-        head_multiplier=head_multiplier,
-        freeze_bn=freeze_bn,
-        clip_gradients=clip_gradients,
-        size_divisibility=size_divisibility,
-        gather_metric_period=gather_metric_period,
-        zero_grad_before_forward=zero_grad_before_forward,
-        datasets_dir=datasets_dir,
-    )
+    typer.echo("🔍 Validation arguments:")
+    typer.echo(f"  Model: {model}")
+    typer.echo(f"  Dataset: {dataset}")
+    typer.echo(f"  Dataset layout: {dataset_layout}")
+    typer.echo(f"  Image size: {im_size}")
+    typer.echo(f"  Run name: {run_name}")
+    typer.echo(f"  Output dir: {output_dir}")
+    typer.echo(f"  Checkpoint dir: {ckpt_dir}")
+    typer.echo(f"  Init checkpoint: {init_checkpoint}")
+    typer.echo(f"  Resume: {resume}")
+    typer.echo(f"  Num GPUs: {num_gpus}")
+    typer.echo(f"  Device: {device}")
+    typer.echo(f"  Workers: {workers}")
+    typer.echo(f"  Batch size: {batch_size}")
+    typer.echo(f"  Learning rate: {learning_rate}")
+    typer.echo(f"  Weight decay: {weight_decay}")
+    typer.echo(f"  Max iterations: {max_iters}")
+    typer.echo(f"  Scheduler: {scheduler}")
+    typer.echo(f"  Optimizer: {optimizer}")
+    typer.echo(f"  Weight decay norm: {weight_decay_norm}")
+    typer.echo(f"  Weight decay embed: {weight_decay_embed}")
+    typer.echo(f"  Backbone multiplier: {backbone_multiplier}")
+    typer.echo(f"  Decoder multiplier: {decoder_multiplier}")
+    typer.echo(f"  Head multiplier: {head_multiplier}")
+    typer.echo(f"  Freeze BN: {freeze_bn}")
+
+    try:
+        validated_device = cast(DeviceType, device)
+        assert device in get_args(DeviceType)
+        validated_scheduler = cast(SchedulerType, scheduler.upper())
+        assert scheduler in get_args(SchedulerType)
+        validated_optimizer = cast(OptimizerType, optimizer.upper())
+        assert optimizer in get_args(OptimizerType)
+
+        val_command(
+            model_name=model,
+            dataset_name=dataset,
+            dataset_layout=dataset_layout,
+            im_size=im_size,
+            run_name=run_name or f"{model}-{uuid.uuid4()}",
+            output_dir=output_dir,
+            ckpt_dir=ckpt_dir,
+            init_checkpoint=init_checkpoint,
+            resume=resume,
+            num_gpus=num_gpus,
+            device=validated_device,
+            workers=workers,
+            amp_enabled=amp_enabled,
+            ddp_broadcast_buffers=ddp_broadcast_buffers,
+            ddp_find_unused=ddp_find_unused,
+            checkpointer_period=checkpointer_period,
+            checkpointer_max_to_keep=checkpointer_max_to_keep,
+            eval_period=eval_period,
+            log_period=log_period,
+            samples=samples,
+            seed=seed,
+            early_stop=early_stop,
+            patience=patience,
+            ema_enabled=ema_enabled,
+            ema_decay=ema_decay,
+            ema_warmup=ema_warmup,
+            learning_rate=learning_rate,
+            weight_decay=weight_decay,
+            max_iters=max_iters,
+            batch_size=batch_size,
+            scheduler=validated_scheduler,
+            optimizer=validated_optimizer,
+            weight_decay_norm=weight_decay_norm,
+            weight_decay_embed=weight_decay_embed,
+            backbone_multiplier=backbone_multiplier,
+            decoder_multiplier=decoder_multiplier,
+            head_multiplier=head_multiplier,
+            freeze_bn=freeze_bn,
+            clip_gradients=clip_gradients,
+            size_divisibility=size_divisibility,
+            gather_metric_period=gather_metric_period,
+            zero_grad_before_forward=zero_grad_before_forward,
+            datasets_dir=datasets_dir,
+        )
+    except Exception as e:
+        typer.echo(f"❌ Validation failed: {e}")
 
 
 @app.command("predict")
 def predict(
-    model: Annotated[str, typer.Option(help="Model name or path (required)")],
     source: Annotated[str, typer.Option(help="Image/video path or URL (required)")],
-    models_dir: Annotated[Optional[str], typer.Option(help="Models directory")] = None,
-    runtime: Annotated[RuntimeType, typer.Option(help="Runtime type")] = RuntimeType.ONNX_CUDA32,
+    model: Annotated[str, typer.Option(help="Model name or path (required)")] = "fai-detr-l-obj365",
+    runtime: Annotated[
+        Optional[RuntimeType], typer.Option(help="Runtime type (If not provided, torch will be used)")
+    ] = None,
     im_size: Annotated[Optional[int], typer.Option(help="Image size")] = 640,
-    conf: Annotated[Optional[float], typer.Option(help="Confidence threshold")] = 0.25,
+    conf: Annotated[Optional[float], typer.Option(help="Confidence threshold")] = 0.5,
+    output_dir: Annotated[
+        Optional[str], typer.Option(help="Directory to save results (default: ~/FocoosAI/predictions/)")
+    ] = PREDICTIONS_DIR,
     save: Annotated[Optional[bool], typer.Option(help="Save annotated image results")] = True,
-    output_dir: Annotated[Optional[str], typer.Option(help="Directory to save results")] = PREDICT_DIR,
     save_json: Annotated[Optional[bool], typer.Option(help="Save detections as JSON")] = True,
     save_masks: Annotated[Optional[bool], typer.Option(help="Save masks as separate images")] = True,
 ):
@@ -707,7 +753,6 @@ def predict(
             Can be specified in several ways:
             - **Pretrained model**: Simple model name like 'fai-detr-m-coco'
             - **Hub model**: Format 'hub://<model-ref>' for models from Focoos Hub
-            - **Local model**: Model name with --models-dir pointing to custom directory
             - **Default directory model**: Model name for models in default Focoos directory
         source (str): Path to input image file or URL. Must be a single image file.
         models_dir (Optional[str]): Directory containing model files.
@@ -734,11 +779,6 @@ def predict(
         Inference with model from Focoos Hub:
         ```bash
         focoos predict --model hub://<model-ref> --source image.jpg
-        ```
-
-        Inference with local model in custom directory:
-        ```bash
-        focoos predict --model my-custom-model --models-dir ./my_models --source image.jpg
         ```
 
         Inference with local model in default Focoos directory:
@@ -806,24 +846,28 @@ def predict(
         - [`focoos benchmark`][focoos.cli.cli.benchmark]: For performance testing
         - [Inference Guide](../inference.md): For detailed inference documentation
     """
-    predict_command(
-        model_name=model,
-        source=source,
-        models_dir=models_dir,
-        runtime=runtime,
-        im_size=im_size,
-        conf=conf,
-        save=save,
-        output_dir=output_dir,
-        save_json=save_json,
-        save_masks=save_masks,
+    typer.echo(
+        f"🔮 Starting predict - Model: {model}, Source: {source}, Runtime: {runtime}, Image size: {im_size}, Conf: {conf}, Save: {save}, Output dir: {output_dir}, Save json: {save_json}, Save masks: {save_masks}"
     )
+    try:
+        predict_command(
+            model_name=model,
+            source=source,
+            runtime=runtime,
+            im_size=im_size,
+            conf=conf,
+            save=save,
+            output_dir=output_dir,
+            save_json=save_json,
+            save_masks=save_masks,
+        )
+    except Exception as e:
+        typer.echo(f"❌ Predict failed: {e}")
 
 
 @app.command("export")
 def export(
     model: Annotated[str, typer.Option(help="Model name (required)")],
-    models_dir: Annotated[Optional[str], typer.Option(help="Models directory")] = None,
     format: Annotated[Optional[ExportFormat], typer.Option(help="Export format")] = ExportFormat.ONNX,
     output_dir: Annotated[Optional[str], typer.Option(help="Output directory")] = None,
     device: Annotated[Optional[str], typer.Option(help="Device (cuda or cpu)")] = "cuda",
@@ -927,26 +971,28 @@ def export(
         - [`focoos predict`][focoos.cli.cli.predict]: For using exported models
         - [`focoos benchmark`][focoos.cli.cli.benchmark]: For testing exported models
     """
-    # Type validation for device parameter
-    validated_device = cast(DeviceType, device)
-    assert device in get_args(DeviceType)
-
-    export_command(
-        model_name=model,
-        models_dir=models_dir,
-        format=format,
-        output_dir=output_dir,
-        device=validated_device,
-        onnx_opset=onnx_opset,
-        im_size=im_size,
-        overwrite=overwrite,
+    typer.echo(
+        f"📦 Starting export - Model: {model}, Format: {format}, Output dir: {output_dir}, Device: {device}, ONNX opset: {onnx_opset}, Image size: {im_size}, Overwrite: {overwrite}"
     )
+    try:
+        validated_device = cast(DeviceType, device)
+        assert device in get_args(DeviceType)
+        export_command(
+            model_name=model,
+            format=format,
+            output_dir=output_dir,
+            device=validated_device,
+            onnx_opset=onnx_opset,
+            im_size=im_size,
+            overwrite=overwrite,
+        )
+    except Exception as e:
+        typer.echo(f"❌ Export failed: {e}")
 
 
 @app.command("benchmark")
 def benchmark(
     model: Annotated[str, typer.Option(help="Model name or path (required)")],
-    models_dir: Annotated[Optional[str], typer.Option(help="Models directory")] = None,
     im_size: Annotated[Optional[int], typer.Option(help="Image size for benchmarking")] = None,
     iterations: Annotated[Optional[int], typer.Option(help="Number of benchmark iterations")] = None,
     device: Annotated[str, typer.Option(help="Device for benchmarking (cuda or cpu)")] = "cuda",
@@ -1066,14 +1112,18 @@ def benchmark(
         - [`focoos predict`][focoos.cli.cli.predict]: For actual inference
         - [`focoos export`][focoos.cli.cli.export]: For optimized model formats
     """
-    # Type validation for device parameter
-    validated_device = cast(DeviceType, device)
-    assert device in get_args(DeviceType)
+    typer.echo(f"📦 Starting benchmark - Model: {model}, Iterations: {iterations}, Size: {im_size}, Device: {device}")
+    try:
+        validated_device = cast(DeviceType, device)
+        assert device in get_args(DeviceType)
+        benchmark_command(
+            model_name=model,
+            iterations=iterations,
+            im_size=im_size,
+            device=validated_device,
+        )
+    except Exception as e:
+        typer.echo(f"❌ Benchmark failed: {e}")
 
-    benchmark_command(
-        model_name=model,
-        models_dir=models_dir,
-        iterations=iterations,
-        im_size=im_size,
-        device=validated_device,
-    )
+
+app.add_typer(hub_app, name="hub")
