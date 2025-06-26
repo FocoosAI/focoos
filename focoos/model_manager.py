@@ -44,7 +44,6 @@ class ModelManager:
         name: str,
         model_info: Optional[ModelInfo] = None,
         config: Optional[ModelConfig] = None,
-        models_dir: Optional[str] = None,
         hub: Optional[FocoosHUB] = None,
         cache: bool = True,
         **kwargs,
@@ -62,7 +61,6 @@ class ModelManager:
             name: Model name, path, or hub reference (e.g., "hub://username/model_ref")
             model_info: Optional ModelInfo object to load the model from directly
             config: Optional custom model configuration to override defaults
-            models_dir: Optional directory to look for local models (defaults to MODELS_DIR)
             hub: Optional FocoosHUB instance to use for hub:// references
             cache: Optional boolean to cache the model info and weights when loading from hub (defaults to True)
             **kwargs: Additional keyword arguments passed to the model configuration
@@ -87,7 +85,7 @@ class ModelManager:
             model_info = ModelRegistry.get_model_info(name)
         # Otherwise, attempt to load from a local directory
         else:
-            model_info = cls._from_local_dir(name=name, models_dir=models_dir)
+            model_info = cls._from_local_dir(name=name)
         # Load model from the resolved ModelInfo
         return cls._from_model_info(model_info=model_info, config=config, **kwargs)
 
@@ -156,7 +154,7 @@ class ModelManager:
         return model
 
     @classmethod
-    def _from_local_dir(cls, name: str, models_dir: Optional[str] = None) -> ModelInfo:
+    def _from_local_dir(cls, name: str) -> ModelInfo:
         """
         Load a model from a local experiment directory.
 
@@ -165,7 +163,6 @@ class ModelManager:
 
         Args:
             name: Name or path of the model directory relative to models_dir
-            models_dir: Base directory containing model directories (defaults to MODELS_DIR)
 
         Returns:
             ModelInfo: The model information loaded from the local directory
@@ -173,11 +170,14 @@ class ModelManager:
         Raises:
             ValueError: If the model directory or ModelInfo file cannot be found
         """
-        models_dir = models_dir or MODELS_DIR
+        if os.path.exists(name):
+            run_dir = name
+        else:
+            run_dir = os.path.join(MODELS_DIR, name)
 
-        run_dir = os.path.join(models_dir, name)
         if not os.path.exists(run_dir):
-            raise ValueError(f"Run {name} not found in {models_dir}")
+            raise ValueError(f"Run {name} not found in {MODELS_DIR}")
+
         model_info_path = os.path.join(run_dir, ArtifactName.INFO)
         if not os.path.exists(model_info_path):
             raise ValueError(f"Model info not found in {run_dir}")
