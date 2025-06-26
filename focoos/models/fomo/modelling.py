@@ -35,7 +35,9 @@ class FOMOCriterion(nn.Module):
         self.loss_type = loss_type
         
     def forward(self, predictions, targets: list[FOMOTargets]):
-        loss = None
+        loss_dict = {}
+        losses_str = self.loss_type.lower().split("+")
+        
         if targets is not None and len(targets) > 0:
             class_weights = torch.tensor([1, # background weight
                             50, 250, 320, 
@@ -43,11 +45,17 @@ class FOMOCriterion(nn.Module):
                             740], 
                             device=predictions.device, dtype=predictions.dtype
                             ) # Aquarium dataset specific
-            if self.loss_type == "bce_loss":
-                target_masks = torch.cat([target.mask.unsqueeze(0) for target in targets], dim=0)  # [B, H, W]
-                target_masks = F.one_hot(target_masks.long(), num_classes=self.num_classes + 1)  # [B, H, W, C+1]
-                target_masks = target_masks[..., 1:]  # [B, H, W, C]
-                target_masks = target_masks.permute(0, 3, 1, 2).float()  # [B, C, H, W]
+            
+            # target.mask one-hot encoding with no background
+            target_masks = torch.cat([target.mask.unsqueeze(0) for target in targets], dim=0)  # [B, H, W]
+            target_masks = F.one_hot(target_masks.long(), num_classes=self.num_classes + 1)  # [B, H, W, C+1]
+            target_masks = target_masks[..., 1:]  # [B, H, W, C]
+            target_masks = target_masks.permute(0, 3, 1, 2).float()  # [B, C, H, W]
+            
+            # reshape class_weights to [C, 1, 1]
+            class_weights = class_weights[1:].reshape(-1, 1, 1) # [C-1, 1, 1]
+                
+            if "bce_loss" in losses_str:
                 """DEBUG"""
                 if False:
                     # compute tensor statistics 
@@ -65,21 +73,33 @@ class FOMOCriterion(nn.Module):
                         with open("/home/ubuntu/focoos-1/notebooks/debug_outputs/random_stuff/class_imbalance_stats.txt", "a") as f:
                             f.write(f"{class_counts.tolist()}\n")
                 """DEBUG"""
-                class_weights = class_weights[1:].reshape(-1, 1, 1) # [C-1, 1, 1]
                 loss = F.binary_cross_entropy_with_logits(predictions, target_masks, 
                                                           reduction='mean', pos_weight=class_weights
                                                           )
-                return {"loss_bce": loss} if loss is not None else None
-            elif self.loss_type == "ce_loss":
+                loss_dict["loss_bce"] = loss if loss is not None else 0
+            elif "ce_loss" in losses_str:
                 target_masks = torch.cat([target.mask.unsqueeze(0) for target in targets], dim=0).long() # [B, H, W]
                 loss = F.cross_entropy(predictions, target_masks, 
                                        weight=class_weights, reduction='mean'
                                        )
-                return {"loss_ce": loss} if loss is not None else None
-            else:
-                raise ValueError(f"Invalid loss type: {self.loss_type}")
+                loss_dict["loss_ce"] = loss if loss is not None else 0
+                
+            if "l1" in losses_str:
+                loss = F.l1_loss(predictions, target_masks, reduction='mean')
+                loss_dict["loss_l1"] = loss if loss is not None else 0
+            if "l2" in losses_str:
+                loss = F.mse_loss(predictions, target_masks, reduction='mean')
+                loss_dict["loss_l2"] = loss if loss is not None else 0
+            if "weighted_l1" in losses_str:
+                loss = F.l1_loss(predictions, target_masks, reduction='none')
+                weighted_l1_loss = (loss * class_weights).mean()
+                loss_dict["loss_weighted_l1"] = weighted_l1_loss if weighted_l1_loss is not None else 0
+            if "weighted_l2" in losses_str:
+                loss = F.mse_loss(predictions, target_masks, reduction='none')
+                weighted_l2_loss = (loss * class_weights).mean()
+                loss_dict["loss_weighted_l2"] = weighted_l2_loss if weighted_l2_loss is not None else 0
         
-        return None
+        return loss_dict
 
 class FOMOHead(nn.Module):
     def __init__(self, in_channels: int, hidden_dim: int, num_classes: int, criterion: nn.Module, activation: str = "relu"):
@@ -89,7 +109,7 @@ class FOMOHead(nn.Module):
         self.criterion = criterion
         self.activation = getattr(F, activation)
         self.conv1 = nn.Conv2d(in_channels, hidden_dim, kernel_size=1)
-        out_channels = num_classes + 1 if self.criterion.loss_type == "ce_loss" else num_classes # else: bce_loss
+        out_channels = num_classes + 1 if "ce_loss" in self.criterion.loss_type.lower().split("+") else num_classes
         self.conv2 = nn.Conv2d(hidden_dim, out_channels, kernel_size=1)
         
     def forward(self, features, targets: list[FOMOTargets] = []):
@@ -100,14 +120,14 @@ class FOMOHead(nn.Module):
         if targets is not None and len(targets) > 0:
             for target in targets:
                 target.mask = resize_mask_to_size(target.mask, outputs.shape[-2:], self.num_classes)
-            loss = self.losses(outputs, targets)
+            loss_dict = self.losses(outputs, targets)
         
-        return outputs, loss
+        return outputs, loss_dict
     
     def losses(self, predictions, targets: list[FOMOTargets]):
-        losses = self.criterion(predictions, targets)
+        loss_dict = self.criterion(predictions, targets)
 
-        return losses
+        return loss_dict
 
 class FOMO(BaseModelNN):
     def __init__(self, config: FOMOConfig):
@@ -150,7 +170,7 @@ class FOMO(BaseModelNN):
         with torch.set_grad_enabled(not self.config.freeze_backbone):
             features = self.backbone(images)
         features_cut = features[self.config.cut_point]
-        outputs, losses = self.head(features_cut, targets)
+        outputs, loss_dict = self.head(features_cut, targets)
         
         """DEBUG"""
         if False:
@@ -188,6 +208,6 @@ class FOMO(BaseModelNN):
         
         if self.training:
             assert targets is not None and len(targets) > 0, "targets should not be None or empty - training mode"
-            return FOMOModelOutput(logits=torch.zeros(0, 0, 0), loss=losses)
+            return FOMOModelOutput(logits=torch.zeros(0, 0, 0), loss=loss_dict)
         
-        return FOMOModelOutput(logits=outputs, loss=losses)
+        return FOMOModelOutput(logits=outputs, loss=loss_dict)
