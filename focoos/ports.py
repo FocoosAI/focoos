@@ -23,7 +23,7 @@ ROOT_DIR = Path.home() / "FocoosAI"
 ROOT_DIR = str(ROOT_DIR) if os.name == "nt" else ROOT_DIR
 MODELS_DIR = os.path.join(ROOT_DIR, "models")
 DATASETS_DIR = os.path.join(ROOT_DIR, "datasets")
-PREDICT_DIR = os.path.join(ROOT_DIR, "predict")
+PREDICTIONS_DIR = os.path.join(ROOT_DIR, "predictions")
 
 
 class PydanticBase(BaseModel, ABC):
@@ -105,26 +105,12 @@ class DatasetLayout(str, Enum):
                     - _classes.csv (comma separated csv)
                     - img_3_mask.png
                     - img_4_mask.png
-
-        - SUPERVISELY: (Semantic Segmentation) format:
-            root/
-                train/
-                    meta.json
-                    img/
-                    ann/
-                    mask/
-                valid/
-                    meta.json
-                    img/
-                    ann/
-                    mask/
         ```
     """
 
     ROBOFLOW_COCO = "roboflow_coco"
     ROBOFLOW_SEG = "roboflow_seg"
     CATALOG = "catalog"
-    SUPERVISELY = "supervisely"
     CLS_FOLDER = "cls_folder"
 
 
