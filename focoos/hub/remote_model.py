@@ -129,6 +129,7 @@ class RemoteModel:
             logger.error(f"Failed to sync local training: {res.status_code} {res.text}")
             raise ValueError(f"Failed to sync local training: {res.status_code} {res.text}")
         if upload_artifacts:
+            # TODO: fix upload artifacts should be a list of artifact names
             for artifact in [ArtifactName.METRICS, ArtifactName.WEIGHTS]:
                 file_path = os.path.join(dir, artifact.value)
                 if os.path.isfile(file_path):
