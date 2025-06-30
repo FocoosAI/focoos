@@ -693,6 +693,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CLI
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1467,6 +1490,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    cli
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1763,9 +1809,8 @@
 <span class="normal">11</span>
 <span class="normal">12</span>
 <span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Loading with custom models directory</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">ModelManager</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;my_model&quot;</span><span class="p">,</span> <span class="n">models_dir</span><span class="o">=</span><span class="s2">&quot;/custom/models/dir&quot;</span><span class="p">)</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Loading with custom models directory</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">ModelManager</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/custom/models/dir/my_model&quot;</span><span class="p">)</span>
 
 <span class="c1"># Expected directory structure:</span>
 <span class="c1"># /path/to/local/model/</span>
@@ -1774,8 +1819,7 @@
 
 <span class="c1"># Loading with configuration override</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">ModelManager</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-    <span class="s2">&quot;local_model&quot;</span><span class="p">,</span>
-    <span class="n">models_dir</span><span class="o">=</span><span class="s2">&quot;/custom/models/dir&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;/custom/models/dir/local_model&quot;</span><span class="p">,</span>
     <span class="n">arg1</span><span class="o">=</span><span class="n">value1</span><span class="p">,</span>
     <span class="n">arg2</span><span class="o">=</span><span class="n">value2</span><span class="p">,</span>
 <span class="p">)</span>
