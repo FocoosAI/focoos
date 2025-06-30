@@ -28,7 +28,7 @@ Examples:
 
     Upload a dataset:
     ```bash
-    focoos hub dataset upload --ref my-dataset --path ./data
+    focoos hub dataset upload --ref my-dataset --path ./data.zip
     ```
 
 See Also:
@@ -59,12 +59,16 @@ def main():
     Use subcommands to list and discover available resources.
 
     Available subcommands:
-    - `models`: List available pretrained models
-    - `datasets`: List available datasets (private and optionally shared)
+    - `models`: List the available user models
+    - `datasets`: List the available user datasets (private and optionally shared)
     - `dataset`: Dataset operations (download, upload)
 
+    Notes:
+        - This command requires an internet connection to access the Focoos Hub.
+        - This command requires a Focoos API Key to be set in the environment variable `FOCOOS_API_KEY`.
+
     Examples:
-        ```bash
+
         # List all available models
         focoos hub models
 
@@ -78,8 +82,7 @@ def main():
         focoos hub dataset download --ref my-dataset --path ./data
 
         # Upload a dataset
-        focoos hub dataset upload --ref my-dataset --path ./data
-        ```
+        focoos hub dataset upload --ref my-dataset --path ./data.zip
     """
     pass
 
@@ -280,7 +283,7 @@ def upload(
     ref: Annotated[str, typer.Option(..., help="The reference ID of the dataset to upload")],
     path: Annotated[str, typer.Option(..., help="Path to upload the dataset from")],
 ):
-    """Upload a dataset to the Focoos Hub.
+    """Upload a dataset to the Focoos Hub (You must first create a dataset on the Focoos hub).
 
     Uploads a dataset to the Focoos Hub from a specified local path.
 
@@ -291,14 +294,16 @@ def upload(
     Examples:
         ```bash
         # Upload a dataset from a specific path
-        focoos hub dataset upload --ref my-dataset-ref --path ./data
+        focoos hub dataset upload --ref my-dataset-ref --path ./data.zip
         ```
 
-    Raises:
-        typer.Exit: If there's an error connecting to the Hub or upload fails.
+    For more information on how the dataset should be structured look at the documentation
 
-    Note:
-        This command requires an internet connection to access the Focoos Hub.
+
+    Notes:
+        - This command requires an internet connection to access the Focoos Hub.
+        - This command requires a Focoos API Key to be set in the environment variable `FOCOOS_API_KEY`.
+        - You must first create a dataset on the Focoos hub.
     """
     typer.echo(f"Uploading dataset from {path} to {ref}...")
 
