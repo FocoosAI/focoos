@@ -68,6 +68,14 @@ class MapDataset(data.Dataset):
             if retry_count >= 3:
                 self.logger.warning("Failed to apply `_map_func` for idx: {}, retry count: {}".format(idx, retry_count))
 
+    @property
+    def name(self):
+        return self.dataset.metadata.name
+
+    @property
+    def task(self):
+        return self.dataset.metadata.task
+
     def preview(self, index=None, use_augmentations=True):
         if not use_augmentations:
             current_augmentations = self.mapper.augmentations

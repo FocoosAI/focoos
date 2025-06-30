@@ -53,7 +53,7 @@ dataset_path = dataset.download_data()
 
 ### Get the training dataset
 
-Now that we downloaded the dataset, we can magically 🪄 instanciate the dataset using the [`AutoDataset`](focoos/api/auto_dataset/#focoos.data.auto_dataset.AutoDataset) as will be used in the training. You can optionally specify aumgentations for the training using the [`DatasetAugmentation`](focoos/api/auto_dataset/#focoos.data.default_aug.DatasetAugmentations) dataclass.
+Now that we downloaded the dataset, we can magically 🪄 instanciate the dataset using the [`AutoDataset`](/focoos/api/auto_dataset/#focoos.data.auto_dataset.AutoDataset) as will be used in the training. You can optionally specify aumgentations for the training using the [`DatasetAugmentation`](/focoos/api/auto_dataset/#focoos.data.default_aug.DatasetAugmentations) dataclass.
 
 ```python
 from focoos.data.auto_dataset import AutoDataset
@@ -83,21 +83,21 @@ model = ModelManager.get("hub://" + model_ref, hub=hub)
 ```
 
 ### Select the hyper-parameters
-The next step is to create a [`TrainerArgs`](focoos/api/ports/#focoos.ports.TrainerArgs) with the hyper-parameters such as the learning rate, the number of iterations and so on.
+The next step is to create a [`TrainerArgs`](/focoos/api/ports/#focoos.ports.TrainerArgs) with the hyper-parameters such as the learning rate, the number of iterations and so on.
 Optionally, if you are using the hub, you can specify `sync_to_hub=True` to track the experiment on the Focoos Hub.
 
 ```python
 from focoos.ports import TrainerArgs
 
 args = TrainerArgs(
-    run_name="football-tutorial",  # the name of the experiment
-    output_dir="./experiments",  # the folder where the model is saved
+    run_name=f"{model.name}_{train_dataset.name}",  # the name of the experiment
+    output_dir="./experiments",  # the folder where the model is saved, DEFAULT  ~/FocoosAI/models"
     batch_size=16,  # how many images in each iteration
     max_iters=500,  # how many iterations lasts the training
     eval_period=100,  # period after we eval the model on the validation (in iterations)
     learning_rate=0.0001,  # learning rate
     weight_decay=0.0001,  # regularization strenght (set it properly to avoid under/over fitting)
-    sync_to_hub=True,  # Use this to see the model under training on the platform
+    sync_to_hub=True, # Use this to sync model info, weights and metrics on the platform
 )
 ```
 

@@ -152,6 +152,7 @@ class FocoosModel:
         self.model_info.config["num_classes"] = len(data_train.dataset.metadata.classes)
         self._reload_model()
         self.model_info.name = train_args.run_name.strip()
+        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)
         assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
 
     def train(self, args: TrainerArgs, data_train: MapDataset, data_val: MapDataset, hub: Optional[FocoosHUB] = None):
@@ -253,6 +254,10 @@ class FocoosModel:
             run_test(args, data_test, self.model, self.processor, self.model_info)
 
     @property
+    def name(self):
+        return self.model_info.name
+
+    @property
     def device(self):
         """Get the device where the model is located.
 
@@ -299,7 +304,7 @@ class FocoosModel:
 
     def export(
         self,
-        runtime_type: RuntimeType = RuntimeType.ONNX_CUDA32,
+        runtime_type: RuntimeType = RuntimeType.TORCHSCRIPT_32,
         onnx_opset: int = 17,
         out_dir: Optional[str] = None,
         device: Literal["cuda", "cpu"] = "cuda",

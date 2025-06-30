@@ -1,15 +1,17 @@
 ![Tests](https://github.com/FocoosAI/focoos/actions/workflows/test.yml/badge.svg??event=push&branch=main)
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/main/tutorials/training.ipynb)
+[![Documentation](https://img.shields.io/badge/docs-latest-blue)](https://focoosai.github.io/focoos/)
+
 # Welcome to Focoos AI
 
 Focoos AI provides an advanced development platform designed to empower developers and businesses with efficient, customizable computer vision solutions. Whether you're working with data from cloud infrastructures or deploying on edge devices, Focoos AI enables you to select, fine-tune, and deploy state-of-the-art models optimized for your unique needs.
 
-## SDK Overview
+## Overview
 
-<!-- Unlock the full potential of Focoos AI with the Focoos Python SDK! 🚀  -->
-The Focoos Python SDK is your gateway to easily access cutting-edge computer vision models and development tools. With just a few lines of code, you can **fine tune** pre-trained models tailored to your specific needs.
+<!-- Unlock the full potential of Focoos AI with the Focoos library! 🚀  -->
+The Focoos library is your gateway to easily access cutting-edge computer vision models and development tools. With just a few lines of code, you can **fine tune** pre-trained models tailored to your specific needs.
 
-Whether you're working in the cloud or on edge devices, the Focoos Python SDK seamlessly integrates into your workflow, accelerating development and simplifying the implementation of computer vision solutions.
+Whether you're working in the cloud or on edge devices, the Focoos library seamlessly integrates into your workflow, accelerating development and simplifying the implementation of computer vision solutions.
 
 ### Key Features 🔑
 
@@ -27,7 +29,7 @@ Whether you're working in the cloud or on edge devices, the Focoos Python SDK se
 Ready to dive in? Get started with the setup in just a few simple steps!
 
 ## Installation
-**Install** the Focoos Python SDK (for more options, see [setup](https://focoosai.github.io/focoos/setup))
+**Install** the Focoos library (for more options, see [setup](https://focoosai.github.io/focoos/setup))
 
 ```bash linenums="0"
 uv pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
@@ -70,7 +72,7 @@ valid_dataset = auto_dataset.get_split(augs=val_augs.get_augmentations(), split=
 model = ModelManager.get("fai-detr-l-obj365")
 
 args = TrainerArgs(
-    run_name=f"{ds_name}-{model.model_info.name}",
+    run_name=f"{model.name}_{train_dataset.name}",
     batch_size=16,
     max_iters=50,
     eval_period=50,
@@ -105,7 +107,7 @@ Using Focoos AI helps you save both time and money while delivering high-perform
 - **4x Cheaper** 💰: Our models require up to 4x less computational power, letting you save on hardware or cloud bill while ensuring high-quality results.
 - **Tons of CO2 saved annually per model** 🌱: Our models are energy-efficient, helping you reduce your carbon footprint by using less powerful hardware with respect to mainstream models.
 
-See the list of our models in the [models](https://focoosai.github.io/focoos/models/) section.
+See the list of our models in the [models](https://focoosai.github.io/focoos/models/models) section.
 
 ---
 ### Start now!

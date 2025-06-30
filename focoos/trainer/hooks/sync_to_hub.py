@@ -67,8 +67,8 @@ class SyncToHubHook(HookBase):
             )
 
     def after_train(self):
+        # Catch exception and sync training info, final weights will be synced in main trainer fn
         exc_type, exc_value, exc_traceback = sys.exc_info()
-        status = ModelStatus.TRAINING_COMPLETED
         if exc_type is not None:
             logger.error(
                 f"Exception during training, status set to TRAINING_ERROR: {str(exc_type.__name__)} {str(exc_value)}"
@@ -88,23 +88,20 @@ class SyncToHubHook(HookBase):
                         detail=f"{str(exc_type.__name__)}:  {str(exc_value)}",
                     )
                 )
-
-        self.model_info.dump_json(os.path.join(self.output_dir, ArtifactName.INFO))
-        self._sync_train_job(
-            sync_info=HubSyncLocalTraining(
-                status=status,
-                iterations=self.iteration,
-                training_info=self.model_info.training_info,
-            ),
-            upload_artifacts=[
-                ArtifactName.WEIGHTS,
-                ArtifactName.LOGS,
-                ArtifactName.PT,
-                ArtifactName.ONNX,
-                ArtifactName.INFO,
-                ArtifactName.METRICS,
-            ],
-        )
+            self.model_info.dump_json(os.path.join(self.output_dir, ArtifactName.INFO))
+            self._sync_train_job(
+                sync_info=HubSyncLocalTraining(
+                    status=status,
+                    iterations=self.iteration,
+                    training_info=self.model_info.training_info,
+                ),
+                upload_artifacts=[
+                    ArtifactName.WEIGHTS,
+                    ArtifactName.LOGS,
+                    ArtifactName.INFO,
+                    ArtifactName.METRICS,
+                ],
+            )
 
     def _sync_train_job(self, sync_info: HubSyncLocalTraining, upload_artifacts: Optional[List[ArtifactName]] = None):
         try:

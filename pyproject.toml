@@ -28,7 +28,7 @@ include = ["focoos**"]
 
 [project]
 name = "focoos"
-version = "0.15.0"
+version = "0.16.1"
 description = "Focoos SDK"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -70,7 +70,6 @@ keywords = [
 tensorrt = ["tensorrt==10.5.0"]
 onnx = ["onnxruntime-gpu==1.22.0", "onnx>=1.17.0", "onnxslim~=0.1.54", "onnxscript~=0.2.7"]
 onnx-cpu = ["onnxruntime==1.22.0","onnx>=1.18.0", "onnxslim~=0.1.54", "onnxscript~=0.2.7"]
-
 dev = [
     "pytest",
     "pytest-cov",
