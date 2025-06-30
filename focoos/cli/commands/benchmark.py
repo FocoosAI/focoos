@@ -62,7 +62,6 @@ def benchmark_command(
     iterations: Optional[int] = None,
     device: Literal["cuda", "cpu"] = "cuda",
     im_size: Optional[Union[int, Tuple[int, int]]] = None,
-    models_dir: Optional[str] = None,
 ):
     """Benchmark a model's inference performance with comprehensive metrics.
 
@@ -102,9 +101,6 @@ def benchmark_command(
             - Tuple: Specific dimensions (width, height)
             - None: Use model's default input size
             Defaults to None.
-        models_dir (Optional[str], optional): Custom directory to search for local
-            model files. If None, uses the default models directory.
-            Defaults to None.
 
     Raises:
         Exception: If model loading fails, device is unavailable, or benchmark
@@ -139,7 +135,7 @@ def benchmark_command(
         - [`focoos.models.base_model.BaseModel.benchmark`][focoos.models.base_model.BaseModel.benchmark]: Core benchmark method
     """
     logger.info(f"🔄 Loading model: {model_name}")
-    model = ModelManager.get(model_name, models_dir=models_dir)
+    model = ModelManager.get(model_name)
 
     logger.info(f"🚀 Starting benchmark with {iterations or 50} iterations on {device}")
     latency_metrics = model.benchmark(

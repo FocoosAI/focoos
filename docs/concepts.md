@@ -84,7 +84,7 @@ Load models from your local filesystem, whether they're custom-trained models or
 
 ```python
 # Loading with custom models directory
-model = ModelManager.get("my_model", models_dir="/custom/models/dir")
+model = ModelManager.get("/custom/models/dir/my_model")
 
 # Expected directory structure:
 # /path/to/local/model/
@@ -93,8 +93,7 @@ model = ModelManager.get("my_model", models_dir="/custom/models/dir")
 
 # Loading with configuration override
 model = ModelManager.get(
-    "local_model",
-    models_dir="/custom/models/dir",
+    "/custom/models/dir/local_model",
     arg1=value1,
     arg2=value2,
 )

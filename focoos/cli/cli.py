@@ -19,6 +19,7 @@ Available Commands:
     - `version`: Show Focoos version information
     - `checks`: Run system checks and display system information
     - `settings`: Show current Focoos configuration settings
+    - `hub`: Focoos Hub commands
 
 Examples:
     Training a model:
@@ -53,12 +54,22 @@ Examples:
     focoos version
     ```
 
+    Focoos Hub commands:
+    ```bash
+    focoos hub
+    focoos hub models
+    focoos hub datasets
+    focoos hub dataset download --ref my-dataset --path ./data
+    focoos hub dataset upload --ref my-dataset --path ./data.zip
+    ```
+
 Note:
     For command-specific help, use: `focoos COMMAND --help`
 
 See Also:
     - [Training Guide](../training.md)
     - [Inference Guide](../inference.md)
+    - [Focoos Hub](../hub/hub.md)
 """
 
 import uuid
@@ -303,7 +314,6 @@ def train(
         dataset (str): Name of the dataset to train on (e.g., 'mydataset.zip').
         run_name (Optional[str]): Optional name for the training run. If not provided,
             generates a unique name using model name and UUID.
-        models_dir (Optional[str]): Directory to save models.
         datasets_dir (Optional[str]): Custom directory for datasets.
         dataset_layout (DatasetLayout): Layout format of the dataset. Defaults to ROBOFLOW_COCO.
         im_size (int): Input image size for training. Defaults to 640.
@@ -755,7 +765,6 @@ def predict(
             - **Hub model**: Format 'hub://<model-ref>' for models from Focoos Hub
             - **Default directory model**: Model name for models in default Focoos directory
         source (str): Path to input image file or URL. Must be a single image file.
-        models_dir (Optional[str]): Directory containing model files.
         runtime (RuntimeType): Runtime backend for inference. Defaults to ONNX_CUDA32.
             Options include ONNX_CUDA32, ONNX_CPU, PYTORCH, etc.
         im_size (Optional[int]): Input image size for inference. Defaults to 640.
@@ -896,9 +905,8 @@ def export(
             Can be specified in several ways:
             - **Pretrained model**: Simple model name like 'fai-detr-m-coco'
             - **Hub model**: Format 'hub://<model-ref>' for models from Focoos Hub
-            - **Local model**: Model name with --models-dir pointing to custom directory
+            - **Local model**: Model name or model directory path (e.g., 'my-model' or '/path/to/my-model')
             - **Default directory model**: Model name for models in default Focoos directory
-        models_dir (Optional[str]): Directory containing model files.
         format (Optional[ExportFormat]): Target export format. Defaults to ONNX.
             Available formats: 'onnx', 'torchscript'.
         output_dir (Optional[str]): Directory to save the exported model files.
@@ -1026,7 +1034,6 @@ def benchmark(
             - **Hub model**: Format 'hub://<model-ref>' for models from Focoos Hub
             - **Local model**: Model name with --models-dir pointing to custom directory
             - **Default directory model**: Model name for models in default Focoos directory
-        models_dir (Optional[str]): Directory containing model files.
         im_size (Optional[int]): Input image size for benchmarking. If not specified,
             uses the model's default input size. Larger sizes typically
             result in slower inference but may improve accuracy.

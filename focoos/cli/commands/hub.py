@@ -297,8 +297,7 @@ def upload(
         focoos hub dataset upload --ref my-dataset-ref --path ./data.zip
         ```
 
-    For more information on how the dataset should be structured look at the documentation
-
+    For more information on how the dataset should be structured look at the [`documentation`](../api/ports.md#focoos.ports.DatasetLayout).
 
     Notes:
         - This command requires an internet connection to access the Focoos Hub.
