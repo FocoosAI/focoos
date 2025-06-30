@@ -390,7 +390,7 @@ def test_from_local_dir_with_model_final_pth(mocker: MockerFixture, functional_m
     # Mock ModelInfo.from_json
     mocker.patch("focoos.ports.ModelInfo.from_json", return_value=mock_model_info)
 
-    model_path = os.path.join("/path/to/models", "test-model")
+    model_path = os.path.join("path/to/models", "test-model")
     # Call the method
     result = functional_model_manager._from_local_dir(name=model_path)
 
