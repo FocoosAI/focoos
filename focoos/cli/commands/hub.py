@@ -35,14 +35,11 @@ See Also:
     - [`focoos.hub.focoos_hub.FocoosHUB`][focoos.hub.focoos_hub.FocoosHUB]: Core hub functionality
 """
 
-import os
 from typing import Annotated, Optional
 
 import typer
 
 from focoos.hub.focoos_hub import FocoosHUB
-from focoos.model_manager import ModelManager
-from focoos.ports import MODELS_DIR, ArtifactName, HubSyncLocalTraining, ModelStatus
 
 app = typer.Typer()
 dataset_app = typer.Typer()
@@ -122,11 +119,9 @@ def models():
            🤖 Focoos Model: fai_detr
         ```
 
-    Raises:
-        typer.Exit: If there's an error connecting to the Hub or no models are found.
-
     Note:
-        This command requires an internet connection to access the Focoos Hub.
+        - This command requires an internet connection to access the Focoos Hub.
+        - This command requires a Focoos API Key to be set in the environment variable `FOCOOS_API_KEY`.
     """
     typer.echo("Listing models...")
     try:
@@ -201,12 +196,10 @@ def datasets(
            🤖 Size MB: 150.5
         ```
 
-    Raises:
-        typer.Exit: If there's an error connecting to the Hub or no datasets are found.
-
     Note:
-        This command requires an internet connection to access the Focoos Hub.
-        Shared datasets may require appropriate permissions to access.
+        - This command requires an internet connection to access the Focoos Hub.
+        - This command requires a Focoos API Key to be set in the environment variable `FOCOOS_API_KEY`.
+        - Shared datasets may require appropriate permissions to access.
     """
     typer.echo("Listing datasets...")
     try:
@@ -259,11 +252,9 @@ def download(
         focoos hub dataset download --ref my-dataset-ref --path ./data
         ```
 
-    Raises:
-        typer.Exit: If there's an error connecting to the Hub or dataset not found.
-
-    Note:
-        This command requires an internet connection to access the Focoos Hub.
+    Notes:
+        - This command requires an internet connection to access the Focoos Hub.
+        - This command requires a Focoos API Key to be set in the environment variable `FOCOOS_API_KEY`.
     """
     typer.echo(f"Downloading dataset from {ref} to {path}...")
     try:
@@ -327,34 +318,35 @@ def upload(
         raise typer.Exit(1)
 
 
-@model_app.command()
-def sync(
-    path: Annotated[str, typer.Option(..., help="Path to sync the model to")],
-):
-    """Sync a local model to the Focoos Hub.
+# TODO: add sync command
+# @model_app.command()
+# def sync(
+#     path: Annotated[str, typer.Option(..., help="Path to sync the model to")],
+# ):
+#     """Sync a local model to the Focoos Hub.
 
-    Syncs a local model to the Focoos Hub from a specified local path.
+#     Syncs a local model to the Focoos Hub from a specified local path.
 
-    Args:
-        path (str): Path to sync the model to
-    """
-    typer.echo(f"Syncing model from {path} to the Focoos Hub...")
-    model_info = ModelManager._from_local_dir(path)
-    typer.echo(f"Model info: {model_info}")
-    focoos_hub = FocoosHUB()
-    remote_model = focoos_hub.new_model(model_info)
+#     Args:
+#         path (str): Path to sync the model to
+#     """
+#     typer.echo(f"Syncing model from {path} to the Focoos Hub...")
+#     model_info = ModelManager._from_local_dir(path)
+#     typer.echo(f"Model info: {model_info}")
+#     focoos_hub = FocoosHUB()
+#     remote_model = focoos_hub.new_model(model_info)
 
-    model_dir = path if os.path.exists(path) else os.path.join(MODELS_DIR, path)
+#     model_dir = path if os.path.exists(path) else os.path.join(MODELS_DIR, path)
 
-    if not os.path.exists(model_dir):
-        raise ValueError(f"Model directory {model_dir} does not exist")
+#     if not os.path.exists(model_dir):
+#         raise ValueError(f"Model directory {model_dir} does not exist")
 
-    remote_model.sync_local_training_job(
-        local_training_info=HubSyncLocalTraining(
-            training_info=model_info.training_info,
-            status=ModelStatus.TRAINING_COMPLETED,
-            focoos_version=model_info.focoos_version,
-        ),
-        dir=model_dir,
-        upload_artifacts=[ArtifactName.INFO, ArtifactName.METRICS, ArtifactName.WEIGHTS],
-    )
+#     remote_model.sync_local_training_job(
+#         local_training_info=HubSyncLocalTraining(
+#             training_info=model_info.training_info,
+#             status=ModelStatus.TRAINING_COMPLETED,
+#             focoos_version=model_info.focoos_version,
+#         ),
+#         dir=model_dir,
+#         upload_artifacts=[ArtifactName.INFO, ArtifactName.METRICS, ArtifactName.WEIGHTS],
+#     )
