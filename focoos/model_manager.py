@@ -176,7 +176,7 @@ class ModelManager:
             run_dir = os.path.join(MODELS_DIR, name)
 
         if not os.path.exists(run_dir):
-            raise ValueError(f"Run {name} not found in {MODELS_DIR}")
+            raise ValueError(f"Run {run_dir} not exists.")
 
         model_info_path = os.path.join(run_dir, ArtifactName.INFO)
         if not os.path.exists(model_info_path):

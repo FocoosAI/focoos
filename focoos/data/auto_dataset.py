@@ -75,8 +75,6 @@ class AutoDataset:
                 return DictDataset.from_roboflow_seg(ds_dir=split_path, task=self.task)
             elif self.layout == DatasetLayout.CLS_FOLDER:
                 return DictDataset.from_folder(root_dir=split_path)
-            # elif self.layout == DatasetLayout.SUPERVISELY:
-            #     return DictDataset.from_supervisely(ds_dir=split_path, task=self.task)
             elif self.layout == DatasetLayout.ROBOFLOW_COCO:
                 return DictDataset.from_roboflow_coco(ds_dir=split_path, task=self.task)
             else:  # Focoos

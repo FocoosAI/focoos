@@ -82,7 +82,6 @@ class DatasetLayout(str, Enum):
     Values:
         - ROBOFLOW_COCO: (Detection,Instance Segmentation)
         - ROBOFLOW_SEG: (Semantic Segmentation)
-        - SUPERVISELY: (Semantic Segmentation)
     Example:
         ```python
         - ROBOFLOW_COCO: (Detection,Instance Segmentation) Roboflow COCO format:
@@ -220,7 +219,7 @@ class DatasetPreview(PydanticBase):
         ref (str): Unique reference ID for the dataset.
         name (str): Human-readable name of the dataset.
         task (FocoosTask): The computer vision task this dataset is designed for.
-        layout (DatasetLayout): The structural format of the dataset (e.g., ROBOFLOW_COCO, ROBOFLOW_SEG, SUPERVISELY).
+        layout (DatasetLayout): The structural format of the dataset (e.g., ROBOFLOW_COCO, ROBOFLOW_SEG).
         description (Optional[str]): Optional description of the dataset's purpose or contents.
         spec (Optional[DatasetSpec]): Detailed specifications about the dataset's composition and size.
     """
