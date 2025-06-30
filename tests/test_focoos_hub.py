@@ -55,7 +55,7 @@ def mock_shared_datasets():
             "ref": "79742c8814f94fcd",
             "url": "s3://mock-s3-url",
             "name": "Aeroscapes",
-            "layout": "supervisely",
+            "layout": "roboflow_coco",
             "description": "Mock descr 1",
             "task": "semseg",
         },

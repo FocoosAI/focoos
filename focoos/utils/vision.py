@@ -34,6 +34,7 @@ def image_loader(im: Union[bytes, str, Path, np.ndarray, Image.Image]) -> np.nda
             - Path: File path (Path object) to the image.
             - np.ndarray: Image in NumPy array format.
             - Image.Image: Image in PIL (Pillow) format.
+            - URL: URL of the image (e.g. http:// or https://).
 
     Returns:
         np.ndarray: The loaded image as a NumPy array, in BGR format, suitable for OpenCV processing.
@@ -41,6 +42,13 @@ def image_loader(im: Union[bytes, str, Path, np.ndarray, Image.Image]) -> np.nda
     Raises:
         ValueError: If the input type is not one of the accepted types.
     """
+    if isinstance(im, str) and im.startswith(("http://", "https://")):
+        import requests
+
+        response = requests.get(im)
+        response.raise_for_status()
+        im = response.content
+
     if isinstance(im, np.ndarray):
         cv_image = im
     elif isinstance(im, str) or isinstance(im, Path):

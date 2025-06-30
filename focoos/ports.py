@@ -23,6 +23,7 @@ ROOT_DIR = Path.home() / "FocoosAI"
 ROOT_DIR = str(ROOT_DIR) if os.name == "nt" else ROOT_DIR
 MODELS_DIR = os.path.join(ROOT_DIR, "models")
 DATASETS_DIR = os.path.join(ROOT_DIR, "datasets")
+PREDICTIONS_DIR = os.path.join(ROOT_DIR, "predictions")
 
 
 class PydanticBase(BaseModel, ABC):
@@ -81,7 +82,6 @@ class DatasetLayout(str, Enum):
     Values:
         - ROBOFLOW_COCO: (Detection,Instance Segmentation)
         - ROBOFLOW_SEG: (Semantic Segmentation)
-        - SUPERVISELY: (Semantic Segmentation)
     Example:
         ```python
         - ROBOFLOW_COCO: (Detection,Instance Segmentation) Roboflow COCO format:
@@ -104,26 +104,12 @@ class DatasetLayout(str, Enum):
                     - _classes.csv (comma separated csv)
                     - img_3_mask.png
                     - img_4_mask.png
-
-        - SUPERVISELY: (Semantic Segmentation) format:
-            root/
-                train/
-                    meta.json
-                    img/
-                    ann/
-                    mask/
-                valid/
-                    meta.json
-                    img/
-                    ann/
-                    mask/
         ```
     """
 
     ROBOFLOW_COCO = "roboflow_coco"
     ROBOFLOW_SEG = "roboflow_seg"
     CATALOG = "catalog"
-    SUPERVISELY = "supervisely"
     CLS_FOLDER = "cls_folder"
 
 
@@ -233,7 +219,7 @@ class DatasetPreview(PydanticBase):
         ref (str): Unique reference ID for the dataset.
         name (str): Human-readable name of the dataset.
         task (FocoosTask): The computer vision task this dataset is designed for.
-        layout (DatasetLayout): The structural format of the dataset (e.g., ROBOFLOW_COCO, ROBOFLOW_SEG, SUPERVISELY).
+        layout (DatasetLayout): The structural format of the dataset (e.g., ROBOFLOW_COCO, ROBOFLOW_SEG).
         description (Optional[str]): Optional description of the dataset's purpose or contents.
         spec (Optional[DatasetSpec]): Detailed specifications about the dataset's composition and size.
     """
@@ -463,6 +449,12 @@ class RuntimeType(str, Enum):
     ONNX_CPU = "onnx_cpu"
     ONNX_COREML = "onnx_coreml"
     TORCHSCRIPT_32 = "torchscript_32"
+
+    def __str__(self) -> str:
+        return self.value
+
+    def __repr__(self) -> str:
+        return self.value
 
     def to_export_format(self) -> ExportFormat:
         if self == RuntimeType.TORCHSCRIPT_32:
@@ -799,6 +791,11 @@ def get_gpus_count():
         return 0
 
 
+SchedulerType = Literal["POLY", "FIXED", "COSINE", "MULTISTEP"]
+OptimizerType = Literal["ADAMW", "SGD", "RMSPROP"]
+DeviceType = Literal["cuda", "cpu"]
+
+
 @dataclass
 class TrainerArgs:
     """Configuration class for unified model training.
@@ -876,9 +873,9 @@ class TrainerArgs:
     weight_decay: float = 0.02
     max_iters: int = 3000
     batch_size: int = 16
-    scheduler: Literal["POLY", "FIXED", "COSINE", "MULTISTEP"] = "MULTISTEP"
+    scheduler: SchedulerType = "MULTISTEP"
     scheduler_extra: Optional[dict] = None
-    optimizer: Literal["ADAMW", "SGD", "RMSPROP"] = "ADAMW"
+    optimizer: OptimizerType = "ADAMW"
     optimizer_extra: Optional[dict] = None
     weight_decay_norm: float = 0.0
     weight_decay_embed: float = 0.0

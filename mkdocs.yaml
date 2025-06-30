@@ -38,6 +38,7 @@ nav:
       - Concepts: concepts.md
       - Inference: inference.md
       - Training: training.md
+      - CLI: cli.md
   - HUB:
       - Overview: hub/overview.md
       - HUB: hub/hub.md
@@ -67,6 +68,7 @@ nav:
       - AutoDataset: api/auto_dataset.md
       - ports: api/ports.md
       - config: api/config.md
+      - cli: api/cli.md
 
 markdown_extensions:
   - pymdownx.highlight:

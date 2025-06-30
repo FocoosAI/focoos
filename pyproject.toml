@@ -55,6 +55,7 @@ dependencies = [
     "gradio~=5.31.0",
     "torch~=2.7.0",
     "torchvision~=0.22.0",
+    "typer>=0.16.0",
 ]
 
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]
@@ -87,3 +88,6 @@ docs = [
     "mkdocstrings[python]>=0.29.0,<0.30.0",
     "mkdocs-include-markdown-plugin>=6.2.1,<7.0.0",
 ]
+
+[project.scripts]
+focoos = "focoos.cli.cli:app"
