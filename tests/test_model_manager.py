@@ -181,7 +181,7 @@ def test_get_with_get_model_local_dir(clean_model_manager, mock_model_config):
         clean_model_manager._from_local_dir.return_value = mock_model_info
 
         model = clean_model_manager.get(name="test-model")
-        clean_model_manager._from_local_dir.assert_called_once_with(name="test-model", models_dir=None)
+        clean_model_manager._from_local_dir.assert_called_once_with(name="test-model")
         clean_model_manager._from_model_info.assert_called_once_with(model_info=mock_model_info, config=None)
         assert isinstance(model, FocoosModel)
 
@@ -197,7 +197,6 @@ def test_get_with_get_model_local_dir_with_config(clean_model_manager, mock_mode
         model = clean_model_manager.get(name="test-model", config=mock_model_config)
         clean_model_manager._from_local_dir.assert_called_once_with(
             name="test-model",
-            models_dir=None,
         )
         clean_model_manager._from_model_info.assert_called_once_with(
             model_info=mock_model_info, config=mock_model_config
@@ -213,10 +212,9 @@ def test_get_with_get_model_local_dir_with_model_dir(clean_model_manager, mock_m
         mock_model_info = MagicMock(spec=ModelInfo)
         clean_model_manager._from_local_dir.return_value = mock_model_info
 
-        model = clean_model_manager.get(name="test-model", models_dir="test-models-dir")
+        model = clean_model_manager.get(name="test-models-dir/test-model")
         clean_model_manager._from_local_dir.assert_called_once_with(
-            name="test-model",
-            models_dir="test-models-dir",
+            name="test-models-dir/test-model",
         )
         clean_model_manager._from_model_info.assert_called_once_with(model_info=mock_model_info, config=None)
         assert isinstance(model, FocoosModel)
@@ -360,7 +358,7 @@ def test_from_local_dir_success(mocker: MockerFixture, functional_model_manager,
     mocker.patch("focoos.ports.ModelInfo.from_json", return_value=mock_model_info)
 
     # Call the method
-    result = functional_model_manager._from_local_dir(name="test-model", models_dir="/path/to/models")
+    result = functional_model_manager._from_local_dir(name="/path/to/models/test-model")
 
     # Assertions - _from_local_dir returns ModelInfo, not FocoosModel
     assert isinstance(result, ModelInfo)
@@ -393,7 +391,7 @@ def test_from_local_dir_with_model_final_pth(mocker: MockerFixture, functional_m
     mocker.patch("focoos.ports.ModelInfo.from_json", return_value=mock_model_info)
 
     # Call the method
-    result = functional_model_manager._from_local_dir(name="test-model", models_dir="/path/to/models")
+    result = functional_model_manager._from_local_dir(name="/path/to/models/test-model")
 
     # Check if weights_uri was updated
     expected_weights_path = os.path.join("/path/to/models", "test-model", "model_final.pth")
@@ -405,8 +403,8 @@ def test_from_local_dir_dir_not_found(mocker: MockerFixture, functional_model_ma
     mocker.patch("os.path.exists", return_value=False)
 
     # Call the method and expect a ValueError
-    with pytest.raises(ValueError, match="Run test-model not found in /path/to/models"):
-        functional_model_manager._from_local_dir(name="test-model", models_dir="/path/to/models")
+    with pytest.raises(ValueError, match="Run /path/to/models/test-model not exists."):
+        functional_model_manager._from_local_dir(name="/path/to/models/test-model")
 
 
 def test_from_local_dir_model_info_not_found(mocker: MockerFixture, functional_model_manager):
@@ -418,7 +416,7 @@ def test_from_local_dir_model_info_not_found(mocker: MockerFixture, functional_m
 
     # Call the method and expect a ValueError
     with pytest.raises(ValueError):
-        functional_model_manager._from_local_dir(name="test-model", models_dir="/path/to/models")
+        functional_model_manager._from_local_dir(name="/path/to/models/test-model")
 
 
 def test_from_hub_success(mocker: MockerFixture, functional_model_manager, mock_model_info):
