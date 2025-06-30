@@ -170,13 +170,11 @@ class ModelManager:
         Raises:
             ValueError: If the model directory or ModelInfo file cannot be found
         """
-        if os.path.exists(name):
-            run_dir = name
-        else:
-            run_dir = os.path.join(MODELS_DIR, name)
-
+        run_dir = name
         if not os.path.exists(run_dir):
-            raise ValueError(f"Run {run_dir} not exists.")
+            run_dir = os.path.join(MODELS_DIR, name)
+            if not os.path.exists(run_dir):
+                raise ValueError(f"Run {run_dir} not exists.")
 
         model_info_path = os.path.join(run_dir, ArtifactName.INFO)
         if not os.path.exists(model_info_path):
