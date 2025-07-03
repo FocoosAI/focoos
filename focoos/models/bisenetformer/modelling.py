@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, override
 
 import torch
 import torch.nn as nn
@@ -606,17 +606,18 @@ class BisenetFormer(BaseModelNN):
     def dtype(self):
         return self.pixel_mean.dtype
 
+    @override
     def forward(
         self,
-        images: torch.Tensor,
+        inputs: torch.Tensor,
         targets: list[BisenetFormerTargets] = [],
     ) -> BisenetFormerOutput:
-        images = (images - self.pixel_mean) / self.pixel_std  # type: ignore
+        inputs = (inputs - self.pixel_mean) / self.pixel_std  # type: ignore
 
-        features = self.pixel_decoder(images)
+        features = self.pixel_decoder(inputs)
         (logits, masks), losses = self.head(features, targets)
 
         if not self.training:
-            masks = F.interpolate(masks, size=images.shape[2:], mode="bilinear", align_corners=False)
+            masks = F.interpolate(masks, size=inputs.shape[2:], mode="bilinear", align_corners=False)
 
         return BisenetFormerOutput(masks=masks, logits=logits, loss=losses)

@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, override
 
 import torch
 import torch.nn as nn
@@ -204,9 +204,10 @@ class FAIClassification(BaseModelNN):
     def dtype(self):
         return self.pixel_mean.dtype
 
+    @override
     def forward(
         self,
-        images: torch.Tensor,
+        inputs: torch.Tensor,
         targets: list[ClassificationTargets] = [],
     ) -> ClassificationModelOutput:
         """Forward pass of the classification model.
@@ -218,9 +219,9 @@ class FAIClassification(BaseModelNN):
             Classification model output with logits and optional loss
         """
 
-        images = (images - self.pixel_mean) / self.pixel_std  # type: ignore
+        inputs = (inputs - self.pixel_mean) / self.pixel_std  # type: ignore
         # Extract features from backbone
-        features = self.backbone(images)
+        features = self.backbone(inputs)
 
         # Extract the highest level feature
         feature_map = features[self.in_features]

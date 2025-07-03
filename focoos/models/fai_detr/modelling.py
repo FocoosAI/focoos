@@ -1,7 +1,7 @@
 import copy
 import math
 from collections import OrderedDict
-from typing import Dict
+from typing import Dict, override
 
 import torch
 import torch.nn as nn
@@ -1331,14 +1331,15 @@ class FAIDetr(BaseModelNN):
     def dtype(self):
         return self.pixel_mean.dtype
 
+    @override
     def forward(
         self,
-        images: torch.Tensor,
+        inputs: torch.Tensor,
         targets: list[DETRTargets] = [],
     ) -> DETRModelOutput:
-        images = (images - self.pixel_mean) / self.pixel_std  # type: ignore
+        inputs = (inputs - self.pixel_mean) / self.pixel_std  # type: ignore
 
-        features = self.pixel_decoder(images)
+        features = self.pixel_decoder(inputs)
         outputs, losses = self.head(features, targets)
 
         if self.training:
