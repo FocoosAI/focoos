@@ -216,6 +216,7 @@ class _EoMT(nn.Module):
         return x
 
     def forward(self, x: torch.Tensor):
+        x = x / 255.0
         x = (x - self.encoder.pixel_mean) / self.encoder.pixel_std
 
         x = self.encoder.backbone.patch_embed(x)
@@ -333,4 +334,7 @@ class EoMT(BaseModelNN):
 
             loss = total_loss / len(mask_logits_per_layer)
 
-        return EoMTModelOutput(masks=masks, logits=logits, loss=loss)
+        if not self.training:
+            masks = F.interpolate(masks, size=images.shape[2:], mode="bilinear", align_corners=False)
+
+        return EoMTModelOutput(masks=masks.sigmoid(), logits=logits[:, :, :-1].softmax(dim=1), loss=loss)

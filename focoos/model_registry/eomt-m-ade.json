@@ -173,7 +173,7 @@
     "status": "TRAINING_COMPLETED",
     "description": "EoMT Medium model (ADE20K Semantic Segmentation)",
     "train_args": null,
-    "weights_uri": "/home/ubuntu/projects/focoos/eomt_m_ade_model_final.pth",
+    "weights_uri": "eomt_m_ade_model_final.pth",
     "val_dataset": "ade20k_sem_seg",
     "val_metrics": null,
     "focoos_version": "0.15.0",

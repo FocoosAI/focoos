@@ -103,6 +103,11 @@ class EoMTProcessor(Processor):
                 raise ValueError("During training, inputs should be a list of DatasetEntry")
             images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
 
+            if image_size is not None:
+                images_torch = torch.nn.functional.interpolate(
+                    images_torch, size=(image_size, image_size), mode="bilinear", align_corners=False
+                )
+
         return images_torch, targets
 
     def semantic_inference(self, mask_cls, mask_pred) -> torch.Tensor:
@@ -227,7 +232,7 @@ class EoMTProcessor(Processor):
 
         cls_pred, mask_pred = output.logits, output.masks
         # Apply softmax to get class probabilities (excluding background class)
-        scores, labels = cls_pred.softmax(-1)[:, :, :-1].max(-1)
+        scores, labels = cls_pred.max(-1)
 
         # Binarize masks based on prediction type
         if predict_all_pixels:

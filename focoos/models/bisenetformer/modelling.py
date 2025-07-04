@@ -1,4 +1,4 @@
-from typing import Dict, Optional, override
+from typing import Dict, Optional
 
 import torch
 import torch.nn as nn
@@ -606,7 +606,6 @@ class BisenetFormer(BaseModelNN):
     def dtype(self):
         return self.pixel_mean.dtype
 
-    @override
     def forward(
         self,
         inputs: torch.Tensor,
