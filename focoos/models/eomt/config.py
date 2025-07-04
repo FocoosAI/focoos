@@ -13,6 +13,7 @@ class EoMTConfig(ModelConfig):
     im_size: Tuple[int, int] = (640, 640)
     num_blocks: int = 4
     masked_attn_enabled: bool = False
+    backbone_name: str = "vit_base_patch14_reg4_dinov2"
 
     # Processor-specific configuration
     postprocessing_type: str = "instance"  # "instance" or "semantic"

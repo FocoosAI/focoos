@@ -37,12 +37,12 @@ class ViT(nn.Module):
             timm.create_model(
                 backbone_name,
                 pretrained=ckpt_path is None,
-                img_size=(592, 592),
+                img_size=img_size,
                 patch_size=patch_size,
                 num_classes=0,
             ),
         )
-        self.backbone.set_input_size(img_size)
+        # self.backbone.set_input_size(img_size)
         default_cfg = cast(Dict[str, Any], self.backbone.default_cfg)
         pixel_mean = torch.tensor(default_cfg["mean"]).reshape(1, -1, 1, 1)
         pixel_std = torch.tensor(default_cfg["std"]).reshape(1, -1, 1, 1)
@@ -279,7 +279,7 @@ class EoMT(BaseModelNN):
         super().__init__(config)
         self.config = config
         self.network = _EoMT(
-            encoder=ViT(img_size=config.im_size),
+            encoder=ViT(img_size=config.im_size, backbone_name=config.backbone_name),
             num_classes=config.num_classes,
             num_q=config.num_queries,
             num_blocks=config.num_blocks,

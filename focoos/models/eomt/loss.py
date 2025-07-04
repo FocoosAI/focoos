@@ -545,6 +545,7 @@ class SetCriterion(nn.Module):
         assert loss in loss_map, f"do you really want to compute {loss} loss?"
         return loss_map[loss](outputs, targets, indices, num_masks, **kwargs)
 
+    @torch.compiler.disable
     def forward(self, outputs, targets: list[EoMTTargets]):
         """This performs the loss computation.
         Parameters:
