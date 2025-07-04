@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Tuple, Union
+from typing import Tuple, Union, override
 
 import numpy as np
 import torch
@@ -94,6 +94,7 @@ class BaseModelNN(ABC, nn.Module):
         """
         raise NotImplementedError("Forward is not implemented for this model.")
 
+    @override
     def load_state_dict(self, checkpoint_state_dict: dict, strict: bool = True) -> IncompatibleKeys:
         """Load model state dictionary from checkpoint with preprocessing.
 

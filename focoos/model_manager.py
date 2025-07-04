@@ -330,6 +330,7 @@ class ConfigManager:
         """
         cls._MODEL_CFG_MAPPING[model_family.value] = model_config_loader
 
+    # TODO: implement _ensure_family_registered
     @classmethod
     def from_dict(cls, model_family: ModelFamily, config_dict: dict, **kwargs) -> ModelConfig:
         """
