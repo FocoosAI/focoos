@@ -21,3 +21,10 @@ class EoMTConfig(ModelConfig):
     threshold: float = 0.5
     use_mask_score: bool = True
     predict_all_pixels: bool = False
+
+    # Loss configuration
+    criterion_num_points: int = 12544
+    criterion_mask_coefficient: float = 5
+    criterion_dice_coefficient: float = 5
+    criterion_class_coefficient: float = 2
+    criterion_no_object_coefficient: float = 0.1

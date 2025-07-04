@@ -18,6 +18,7 @@ from torch.optim.lr_scheduler import LRScheduler
 
 from focoos.models.base_model import BaseModelNN
 from focoos.models.eomt.config import EoMTConfig
+from focoos.models.eomt.loss import MaskHungarianMatcher, SetCriterion
 from focoos.models.eomt.ports import EoMTModelOutput, EoMTTargets
 
 
@@ -36,11 +37,12 @@ class ViT(nn.Module):
             timm.create_model(
                 backbone_name,
                 pretrained=ckpt_path is None,
-                img_size=img_size,
+                img_size=(592, 592),
                 patch_size=patch_size,
                 num_classes=0,
             ),
         )
+        self.backbone.set_input_size(img_size)
         default_cfg = cast(Dict[str, Any], self.backbone.default_cfg)
         pixel_mean = torch.tensor(default_cfg["mean"]).reshape(1, -1, 1, 1)
         pixel_std = torch.tensor(default_cfg["std"]).reshape(1, -1, 1, 1)
@@ -283,6 +285,29 @@ class EoMT(BaseModelNN):
             num_blocks=config.num_blocks,
             masked_attn_enabled=config.masked_attn_enabled,
         )
+        self.criterion = SetCriterion(
+            num_classes=self.config.num_classes,
+            matcher=MaskHungarianMatcher(
+                cost_class=self.config.criterion_class_coefficient,
+                cost_mask=self.config.criterion_mask_coefficient,
+                cost_dice=self.config.criterion_dice_coefficient,
+                num_points=self.config.criterion_num_points,
+                cls_sigmoid=False,
+            ),
+            weight_dict={
+                "loss_ce": self.config.criterion_class_coefficient,
+                "loss_mask": self.config.criterion_mask_coefficient,
+                "loss_dice": self.config.criterion_dice_coefficient,
+            },
+            deep_supervision=True,
+            eos_coef=self.config.criterion_no_object_coefficient,
+            losses=["labels", "masks"],
+            num_points=self.config.criterion_num_points,
+            oversample_ratio=3.0,
+            importance_sample_ratio=0.75,
+            loss_class_type="ce_loss",
+            cls_sigmoid=False,
+        )
 
     @property
     def device(self) -> torch.device:
@@ -315,26 +340,27 @@ class EoMT(BaseModelNN):
         masks = mask_logits_per_layer[-1]
         logits = class_logits_per_layer[-1]
 
-        # Calculate loss during training
         loss = None
+        # Calculate loss during training
         if self.training and targets and len(targets) > 0:
-            # Compute loss across all layers (deep supervision)
-            total_loss = 0.0
-            for layer_masks, layer_logits in zip(mask_logits_per_layer, class_logits_per_layer):
-                # Basic cross-entropy loss for classes
-                loss_ce = F.cross_entropy(
-                    layer_logits.view(-1, layer_logits.shape[-1]), torch.cat([t.labels for t in targets]).view(-1)
-                )
-
-                # Basic binary cross-entropy loss for masks
-                target_masks = torch.stack([t.masks for t in targets])
-                loss_mask = F.binary_cross_entropy_with_logits(layer_masks.view(-1), target_masks.view(-1).float())
-
-                total_loss += loss_ce + loss_mask
-
-            loss = total_loss / len(mask_logits_per_layer)
+            out = {
+                "pred_logits": class_logits_per_layer[-1],
+                "pred_masks": mask_logits_per_layer[-1],
+                "aux_outputs": self._set_aux_loss(
+                    class_logits_per_layer,
+                    mask_logits_per_layer,
+                ),
+            }
+            loss = self.criterion(out, targets)
 
         if not self.training:
             masks = F.interpolate(masks, size=images.shape[2:], mode="bilinear", align_corners=False)
 
         return EoMTModelOutput(masks=masks.sigmoid(), logits=logits[:, :, :-1].softmax(dim=1), loss=loss)
+
+    @torch.jit.unused
+    def _set_aux_loss(self, outputs_class, outputs_seg_masks):
+        # this is a workaround to make torchscript happy, as torchscript
+        # doesn't support dictionary with non-homogeneous values, such
+        # as a dict having both a Tensor and a list.
+        return [{"pred_logits": a, "pred_masks": b} for a, b in zip(outputs_class[:-1], outputs_seg_masks[:-1])]
