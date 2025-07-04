@@ -7,11 +7,86 @@
 # ---------------------------------------------------------------
 
 import math
-from typing import Optional
+from typing import Any, Dict, Optional, Tuple, cast
 
+import timm
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from timm.models.vision_transformer import VisionTransformer
+from torch.optim.lr_scheduler import LRScheduler
+
+from focoos.models.base_model import BaseModelNN
+from focoos.models.eomt.config import EoMTConfig
+from focoos.models.eomt.ports import EoMTModelOutput, EoMTTargets
+
+
+class ViT(nn.Module):
+    def __init__(
+        self,
+        img_size: Tuple[int, int],
+        patch_size: int = 16,
+        backbone_name: str = "vit_large_patch14_reg4_dinov2",
+        ckpt_path: Optional[str] = None,
+    ):
+        super().__init__()
+
+        self.backbone = cast(
+            VisionTransformer,
+            timm.create_model(
+                backbone_name,
+                pretrained=ckpt_path is None,
+                img_size=img_size,
+                patch_size=patch_size,
+                num_classes=0,
+            ),
+        )
+        default_cfg = cast(Dict[str, Any], self.backbone.default_cfg)
+        pixel_mean = torch.tensor(default_cfg["mean"]).reshape(1, -1, 1, 1)
+        pixel_std = torch.tensor(default_cfg["std"]).reshape(1, -1, 1, 1)
+        self.register_buffer("pixel_mean", pixel_mean)
+        self.register_buffer("pixel_std", pixel_std)
+
+
+class TwoStageWarmupPolySchedule(LRScheduler):
+    def __init__(
+        self,
+        optimizer,
+        num_backbone_params: int,
+        warmup_steps: tuple[int, int],
+        total_steps: int,
+        poly_power: float,
+        last_epoch=-1,
+    ):
+        self.num_backbone_params = num_backbone_params
+        self.warmup_steps = warmup_steps
+        self.total_steps = total_steps
+        self.poly_power = poly_power
+        super().__init__(optimizer, last_epoch)
+
+    def get_lr(self):
+        step = self.last_epoch
+        lrs = []
+        non_vit_warmup, vit_warmup = self.warmup_steps
+        for i, base_lr in enumerate(self.base_lrs):
+            if i >= self.num_backbone_params:
+                if non_vit_warmup > 0 and step < non_vit_warmup:
+                    lr = base_lr * (step / non_vit_warmup)
+                else:
+                    adjusted = max(0, step - non_vit_warmup)
+                    max_steps = max(1, self.total_steps - non_vit_warmup)
+                    lr = base_lr * (1 - (adjusted / max_steps)) ** self.poly_power
+            else:
+                if step < non_vit_warmup:
+                    lr = 0
+                elif step < non_vit_warmup + vit_warmup:
+                    lr = base_lr * ((step - non_vit_warmup) / vit_warmup)
+                else:
+                    adjusted = max(0, step - non_vit_warmup - vit_warmup)
+                    max_steps = max(1, self.total_steps - non_vit_warmup - vit_warmup)
+                    lr = base_lr * (1 - (adjusted / max_steps)) ** self.poly_power
+            lrs.append(lr)
+        return lrs
 
 
 class LayerNorm2d(nn.LayerNorm):
@@ -57,14 +132,14 @@ class ScaleBlock(nn.Module):
         return x
 
 
-class EoMT(nn.Module):
+class _EoMT(nn.Module):
     def __init__(
         self,
-        encoder: nn.Module,
-        num_classes,
-        num_q,
-        num_blocks=4,
-        masked_attn_enabled=True,
+        encoder: ViT,
+        num_classes: int,
+        num_q: int,
+        num_blocks: int = 4,
+        masked_attn_enabled: bool = True,
     ):
         super().__init__()
         self.encoder = encoder
@@ -194,3 +269,68 @@ class EoMT(nn.Module):
             mask_logits_per_layer,
             class_logits_per_layer,
         )
+
+
+class EoMT(BaseModelNN):
+    def __init__(self, config: EoMTConfig):
+        super().__init__(config)
+        self.config = config
+        self.network = _EoMT(
+            encoder=ViT(img_size=config.im_size),
+            num_classes=config.num_classes,
+            num_q=config.num_queries,
+            num_blocks=config.num_blocks,
+            masked_attn_enabled=config.masked_attn_enabled,
+        )
+
+    @property
+    def device(self) -> torch.device:
+        """Get the device where the model is located."""
+        return next(self.parameters()).device
+
+    @property
+    def dtype(self) -> torch.dtype:
+        """Get the data type of the model parameters."""
+        return next(self.parameters()).dtype
+
+    def forward(
+        self,
+        images: torch.Tensor,
+        targets: list[EoMTTargets] = [],
+    ) -> EoMTModelOutput:
+        """Perform forward pass through the model.
+
+        Args:
+            images: Input images tensor
+            targets: Training targets (used during training)
+
+        Returns:
+            EoMTModelOutput with masks, logits, and optional loss
+        """
+        # Get raw model outputs
+        mask_logits_per_layer, class_logits_per_layer = self.network(images)
+
+        # Use final layer predictions
+        masks = mask_logits_per_layer[-1]
+        logits = class_logits_per_layer[-1]
+
+        # Calculate loss during training
+        loss = None
+        if self.training and targets and len(targets) > 0:
+            # Compute loss across all layers (deep supervision)
+            total_loss = 0.0
+            for layer_masks, layer_logits in zip(mask_logits_per_layer, class_logits_per_layer):
+                # Basic cross-entropy loss for classes
+                loss_ce = F.cross_entropy(
+                    layer_logits.view(-1, layer_logits.shape[-1]), torch.cat([t.labels for t in targets]).view(-1)
+                )
+
+                # Basic binary cross-entropy loss for masks
+                target_masks = torch.stack([t.masks for t in targets])
+                loss_mask = F.binary_cross_entropy_with_logits(layer_masks.view(-1), target_masks.view(-1).float())
+
+                total_loss += loss_ce + loss_mask
+
+            loss = total_loss / len(mask_logits_per_layer)
+
+        return EoMTModelOutput(masks=masks, logits=logits, loss=loss)

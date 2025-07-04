@@ -701,6 +701,7 @@ class ModelFamily(str, Enum):
     MASKFORMER = "fai_mf"
     BISENETFORMER = "bisenetformer"
     IMAGE_CLASSIFIER = "fai_cls"
+    EOMT = "eomt"
 
 
 # This should not be a dataclass, but their child must be
