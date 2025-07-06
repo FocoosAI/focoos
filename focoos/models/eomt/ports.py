@@ -8,8 +8,9 @@ from focoos.ports import ModelOutput
 
 @dataclass
 class EoMTModelOutput(ModelOutput):
-    masks: Optional[torch.Tensor] = None  # [N, num_queries, H, W]
-    logits: Optional[torch.Tensor] = None  # [N, num_queries, num_classes]
+    masks: torch.Tensor  # [N, num_queries, H, W]
+    logits: torch.Tensor  # [N, num_queries, num_classes]
+    loss: Optional[dict]
 
 
 @dataclass

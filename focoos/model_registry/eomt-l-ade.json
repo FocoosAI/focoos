@@ -1,5 +1,5 @@
 {
-    "name": "eomt-m-ade",
+    "name": "eomt-l-ade",
     "model_family": "eomt",
     "classes": [
         "wall",
@@ -168,15 +168,15 @@
         "use_mask_score": false,
         "predict_all_pixels": true
     },
-    "focoos_model": "eomt-m-ade",
+    "focoos_model": "eomt-l-ade",
     "ref": null,
     "status": "TRAINING_COMPLETED",
-    "description": "EoMT Medium model (ADE20K Semantic Segmentation)",
+    "description": "EoMT Large model (ADE20K Semantic Segmentation)",
     "train_args": null,
     "weights_uri": "eomt_m_ade_model_final.pth",
-    "val_dataset": "ade20k_sem_seg",
+    "val_dataset": "ade20k_semseg",
     "val_metrics": null,
-    "focoos_version": "0.15.0",
+    "focoos_version": "0.17.0",
     "latency": [],
     "updated_at": null
 }

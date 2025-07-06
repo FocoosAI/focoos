@@ -1,5 +1,5 @@
 {
-    "name": "eomt-m-coco-ins",
+    "name": "eomt-l-coco-ins",
     "model_family": "eomt",
     "classes": [
         "person",
@@ -101,15 +101,15 @@
         "use_mask_score": true,
         "predict_all_pixels": false
     },
-    "focoos_model": "eomt-m-coco-ins",
+    "focoos_model": "eomt-l-coco-ins",
     "ref": null,
     "status": "TRAINING_COMPLETED",
-    "description": "EoMT Medium model (COCO Instance Segmentation)",
+    "description": "EoMT Large model (COCO Instance Segmentation)",
     "train_args": null,
     "weights_uri": "eomt_m_coco_ins_model_final.pth",
     "val_dataset": "coco_2017_instance",
     "val_metrics": null,
-    "focoos_version": "0.15.0",
+    "focoos_version": "0.17.0",
     "latency": [],
     "updated_at": null
 }
