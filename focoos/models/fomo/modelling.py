@@ -8,6 +8,52 @@ from focoos.models.fomo.ports import FOMOModelOutput, FOMOTargets
 from focoos.nn.backbone.build import load_backbone
 
 
+def smooth_one_hot_targets(one_hot_masks, sigma=2, kernel_size=11):
+    """
+    Apply 2D Gaussian smoothing to one-hot encoded masks.
+    
+    Args:
+        one_hot_masks: Tensor of shape [B, C, H, W] where each channel is a 0/1 heatmap
+        sigma: Standard deviation of the Gaussian kernel
+        kernel_size: Size of the Gaussian kernel (should be odd)
+    
+    Returns:
+        Smoothed masks with same shape as input
+    """
+    if kernel_size % 2 == 0:
+        raise ValueError("Kernel size must be odd")
+    
+    # Create 2D Gaussian kernel
+    ax = torch.arange(-kernel_size // 2 + 1., kernel_size // 2 + 1.)
+    xx, yy = torch.meshgrid(ax, ax, indexing='ij')
+    kernel = torch.exp(-(xx**2 + yy**2) / (2 * sigma**2))
+    kernel = kernel / kernel.sum()
+    kernel = kernel.to(one_hot_masks.device)
+    
+    # Apply convolution to each channel separately
+    smoothed_masks = torch.zeros_like(one_hot_masks)
+    
+    for b in range(one_hot_masks.shape[0]):
+        for c in range(one_hot_masks.shape[1]):
+            channel = one_hot_masks[b, c].unsqueeze(0).unsqueeze(0)  # [1, 1, H, W]
+            smoothed_channel = F.conv2d(
+                channel, 
+                kernel.unsqueeze(0).unsqueeze(0),  # [1, 1, kernel_size, kernel_size]
+                padding=kernel_size // 2
+            )
+            smoothed_masks[b, c] = smoothed_channel.squeeze()
+            
+    # Normalize each channel to preserve the original sum
+    for b in range(smoothed_masks.shape[0]):
+        for c in range(smoothed_masks.shape[1]):
+            original_sum = one_hot_masks[b, c].sum()
+            current_sum = smoothed_masks[b, c].sum()
+            if current_sum > 0:  # Avoid division by zero
+                smoothed_masks[b, c] = smoothed_masks[b, c] * (original_sum / current_sum)
+    
+    return smoothed_masks
+
+
 def resize_mask_to_size(mask, size, num_classes):
     """Resize a mask to target size while preserving class indices at scaled locations.
     
@@ -26,14 +72,14 @@ def resize_mask_to_size(mask, size, num_classes):
     scaled_y = (y_idxs * target_h / h).long()
     resized_mask[scaled_y, scaled_x] = mask[y_idxs, x_idxs]
     
-    return resized_mask + 1 # map background  -1 => 0, others to c => c+1
+    return resized_mask + 1 # map background  -1 => 0, others c => c+1
 
 class FOMOCriterion(nn.Module):
     def __init__(self, num_classes: int, loss_type: str):
         super().__init__()
         self.num_classes = num_classes
         self.loss_type = loss_type
-        
+    '''
     def forward(self, predictions, targets: list[FOMOTargets]):
         loss_dict = {}
         losses_str = self.loss_type.lower().split("+")
@@ -51,9 +97,8 @@ class FOMOCriterion(nn.Module):
             target_masks = F.one_hot(target_masks.long(), num_classes=self.num_classes + 1)  # [B, H, W, C+1]
             target_masks = target_masks[..., 1:]  # [B, H, W, C]
             target_masks = target_masks.permute(0, 3, 1, 2).float()  # [B, C, H, W]
-            
-            # reshape class_weights to [C, 1, 1]
-            class_weights = class_weights[1:].reshape(-1, 1, 1) # [C-1, 1, 1]
+            if "bce_loss" in losses_str:
+                class_weights = class_weights[1:].reshape(-1, 1, 1) # to match target_masks shape
                 
             if "bce_loss" in losses_str:
                 """DEBUG"""
@@ -78,12 +123,17 @@ class FOMOCriterion(nn.Module):
                                                           )
                 loss_dict["loss_bce"] = loss if loss is not None else 0
             elif "ce_loss" in losses_str:
-                target_masks = torch.cat([target.mask.unsqueeze(0) for target in targets], dim=0).long() # [B, H, W]
+                target_masks = torch.cat([target.mask.unsqueeze(0) for target in targets], dim=0).long()  # [B, H, W]
                 loss = F.cross_entropy(predictions, target_masks, 
                                        weight=class_weights, reduction='mean'
                                        )
                 loss_dict["loss_ce"] = loss if loss is not None else 0
-                
+            
+            # TODO:for below losses only, impplement an if later
+            predictions = predictions.sigmoid() # TODO: test also without sigmoid
+            if "bce_loss" in losses_str:
+                target_masks = target_masks[..., 1:]  # [B, H, W, C]
+            target_masks = target_masks.permute(0, 3, 1, 2).float()  # [B, C, H, W]
             if "l1" in losses_str:
                 loss = F.l1_loss(predictions, target_masks, reduction='mean')
                 loss_dict["loss_l1"] = loss if loss is not None else 0
@@ -100,6 +150,65 @@ class FOMOCriterion(nn.Module):
                 loss_dict["loss_weighted_l2"] = weighted_l2_loss if weighted_l2_loss is not None else 0
         
         return loss_dict
+    '''
+    def forward(self, predictions, targets: list[FOMOTargets]): # test with heatmaps
+        loss_dict = {}
+        losses_str = self.loss_type.lower().split("+")
+        
+        class_weights = torch.tensor([1, # background weight
+                            50, 250, 320, 
+                            550, 390, 1290, 
+                            740], 
+                            device=predictions.device, dtype=predictions.dtype
+                            ) # Aquarium dataset specific
+        
+        if targets is not None and len(targets) > 0:
+            target_masks = torch.cat([target.mask.unsqueeze(0) for target in targets], dim=0)  # [B, H, W]
+            target_masks = F.one_hot(target_masks.long(), num_classes=self.num_classes + 1)  # [B, H, W, C+1]
+            target_masks = target_masks[..., 1:]  # [B, H, W, C]
+            target_masks = target_masks.permute(0, 3, 1, 2).float()  # [B, C, H, W]
+            
+            # Smoothing the target masks
+            target_masks_smoothed = smooth_one_hot_targets(target_masks, sigma=2, kernel_size=11)
+            
+            # For below operations only
+            predictions = predictions.sigmoid()
+            class_weights = class_weights[1:].reshape(-1, 1, 1) # to match target_masks shape
+            target_masks = target_masks_smoothed
+            """DEBUG"""
+            if False:
+                import os
+                debug_dir = f"/home/ubuntu/focoos-1/notebooks/debug_outputs/debug_test_fomo_l1_heatmaps"
+                os.makedirs(debug_dir, exist_ok=True)
+                pred_save_path = os.path.join(debug_dir, "predictions.pt")
+                gt_save_path = os.path.join(debug_dir, "gt.pt")
+                torch.save(predictions, pred_save_path)
+                torch.save(target_masks, gt_save_path)
+            """DEBUG"""
+            if "l1_heatmaps" in losses_str:
+                loss = F.l1_loss(predictions, target_masks, reduction='mean')
+                loss_dict["loss_l1"] = loss if loss is not None else 0
+            if "l2_heatmaps" in losses_str:
+                loss = F.mse_loss(predictions, target_masks, reduction='mean')
+                loss_dict["loss_l2"] = loss if loss is not None else 0
+            if "weighted_l1_heatmaps" in losses_str:
+                loss = F.l1_loss(predictions, target_masks, reduction='none')
+                weighted_l1_loss = (loss * class_weights).mean()
+                loss_dict["loss_weighted_l1"] = weighted_l1_loss if weighted_l1_loss is not None else 0
+            if "weighted_l2_heatmaps" in losses_str:
+                loss = F.mse_loss(predictions, target_masks, reduction='none')
+                weighted_l2_loss = (loss * class_weights).mean()
+                loss_dict["loss_weighted_l2"] = weighted_l2_loss if weighted_l2_loss is not None else 0
+                
+            # Count losses
+            if "count" in losses_str:
+                gt_counts_per_class = target_masks.sum(dim=1)
+                pred_counts_per_class = predictions.sum(dim=1)
+                loss = F.l1_loss(pred_counts_per_class, gt_counts_per_class, reduction='mean')
+                loss_dict["loss_count"] = loss if loss is not None else 0
+                
+        return loss_dict
+        
 
 class FOMOHead(nn.Module):
     def __init__(self, in_channels: int, hidden_dim: int, num_classes: int, criterion: nn.Module, activation: str = "relu"):
@@ -108,7 +217,10 @@ class FOMOHead(nn.Module):
         self.num_classes = num_classes
         self.criterion = criterion
         self.activation = getattr(F, activation)
-        self.conv1 = nn.Conv2d(in_channels, hidden_dim, kernel_size=1)
+        self.conv1 = nn.Conv2d(in_channels, hidden_dim, 
+                               kernel_size=1,
+                               dilation=1,
+                               )
         out_channels = num_classes + 1 if "ce_loss" in self.criterion.loss_type.lower().split("+") else num_classes
         self.conv2 = nn.Conv2d(hidden_dim, out_channels, kernel_size=1)
         
@@ -116,7 +228,7 @@ class FOMOHead(nn.Module):
         outputs = self.conv1(features)
         outputs = self.conv2(self.activation(outputs))
         
-        loss = None
+        loss_dict = None
         if targets is not None and len(targets) > 0:
             for target in targets:
                 target.mask = resize_mask_to_size(target.mask, outputs.shape[-2:], self.num_classes)
@@ -166,6 +278,8 @@ class FOMO(BaseModelNN):
         images: torch.Tensor, 
         targets: list[FOMOTargets] = []
     ) -> FOMOModelOutput:
+        
+        images = (images - self.pixel_mean) / self.pixel_std
         
         with torch.set_grad_enabled(not self.config.freeze_backbone):
             features = self.backbone(images)

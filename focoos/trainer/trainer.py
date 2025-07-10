@@ -260,7 +260,7 @@ class FocoosTrainer:
         if True:
             import os
             self.data_evaluator._eval_counter += 1 # DEBUG
-            debug_dir = f"/home/ubuntu/focoos-1/notebooks/debug_outputs/eval_debug13/eval_counter_{self._eval_counter}"
+            debug_dir = f"/home/ubuntu/focoos-1/notebooks/debug_outputs/test_fomo_l1_heatmaps_trained_backbone/eval_counter_{self._eval_counter}"
             os.makedirs(debug_dir, exist_ok=True)
             print(f"DEBUG: tensors saved to : {debug_dir}")
         """DEBUG"""

@@ -1,11 +1,13 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 import itertools
 from collections import OrderedDict
+from pickle import FALSE
 from typing import Optional, Union
 
 import numpy as np
 import pycocotools.mask as mask_util
 import torch
+import torch.nn.functional as F
 from PIL import Image
 
 from focoos.data.datasets.dict_dataset import DictDataset
@@ -39,6 +41,20 @@ def convert_boxes_to_gt_mask(boxes, classes, gt_image_size, output_image_size):
         mask[center_y, center_x] = class_idx + 1 
     
     return mask
+
+def convert_gt_mask_to_heatmaps(gt_mask, num_classes):
+
+    # Use one-hot encoding to generate heatmaps
+    heatmaps = F.one_hot(gt_mask.long(), num_classes=num_classes + 1) # [H, W, C+1]
+    heatmaps = heatmaps[..., 1:] # [H, W, C]
+    heatmaps = heatmaps.permute(2, 0, 1) # [C, H, W]
+    heatmaps = heatmaps.unsqueeze(0).float() # [1, C, H, W]
+    
+    from focoos.models.fomo.modelling import smooth_one_hot_targets
+    heatmaps = smooth_one_hot_targets(heatmaps, sigma=2, kernel_size=11)
+    heatmaps = heatmaps.squeeze(0)  # Remove the batch dimension, now [C, H, W]
+    
+    return heatmaps
 
 
 def load_image_into_numpy_array(
@@ -104,7 +120,7 @@ class CountingEvaluator(DatasetEvaluator):
         """DEBUG"""
         if True:
             import os
-            debug_dir = f"/home/ubuntu/focoos-1/notebooks/debug_outputs/eval_debug13/eval_counter_{self._eval_counter}"
+            debug_dir = f"/home/ubuntu/focoos-1/notebooks/debug_outputs/test_fomo_l1_heatmaps_trained_backbone/eval_counter_{self._eval_counter}"
             os.makedirs(debug_dir, exist_ok=True)
         """DEBUG"""
         for input, output in zip(inputs, outputs):
@@ -126,7 +142,7 @@ class CountingEvaluator(DatasetEvaluator):
             self._predictions.extend(self.encode_json_sem_seg(np.array(pred), input.file_name))
             
             """DEBUG"""
-            if True:
+            if False:
                 import os
                 import shutil
                 
@@ -151,6 +167,37 @@ class CountingEvaluator(DatasetEvaluator):
                     torch.save(pred, pred_save_path)
                     # print(f"DEBUG: tensors saved to : {debug_dir}")
             """DEBUG"""
+            
+            # EXPERIMENTAL: Heatmamps related part
+            pred_heatmaps = output["instances"].to(self._cpu_device)
+            gt_heatmaps = convert_gt_mask_to_heatmaps(gt_mask, num_classes=self._num_classes)
+            
+            """DEBUG heatmaps"""
+            if True:
+                import os
+                import shutil
+                
+                # Delete directory contents if it exists
+                if os.path.exists(debug_dir):
+                    if not hasattr(self, '_debug_dir_cleared'):
+                        shutil.rmtree(debug_dir)
+                        self._debug_dir_cleared = True
+                        os.makedirs(debug_dir)
+                
+                    # Save the input image tensor
+                    image_id = input.image_id
+                    image_tensor = input.image
+                    if image_tensor is not None:
+                        image_save_path = os.path.join(debug_dir, f"{image_id}_image.pt")
+                        torch.save(image_tensor, image_save_path)
+                    # Save the ground truth heatmaps
+                    gt_mask_save_path = os.path.join(debug_dir, f"{image_id}_gt_mask.pt")
+                    torch.save(gt_heatmaps, gt_mask_save_path)
+                    # Save the prediction heatmaps
+                    pred_save_path = os.path.join(debug_dir, f"{image_id}_pred_mask.pt")
+                    torch.save(pred_heatmaps, pred_save_path)
+                    # print(f"DEBUG: tensors saved to : {debug_dir}")
+            """DEBUG heatmaps"""
 
     def evaluate(self):
         """

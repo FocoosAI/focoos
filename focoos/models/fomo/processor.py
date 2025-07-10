@@ -134,7 +134,7 @@ class FOMOProcessor(Processor):
                 
         return results
     '''
-
+    
     def postprocess(
         self, 
         outputs: FOMOModelOutput,
@@ -150,8 +150,8 @@ class FOMOProcessor(Processor):
         top_k: Optional[int] = None,
         threshold: Optional[float] = 0.5,
     ):
-                
-        return outputs.logits
+        logits = torch.tensor(outputs.logits)
+        return logits
     
     def eval_postprocess(
         self,
@@ -160,20 +160,23 @@ class FOMOProcessor(Processor):
     ) -> list[dict[str, Union[Instances, torch.Tensor]]]:
         
         results = []
-        mask_pred = (output.logits.sigmoid()).to(torch.float32)
+        losses_str = self.loss_type.lower().split("+")
         
-        if self.loss_type == "bce_loss":
+        if "ce_loss" in losses_str:
+            mask_pred = (output.logits.softmax(dim=1)).to(torch.float32)
+            for i in range(len(batched_inputs)):
+                results.append({'instances': mask_pred[i]})
+        if "l1_heatmaps" in losses_str:
+            for i in range(len(batched_inputs)):
+                mask_pred = (output.logits.sigmoid()).to(torch.float32)
+                results.append({'instances': mask_pred[i]})
+        else: # bce_loss, l1, l2, weighted_l1, weighted_l2
+            mask_pred = (output.logits.sigmoid()).to(torch.float32)
             for i in range(len(batched_inputs)):
                 mask_height, mask_width = tuple(mask_pred[i].shape[-2:])
                 background_mask = torch.zeros((mask_height, mask_width), dtype=torch.float32, device=mask_pred.device).unsqueeze(0).unsqueeze(0) + self.mask_threshold
                 mask_pred_result = torch.cat([background_mask, mask_pred], dim=1).squeeze(0)
                 results.append({'instances': mask_pred_result})
-        elif self.loss_type == "ce_loss":
-            for i in range(len(batched_inputs)):
-                results.append({'instances': mask_pred[i]})
-        else:
-            raise ValueError(f"Invalid loss type: {self.loss_type}")
-        
         return results
 
     def export_postprocess(
@@ -191,10 +194,9 @@ class FOMOProcessor(Processor):
     def get_dynamic_axes(self) -> DynamicAxes:
         return DynamicAxes(
             input_names=["images"],
-            output_names=["boxes", "logits"],
+            output_names=["logits"],
             dynamic_axes={
                 "images": {0: "batch", 2: "height", 3: "width"},
-                "boxes": {0: "batch"},
                 "logits": {0: "batch"},
             },
         )

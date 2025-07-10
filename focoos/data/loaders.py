@@ -32,7 +32,7 @@ def build_batch_data_loader(
     *,
     aspect_ratio_grouping=False,
     num_workers=0,
-    prefetch_factor=None, # DEBUG 2
+    prefetch_factor=2, # DEBUG 2
     collate_fn=None,
     drop_last: bool = True,
     **kwargs,

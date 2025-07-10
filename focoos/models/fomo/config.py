@@ -16,7 +16,7 @@ class FOMOConfig(ModelConfig):
     activation: str = "relu"
     cut_point: str = "res3" # 1/8 input resolution
     reduction_factor: int = 8 # should match with cut_point
-    freeze_backbone: bool = True
+    freeze_backbone: bool = False
     loss_type: str = "bce_loss" # bce_loss, ce_loss, l1, l2, weighted_l1, weighted_l2 or any combination of them, concat them with "+"
     mask_threshold: float = 0.5
     
