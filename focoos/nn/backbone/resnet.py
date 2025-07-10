@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from focoos.nn.layers.base import _get_activation_fn as get_activation
+from focoos.nn.layers.base import get_activation_fn as get_activation
 from focoos.nn.layers.conv import ConvNormLayer
 from focoos.nn.layers.norm import FrozenBatchNorm2d
 from focoos.utils.logger import get_logger
