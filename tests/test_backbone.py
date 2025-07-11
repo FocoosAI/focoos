@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from focoos.model_manager import ConfigBackboneManager
-from focoos.nn.backbone.base import BackboneConfig
+from focoos.nn.backbone.base import BackboneConfig, ShapeSpec
 from focoos.nn.backbone.build import load_backbone
 
 # List of all backbone types with their minimum required config
@@ -134,6 +134,25 @@ def test_padding_constraints():
             assert isinstance(constraints, dict)
 
 
+def test_output_shape():
+    """Test that output_shape property works."""
+    for backbone_type, config_dicts in BACKBONE_CONFIGS.items():
+        for config_dict in config_dicts:
+            config = ConfigBackboneManager.from_dict(config_dict)
+            backbone = load_backbone(config)
+
+            # Should return a dict
+            shapes = backbone.output_shape()
+            assert isinstance(shapes, dict)
+
+            # Check each shape specification
+            for name, shape_spec in shapes.items():
+                assert isinstance(shape_spec, ShapeSpec)
+                assert hasattr(shape_spec, "channels")
+                assert hasattr(shape_spec, "stride")
+            print(backbone_type, shapes)
+
+
 if __name__ == "__main__":
     test_build_function()
     for backbone_type in BACKBONE_CONFIGS.keys():
@@ -144,3 +163,4 @@ if __name__ == "__main__":
     test_invalid_backbone_type()
     test_size_divisibility()
     test_padding_constraints()
+    test_output_shape()

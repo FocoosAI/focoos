@@ -44,6 +44,9 @@ class BaseBackbone(nn.Module, metaclass=ABCMeta):
         """
         super().__init__()
         self.config = config
+        self.out_features: list[str] = []
+        self.out_feature_strides: dict[str, int] = {}
+        self.out_feature_channels: dict[str, int] = {}
 
     @abstractmethod
     def forward(self):
@@ -94,8 +97,8 @@ class BaseBackbone(nn.Module, metaclass=ABCMeta):
         # this is a backward-compatible default
         return {
             name: ShapeSpec(
-                channels=self._out_feature_channels[name],
-                stride=self._out_feature_strides[name],
+                channels=self.out_feature_channels[name],
+                stride=self.out_feature_strides[name],
             )
-            for name in self._out_features
+            for name in self.out_features
         }
