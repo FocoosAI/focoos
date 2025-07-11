@@ -1,12 +1,18 @@
+from typing import Callable, Optional, Union
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
-def _get_activation_fn(activation=None):
+def get_activation_fn(
+    activation: Optional[Union[str, nn.Module]] = None, default_activation: Optional[nn.Module] = None
+) -> Union[Callable[[torch.Tensor], torch.Tensor], nn.Module]:
     """Return an activation function given a string"""
     if activation is None:
-        return nn.Identity()
+        return default_activation or nn.Identity()
+    if isinstance(activation, nn.Module):
+        return activation
     activation = activation.lower()
     if activation == "relu":
         return F.relu
