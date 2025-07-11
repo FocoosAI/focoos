@@ -16,6 +16,16 @@ resolution-markers = [
     "(python_full_version >= '3.13' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.13' and sys_platform != 'darwin' and sys_platform != 'linux')",
 ]
 
+[manifest]
+
+[[manifest.dependency-metadata]]
+name = "tensorrt-cu12"
+requires-dist = ["tensorrt-cu12-bindings", "tensorrt-cu12-libs"]
+
+[[manifest.dependency-metadata]]
+name = "tensorrt-cu12-libs"
+requires-dist = ["nvidia-cuda-runtime-cu12"]
+
 [[package]]
 name = "absl-py"
 version = "2.3.0"
@@ -645,7 +655,7 @@ wheels = [
 
 [[package]]
 name = "focoos"
-version = "0.16.1"
+version = "0.17.0"
 source = { editable = "." }
 dependencies = [
     { name = "colorama" },
@@ -721,15 +731,15 @@ requires-dist = [
     { name = "mkdocs-include-markdown-plugin", marker = "extra == 'docs'", specifier = ">=6.2.1,<7.0.0" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.5.28,<10.0.0" },
     { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'", specifier = ">=0.29.0,<0.30.0" },
-    { name = "numpy", specifier = "~=2.2.1" },
-    { name = "onnx", marker = "extra == 'onnx'", specifier = ">=1.17.0" },
+    { name = "numpy", specifier = "~=2.2.6" },
+    { name = "onnx", marker = "extra == 'onnx'", specifier = ">=1.18.0" },
     { name = "onnx", marker = "extra == 'onnx-cpu'", specifier = ">=1.18.0" },
     { name = "onnxruntime", marker = "extra == 'onnx-cpu'", specifier = "==1.22.0" },
     { name = "onnxruntime-gpu", marker = "extra == 'onnx'", specifier = "==1.22.0" },
-    { name = "onnxscript", marker = "extra == 'onnx'", specifier = "~=0.2.7" },
-    { name = "onnxscript", marker = "extra == 'onnx-cpu'", specifier = "~=0.2.7" },
-    { name = "onnxslim", marker = "extra == 'onnx'", specifier = "~=0.1.54" },
-    { name = "onnxslim", marker = "extra == 'onnx-cpu'", specifier = "~=0.1.54" },
+    { name = "onnxscript", marker = "extra == 'onnx'", specifier = "~=0.3.1" },
+    { name = "onnxscript", marker = "extra == 'onnx-cpu'", specifier = "~=0.3.1" },
+    { name = "onnxslim", marker = "extra == 'onnx'", specifier = "~=0.1.59" },
+    { name = "onnxslim", marker = "extra == 'onnx-cpu'", specifier = "~=0.1.59" },
     { name = "opencv-python", specifier = "~=4.11.0.86" },
     { name = "orjson", specifier = "~=3.10.18" },
     { name = "pillow", specifier = "~=10.2.0" },
@@ -750,7 +760,7 @@ requires-dist = [
     { name = "supervision", specifier = "~=0.26.0rc7" },
     { name = "tensorboard", specifier = "~=2.19.0" },
     { name = "tensorrt", marker = "extra == 'tensorrt'", specifier = "==10.5.0" },
-    { name = "torch", specifier = "~=2.7.0" },
+    { name = "torch", specifier = "~=2.7.1" },
     { name = "torchvision", specifier = "~=0.22.0" },
     { name = "tox", marker = "extra == 'dev'" },
     { name = "tox-uv", marker = "extra == 'dev'" },
@@ -1732,8 +1742,11 @@ name = "nvidia-cuda-runtime-cu12"
 version = "12.6.77"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
+    { url = "https://files.pythonhosted.org/packages/8f/ea/590b2ac00d772a8abd1c387a92b46486d2679ca6622fd25c18ff76265663/nvidia_cuda_runtime_cu12-12.6.77-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:6116fad3e049e04791c0256a9778c16237837c08b27ed8c8401e2e45de8d60cd", size = 908052, upload-time = "2024-11-20T17:35:19.905Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/3d/159023799677126e20c8fd580cca09eeb28d5c5a624adc7f793b9aa8bbfa/nvidia_cuda_runtime_cu12-12.6.77-py3-none-manylinux2014_aarch64.whl", hash = "sha256:d461264ecb429c84c8879a7153499ddc7b19b5f8d84c204307491989a365588e", size = 908040, upload-time = "2024-10-01T16:57:22.221Z" },
     { url = "https://files.pythonhosted.org/packages/e1/23/e717c5ac26d26cf39a27fbc076240fad2e3b817e5889d671b67f4f9f49c5/nvidia_cuda_runtime_cu12-12.6.77-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:ba3b56a4f896141e25e19ab287cd71e52a6a0f4b29d0d31609f60e3b4d5219b7", size = 897690, upload-time = "2024-11-20T17:35:30.697Z" },
     { url = "https://files.pythonhosted.org/packages/f0/62/65c05e161eeddbafeca24dc461f47de550d9fa8a7e04eb213e32b55cfd99/nvidia_cuda_runtime_cu12-12.6.77-py3-none-manylinux2014_x86_64.whl", hash = "sha256:a84d15d5e1da416dd4774cb42edf5e954a3e60cc945698dc1d5be02321c44dc8", size = 897678, upload-time = "2024-10-01T16:57:33.821Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/76/4c80fa138333cc975743fd0687a745fccb30d167f906f13c1c7f9a85e5ea/nvidia_cuda_runtime_cu12-12.6.77-py3-none-win_amd64.whl", hash = "sha256:86c58044c824bf3c173c49a2dbc7a6c8b53cb4e4dca50068be0bf64e9dab3f7f", size = 891773, upload-time = "2024-10-01T17:09:26.362Z" },
 ]
 
 [[package]]
@@ -1874,6 +1887,21 @@ wheels = [
 ]
 
 [[package]]
+name = "onnx-ir"
+version = "0.1.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ml-dtypes" },
+    { name = "numpy" },
+    { name = "onnx" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/12/8b/e5d7218b81e07af56310288a994df536107e6486412dc8ea3cf2cf2ad7d2/onnx_ir-0.1.4.tar.gz", hash = "sha256:d20f4864fd93b9b020c86fe441e41103b51b7fa7665669db90487013648b3a1d", size = 105559, upload-time = "2025-07-04T08:02:54.175Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5e/01/b7159c8559561741ea272693ab04995e05c2c51adb719cfa6e51cc4ae51e/onnx_ir-0.1.4-py3-none-any.whl", hash = "sha256:e82af6cd5d225682c8b19d843e083b440858acf2b846f1950189b5299ad6c91b", size = 118994, upload-time = "2025-07-04T08:02:52.959Z" },
+]
+
+[[package]]
 name = "onnxruntime"
 version = "1.22.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1932,32 +1960,33 @@ wheels = [
 
 [[package]]
 name = "onnxscript"
-version = "0.2.7"
+version = "0.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "ml-dtypes" },
     { name = "numpy" },
     { name = "onnx" },
+    { name = "onnx-ir" },
     { name = "packaging" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c4/c0/ca5afd062c54061fa4ebbdfee8eaf5879bd2095fbb9babb6eda3abc2cfbe/onnxscript-0.2.7.tar.gz", hash = "sha256:669cd60ea3466d5b1443d3db38753da45acba6b002de64441713a5e782728f03", size = 637958, upload-time = "2025-05-28T01:05:05.513Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/62/24/7583317b1ee93d06a7e9c482a0e264af76dd63de0d24f67dbf47467d4bf0/onnxscript-0.3.1.tar.gz", hash = "sha256:8f18d2e7119743187579e21bc7d031b5666b56b7e31fcba9a14491f088ead68e", size = 571946, upload-time = "2025-06-26T19:44:17.849Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ca/f7/ef7ff99530a9f23d7a2725b744bbe03a47006649224de1e08f9d71267ec8/onnxscript-0.2.7-py3-none-any.whl", hash = "sha256:d4bb7d1e7c7aebce35400db1dba4e37b57b9ac80340db1fe627bdd0b9730d1e4", size = 735802, upload-time = "2025-05-28T01:05:08.201Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/7b/08b48677f4c15beac66c97e84db90fc9fb15cbd297cc1c66564d2c54561d/onnxscript-0.3.1-py3-none-any.whl", hash = "sha256:8ca3069d13487332fa7e93ae544e361e6cf133f6a381a2237e17698c3346d541", size = 661045, upload-time = "2025-06-26T19:44:20.413Z" },
 ]
 
 [[package]]
 name = "onnxslim"
-version = "0.1.56"
+version = "0.1.59"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "onnx" },
     { name = "packaging" },
     { name = "sympy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/94/0f/45a19cdf7dfd42d8fe94e3f78c3b0546c02971c6a1485185395b959d5b72/onnxslim-0.1.56.tar.gz", hash = "sha256:fdcda277a5c7d104147622124650bc60364d026ec4fbcb0475f61f82ff09d0cc", size = 123621, upload-time = "2025-06-02T17:45:31.712Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ac/d3/7ea070092b126dba190b6a737146885627fd29c82bcb774aa48e424c3fb7/onnxslim-0.1.59.tar.gz", hash = "sha256:c4ffdefe27898a73b7cec902f3c3f81455c20c12a29e865c76f4f07f2ce66675", size = 131480, upload-time = "2025-07-05T03:25:36.686Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bf/e6/e966aa815379c4770b5676f907d3e6ff660af1574c025bf4a21fe2e501a3/onnxslim-0.1.56-py3-none-any.whl", hash = "sha256:616beeea802b7ed7bb98672a381998d2d26c2993a8bd1c6ac3d672965ef04a36", size = 146206, upload-time = "2025-06-02T17:45:30.437Z" },
+    { url = "https://files.pythonhosted.org/packages/75/cd/5b2e8aa6076710064fca5d75390d925bb1cf94b4e6f9c5777e283d07c4c8/onnxslim-0.1.59-py3-none-any.whl", hash = "sha256:0b691a46002ad8db6f7a59e60d65c8c85ebb3cf80d666579b79bd85666e0ada3", size = 154920, upload-time = "2025-07-05T03:25:35.283Z" },
 ]
 
 [[package]]
@@ -3074,7 +3103,39 @@ sdist = { url = "https://files.pythonhosted.org/packages/ee/b9/f917eb7dfe02da30b
 name = "tensorrt-cu12"
 version = "10.5.0"
 source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tensorrt-cu12-bindings" },
+    { name = "tensorrt-cu12-libs" },
+]
 sdist = { url = "https://files.pythonhosted.org/packages/22/d5/a4c3e22482d4273e151123990934d7c8d0ba1e4efb9a483eba807cdce279/tensorrt-cu12-10.5.0.tar.gz", hash = "sha256:46edbda08c54c8ffa88c75d75b4761eb9839e81678135e8d1530adc8cef6a61b", size = 18341, upload-time = "2024-09-30T21:24:43.864Z" }
+
+[[package]]
+name = "tensorrt-cu12-bindings"
+version = "10.12.0.36"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/35/b2/3c77a90a9c4f5b5ec40fa5b5227595f880a42d4e6f19e0868531b85b2442/tensorrt_cu12_bindings-10.12.0.36-cp310-none-manylinux_2_28_x86_64.whl", hash = "sha256:7ecdb6fc2555caed7d4fbbd8158ed7ced64e230c125484f62a5369c40dcc70e5", size = 1172872, upload-time = "2025-06-12T21:44:03.397Z" },
+    { url = "https://files.pythonhosted.org/packages/8b/8a/b26adc5c549472cf8fc1ede8702f037e1da8f1755ac5c6f5419ee4703a78/tensorrt_cu12_bindings-10.12.0.36-cp310-none-manylinux_2_31_aarch64.whl", hash = "sha256:d8548ab5976ca5c91279c68ee77f4c892e03460709cfa3fbd2a22aa8123cb731", size = 1242157, upload-time = "2025-06-12T21:31:02.294Z" },
+    { url = "https://files.pythonhosted.org/packages/57/11/ebd1abd00bd405c9aca17c4fdd164e9b4ca6091204f2124e4ed3ac8c7d55/tensorrt_cu12_bindings-10.12.0.36-cp310-none-win_amd64.whl", hash = "sha256:71be162a77ec9d5165d8c6ffad95179882e2c8604a68d7e21933258c182a8c0a", size = 869257, upload-time = "2025-06-12T21:55:35.386Z" },
+    { url = "https://files.pythonhosted.org/packages/2c/52/d46ecfbeecfeff28b3b58502c3edf1ac03e55042408eddb75eff76c6f382/tensorrt_cu12_bindings-10.12.0.36-cp311-none-manylinux_2_28_x86_64.whl", hash = "sha256:58cf45605bb330e86f8ad49bc8997ed68cfdf5b09da229534fb7f84aa3fe5bf4", size = 1173379, upload-time = "2025-06-12T21:43:46.068Z" },
+    { url = "https://files.pythonhosted.org/packages/99/99/6faa695b05413bd1c5358d11fb3ef836c8ff8b7e0c991d1060621d2d7163/tensorrt_cu12_bindings-10.12.0.36-cp311-none-manylinux_2_31_aarch64.whl", hash = "sha256:ae0866a89caaeada1c16776de85413a523f78f53b1fd83f1b903c39eed264d82", size = 1242340, upload-time = "2025-06-12T21:31:32.275Z" },
+    { url = "https://files.pythonhosted.org/packages/ab/68/e79bb2748434d81bc77afe2e31d3878f0f0622f7d02bf36b58529ec3b78d/tensorrt_cu12_bindings-10.12.0.36-cp311-none-win_amd64.whl", hash = "sha256:9d6687f056ce603c6a97235fd4291330c06410ac5b899db412597a06720b02bc", size = 868166, upload-time = "2025-06-12T21:56:27.052Z" },
+    { url = "https://files.pythonhosted.org/packages/df/40/d6d0599e1b3ac79a3583f03eec951a4c4c91c1a600bcc779e29a3012b359/tensorrt_cu12_bindings-10.12.0.36-cp312-none-manylinux_2_28_x86_64.whl", hash = "sha256:fb3a2ce96c7472a46bbee2030ce6a54fd6a32deda401c1c67d9de057550e0171", size = 1176288, upload-time = "2025-06-12T21:43:29.001Z" },
+    { url = "https://files.pythonhosted.org/packages/da/0c/caee237aaa9edc9bfdb04857c3f96313a98ee2e3b9a6a9949b42afc724f5/tensorrt_cu12_bindings-10.12.0.36-cp312-none-manylinux_2_31_aarch64.whl", hash = "sha256:f5128b8b2a379e65c09745ba97df58abf3a418cbfd6508d37f76121d9bdd3bc8", size = 1220840, upload-time = "2025-06-12T21:30:03.028Z" },
+    { url = "https://files.pythonhosted.org/packages/c1/c6/31a1285e214c71e33a29d2cbd9c9418cbbcbd255b3f6d62b0c24cb064580/tensorrt_cu12_bindings-10.12.0.36-cp312-none-win_amd64.whl", hash = "sha256:408af91113c22f58f2f08404bfc1548baa8d78ce6126bd543acdc9d5819662ff", size = 871280, upload-time = "2025-06-12T21:55:00.025Z" },
+    { url = "https://files.pythonhosted.org/packages/10/96/e5bfc380c75291ab6c462b05fe915e8824b2dd53da5b317af1a9eaa0a9db/tensorrt_cu12_bindings-10.12.0.36-cp313-none-manylinux_2_28_x86_64.whl", hash = "sha256:0eb8d3e41279b1d0d329b85372d5d720c8d2ff1228f6273142d717b44d75935b", size = 1176296, upload-time = "2025-06-12T21:43:11.5Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/e4/d24c7bd03afff1a3d04486652a0df9a6702b26f799bc3f67c4f2f1b6cb79/tensorrt_cu12_bindings-10.12.0.36-cp313-none-manylinux_2_31_aarch64.whl", hash = "sha256:a850992cad842340e6fed41fe74f529064064ff61881d50ef5a2be1816526f9b", size = 1220829, upload-time = "2025-06-12T21:29:04.046Z" },
+    { url = "https://files.pythonhosted.org/packages/30/f3/d5270893aa35757228bc85dfab3da4ac7016d7e54b28e13953bf6a01e635/tensorrt_cu12_bindings-10.12.0.36-cp313-none-win_amd64.whl", hash = "sha256:3a1709e9dbaaef0f005681637a7d698f8609fec250716bbd184e3f3c40d8c4ea", size = 871303, upload-time = "2025-06-12T21:55:17.643Z" },
+]
+
+[[package]]
+name = "tensorrt-cu12-libs"
+version = "10.12.0.36"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "nvidia-cuda-runtime-cu12" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1e/bd/31d7dbd2d23a3558f7f4b3447586b4ef9141a0f3a0748c41c730e99cf6a6/tensorrt_cu12_libs-10.12.0.36.tar.gz", hash = "sha256:d26af485ad452599016bde631f4cd223b97f240afb647162ab0c5e8f89708934", size = 709, upload-time = "2025-06-12T21:22:47.972Z" }
 
 [[package]]
 name = "termcolor"
