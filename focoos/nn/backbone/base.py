@@ -96,9 +96,9 @@ class BaseBackbone(nn.Module, metaclass=ABCMeta):
         """
         # this is a backward-compatible default
         return {
-            name: ShapeSpec(
-                channels=self.out_feature_channels[name],
-                stride=self.out_feature_strides[name],
+            feature: ShapeSpec(
+                channels=self.out_feature_channels[feature],
+                stride=self.out_feature_strides[feature],
             )
-            for name in self.out_features
+            for feature in self.out_features
         }

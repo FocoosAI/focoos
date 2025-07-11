@@ -35,26 +35,38 @@ class DarkNet(BaseBackbone):
     def __init__(self, config: DarkNetConfig):
         super().__init__(config)
 
-        width = DARKNET_SIZES[config.size]["width"]
-        depth = DARKNET_SIZES[config.size]["depth"]
-        activation = ACTIVATION_MAPPING[config.activation]
+        self.width = DARKNET_SIZES[config.size]["width"]
+        self.depth = DARKNET_SIZES[config.size]["depth"]
+        self.activation = ACTIVATION_MAPPING[config.activation]
 
-        p1 = [ConvNormLayer(ch_in=width[0], ch_out=width[1], kernel_size=3, stride=2, padding=1, act=activation)]
+        p1 = [
+            ConvNormLayer(
+                ch_in=self.width[0], ch_out=self.width[1], kernel_size=3, stride=2, padding=1, act=self.activation
+            )
+        ]
         p2 = [
-            ConvNormLayer(ch_in=width[1], ch_out=width[2], kernel_size=3, stride=2, padding=1, act=activation),
-            C2f(ch_in=width[2], ch_out=width[2], shortcut=True, n=depth[0], activation=activation),
+            ConvNormLayer(
+                ch_in=self.width[1], ch_out=self.width[2], kernel_size=3, stride=2, padding=1, act=self.activation
+            ),
+            C2f(ch_in=self.width[2], ch_out=self.width[2], shortcut=True, n=self.depth[0], activation=self.activation),
         ]
         p3 = [
-            ConvNormLayer(ch_in=width[2], ch_out=width[3], kernel_size=3, stride=2, padding=1, act=activation),
-            C2f(ch_in=width[3], ch_out=width[3], shortcut=True, n=depth[1], activation=activation),
+            ConvNormLayer(
+                ch_in=self.width[2], ch_out=self.width[3], kernel_size=3, stride=2, padding=1, act=self.activation
+            ),
+            C2f(ch_in=self.width[3], ch_out=self.width[3], shortcut=True, n=self.depth[1], activation=self.activation),
         ]
         p4 = [
-            ConvNormLayer(ch_in=width[3], ch_out=width[4], kernel_size=3, stride=2, padding=1, act=activation),
-            C2f(ch_in=width[4], ch_out=width[4], shortcut=True, n=depth[2], activation=activation),
+            ConvNormLayer(
+                ch_in=self.width[3], ch_out=self.width[4], kernel_size=3, stride=2, padding=1, act=self.activation
+            ),
+            C2f(ch_in=self.width[4], ch_out=self.width[4], shortcut=True, n=self.depth[2], activation=self.activation),
         ]
         p5 = [
-            ConvNormLayer(ch_in=width[4], ch_out=width[5], kernel_size=3, stride=2, padding=1, act=activation),
-            C2f(ch_in=width[5], ch_out=width[5], shortcut=True, n=depth[3], activation=activation),
+            ConvNormLayer(
+                ch_in=self.width[4], ch_out=self.width[5], kernel_size=3, stride=2, padding=1, act=self.activation
+            ),
+            C2f(ch_in=self.width[5], ch_out=self.width[5], shortcut=True, n=self.depth[3], activation=self.activation),
         ]
 
         self.p1 = torch.nn.Sequential(*p1)
@@ -66,10 +78,10 @@ class DarkNet(BaseBackbone):
         self.out_features = ["res2", "res3", "res4", "res5"]
         self.out_feature_strides = {"res2": 4, "res3": 8, "res4": 16, "res5": 32}
         self.out_feature_channels = {
-            "res2": width[2],
-            "res3": width[3],
-            "res4": width[4],
-            "res5": width[5],
+            "res2": self.width[2],
+            "res3": self.width[3],
+            "res4": self.width[4],
+            "res5": self.width[5],
         }
 
     def forward_features(self, x):
