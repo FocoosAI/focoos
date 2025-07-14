@@ -136,7 +136,7 @@ def get_gpu_info() -> GPUInfo:
     return gpu_info
 
 
-def get_cpu_name() -> Optional[str]:
+def get_cpu_name() -> str:
     """
     Retrieve the name of the CPU.
 
