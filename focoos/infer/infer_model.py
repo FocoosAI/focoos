@@ -40,6 +40,7 @@ from focoos.ports import (
 )
 from focoos.processor.processor_manager import ProcessorManager
 from focoos.utils.logger import get_logger
+from focoos.utils.system import get_device_name
 from focoos.utils.vision import (
     image_preprocess,
 )
@@ -238,9 +239,13 @@ class InferModel:
             size = self.model_info.im_size
         if isinstance(size, int):
             size = (size, size)
-
-        engine, device = self.runtime.get_info()
-        logger.info(f"⏱️ Benchmarking latency on {device}, size: {size}x{size}..")
+        if self.runtime.__class__.__name__ == "ONNXRuntime":
+            active_provider = self.runtime.active_provider or "cpu"  # type: ignore
+            engine = f"onnx.{active_provider}"
+        else:
+            engine = "torchscript"
+        device = get_device_name()
+        logger.info(f"⏱️ Benchmarking End-to-End latency on {device}, size: {size}x{size}..")
 
         np_input = (255 * np.random.random((size[0], size[1], 3))).astype(np.uint8)
 

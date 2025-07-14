@@ -401,3 +401,15 @@ def list_files_with_extensions(base_dir: Union[str, Path], extensions: Optional[
     else:
         files = base_dir.glob("*")
     return [file for file in files if file.is_file()]
+
+
+def get_device_name() -> str:
+    gpu_info = get_gpu_info()
+    if gpu_info.devices is not None and len(gpu_info.devices) > 0:
+        if gpu_info.devices[0].gpu_name is not None:
+            return gpu_info.devices[0].gpu_name
+        else:
+            return "Unknown GPU"
+    else:
+        cpu_name = get_cpu_name()
+        return cpu_name if cpu_name is not None else "CPU"

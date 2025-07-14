@@ -29,7 +29,7 @@ from focoos.processor.processor_manager import ProcessorManager
 from focoos.utils.distributed.dist import launch
 from focoos.utils.env import TORCH_VERSION
 from focoos.utils.logger import get_logger
-from focoos.utils.system import get_cpu_name, get_focoos_version, get_system_info
+from focoos.utils.system import get_cpu_name, get_device_name, get_focoos_version, get_system_info
 
 logger = get_logger("FocoosModel")
 
@@ -561,9 +561,7 @@ class FocoosModel:
         metrics = model.benchmark(size=size, iterations=iterations)
         return metrics
 
-    def end2end_benchmark(
-        self, iterations: int = 50, size: Optional[int] = None, device: Literal["cuda", "cpu"] = "cuda"
-    ) -> LatencyMetrics:
+    def end2end_benchmark(self, iterations: int = 50, size: Optional[int] = None) -> LatencyMetrics:
         """Benchmark the complete end-to-end inference pipeline.
 
         This method measures the full inference latency including preprocessing,
@@ -579,12 +577,15 @@ class FocoosModel:
         """
         if size is None:
             size = self.model_info.im_size
-
+        if self.model.device.type == "cpu":
+            device_name = get_cpu_name()
+        else:
+            device_name = get_device_name()
         try:
             model = self.model.cuda()
         except Exception:
             logger.warning("Unable to use CUDA")
-        logger.info(f"⏱️ Benchmarking latency on {model.device}, size: {size}x{size}..")
+        logger.info(f"⏱️ Benchmarking End-to-End latency on {device_name} ({self.model.device}), size: {size}x{size}..")
         # warmup
         data = 128 * torch.randn(1, 3, size, size).to(model.device)
 

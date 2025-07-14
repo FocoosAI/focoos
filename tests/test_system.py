@@ -6,6 +6,7 @@ from focoos.ports import GPUDevice, GPUInfo, SystemInfo
 from focoos.utils.system import (
     get_cpu_name,
     get_cuda_version,
+    get_device_name,
     get_system_info,
 )
 
@@ -64,3 +65,49 @@ def test_get_system_info():
         assert system_info.cpu_cores > 0
         assert system_info.gpu_info is not None
         assert system_info.gpu_info.gpu_count == 0
+
+
+def test_get_device_name():
+    with patch("focoos.utils.system.get_gpu_info") as mock_get_gpu_info:
+        mock_get_gpu_info.return_value = GPUInfo(
+            gpu_count=0,
+            gpu_driver="533.104.00",
+            gpu_cuda_version="12.1",
+            devices=[],
+        )
+        cpu_name = get_cpu_name()
+        assert get_device_name() == cpu_name
+
+        mock_get_gpu_info.return_value = GPUInfo(
+            gpu_count=1,
+            gpu_driver="533.104.00",
+            gpu_cuda_version="12.1",
+            devices=[
+                GPUDevice(
+                    gpu_id=0,
+                    gpu_name="NVIDIA RTX 4090",
+                    gpu_memory_total_gb=24.0,
+                    gpu_memory_used_percentage=70.0,
+                    gpu_temperature=65.0,
+                    gpu_load_percentage=80.0,
+                )
+            ],
+        )
+        assert get_device_name() == "NVIDIA RTX 4090"
+
+        mock_get_gpu_info.return_value = GPUInfo(
+            gpu_count=1,
+            gpu_driver="533.104.00",
+            gpu_cuda_version="12.1",
+            devices=[
+                GPUDevice(
+                    gpu_id=0,
+                    gpu_name=None,
+                    gpu_memory_total_gb=24.0,
+                    gpu_memory_used_percentage=70.0,
+                    gpu_temperature=65.0,
+                    gpu_load_percentage=80.0,
+                )
+            ],
+        )
+        assert get_device_name() == "Unknown GPU"

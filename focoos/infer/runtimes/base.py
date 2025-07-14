@@ -45,7 +45,7 @@ class BaseRuntime:
         pass
 
     @abstractmethod
-    def get_info(self) -> tuple[str, str]:
+    def _get_device_info(self) -> tuple[str, str]:
         """
         Get the engine and device name.
         """
