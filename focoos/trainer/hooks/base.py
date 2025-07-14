@@ -75,3 +75,15 @@ class HookBase:
         implementing `state_dict` and `load_state_dict`.
         """
         return {}
+
+
+class EventWriter:
+    """
+    Base class for writers that obtain events from :class:`EventStorage` and process them.
+    """
+
+    def write(self):
+        raise NotImplementedError
+
+    def close(self):
+        pass

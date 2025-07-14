@@ -12,6 +12,10 @@ from .hook import (
     TorchMemoryStats,
     TorchProfiler,
 )
+from .metrics_json_writer import JSONWriter
+from .metrics_printer import CommonMetricPrinter
+from .sync_to_hub import SyncToHubHook
+from .tensorboard_writer import TensorboardXWriter
 from .visualization import VisualizationHook
 
 __all__ = [
@@ -29,4 +33,8 @@ __all__ = [
     "TorchMemoryStats",
     "TorchProfiler",
     "VisualizationHook",
+    "TensorboardXWriter",
+    "JSONWriter",
+    "CommonMetricPrinter",
+    "SyncToHubHook",
 ]

@@ -10,6 +10,7 @@ from .ports import (
     DatasetLayout,
     DatasetMetadata,
     DatasetPreview,
+    DatasetSplitType,
     DetectronDict,
     FocoosDet,
     FocoosDetections,
@@ -30,7 +31,7 @@ from .ports import (
 )
 from .processor import ProcessorManager
 from .utils.logger import _setup_logging, get_logger
-from .utils.system import get_cuda_version, get_system_info
+from .utils.system import get_cpu_name, get_cuda_version, get_device_name, get_system_info
 from .utils.vision import (
     base64mask_to_mask,
     binary_mask_to_base64,
@@ -91,4 +92,7 @@ __all__ = [
     "ConfigManager",
     "ModelFamily",
     "FocoosHUB",
+    "DatasetSplitType",
+    "get_cpu_name",
+    "get_device_name",
 ]
