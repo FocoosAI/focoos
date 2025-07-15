@@ -176,7 +176,9 @@ class FocoosModel:
         """
         from focoos.trainer.trainer import run_train
 
+        assert data_train.dataset.metadata.num_classes > 0, "Number of dataset classes must be greater than 0"
         self._setup_model_for_training(args, data_train, data_val)
+
         assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
         assert self.model_info.config["num_classes"] == data_train.dataset.metadata.num_classes, (
             "Number of classes mismatch between model and dataset."
