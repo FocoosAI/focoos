@@ -239,6 +239,8 @@ class InferModel:
             size = self.model_info.im_size
         if isinstance(size, int):
             size = (size, size)
+
+        device = get_device_name()
         if self.runtime.__class__.__name__ == "ONNXRuntime":
             active_provider = self.runtime.active_provider or "cpu"  # type: ignore
             engine = f"onnx.{active_provider}"
@@ -254,7 +256,7 @@ class InferModel:
         durations = []
         for step in range(iterations + 5):
             start = perf_counter()
-            self(np_input)
+            self.infer(np_input)
             end = perf_counter()
 
             if step >= 5:  # Skip first 5 iterations
