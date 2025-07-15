@@ -4,8 +4,8 @@ This module provides a simplified and unified training implementation that combi
 the functionality of the original FocoosTrainer and the engine Trainer classes.
 """
 
+import json
 import os
-import shutil
 import time
 import weakref
 from collections.abc import Mapping
@@ -18,7 +18,7 @@ from torch import GradScaler, autocast
 
 from focoos.data.datasets.map_dataset import MapDataset
 from focoos.data.loaders import build_detection_test_loader, build_detection_train_loader
-from focoos.hub.remote_model import RemoteModel
+from focoos.hub.focoos_hub import FocoosHUB
 from focoos.models.focoos_model import BaseModelNN
 from focoos.nn.layers.norm import FrozenBatchNorm2d
 from focoos.ports import ArtifactName, HubSyncLocalTraining, ModelInfo, ModelStatus, Task, TrainerArgs, TrainingInfo
@@ -42,7 +42,7 @@ from focoos.trainer.solver.build import build_lr_scheduler, build_optimizer
 from focoos.utils.distributed.dist import comm, create_ddp_model
 from focoos.utils.env import seed_all_rng
 from focoos.utils.logger import capture_all_output, get_logger
-from focoos.utils.metrics import parse_metrics
+from focoos.utils.metrics import is_json_compatible, parse_metrics
 from focoos.utils.system import get_system_info
 
 # Mapping of task types to their primary evaluation metrics
@@ -54,79 +54,237 @@ TASK_METRICS = {
     # Task.PANOPTIC_SEGMENTATION.value: "panoptic_seg/PQ",
 }
 
-logger = get_logger(__name__)
+logger = get_logger("FocoosTrainer")
 
 
 class FocoosTrainer:
-    def __init__(
+    def train(
+        self,
+        args: TrainerArgs,
+        model: BaseModelNN,
+        processor: Processor,
+        model_info: ModelInfo,
+        data_train: MapDataset,
+        data_val: MapDataset,
+        hub: Optional[FocoosHUB] = None,
+    ):
+        """Train the model using the configured settings."""
+        self.args = args
+        self.model = model
+        self.processor = processor
+        self.model_info = model_info
+        self.data_train = data_train
+        self.data_val = data_val
+        self.resume = args.resume
+        self.finished = False
+
+        self.args.run_name = self.args.run_name.strip()
+        # Setup logging and environment
+        self.output_dir = os.path.join(self.args.output_dir, self.args.run_name)
+        revision = 1
+        original_run_name = self.args.run_name
+        while os.path.exists(self.output_dir):
+            logger.warning(f"Trainer Output directory {self.output_dir} already exists. Creating a new one...")
+            self.args.run_name = original_run_name + f"-{revision}"
+            self.output_dir = os.path.join(self.args.output_dir, self.args.run_name)
+            revision += 1
+        if comm.is_main_process():
+            os.makedirs(self.output_dir, exist_ok=True)
+
+        with capture_all_output(log_path=os.path.join(self.output_dir, "log.txt"), rank=comm.get_local_rank()):
+            logger.info(f"📁 Run name: {self.args.run_name} | Output dir: {self.output_dir}")
+
+            logger.debug("Rank of current process: {}. World size: {}".format(comm.get_rank(), comm.get_world_size()))
+            get_system_info().pprint()
+
+            seed_all_rng(None if self.args.seed < 0 else self.args.seed + comm.get_rank())
+            torch.backends.cudnn.benchmark = False
+
+            if self.args.ckpt_dir:
+                self.ckpt_dir = self.args.ckpt_dir
+                if comm.is_main_process():
+                    os.makedirs(self.ckpt_dir, exist_ok=True)
+                    logger.info(f"[Checkpoints directory] {self.ckpt_dir}")
+            else:
+                self.ckpt_dir = self.output_dir
+
+            # Setup model and data
+            self._setup_model_and_data(model, processor, model_info, data_train, data_val)
+
+            assert self.data_train is not None, "Train dataset is required for training"
+
+            # Setup Optimizer
+            optim = build_optimizer(
+                name=self.args.optimizer,
+                learning_rate=self.args.learning_rate,
+                weight_decay=self.args.weight_decay,
+                model=model,
+                weight_decay_norm=self.args.weight_decay_norm,
+                weight_decay_embed=self.args.weight_decay_embed,
+                backbone_multiplier=self.args.backbone_multiplier,
+                decoder_multiplier=self.args.decoder_multiplier,
+                head_multiplier=self.args.head_multiplier,
+                clip_gradients=self.args.clip_gradients,
+                extra=self.args.optimizer_extra,
+            )
+            scheduler = build_lr_scheduler(
+                name=self.args.scheduler,
+                max_iters=self.args.max_iters,
+                optimizer=optim,
+                extra=self.args.scheduler_extra,
+            )
+
+            # Setup dataset
+            train_loader = build_detection_train_loader(
+                dataset=self.data_train,
+                total_batch_size=args.batch_size,
+                num_workers=args.workers,
+            )
+
+            # Handle Multi-GPU Training
+            model = create_ddp_model(
+                model,
+                broadcast_buffers=self.args.ddp_broadcast_buffers,
+                find_unused_parameters=self.args.ddp_find_unused,
+            )  # type: ignore
+
+            # Setup Trainer
+            trainer_loop = TrainerLoop(
+                model=model,
+                processor=self.processor,
+                dataloader=train_loader,
+                optimizer=optim,
+                amp=args.amp_enabled,
+                clip_gradient=args.clip_gradients,
+                gather_metric_period=args.gather_metric_period,
+                zero_grad_before_forward=args.zero_grad_before_forward,
+            )
+
+            # Setup Checkpointer
+            checkpointer = Checkpointer(
+                model,  # type: ignore
+                save_dir=self.ckpt_dir,
+                trainer=trainer_loop,
+                **ema.get_ema_checkpointer(model) if args.ema_enabled else {},
+            )
+
+            if self.args.sync_to_hub:
+                self._setup_hub(hub)
+
+            self._register_hooks(trainer_loop, model, checkpointer, optim, scheduler, args)
+
+            # Load checkpoint if needed
+            if self.checkpoint:
+                checkpointer.resume_or_load(path=self.checkpoint, resume=args.resume)
+            else:
+                checkpointer.resume_or_load(path="", resume=args.resume)
+
+            if self.args.resume and checkpointer.has_checkpoint():
+                # The checkpoint stores the training iteration that just finished, thus we start
+                # at the next iteration
+                start_iter = trainer_loop.iter + 1
+            else:
+                start_iter = 0
+
+            output_lines = [
+                f"🚀 Starting training from iteration {start_iter}",
+                "========== 🔧 Main Hyperparameters 🔧 ==========",
+                f" - max_iter: {self.args.max_iters}",
+                f" - batch_size: {self.args.batch_size}",
+                f" - learning_rate: {self.args.learning_rate}",
+                " - resolution: !TODO",
+                f" - optimizer: {self.args.optimizer}",
+                f" - scheduler: {self.args.scheduler}",
+                f" - weight_decay: {self.args.weight_decay}",
+                f" - ema_enabled: {self.args.ema_enabled}",
+                "================================================",
+            ]
+            logger.info("\n".join(output_lines))
+
+            self._update_training_info_and_dump(ModelStatus.TRAINING_RUNNING)
+            trainer_loop.train(start_iter=start_iter, max_iter=args.max_iters)
+            self.finished = True
+            self.finish()
+            if self.args.sync_to_hub:
+                self.remote_model.sync_local_training_job(
+                    local_training_info=HubSyncLocalTraining(
+                        status=ModelStatus.TRAINING_COMPLETED,
+                        iterations=self.args.max_iters,
+                        training_info=self.model_info.training_info,
+                    ),
+                    dir=self.output_dir,
+                    upload_artifacts=[
+                        ArtifactName.WEIGHTS,
+                        ArtifactName.METRICS,
+                    ],
+                )
+
+    def eval(
         self,
         args: TrainerArgs,
         model: BaseModelNN,
         processor: Processor,
         model_info: ModelInfo,
         data_val: MapDataset,
-        data_train: Optional[MapDataset] = None,
-        remote_model: Optional[RemoteModel] = None,
+        restore_best: bool = False,
     ):
-        """Initialize the trainer.
+        """Run model evaluation on test set.
 
         Args:
-            args: Training configuration
-            model: Model to train/evaluate
-            metadata: Model metadata/configuration
-            data_val: Validation dataset
-            data_train: Optional training dataset
+            restore_best: Whether to restore best checkpoint before testing
+
+        Returns:
+            dict: Evaluation metrics
         """
         self.args = args
-        self.resume = args.resume
-        self.finished = False
-
-        self.args.run_name = self.args.run_name.strip()
-        self.output_dir = os.path.join(self.args.output_dir, self.args.run_name)
-        # Setup logging and environment
-        self._setup_environment()
-        self.remote_model = remote_model
-
-        # Setup model and data
-        self._setup_model_and_data(model, processor, model_info, data_train, data_val, args)
-
-        # Setup training components
-        self._setup_training_components()
-
-    def _setup_environment(self):
-        """Setup logging and environment variables."""
-
-        self.output_dir = os.path.join(self.args.output_dir, self.args.run_name)
+        self.output_dir = os.path.join(self.args.output_dir, f"{self.args.run_name.strip()}_eval")
         if comm.is_main_process():
             os.makedirs(self.output_dir, exist_ok=True)
-
-        _to_delete = ["metrics.json", "preview", "model_info.json"]
-
-        # TODO: this delete the files if they already exist, but we should not do this during model.test()
+        original_weights_uri = model_info.weights_uri
+        self._setup_model_and_data(model, processor, model_info, None, data_val)
+        self.model_info.weights_uri = original_weights_uri
         if comm.is_main_process():
-            for file in _to_delete:
-                if os.path.exists(os.path.join(self.output_dir, file)):
-                    logger.warning(f"File {file} already exists in {self.output_dir}. Overwriting...")
-                    if os.path.isdir(os.path.join(self.output_dir, file)):
-                        shutil.rmtree(os.path.join(self.output_dir, file))
-                    else:
-                        os.remove(os.path.join(self.output_dir, file))
+            self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
+        model = create_ddp_model(self.model)  # type: ignore
 
-        logger.info(f"📁 Run name: {self.args.run_name} | Output dir: {self.output_dir}")
+        if restore_best:
+            # Setup Checkpointer to recover trained model or load from scratch
+            checkpointer = Checkpointer(
+                model=model,  # type: ignore
+                save_dir=self.output_dir,
+                **ema.get_ema_checkpointer(model) if args.ema_enabled else {},
+            )
+            checkpointer.resume_or_load(path=self.checkpoint or "", resume=args.resume)
+            if args.ema_enabled:
+                ema.apply_model_ema(model)
 
-        logger.debug("Rank of current process: {}. World size: {}".format(comm.get_rank(), comm.get_world_size()))
-        get_system_info().pprint()
+        eval_result = self._do_eval(model)
 
-        seed_all_rng(None if self.args.seed < 0 else self.args.seed + comm.get_rank())
-        torch.backends.cudnn.benchmark = False
+        if comm.get_rank() == 0:
+            key, value = TASK_METRICS[self.task.value].split("/")
+            raw_metrics = _add_prefix(eval_result[key], key)
+            if (
+                self.model_info.val_metrics is None
+                or raw_metrics[TASK_METRICS[self.task.value]]
+                > self.model_info.val_metrics[TASK_METRICS[self.task.value]]
+            ):
+                self.model_info.val_metrics = raw_metrics
+                self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
+                _metrics = [raw_metrics]
+                with open(os.path.join(self.output_dir, "metrics.json"), "w") as f:
+                    f.write(json.dumps(_metrics))
 
-        if self.args.ckpt_dir:
-            self.ckpt_dir = self.args.ckpt_dir
-            if comm.is_main_process():
-                os.makedirs(self.ckpt_dir, exist_ok=True)
-                logger.info(f"[Checkpoints directory] {self.ckpt_dir}")
-        else:
-            self.ckpt_dir = self.output_dir
+        return eval_result
+
+    def _setup_hub(self, hub: Optional[FocoosHUB] = None):
+        if comm.is_main_process() and self.args.sync_to_hub:
+            hub = hub or FocoosHUB()
+            self.remote_model = hub.new_model(self.model_info)
+
+            self.model_info.ref = self.remote_model.ref
+            logger.info(f"Model {self.model_info.name} created in hub with ref {self.model_info.ref}")
+
+        """Setup logging and environment variables."""
 
     def _setup_model_and_data(
         self,
@@ -135,13 +293,14 @@ class FocoosTrainer:
         model_info: ModelInfo,
         data_train: Optional[MapDataset],
         data_val: MapDataset,
-        args: TrainerArgs,
     ):
         """Setup model and data."""
         # Setup Model
         self.model = model
         self.processor = processor.train()
         self.model_info = model_info
+        if self.model_info.name != self.args.run_name:
+            self.model_info.name = self.args.run_name
         self.model_info.weights_uri = os.path.join(self.output_dir, "model_final.pth")
         self.checkpoint = self.args.init_checkpoint
         # Setup data
@@ -183,11 +342,6 @@ class FocoosTrainer:
         # Save metadata
         if comm.get_rank() == 0:
             self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
-
-    def _setup_training_components(self):
-        """Setup training components like optimizer, scheduler, etc."""
-        # This will be called during train() method
-        pass
 
     def _store_model(self, save_file):
         """Store model weights to file.
@@ -386,155 +540,6 @@ class FocoosTrainer:
                         ),
                     ]
                 )
-
-    def train(self):
-        """Train the model using the configured settings."""
-        args = self.args
-        model = self.model
-
-        assert self.data_train is not None, "Train dataset is required for training"
-
-        # Setup Optimizer
-        optim = build_optimizer(
-            name=self.args.optimizer,
-            learning_rate=self.args.learning_rate,
-            weight_decay=self.args.weight_decay,
-            model=model,
-            weight_decay_norm=self.args.weight_decay_norm,
-            weight_decay_embed=self.args.weight_decay_embed,
-            backbone_multiplier=self.args.backbone_multiplier,
-            decoder_multiplier=self.args.decoder_multiplier,
-            head_multiplier=self.args.head_multiplier,
-            clip_gradients=self.args.clip_gradients,
-            extra=self.args.optimizer_extra,
-        )
-        scheduler = build_lr_scheduler(
-            name=self.args.scheduler,
-            max_iters=self.args.max_iters,
-            optimizer=optim,
-            extra=self.args.scheduler_extra,
-        )
-
-        # Setup dataset
-        train_loader = build_detection_train_loader(
-            dataset=self.data_train,
-            total_batch_size=args.batch_size,
-            num_workers=args.workers,
-        )
-
-        # Handle Multi-GPU Training
-        model = create_ddp_model(
-            model,
-            broadcast_buffers=self.args.ddp_broadcast_buffers,
-            find_unused_parameters=self.args.ddp_find_unused,
-        )
-
-        # Setup Trainer
-        trainer_loop = TrainerLoop(
-            model=model,
-            processor=self.processor,
-            dataloader=train_loader,
-            optimizer=optim,
-            amp=args.amp_enabled,
-            clip_gradient=args.clip_gradients,
-            gather_metric_period=args.gather_metric_period,
-            zero_grad_before_forward=args.zero_grad_before_forward,
-        )
-
-        # Setup Checkpointer
-        checkpointer = Checkpointer(
-            model,  # type: ignore
-            save_dir=self.ckpt_dir,
-            trainer=trainer_loop,
-            **ema.get_ema_checkpointer(model) if args.ema_enabled else {},
-        )
-
-        self._register_hooks(trainer_loop, model, checkpointer, optim, scheduler, args)
-
-        # Load checkpoint if needed
-        if self.checkpoint:
-            checkpointer.resume_or_load(path=self.checkpoint, resume=args.resume)
-        else:
-            checkpointer.resume_or_load(path="", resume=args.resume)
-
-        if self.args.resume and checkpointer.has_checkpoint():
-            # The checkpoint stores the training iteration that just finished, thus we start
-            # at the next iteration
-            start_iter = trainer_loop.iter + 1
-        else:
-            start_iter = 0
-
-        output_lines = [
-            f"🚀 Starting training from iteration {start_iter}",
-            "========== 🔧 Main Hyperparameters 🔧 ==========",
-            f" - max_iter: {self.args.max_iters}",
-            f" - batch_size: {self.args.batch_size}",
-            f" - learning_rate: {self.args.learning_rate}",
-            " - resolution: !TODO",
-            f" - optimizer: {self.args.optimizer}",
-            f" - scheduler: {self.args.scheduler}",
-            f" - weight_decay: {self.args.weight_decay}",
-            f" - ema_enabled: {self.args.ema_enabled}",
-            "================================================",
-        ]
-        logger.info("\n".join(output_lines))
-
-        self._update_training_info_and_dump(ModelStatus.TRAINING_RUNNING)
-        trainer_loop.train(start_iter=start_iter, max_iter=args.max_iters)
-        self.finished = True
-        self.finish()
-        if comm.is_main_process() and self.remote_model and self.args.sync_to_hub:
-            self.remote_model.sync_local_training_job(
-                local_training_info=HubSyncLocalTraining(
-                    status=ModelStatus.TRAINING_COMPLETED,
-                    iterations=self.args.max_iters,
-                    training_info=self.model_info.training_info,
-                ),
-                dir=self.output_dir,
-                upload_artifacts=[
-                    ArtifactName.WEIGHTS,
-                    ArtifactName.METRICS,
-                ],
-            )
-
-    def test(self, restore_best: bool = False):
-        """Run model evaluation on test set.
-
-        Args:
-            restore_best: Whether to restore best checkpoint before testing
-
-        Returns:
-            dict: Evaluation metrics
-        """
-        args = self.args
-        model = self.model
-
-        model = create_ddp_model(model)
-
-        if restore_best:
-            # Setup Checkpointer to recover trained model or load from scratch
-            checkpointer = Checkpointer(
-                model=model,  # type: ignore
-                save_dir=self.output_dir,
-                **ema.get_ema_checkpointer(model) if args.ema_enabled else {},
-            )
-            checkpointer.resume_or_load(path=self.checkpoint or "", resume=args.resume)
-            if args.ema_enabled:
-                ema.apply_model_ema(model)
-
-        eval_result = self._do_eval(model)
-
-        if comm.get_rank() == 0:
-            key, value = TASK_METRICS[self.task.value].split("/")
-            raw_metrics = _add_prefix(eval_result[key], key)
-            if (
-                self.model_info.val_metrics is None
-                or raw_metrics[TASK_METRICS[self.task.value]]
-                > self.model_info.val_metrics[TASK_METRICS[self.task.value]]
-            ):
-                self.model_info.val_metrics = raw_metrics
-
-        return eval_result
 
     def _update_training_info_and_dump(self, new_status: ModelStatus, detail: Optional[str] = None):
         self.model_info.status = new_status
@@ -892,7 +897,7 @@ def _add_prefix(metric, key):
     Returns:
         dict: Metric dictionary with prefix
     """
-    return {f"{key}/{k}": v for k, v in metric.items()}
+    return {f"{key}/{k}": v for k, v in metric.items() if is_json_compatible(v)}
 
 
 def run_train(
@@ -902,7 +907,7 @@ def run_train(
     image_model: BaseModelNN,
     processor: Processor,
     model_info: ModelInfo,  # type: ignore  # noqa: F821
-    remote_model: Optional[RemoteModel] = None,
+    hub: Optional[FocoosHUB] = None,
 ):
     """Run model training.
 
@@ -916,44 +921,28 @@ def run_train(
     Returns:
         tuple: (trained model, updated metadata)
     """
+    trainer = FocoosTrainer()
+    trainer.train(
+        args=train_args,
+        model=image_model,
+        processor=processor,
+        model_info=model_info,
+        data_train=data_train,
+        data_val=data_val,
+        hub=hub,
+    )
 
-    rank = comm.get_local_rank()
-    log_path = os.path.join(train_args.output_dir, train_args.run_name.strip(), "log.txt")
-    with capture_all_output(log_path=log_path, rank=rank):
-        trainer = FocoosTrainer(
-            args=train_args,
-            model=image_model,
-            processor=processor,
-            model_info=model_info,
-            data_train=data_train,
-            data_val=data_val,
-            remote_model=remote_model,
-        )
-        trainer.train()
-
-        return image_model, model_info
+    return image_model, model_info
 
 
-def run_test(
+def run_eval(
     train_args: TrainerArgs,
     data_val: MapDataset,
     image_model: BaseModelNN,
     processor: Processor,
     model_info: ModelInfo,
-    remote_model: Optional[RemoteModel] = None,
 ):
-    rank = comm.get_local_rank()
-
-    log_path = os.path.join(train_args.output_dir, train_args.run_name.strip(), "test_log.txt")
-    with capture_all_output(log_path=log_path, rank=rank):
-        trainer = FocoosTrainer(
-            args=train_args,
-            model=image_model,
-            processor=processor,
-            model_info=model_info,
-            data_val=data_val,
-            remote_model=remote_model,
-        )
-        trainer.test()
+    trainer = FocoosTrainer()
+    trainer.eval(args=train_args, model=image_model, processor=processor, model_info=model_info, data_val=data_val)
 
     return image_model, model_info

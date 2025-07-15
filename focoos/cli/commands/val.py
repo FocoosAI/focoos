@@ -366,7 +366,7 @@ def val_command(
         logger.info("🔍 Starting validation loop...")
         logger.info(f"📊 Validation samples: {len(valid_dataset)}")
 
-        model.test(trainer_args, valid_dataset)
+        model.eval(trainer_args, valid_dataset)
 
         logger.info("✅ Validation completed successfully!")
         logger.info(f"📁 Output directory: {trainer_args.output_dir}")

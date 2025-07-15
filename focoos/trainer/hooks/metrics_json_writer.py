@@ -1,37 +1,13 @@
 import json
-import math
 import os
 from collections import defaultdict
 
 from focoos.trainer.events import get_event_storage
 from focoos.trainer.hooks.base import EventWriter
 from focoos.utils.logger import get_logger
+from focoos.utils.metrics import is_json_compatible
 
 logger = get_logger(__name__)
-
-
-def is_json_compatible(value):
-    """
-    Check if a value is compatible with JSON serialization.
-
-    Args:
-        value: The value to check
-
-    Returns:
-        bool: True if the value can be serialized to JSON, False otherwise
-    """
-    if value is None:
-        return True
-    if isinstance(value, (bool, int, float, str)):
-        # Check for NaN and Infinity which are not JSON compatible
-        if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
-            return False
-        return True
-    if isinstance(value, (list, tuple)):
-        return all(is_json_compatible(item) for item in value)
-    if isinstance(value, dict):
-        return all(is_json_compatible(v) for v in value.values())
-    return False
 
 
 class JSONWriter(EventWriter):

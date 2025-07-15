@@ -8,7 +8,7 @@ from focoos.trainer.events import get_event_storage
 from focoos.trainer.hooks.base import EventWriter
 from focoos.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger("metrics")
 
 
 class CommonMetricPrinter(EventWriter):

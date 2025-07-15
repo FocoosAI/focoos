@@ -181,21 +181,13 @@ class FocoosModel:
         assert self.model_info.config["num_classes"] == data_train.dataset.metadata.num_classes, (
             "Number of classes mismatch between model and dataset."
         )
-        remote_model = None
-        if args.sync_to_hub:
-            hub = hub or FocoosHUB()
-            remote_model = hub.new_model(self.model_info)
-
-            self.model_info.ref = remote_model.ref
-            logger.info(f"Model {self.model_info.name} created in hub with ref {self.model_info.ref}")
-
         assert args.num_gpus, "Training without GPUs is not supported. num_gpus must be greater than 0"
         if args.num_gpus > 1:
             launch(
                 run_train,
                 args.num_gpus,
                 dist_url="auto",
-                args=(args, data_train, data_val, self.model, self.processor, self.model_info, remote_model),
+                args=(args, data_train, data_val, self.model, self.processor, self.model_info, hub),
             )
 
             logger.info("Training done, resuming main process.")
@@ -213,10 +205,10 @@ class FocoosModel:
             logger.info(f"Reloading weights from {self.model_info.weights_uri}")
             self._reload_model()
         else:
-            run_train(args, data_train, data_val, self.model, self.processor, self.model_info, remote_model)
+            run_train(args, data_train, data_val, self.model, self.processor, self.model_info, hub)
 
-    def test(self, args: TrainerArgs, data_test: MapDataset):
-        """Test the model on the provided test dataset.
+    def eval(self, args: TrainerArgs, data_test: MapDataset):
+        """evaluate the model on the provided test dataset.
 
         This method evaluates the model performance on a test dataset,
         supporting both single-GPU and multi-GPU testing.
@@ -229,7 +221,7 @@ class FocoosModel:
             AssertionError: If task mismatch between model and dataset.
             AssertionError: If num_gpus is 0 (GPU testing is required).
         """
-        from focoos.trainer.trainer import run_test
+        from focoos.trainer.trainer import run_eval
 
         self.model_info.val_dataset = data_test.dataset.metadata.name
         self.model_info.val_metrics = None
@@ -240,7 +232,7 @@ class FocoosModel:
         assert args.num_gpus, "Testing without GPUs is not supported. num_gpus must be greater than 0"
         if args.num_gpus > 1:
             launch(
-                run_test,
+                run_eval,
                 args.num_gpus,
                 dist_url="auto",
                 args=(args, data_test, self.model, self.processor, self.model_info),
@@ -251,7 +243,7 @@ class FocoosModel:
             metadata_path = os.path.join(final_folder, ArtifactName.INFO)
             self.model_info = ModelInfo.from_json(metadata_path)
         else:
-            run_test(args, data_test, self.model, self.processor, self.model_info)
+            run_eval(args, data_test, self.model, self.processor, self.model_info)
 
     @property
     def name(self):

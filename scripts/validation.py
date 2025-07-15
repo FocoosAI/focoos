@@ -87,7 +87,7 @@ def main():
     )
 
     # Start validation
-    model.test(trainer_args, valid_dataset)
+    model.eval(trainer_args, valid_dataset)
 
 
 if __name__ == "__main__":
