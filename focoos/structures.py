@@ -949,6 +949,7 @@ class Instances:
             "keypoints": self.keypoints,
             "scores": self.scores,
             "classes": self.classes,
+            "areas": self.areas,
         }
 
     # Tensor-like methods

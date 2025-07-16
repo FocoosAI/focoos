@@ -10,9 +10,13 @@ import torch
 from focoos.data import utils
 from focoos.data.transforms import augmentation as A
 from focoos.data.transforms import transform as T
+from focoos.ports import DatasetEntry
 from focoos.structures import BoxMode
+from focoos.utils.logger import get_logger
 
 from .mapper import DatasetMapper
+
+logger = get_logger("KeypointMapper")
 
 
 class KeypointDatasetMapper(DatasetMapper):
@@ -65,7 +69,7 @@ class KeypointDatasetMapper(DatasetMapper):
         mode = "training" if is_train else "inference"
         logger.info(f"[DatasetMapper] Augmentations used in {mode}: {augmentations}")
 
-    def _transform_annotations(self, dataset_dict, transforms, image_shape):
+    def _transform_annotations(self, dataset_dict, transforms, image_shape) -> dict:
         # USER: Modify this if you want to keep them for some reason.
         for anno in dataset_dict["annotations"]:
             anno.pop("segmentation", None)
@@ -104,8 +108,9 @@ class KeypointDatasetMapper(DatasetMapper):
         instances = utils.filter_empty_instances(instances, by_box=use_bbox, by_mask=use_mask)
 
         dataset_dict["instances"] = instances
+        return dataset_dict
 
-    def __call__(self, dataset_dict: dict):
+    def __call__(self, dataset_dict: dict) -> DatasetEntry:
         """
         Args:
             dataset_dict (dict): Metadata of one image, in Detectron2 Dataset format.
@@ -113,6 +118,7 @@ class KeypointDatasetMapper(DatasetMapper):
         Returns:
             dict: a format that builtin models in detectron2 accept
         """
+
         dataset_dict = copy.deepcopy(dataset_dict)  # it will be modified by code below
         # USER: Write your own image loading if it's not from a file
         image = utils.read_image(dataset_dict["file_name"], format=self.image_format)
@@ -153,6 +159,16 @@ class KeypointDatasetMapper(DatasetMapper):
 
         if "annotations" in dataset_dict and self.is_train:
             # there is a problem here with image_shape (annotations are not transformed)
-            self._transform_annotations(dataset_dict, transforms, image_shape)
+            dataset_dict = self._transform_annotations(dataset_dict, transforms, image_shape)
 
-        return dataset_dict
+        # dataset_dict["instances"] = Instances(
+        #    image_shape,
+        # )
+        return DatasetEntry(
+            image=dataset_dict["image"],
+            height=dataset_dict["height"],
+            width=dataset_dict["width"],
+            file_name=dataset_dict["file_name"],
+            image_id=dataset_dict["image_id"],
+            instances=dataset_dict.get("instances", None),
+        )

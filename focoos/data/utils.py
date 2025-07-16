@@ -3,7 +3,7 @@ import pycocotools.mask as mask_util
 import torch
 from PIL import Image
 
-import focoos.data.transforms as T
+from focoos.data.transforms.transform import HFlipTransform
 from focoos.structures import (
     BitMasks,
     Boxes,
@@ -152,7 +152,7 @@ def transform_keypoint_annotations(keypoints, transforms, image_size, keypoint_h
 
     # This assumes that HorizFlipTransform is the only one that does flip
 
-    do_hflip = sum(isinstance(t, T.HFlipTransform) for t in transforms.transforms) % 2 == 1
+    do_hflip = sum(isinstance(t, HFlipTransform) for t in transforms.transforms) % 2 == 1
 
     # Alternative way: check if probe points was horizontally flipped.
     # probe = np.asarray([[0.0, 0.0], [image_width, 0.0]])
@@ -176,7 +176,7 @@ def transform_keypoint_annotations(keypoints, transforms, image_size, keypoint_h
     return keypoints
 
 
-def annotations_to_instances(annos, image_size):
+def annotations_to_instances(annos, image_size) -> Instances:
     """
     Create an :class:`Instances` object used by the models,
     from instance annotations in the dataset dict.
@@ -232,8 +232,10 @@ def annotations_to_instances(annos, image_size):
     if len(annos) and "keypoints" in annos[0]:
         kpts = [obj.get("keypoints", []) for obj in annos]
         keypoints = Keypoints(kpts)
+        areas = [obj.get("area", None) for obj in annos]
+        areas = torch.tensor(areas, dtype=torch.float32)
 
-    return Instances(image_size, boxes=boxes, classes=classes, masks=masks, keypoints=keypoints)
+    return Instances(image_size, boxes=boxes, classes=classes, masks=masks, keypoints=keypoints, areas=areas)
 
 
 def filter_empty_instances(
@@ -254,18 +256,18 @@ def filter_empty_instances(
         tensor[bool], optional: boolean mask of filtered instances
     """
     assert by_box or by_mask
-    r = []
+    empty_indexes = []
     if instances.boxes and by_box:
-        r.append(instances.boxes.nonempty(threshold=box_threshold))
+        empty_indexes.append(instances.boxes.nonempty(threshold=box_threshold))
     if instances.masks and by_mask:
         assert isinstance(instances.masks, BitMasks), "Error, masks in instances are not BitMasks"
-        r.append(instances.masks.nonempty())
+        empty_indexes.append(instances.masks.nonempty())
     # TODO: can also filter visible keypoints
 
-    if not r:
+    if len(empty_indexes) == 0:
         return instances
-    m = r[0]
-    for x in r[1:]:
+    m = empty_indexes[0]
+    for x in empty_indexes[1:]:
         m = m & x
 
     return instances[m]
