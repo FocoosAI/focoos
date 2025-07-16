@@ -5,6 +5,7 @@ from focoos.data.datasets.dict_dataset import DictDataset
 from focoos.data.datasets.map_dataset import MapDataset
 from focoos.data.mappers.classification_dataset_mapper import ClassificationDatasetMapper
 from focoos.data.mappers.detection_dataset_mapper import DetectionDatasetMapper
+from focoos.data.mappers.keypoint import KeypointDatasetMapper
 from focoos.data.mappers.mapper import DatasetMapper
 from focoos.data.mappers.semantic_dataset_mapper import SemanticDatasetMapper
 from focoos.data.transforms import transform as T
@@ -110,6 +111,13 @@ class AutoDataset:
                 image_format="RGB",
                 is_train=not is_validation_split,
                 augmentations=augs,
+            )
+        elif self.task == Task.KEYPOINT:
+            return KeypointDatasetMapper(
+                image_format="RGB",
+                augmentations=augs,
+                is_train=not is_validation_split,
+                # keypoint_hflip_indices=np.array(keypoint_hflip_indices),
             )
         else:
             raise NotImplementedError(f"Task {self.task} not found in autodataset _load_mapper()")

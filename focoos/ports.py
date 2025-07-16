@@ -704,6 +704,7 @@ class ModelFamily(str, Enum):
     MASKFORMER = "fai_mf"
     BISENETFORMER = "bisenetformer"
     IMAGE_CLASSIFIER = "fai_cls"
+    YOLOXPOSE = "yoloxpose"
 
 
 # This should not be a dataclass, but their child must be
@@ -928,6 +929,10 @@ class DatasetMetadata:
         if self.task == Task.CLASSIFICATION:
             assert self.thing_classes is not None, "thing_classes is required for classification"
             return self.thing_classes
+        if self.task == Task.KEYPOINT:
+            assert self.thing_classes is not None, "thing_classes is required for keypoint"
+            return self.thing_classes
+
         raise ValueError(f"Task {self.task} not supported")
 
     @property
