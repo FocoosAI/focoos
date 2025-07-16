@@ -11,7 +11,7 @@ from torch.nn.modules.utils import _pair
 from focoos.models.focoos_model import BaseModelNN
 from focoos.models.yoloxpose.config import YOLOXPoseConfig
 from focoos.models.yoloxpose.loss import KeypointCriterion
-from focoos.models.yoloxpose.ports import KeypointModelOutput, KeypointOutput, KeypointTargets, OptSampleList
+from focoos.models.yoloxpose.ports import KeypointOutput, KeypointTargets, OptSampleList, YOLOXPoseModelOutput
 from focoos.models.yoloxpose.utils import bias_init_with_prob, filter_scores_and_topk, nms_torch, reduce_mean
 from focoos.nn.backbone.base import ShapeSpec
 from focoos.nn.backbone.build import load_backbone
@@ -418,19 +418,32 @@ class SimOTAAssigner:
             dict: Assignment result containing assigned gt indices,
                 max iou overlaps, assigned labels, etc.
         """
+        assert gt_instances is not None, "gt_instances is None"
+        assert pred_instances is not None, "pred_instances is None"
+        assert gt_instances.bboxes is not None, "gt_instances.bboxes is None"
+        assert gt_instances.labels is not None, "gt_instances.labels is None"
+        assert gt_instances.keypoints is not None, "gt_instances.keypoints is None"
+        assert gt_instances.keypoints_visible is not None, "gt_instances.keypoints_visible is None"
+        assert gt_instances.areas is not None, "gt_instances.areas is None"
+        assert pred_instances.bboxes is not None, "pred_instances.bboxes is None"
+        assert pred_instances.scores is not None, "pred_instances.scores is None"
+        assert pred_instances.priors is not None, "pred_instances.priors is None"
+        assert pred_instances.keypoints is not None, "pred_instances.keypoints is None"
+        assert pred_instances.keypoints_visible is not None, "pred_instances.keypoints_visible is None"
+
         gt_bboxes = gt_instances.bboxes
         gt_labels = gt_instances.labels
         gt_keypoints = gt_instances.keypoints
         gt_keypoints_visible = gt_instances.keypoints_visible
         gt_areas = gt_instances.areas
-        num_gt = gt_bboxes.size(0)
+        num_gt = gt_bboxes.size(0) if gt_bboxes is not None else 0
 
         decoded_bboxes = pred_instances.bboxes
         pred_scores = pred_instances.scores
         priors = pred_instances.priors
         keypoints = pred_instances.keypoints
         keypoints_visible = pred_instances.keypoints_visible
-        num_bboxes = decoded_bboxes.size(0)
+        num_bboxes = decoded_bboxes.size(0) if decoded_bboxes is not None else 0
 
         # assign 0 by default
         assigned_gt_inds = decoded_bboxes.new_full((num_bboxes,), 0, dtype=torch.long)
@@ -552,6 +565,7 @@ class SimOTAAssigner:
         gt_cxs = (gt_bboxes[:, 0] + gt_bboxes[:, 2]) / 2.0
         gt_cys = (gt_bboxes[:, 1] + gt_bboxes[:, 3]) / 2.0
         if self.use_keypoints_for_center and gt_keypoints_visible is not None:
+            assert gt_keypoints is not None, "gt_keypoints is None"
             gt_kpts_cts = (gt_keypoints * gt_keypoints_visible.unsqueeze(-1)).sum(dim=-2) / gt_keypoints_visible.sum(
                 dim=-1, keepdims=True
             ).clip(min=0)
@@ -560,12 +574,6 @@ class SimOTAAssigner:
 
             gt_cxs[valid_mask] = gt_kpts_cts[valid_mask][..., 0]
             gt_cys[valid_mask] = gt_kpts_cts[valid_mask][..., 1]
-            # a = gt_kpts_cts[valid_mask][..., 0]
-            # gt_cxs = gt_cxs.to(a.dtype).expand_as(valid_mask)  # fix
-            # gt_cxs[valid_mask] = a
-            # b = gt_kpts_cts[valid_mask][..., 1]
-            # gt_cys = gt_cys.to(b.dtype).expand_as(valid_mask)  # fix
-            # gt_cys[valid_mask] = b
 
         ct_box_l = gt_cxs - self.center_radius * repeated_stride_x
         ct_box_t = gt_cys - self.center_radius * repeated_stride_y
@@ -600,7 +608,7 @@ class SimOTAAssigner:
         # calculate dynamic k for each gt
         dynamic_ks = torch.clamp(topk_ious.sum(0).int(), min=1)
         for gt_idx in range(num_gt):
-            _, pos_idx = torch.topk(cost[:, gt_idx], k=dynamic_ks[gt_idx], largest=False)
+            _, pos_idx = torch.topk(cost[:, gt_idx], k=int(dynamic_ks[gt_idx]), largest=False)
             # cost[:, gt_idx], k=int(dynamic_ks[gt_idx][0]), largest=False) # fix
             matching_matrix[:, gt_idx][pos_idx] = 1
             # matching_matrix[:, gt_idx][:, pos_idx] = 1 # fix
@@ -1051,6 +1059,16 @@ class YOLOXPoseHead(nn.Module):
         flatten_objectness = self._flatten_predictions(objectnesses)
         flatten_kpt_offsets = self._flatten_predictions(kpt_offsets)
         flatten_kpt_vis = self._flatten_predictions(kpt_vis)
+
+        if (
+            flatten_cls_scores is None
+            or flatten_bbox_preds is None
+            or flatten_objectness is None
+            or flatten_kpt_offsets is None
+            or flatten_kpt_vis is None
+        ):
+            raise ValueError("One or more flattened predictions are None")
+
         flatten_bbox_decoded = self.decode_bbox(
             flatten_bbox_preds,  # flatten_bbox_preds.shape = [batch_size, 8400, 4]
             flatten_priors[..., :2],  # flatten_priors[..., :2].shape = [8400, 2]
@@ -1098,7 +1116,7 @@ class YOLOXPoseHead(nn.Module):
         batch_decoded_bboxes: Tensor,
         batch_decoded_kpts: Tensor,
         batch_kpt_vis: Tensor,
-        batch_data_samples: list,
+        batch_data_samples: OptSampleList,
     ):
         num_imgs = len(batch_data_samples)
 
@@ -1228,10 +1246,13 @@ class YOLOXPoseHead(nn.Module):
         # TODO: avoid using mmpose data structures
         gt_instances = KeypointTargets(
             bboxes=data_sample["boxes"],
+            scores=None,
+            priors=None,
             labels=data_sample["labels"],
             keypoints=data_sample["keypoints"],
             keypoints_visible=data_sample["keypoints_vis"],
             areas=data_sample["areas"],
+            keypoints_visible_weights=data_sample.get("keypoints_visible_weights", None),
         )
         gt_fields = data_sample.get("gt_fields", dict())
         num_gts = len(gt_instances)
@@ -1271,7 +1292,9 @@ class YOLOXPoseHead(nn.Module):
             priors=priors,
             keypoints=decoded_kpts,
             keypoints_visible=kpt_vis,
+            keypoints_visible_weights=None,
             areas=None,
+            labels=None,
         )
         assign_result = self.assigner.assign(pred_instances=pred_instances, gt_instances=gt_instances)
 
@@ -1282,6 +1305,7 @@ class YOLOXPoseHead(nn.Module):
         pos_assigned_gt_inds = assign_result["gt_inds"][pos_inds] - 1
 
         # bbox target
+        assert gt_instances.bboxes is not None, "gt_instances.bboxes is None"
         bbox_target = gt_instances.bboxes[pos_assigned_gt_inds.long()]
 
         # cls target
@@ -1289,13 +1313,15 @@ class YOLOXPoseHead(nn.Module):
         cls_target = F.one_hot(pos_gt_labels, self.num_classes) * max_overlaps.unsqueeze(-1)
 
         # pose targets
+        assert gt_instances.keypoints is not None, "gt_instances.keypoints is None"
+        assert gt_instances.keypoints_visible is not None, "gt_instances.keypoints_visible is None"
         kpt_target = gt_instances.keypoints[pos_assigned_gt_inds]
         vis_target = gt_instances.keypoints_visible[pos_assigned_gt_inds]
-        if "keypoints_visible_weights" in gt_instances:
+        if gt_instances.keypoints_visible_weights is not None:
             vis_weight = gt_instances.keypoints_visible_weights[pos_assigned_gt_inds]
         else:
             vis_weight = vis_target.new_ones(vis_target.shape)
-        pos_areas = gt_instances.areas[pos_assigned_gt_inds]
+        pos_areas = gt_instances.areas[pos_assigned_gt_inds] if gt_instances.areas is not None else None
 
         # obj target
         obj_target = torch.zeros_like(objectness)
@@ -1383,13 +1409,24 @@ class YOLOXPoseHead(nn.Module):
         flatten_stride = torch.cat(mlvl_strides)
 
         # flatten cls_scores, bbox_preds and objectness
-        flatten_cls_scores = self._flatten_predictions(cls_scores).sigmoid()
+        flatten_cls_scores = self._flatten_predictions(cls_scores)
+        flatten_cls_scores = flatten_cls_scores.sigmoid() if flatten_cls_scores is not None else None
         flatten_bbox_preds = self._flatten_predictions(bbox_preds)
-        flatten_objectness = self._flatten_predictions(objectnesses).sigmoid()
+        flatten_objectness = self._flatten_predictions(objectnesses)
+        flatten_objectness = flatten_objectness.sigmoid() if flatten_objectness is not None else None
         flatten_kpt_offsets = self._flatten_predictions(kpt_offsets)
-        flatten_kpt_vis = self._flatten_predictions(kpt_vis).sigmoid()
-        flatten_bbox_preds = self.decode_bbox(flatten_bbox_preds, flatten_priors, flatten_stride)
-        flatten_kpt_reg = self.decode_kpt_reg(flatten_kpt_offsets, flatten_priors, flatten_stride)
+        flatten_kpt_vis = self._flatten_predictions(kpt_vis)
+        flatten_kpt_vis = flatten_kpt_vis.sigmoid() if flatten_kpt_vis is not None else None
+        flatten_bbox_preds = (
+            self.decode_bbox(flatten_bbox_preds, flatten_priors, flatten_stride)
+            if flatten_bbox_preds is not None
+            else None
+        )
+        flatten_kpt_reg = (
+            self.decode_kpt_reg(flatten_kpt_offsets, flatten_priors, flatten_stride)
+            if flatten_kpt_offsets is not None
+            else None
+        )
 
         # Initialize empty lists for each key
         all_scores = []
@@ -1399,6 +1436,12 @@ class YOLOXPoseHead(nn.Module):
         all_pred_keypoints = []
         all_keypoint_scores = []
         all_keypoints_visible = []
+
+        assert flatten_bbox_preds is not None, "flatten_bbox_preds is None"
+        assert flatten_cls_scores is not None, "flatten_cls_scores is None"
+        assert flatten_objectness is not None, "flatten_objectness is None"
+        assert flatten_kpt_reg is not None, "flatten_kpt_reg is None"
+        assert flatten_kpt_vis is not None, "flatten_kpt_vis is None"
 
         for bboxes, scores, objectness, kpt_reg, kpt_vis in zip(
             flatten_bbox_preds, flatten_cls_scores, flatten_objectness, flatten_kpt_reg, flatten_kpt_vis
@@ -1412,7 +1455,7 @@ class YOLOXPoseHead(nn.Module):
                 scores, score_thr, nms_pre, results=dict(labels=labels[:, 0])
             )
 
-            labels = results["labels"]
+            labels = results["labels"] if results is not None else labels[:, 0]
 
             bboxes = bboxes[keep_idxs_score]
             kpt_vis = kpt_vis[keep_idxs_score]
@@ -1515,7 +1558,7 @@ class YOLOXPoseHead(nn.Module):
         decoded_kpts = pred_kpt_offsets * stride + priors
         return decoded_kpts  # decoded_kpts.shape = [batch_size, 8400, 17, 2], format xy ABS
 
-    def _flatten_predictions(self, preds: List[Tensor]):
+    def _flatten_predictions(self, preds: List[Tensor]) -> Optional[Tensor]:
         """Flattens the predictions from a list of tensors to a single
         tensor."""
         if len(preds) == 0:
@@ -1572,10 +1615,10 @@ class YOLOXPose(BaseModelNN):
     def dtype(self):
         return self.pixel_mean.dtype
 
-    def forward(self, images: torch.Tensor, targets: list[KeypointTargets] = []) -> KeypointModelOutput:
+    def forward(self, images: torch.Tensor, targets: list[KeypointTargets] = []) -> YOLOXPoseModelOutput:
         images = (images - self.pixel_mean) / self.pixel_std  # type: ignore
 
         features = self.backbone(images)
         features = self.pixel_decoder(features)
         outputs, losses = self.head(features, targets)
-        return KeypointModelOutput(outputs=outputs, loss=losses)
+        return YOLOXPoseModelOutput(outputs=outputs, loss=losses)

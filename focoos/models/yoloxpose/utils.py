@@ -69,7 +69,7 @@ def nms_torch(
 
 
 def filter_scores_and_topk(
-    scores: Tensor, score_thr: float, topk: int, results: Optional[dict or list or torch.Tensor] = None
+    scores: Tensor, score_thr: float, topk: int, results: Optional[Union[dict, list, torch.Tensor]] = None
 ):
     """Filter results using score threshold and topk candidates.
 
@@ -145,7 +145,7 @@ class Scale(nn.Module):
         return x * self.scale
 
 
-def bbox_xyxy2cs(bbox: np.ndarray, padding: float = 1.0) -> Tuple[np.ndarray, np.ndarray]:
+def bbox_xyxy2cs(bbox: Tensor, padding: float = 1.0) -> Tuple[Tensor, Tensor]:
     """Transform the bbox format from (x,y,w,h) into (center, scale)
 
     Args:
@@ -156,9 +156,9 @@ def bbox_xyxy2cs(bbox: np.ndarray, padding: float = 1.0) -> Tuple[np.ndarray, np
 
     Returns:
         tuple: A tuple containing center and scale.
-        - np.ndarray[float32]: Center (x, y) of the bbox in shape (2,) or
+        - Tensor[float32]: Center (x, y) of the bbox in shape (2,) or
             (n, 2)
-        - np.ndarray[float32]: Scale (w, h) of the bbox in shape (2,) or
+        - Tensor[float32]: Scale (w, h) of the bbox in shape (2,) or
             (n, 2)
     """
     # convert single bbox from (4, ) to (1, 4)
@@ -173,7 +173,7 @@ def bbox_xyxy2cs(bbox: np.ndarray, padding: float = 1.0) -> Tuple[np.ndarray, np
         center = center[0]
         scale = scale[0]
 
-    return center, scale
+    return torch.Tensor(center), torch.Tensor(scale)
 
 
 def drop_path(x: torch.Tensor, drop_prob: float = 0.0, training: bool = False) -> torch.Tensor:

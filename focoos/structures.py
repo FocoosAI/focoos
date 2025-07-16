@@ -924,6 +924,7 @@ class Instances:
         keypoints: Optional[Keypoints] = None,
         scores: Optional[torch.Tensor] = None,
         classes: Optional[torch.Tensor] = None,
+        areas: Optional[torch.Tensor] = None,
     ):
         """
         Args:
@@ -941,6 +942,7 @@ class Instances:
         self.keypoints = keypoints
         self.scores = scores
         self.classes = classes
+        self.areas = areas
         self._fields = {
             "boxes": self.boxes,
             "masks": self.masks,

@@ -121,12 +121,14 @@ class Task(str, Enum):
         - SEMSEG: Semantic segmentation
         - INSTANCE_SEGMENTATION: Instance segmentation
         - CLASSIFICATION: Image classification
+        - KEYPOINT: Keypoint detection
     """
 
     DETECTION = "detection"
     SEMSEG = "semseg"
     INSTANCE_SEGMENTATION = "instseg"
     CLASSIFICATION = "classification"
+    KEYPOINT = "keypoint"
 
 
 @dataclass
@@ -307,6 +309,7 @@ class FocoosDet(PydanticBase):
     cls_id: Optional[int] = None
     label: Optional[str] = None
     mask: Optional[str] = None
+    keypoints: Optional[list[tuple[int, int, float]]] = None  # TODO: check if float visibility is used or not
 
     @classmethod
     def from_json(cls, data: Union[str, dict]):
