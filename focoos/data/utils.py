@@ -229,6 +229,7 @@ def annotations_to_instances(annos, image_size) -> Instances:
         masks = BitMasks(torch.stack([torch.from_numpy(np.ascontiguousarray(x)) for x in masks]))
 
     keypoints = None
+    areas = None
     if len(annos) and "keypoints" in annos[0]:
         kpts = [obj.get("keypoints", []) for obj in annos]
         keypoints = Keypoints(kpts)
