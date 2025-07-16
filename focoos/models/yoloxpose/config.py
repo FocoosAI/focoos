@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, Literal, Tuple
 
 from focoos.nn.backbone.base import BackboneConfig
+from focoos.nn.backbone.darknet import DarkNetConfig
 from focoos.ports import ModelConfig
 
 NormType = Literal["BN"]
@@ -9,8 +10,9 @@ NormType = Literal["BN"]
 
 @dataclass
 class YOLOXPoseConfig(ModelConfig):
-    backbone_config: BackboneConfig
+    backbone_config: BackboneConfig = field(default_factory=lambda: DarkNetConfig(size="m", activation="silu"))
     num_classes: int
+    resolution: int = 640
 
     num_keypoints: int = 17
     in_channels: int = 256

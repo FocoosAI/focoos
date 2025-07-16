@@ -8,7 +8,11 @@ from focoos.models.yoloxpose.config import YOLOXPoseConfig
 from focoos.models.yoloxpose.ports import KeypointTargets, YOLOXPoseModelOutput
 from focoos.ports import DatasetEntry, DynamicAxes, FocoosDet, FocoosDetections
 from focoos.processor.base_processor import Processor
-from focoos.structures import Boxes, ImageList
+from focoos.structures import ImageList
+from focoos.utils.logger import get_logger
+from focoos.utils.timer import took
+
+logger = get_logger(__name__)
 
 
 class YOLOXPoseProcessor(Processor):
@@ -19,7 +23,9 @@ class YOLOXPoseProcessor(Processor):
         self.score_thr = config.score_thr
         self.skeleton = config.skeleton
         self.flip_map = config.flip_map
+        self.resolution = config.resolution
 
+    @took
     def preprocess(
         self,
         inputs: Union[
@@ -93,6 +99,8 @@ class YOLOXPoseProcessor(Processor):
         box_pred = boxes.gather(dim=0, index=index.unsqueeze(-1).repeat(1, boxes.shape[-1]))
         return scores, labels, box_pred
 
+    # TODO: implement threshold
+    @took
     def postprocess(
         self,
         outputs: YOLOXPoseModelOutput,
@@ -103,17 +111,17 @@ class YOLOXPoseProcessor(Processor):
             list[Image.Image],
             list[np.ndarray],
             list[torch.Tensor],
-            list[DatasetEntry],
         ],
         class_names: list[str] = [],
         threshold: float = 0.5,
+        device="cuda:0",
         **kwargs,
     ) -> list[FocoosDetections]:
         threshold = threshold or self.score_thr
 
         image_sizes = self.get_image_sizes(inputs)
 
-        results = FocoosDetections(detections=[])
+        res = []
 
         batch_size = outputs.outputs.scores.shape[0]
 
@@ -122,56 +130,62 @@ class YOLOXPoseProcessor(Processor):
         )
 
         for i in range(batch_size):
-            # Scale and clip bounding boxes
-            if outputs.outputs.pred_bboxes:
+            results = FocoosDetections(detections=[])
+            filter_mask = outputs.outputs.scores[i] > threshold
+            if outputs.outputs.pred_bboxes is not None:
                 output_boxes = outputs.outputs.pred_bboxes
             else:
                 raise ValueError("Predictions must contain boxes!")
 
             size = image_sizes[i]
-            h, w = size[0], size[1]
+            h, w = int(size[0]), int(size[1])
 
-            # Post-process to resize to original image size
-            output_height, output_width = image_sizes[i][0], image_sizes[i][1]
+            scale_x = self.resolution / w
+            scale_y = self.resolution / h
+            logger.debug(f"scale_x: {scale_x}, scale_y: {scale_y}")
+            logger.debug(f"outputs.outputs.scores[i].shape: {outputs.outputs.scores[i].shape}")
+            # Scores
+            filtered_scores = outputs.outputs.scores[i][filter_mask].to("cpu").numpy().tolist()
+            logger.debug(f"filtered_scores_shape: {outputs.outputs.scores[i][filter_mask].shape}")
 
-            # Handle tensor vs int types for output dimensions
-            if isinstance(output_width, torch.Tensor):
-                output_width_tmp = output_width.float()
-                output_height_tmp = output_height.float()
-            else:
-                output_width_tmp = output_width
-                output_height_tmp = output_height
+            # Labels
+            filtered_labels = outputs.outputs.labels[i][filter_mask].to("cpu").numpy().tolist()
 
-            # Calculate scaling factors
-            scale_x, scale_y = (
-                output_width_tmp / w,
-                output_height_tmp / h,
-            )
+            # Boxes
+            filtered_boxes = outputs.outputs.pred_bboxes[i][filter_mask]
+            logger.debug(f"filtered_boxes_shape: {filtered_boxes.shape}")
+            output_boxes = filtered_boxes * torch.tensor([scale_x, scale_y, scale_x, scale_y]).to(device)
+            output_boxes = output_boxes.clip(0, max(h, w))
+            output_boxes = output_boxes.cpu().numpy().astype(int).tolist()
 
-            output_boxes = Boxes(outputs.outputs.pred_bboxes[i])
-            output_boxes.scale(scale_x, scale_y)
-            output_boxes.clip(size)
-            output_boxes = output_boxes.nonempty()
-
-            # Process keypoints
+            # keypoints
+            filtered_keypoints = outputs.outputs.pred_keypoints[i][filter_mask]
             keypoints_vis_expanded = outputs.outputs.keypoints_visible[i].unsqueeze(-1)
-            keypoints_with_vis = torch.cat((outputs.outputs.pred_keypoints[i], keypoints_vis_expanded), dim=2)
-            keypoints = keypoints_with_vis.cpu().numpy().tolist()
-            keypoints[:, :, 0] *= scale_x
-            keypoints[:, :, 1] *= scale_y
+            keypoints_with_vis = torch.cat((filtered_keypoints, keypoints_vis_expanded), dim=2)
+            keypoints_with_vis[:, :, 0] *= scale_x
+            keypoints_with_vis[:, :, 1] *= scale_y
+            keypoints = keypoints_with_vis.cpu().numpy().astype(int).tolist()
 
-            # Create new Instances with resized dimensions
-            detection = FocoosDet(
-                bbox=outputs.outputs.pred_bboxes[i].cpu().numpy().tolist(),
-                conf=outputs.outputs.scores[i].cpu().numpy().tolist(),
-                cls_id=outputs.outputs.labels[i].cpu().numpy().tolist(),
-                label=class_names[outputs.outputs.labels[i].cpu().numpy().tolist()],
-                keypoints=keypoints,
+            res.append(
+                FocoosDetections(
+                    detections=[
+                        FocoosDet(
+                            bbox=box,
+                            conf=score,
+                            cls_id=label,
+                            label=class_names[label] if class_names and label < len(class_names) else None,
+                            keypoints=keypoint,
+                        )
+                        for box, score, label, keypoint in zip(
+                            output_boxes, filtered_scores, filtered_labels, keypoints
+                        )
+                    ]
+                )
             )
 
-            results.detections.append(detection)
+            res.append(results)
 
-        return [results]
+        return res
 
     def export_postprocess(
         self,
