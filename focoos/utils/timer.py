@@ -4,6 +4,10 @@
 from time import perf_counter
 from typing import Optional
 
+from focoos.utils.logger import get_logger
+
+logger = get_logger("Timer")
+
 
 class Timer:
     """
@@ -68,3 +72,14 @@ class Timer:
             pause.
         """
         return self.seconds() / self._count_start
+
+
+def took(func):
+    def wrap_fn(*args, **kwargs):
+        t1 = perf_counter()
+        res = func(*args, **kwargs)
+        t2 = perf_counter()
+        logger.debug(f"{func.__name__} took {t2 - t1:.3f}s")
+        return res
+
+    return wrap_fn
