@@ -62,10 +62,10 @@ source .venv/bin/activate
     🤖 **Multiple Runtimes:** You can install multiple extras by running `pip install 'focoos[onnx,tensorrt] @ git+https://github.com/FocoosAI/focoos.git'`. Note that you can't use `onnx-cpu` and `onnx` or `tensorrt` at the same time.
 
 !!! note
-    🛠️ **Installation Tip:** If you want to install a specific version, for example `v0.14.1`, use:
+    🛠️ **Installation Tip:** If you want to install a specific version, for example `v0.18.0`, use:
 
     ```bash linenums="0"
-    uv pip install 'focoos @ git+https://github.com/FocoosAI/focoos@v0.14.1'
+    uv pip install 'focoos @ git+https://github.com/FocoosAI/focoos@v0.18.0'
     ```
 
     📋 **Check Versions:** Visit [https://github.com/FocoosAI/focoos/tags](https://github.com/FocoosAI/focoos/tags) for available versions.

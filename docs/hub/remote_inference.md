@@ -129,7 +129,7 @@ for i, detection in enumerate(results.detections):
 Visualize results using the built-in utilities:
 
 ```python
-from focoos.utils.vision import annotate_image
+from focoos import annotate_image
 
 results = model.infer(image=image, threshold=0.5)
 

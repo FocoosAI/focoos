@@ -28,8 +28,9 @@ In this guide, we will perform the following steps:
 ## 0. \[Optional\] Connect to the Focoos Hub
 
 Focoos can be used without having an accont on the [Focoos Hub](http://app.focoos.ai). With it, you will unlock additional functionalities, as we will see below. If you have it, just connect to the HUB.
-```
-from focoos.hub import FocoosHUB
+
+```python
+from focoos import FocoosHUB
 
 FOCOOS_API_KEY = None  # write here your API key
 hub = FocoosHUB(api_key=FOCOOS_API_KEY)
@@ -56,9 +57,9 @@ dataset_path = dataset.download_data()
 Now that we downloaded the dataset, we can magically 🪄 instanciate the dataset using the [`AutoDataset`](/focoos/api/auto_dataset/#focoos.data.auto_dataset.AutoDataset) as will be used in the training. You can optionally specify aumgentations for the training using the [`DatasetAugmentation`](/focoos/api/auto_dataset/#focoos.data.default_aug.DatasetAugmentations) dataclass.
 
 ```python
-from focoos.data.auto_dataset import AutoDataset
-from focoos.data.default_aug import DatasetAugmentations
-from focoos.ports import DatasetSplitType
+from focoos.data import AutoDataset,DatasetAugmentations
+
+from focoos import DatasetSplitType
 
 task = dataset.task  # see ports.Task for more information
 layout = dataset.layout  # see ports.DatasetLayout for more information
@@ -76,7 +77,7 @@ valid_dataset = auto_dataset.get_split(augs=augs, split=DatasetSplitType.VAL)
 The first step to personalize your model is to instance a model. You can get a model using the ModelManager by specifying a model name. Optionally, you can also get one of your trained models on the hub. If you want to follow the example, just use `fai-detr-m-coco` as the model reference.
 
 ```python
-from focoos.model_manager import ModelManager
+from focoos import ModelManager
 
 model_ref = "<YOUR-MODEL-REF>"
 model = ModelManager.get("hub://" + model_ref, hub=hub)
@@ -87,7 +88,7 @@ The next step is to create a [`TrainerArgs`](/focoos/api/ports/#focoos.ports.Tra
 Optionally, if you are using the hub, you can specify `sync_to_hub=True` to track the experiment on the Focoos Hub.
 
 ```python
-from focoos.ports import TrainerArgs
+from focoos import TrainerArgs
 
 args = TrainerArgs(
     run_name=f"{model.name}_{train_dataset.name}",  # the name of the experiment
@@ -115,7 +116,7 @@ Now that the model is ready, let's see how it behaves.
 ```python
 import random
 from PIL import Image
-from focoos.utils.vision import annotate_image
+from focoos import annotate_image
 
 index = random.randint(0, len(valid_dataset))
 

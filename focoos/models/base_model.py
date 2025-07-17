@@ -9,6 +9,7 @@ from torch import nn
 from focoos.ports import DatasetEntry, LatencyMetrics, ModelConfig, ModelOutput
 from focoos.utils.checkpoint import IncompatibleKeys, strip_prefix_if_present
 from focoos.utils.logger import get_logger
+from focoos.utils.system import get_cpu_name, get_device_name
 
 logger = get_logger("BaseModelNN")
 
@@ -168,7 +169,12 @@ class BaseModelNN(ABC, nn.Module):
             This method assumes the model is running on CUDA for timing.
             Input data is randomly generated for benchmarking purposes.
         """
-        logger.info(f"⏱️ Benchmarking latency on {self.device}, size: {size}x{size}..")
+        if self.device.type == "cpu":
+            device_name = get_cpu_name()
+        else:
+            device_name = get_device_name()
+
+        logger.info(f"⏱️ Benchmarking latency on {device_name} ({self.device}), size: {size}x{size}..")
         # warmup
         data = 128 * torch.randn(1, 3, size[0], size[1]).to(self.device)
         durations = []
@@ -190,7 +196,7 @@ class BaseModelNN(ABC, nn.Module):
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
             im_size=size[0],  # FIXME: this is a hack to get the im_size as int, assuming it's a square
-            device=str(self.device),
+            device=device_name,
         )
         logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")
         return metrics

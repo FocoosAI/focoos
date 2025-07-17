@@ -19,7 +19,7 @@ except ImportError:
 
 from focoos.trainer.checkpointer import Checkpointer
 from focoos.trainer.checkpointer import PeriodicCheckpointer as _PeriodicCheckpointer
-from focoos.trainer.events import EventWriter
+from focoos.trainer.hooks.base import EventWriter
 from focoos.utils.distributed import comm
 from focoos.utils.logger import get_logger
 from focoos.utils.timer import Timer

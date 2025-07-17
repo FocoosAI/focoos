@@ -16,7 +16,7 @@ A modern, comprehensive command-line interface for the Focoos computer vision fr
 ## 📦 Installation
 
 ```bash
-pip install focoos
+uv pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
 ```
 
 ## 🎯 Quick Start
@@ -53,26 +53,26 @@ Where:
 ## 🛠️ Available Commands
 
 ### Core Commands
-| Command | Description | Example |
-|---------|-------------|---------|
-| **`train`** | Train models on datasets | `focoos train --model fai-detr-m-coco --dataset data.zip` |
-| **`val`** | Validate model performance | `focoos val --model fai-detr-m-coco --dataset data.zip` |
-| **`predict`** | Run inference on images | `focoos predict --model fai-detr-m-coco --source image.jpg` |
-| **`export`** | Export models to different formats | `focoos export --model fai-detr-m-coco --format onnx` |
-| **`benchmark`** | Benchmark model performance | `focoos benchmark --model fai-detr-m-coco --iterations 100` |
+| Command         | Description                        | Example                                                     |
+| --------------- | ---------------------------------- | ----------------------------------------------------------- |
+| **`train`**     | Train models on datasets           | `focoos train --model fai-detr-m-coco --dataset data.zip`   |
+| **`val`**       | Validate model performance         | `focoos val --model fai-detr-m-coco --dataset data.zip`     |
+| **`predict`**   | Run inference on images            | `focoos predict --model fai-detr-m-coco --source image.jpg` |
+| **`export`**    | Export models to different formats | `focoos export --model fai-detr-m-coco --format onnx`       |
+| **`benchmark`** | Benchmark model performance        | `focoos benchmark --model fai-detr-m-coco --iterations 100` |
 
 ### Hub Commands
-| Command | Description | Example |
-|---------|-------------|---------|
-| **`hub models`** | List available pretrained models | `focoos hub models` |
-| **`hub datasets`** | List available datasets | `focoos hub datasets --include-shared` |
+| Command            | Description                      | Example                                |
+| ------------------ | -------------------------------- | -------------------------------------- |
+| **`hub models`**   | List available pretrained models | `focoos hub models`                    |
+| **`hub datasets`** | List available datasets          | `focoos hub datasets --include-shared` |
 
 ### Utility Commands
-| Command | Description | Example |
-|---------|-------------|---------|
-| **`version`** | Show Focoos version information | `focoos version` |
-| **`checks`** | Run system diagnostics | `focoos checks` |
-| **`settings`** | Show current configuration | `focoos settings` |
+| Command        | Description                     | Example           |
+| -------------- | ------------------------------- | ----------------- |
+| **`version`**  | Show Focoos version information | `focoos version`  |
+| **`checks`**   | Run system diagnostics          | `focoos checks`   |
+| **`settings`** | Show current configuration      | `focoos settings` |
 
 ## 📖 Detailed Examples
 
@@ -221,55 +221,55 @@ focoos hub datasets --include-shared
 
 ### Common Parameters
 
-| Parameter | Description | Default | Options |
-|-----------|-------------|---------|---------|
-| `--model` | Model name or path | **Required** | `fai-detr-m-coco`, `path/to/model` |
-| `--dataset` | Dataset name or path | **Required** | `mydataset.zip`, `path/to/data/` |
-| `--source` | Input source (predict only) | **Required** | `image.jpg` |
-| `--im-size` | Input image size | 640 | Any positive integer |
-| `--batch-size` | Batch size | 16 | Powers of 2 recommended |
-| `--device` | Compute device | `cuda` | `cuda`, `cpu`, `mps` |
-| `--workers` | Data loading workers | 4 | 0-16 recommended |
-| `--output-dir` | Output directory | Auto-generated | Any valid path |
+| Parameter      | Description                 | Default        | Options                            |
+| -------------- | --------------------------- | -------------- | ---------------------------------- |
+| `--model`      | Model name or path          | **Required**   | `fai-detr-m-coco`, `path/to/model` |
+| `--dataset`    | Dataset name or path        | **Required**   | `mydataset.zip`, `path/to/data/`   |
+| `--source`     | Input source (predict only) | **Required**   | `image.jpg`                        |
+| `--im-size`    | Input image size            | 640            | Any positive integer               |
+| `--batch-size` | Batch size                  | 16             | Powers of 2 recommended            |
+| `--device`     | Compute device              | `cuda`         | `cuda`, `cpu`, `mps`               |
+| `--workers`    | Data loading workers        | 4              | 0-16 recommended                   |
+| `--output-dir` | Output directory            | Auto-generated | Any valid path                     |
 
 ### Training-Specific Options
 
-| Parameter | Description | Default | Options |
-|-----------|-------------|---------|---------|
-| `--max-iters` | Training iterations | 3000 | Any positive integer |
-| `--learning-rate` | Initial learning rate | 5e-4 | 1e-6 to 1e-1 |
-| `--scheduler` | LR scheduler type | `MULTISTEP` | `MULTISTEP`, `COSINE`, `POLY`, `FIXED` |
-| `--optimizer` | Optimizer type | `ADAMW` | `ADAMW`, `SGD`, `RMSPROP` |
-| `--early-stop` | Enable early stopping | `true` | `true`, `false` |
-| `--patience` | Early stopping patience | 10 | Any positive integer |
-| `--ema-enabled` | Enable EMA | `false` | `true`, `false` |
-| `--amp-enabled` | Enable mixed precision | `true` | `true`, `false` |
+| Parameter         | Description             | Default     | Options                                |
+| ----------------- | ----------------------- | ----------- | -------------------------------------- |
+| `--max-iters`     | Training iterations     | 3000        | Any positive integer                   |
+| `--learning-rate` | Initial learning rate   | 5e-4        | 1e-6 to 1e-1                           |
+| `--scheduler`     | LR scheduler type       | `MULTISTEP` | `MULTISTEP`, `COSINE`, `POLY`, `FIXED` |
+| `--optimizer`     | Optimizer type          | `ADAMW`     | `ADAMW`, `SGD`, `RMSPROP`              |
+| `--early-stop`    | Enable early stopping   | `true`      | `true`, `false`                        |
+| `--patience`      | Early stopping patience | 10          | Any positive integer                   |
+| `--ema-enabled`   | Enable EMA              | `false`     | `true`, `false`                        |
+| `--amp-enabled`   | Enable mixed precision  | `true`      | `true`, `false`                        |
 
 ### Export Options
 
-| Parameter | Description | Default | Options |
-|-----------|-------------|---------|---------|
-| `--format` | Export format | `onnx` | `onnx`, `torchscript` |
-| `--onnx-opset` | ONNX opset version | 17 | 11, 13, 16, 17 |
-| `--overwrite` | Overwrite existing files | `false` | `true`, `false` |
+| Parameter      | Description              | Default | Options               |
+| -------------- | ------------------------ | ------- | --------------------- |
+| `--format`     | Export format            | `onnx`  | `onnx`, `torchscript` |
+| `--onnx-opset` | ONNX opset version       | 17      | 11, 13, 16, 17        |
+| `--overwrite`  | Overwrite existing files | `false` | `true`, `false`       |
 
 ### Prediction Options
 
-| Parameter | Description | Default | Options |
-|-----------|-------------|---------|---------|
-| `--conf` | Confidence threshold | 0.5 | 0.0 to 1.0 |
-| `--save` | Save annotated images | `true` | `true`, `false` |
-| `--save-json` | Save JSON results | `true` | `true`, `false` |
-| `--save-masks` | Save segmentation masks | `true` | `true`, `false` |
-| `--runtime` | Inference runtime | Auto | `onnx_cuda32`, `torchscript_32`, `onnx_cpu` |
+| Parameter      | Description             | Default | Options                                     |
+| -------------- | ----------------------- | ------- | ------------------------------------------- |
+| `--conf`       | Confidence threshold    | 0.5     | 0.0 to 1.0                                  |
+| `--save`       | Save annotated images   | `true`  | `true`, `false`                             |
+| `--save-json`  | Save JSON results       | `true`  | `true`, `false`                             |
+| `--save-masks` | Save segmentation masks | `true`  | `true`, `false`                             |
+| `--runtime`    | Inference runtime       | Auto    | `onnx_cuda32`, `torchscript_32`, `onnx_cpu` |
 
 ## 📊 Dataset Layout
-| Format | Description | Usage |
-|--------|-------------|-------|
+| Format          | Description                                             | Usage                            |
+| --------------- | ------------------------------------------------------- | -------------------------------- |
 | `roboflow_coco` | Roboflow COCO format (Detection, Instance Segmentation) | `--dataset-layout roboflow_coco` |
-| `roboflow_seg` | Roboflow segmentation format (Semantic Segmentation) | `--dataset-layout roboflow_seg` |
-| `catalog` | Catalog format | `--dataset-layout catalog` |
-| `cls_folder` | Classification folder format | `--dataset-layout cls_folder` |
+| `roboflow_seg`  | Roboflow segmentation format (Semantic Segmentation)    | `--dataset-layout roboflow_seg`  |
+| `catalog`       | Catalog format                                          | `--dataset-layout catalog`       |
+| `cls_folder`    | Classification folder format                            | `--dataset-layout cls_folder`    |
 
 ## 🔧 Advanced Usage
 

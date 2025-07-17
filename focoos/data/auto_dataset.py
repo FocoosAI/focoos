@@ -148,9 +148,11 @@ class AutoDataset:
         Returns:
             MapDataset: A DictDataset with DatasetMapper for training.
         """
+        dict_split = self._load_split(dataset_name=self.dataset_name, split=split)
+        assert dict_split.metadata.num_classes > 0, "Number of dataset classes must be greater than 0"
 
         return MapDataset(
-            dataset=self._load_split(dataset_name=self.dataset_name, split=split),
+            dataset=dict_split,
             mapper=self._load_mapper(
                 augs=augs,
                 is_validation_split=(split == DatasetSplitType.VAL),

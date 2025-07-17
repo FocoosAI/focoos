@@ -16,7 +16,7 @@ Whether you're working in the cloud or on edge devices, the Focoos library seaml
 ### Key Features 🔑
 
 1. **Frugal Pretrained Models** 🌿
-   Get started quickly by selecting one of our efficient, [pre-trained models](https://focoosai.github.io/focoos/models/) that best suits your data and application needs.
+   Get started quickly by selecting one of our efficient, [pre-trained models](https://focoosai.github.io/focoos/models/models/) that best suits your data and application needs.
    Focoos Model Registry give access to 11 pretrained models of different size from different families: RTDetr, Maskformer, BisenetFormer
 
 2. **Fine Tune Your Model** ✨ Adapt the model to your specific use case by customize its config and training it on your own dataset.
@@ -38,25 +38,25 @@ uv pip install 'focoos @ git+https://github.com/FocoosAI/focoos.git'
 ## Inference
 
 ```python
-from focoos.model_registry import ModelRegistry
-from focoos.model_manager import ModelManager
+from focoos import ModelManager
 
-image_path = "./image.jpg"
+
+im = Image.open("image.jpg")
 
 model = ModelManager.get("fai-detr-l-obj365") # any models from ModelRegistry, FocoosHub or local folder
 
-detections = model(image_path)
+detections = model(im)
 
 ```
 
 ## Training
 
 ```python
-from focoos.data.default_aug import get_default_by_task
-from focoos.ports import TrainerArgs, Task
-from focoos.data.auto_dataset import AutoDataset
-from focoos.model_manager import ModelManager
-from focoos.ports import DatasetSplitType, DatasetLayout, RuntimeType
+from focoos import ModelManager,DatasetSplitType, DatasetLayout, RuntimeType, TrainerArgs, Task
+from focoos.data import get_default_by_task
+from focoos.data import AutoDataset
+
+
 
 ds_name = "my_dataset.zip"
 task = Task.DETECTION
@@ -82,15 +82,18 @@ args = TrainerArgs(
 
 
 model.train(args, train_dataset, valid_dataset)
+
+# if you want to do only evaluation
+
+model.eval(args, valid_dataset)
+
 ```
 
 
-## Export and optimized Inference
+## Export, Benchmark and optimized Inference
 
 ```python
-from focoos.model_manager import ModelManager
-from focoos.ports import RuntimeType
-
+from focoos import RuntimeType, ModelManager
 
 model = ModelManager.get("fai-detr-l-obj365")
 infer_model = model.export(runtime_type=RuntimeType.TORCHSCRIPT_32)

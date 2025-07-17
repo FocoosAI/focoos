@@ -108,12 +108,12 @@ The [`ModelInfo`](/focoos/api/ports/#focoos.ports.ModelInfo) class represents co
 **Requirements**: Properly constructed ModelInfo object with valid configuration parameters.
 
 ```python
+from focoos import ModelInfo, ModelFamily, Task
 # Loading from JSON file
 model_info = ModelInfo.from_json("path/to/model_info.json")
 model = ModelManager.get("any_name", model_info=model_info)
 
 # Programmatically creating ModelInfo
-from focoos.ports import ModelInfo, ModelFamily, Task
 
 model_info = ModelInfo(
     name="custom_detector",

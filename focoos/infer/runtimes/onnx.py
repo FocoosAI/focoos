@@ -14,7 +14,7 @@ from focoos.ports import (
     OnnxRuntimeOpts,
 )
 from focoos.utils.logger import get_logger
-from focoos.utils.system import get_cpu_name, get_gpu_info
+from focoos.utils.system import get_cpu_name, get_device_name
 
 GPU_ID = 0
 
@@ -152,16 +152,6 @@ class ONNXRuntime(BaseRuntime):
         out = self.ort_sess.run(out_name, {input_name: im.cpu().numpy()})
         return out
 
-    def get_info(self) -> tuple[str, str]:
-        gpu_info = get_gpu_info()
-        device_name = "CPU"
-        if gpu_info.devices is not None and len(gpu_info.devices) > 0:
-            device_name = gpu_info.devices[0].gpu_name
-        else:
-            device_name = get_cpu_name()
-            logger.warning(f"No GPU found, using CPU {device_name}.")
-        return f"onnx.{self.active_provider}", str(device_name)
-
     def benchmark(self, iterations: int = 50, size: Union[int, Tuple[int, int]] = 640) -> LatencyMetrics:
         """
         Benchmark the model performance.
@@ -176,7 +166,10 @@ class ONNXRuntime(BaseRuntime):
         Returns:
             LatencyMetrics: Performance metrics including FPS, mean, min, max, and std latencies.
         """
-        engine, device_name = self.get_info()
+        engine = f"onnx.{self.active_provider}"
+        device_name = get_device_name()
+        if self.active_provider == "CPUExecutionProvider":
+            device_name = get_cpu_name()
         if isinstance(size, int):
             size = (size, size)
 
