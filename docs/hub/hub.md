@@ -152,7 +152,7 @@ except ValueError as e:
 The HUB client uses configuration from the global `FOCOOS_CONFIG`:
 
 ```python
-from focoos.config import FOCOOS_CONFIG
+from focoos import FOCOOS_CONFIG
 
 # Check current configuration
 print(f"API Key: {FOCOOS_CONFIG.focoos_api_key}")
