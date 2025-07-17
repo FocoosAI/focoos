@@ -31,6 +31,7 @@ class ModelRegistry:
         "bisenetformer-m-ade": os.path.join(REGISTRY_PATH, "bisenetformer-m-ade.json"),
         "bisenetformer-l-ade": os.path.join(REGISTRY_PATH, "bisenetformer-l-ade.json"),
         "bisenetformer-s-ade": os.path.join(REGISTRY_PATH, "bisenetformer-s-ade.json"),
+        "yoloxpose-m-coco": os.path.join(REGISTRY_PATH, "yoloxpose-m-coco.json"),
     }
 
     @classmethod

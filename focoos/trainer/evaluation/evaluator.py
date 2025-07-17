@@ -166,8 +166,6 @@ def inference_on_dataset(
         start_data_time = time.perf_counter()
         dict.get(callbacks or {}, "on_start", lambda: None)()
         for idx, inputs in enumerate(data_loader):
-            if idx == 50:  # remove this
-                break
             total_data_time += time.perf_counter() - start_data_time
             if idx == num_warmup:
                 start_time = time.perf_counter()
