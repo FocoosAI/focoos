@@ -28,15 +28,13 @@ from focoos.trainer.evaluation.evaluator import inference_on_dataset
 from focoos.trainer.evaluation.get_eval import get_evaluator
 from focoos.trainer.evaluation.utils import print_csv_format
 from focoos.trainer.events import EventStorage, get_event_storage
-from focoos.trainer.hooks import (
-    CommonMetricPrinter,
-    EarlyStopException,
-    EarlyStoppingHook,
-    JSONWriter,
-    SyncToHubHook,
-    VisualizationHook,
-    hook,
-)
+from focoos.trainer.hooks import hook
+from focoos.trainer.hooks.early_stop import EarlyStopException, EarlyStoppingHook
+from focoos.trainer.hooks.metrics_json_writer import JSONWriter
+from focoos.trainer.hooks.metrics_printer import CommonMetricPrinter
+from focoos.trainer.hooks.sync_to_hub import SyncToHubHook
+from focoos.trainer.hooks.tensorboard_writer import TensorboardXWriter
+from focoos.trainer.hooks.visualization import VisualizationHook
 from focoos.trainer.solver import ema
 from focoos.trainer.solver.build import build_lr_scheduler, build_optimizer
 from focoos.utils.distributed.dist import comm, create_ddp_model
@@ -51,6 +49,7 @@ TASK_METRICS = {
     Task.SEMSEG.value: "sem_seg/mIoU",
     Task.INSTANCE_SEGMENTATION.value: "segm/AP",
     Task.CLASSIFICATION.value: "classification/Accuracy",
+    Task.KEYPOINT.value: "keypoints/AP",
     # Task.PANOPTIC_SEGMENTATION.value: "panoptic_seg/PQ",
 }
 
@@ -227,6 +226,7 @@ class FocoosTrainer:
         model_info: ModelInfo,
         data_val: MapDataset,
         restore_best: bool = False,
+        save_json: bool = True,
     ):
         """Run model evaluation on test set.
 
@@ -238,12 +238,12 @@ class FocoosTrainer:
         """
         self.args = args
         self.output_dir = os.path.join(self.args.output_dir, f"{self.args.run_name.strip()}_eval")
-        if comm.is_main_process():
+        if comm.is_main_process() and save_json:
             os.makedirs(self.output_dir, exist_ok=True)
         original_weights_uri = model_info.weights_uri
         self._setup_model_and_data(model, processor, model_info, None, data_val)
         self.model_info.weights_uri = original_weights_uri
-        if comm.is_main_process():
+        if comm.is_main_process() and save_json:
             self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
         model = create_ddp_model(self.model)  # type: ignore
 
@@ -271,8 +271,9 @@ class FocoosTrainer:
                 self.model_info.val_metrics = raw_metrics
                 self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
                 _metrics = [raw_metrics]
-                with open(os.path.join(self.output_dir, "metrics.json"), "w") as f:
-                    f.write(json.dumps(_metrics))
+                if save_json:
+                    with open(os.path.join(self.output_dir, "metrics.json"), "w") as f:
+                        f.write(json.dumps(_metrics))
 
         return eval_result
 
@@ -488,7 +489,7 @@ class FocoosTrainer:
                             JSONWriter(
                                 os.path.join(self.ckpt_dir, "metrics.json"),
                             ),
-                            # TensorboardXWriter(self.output_dir),
+                            TensorboardXWriter(self.output_dir),
                         ],
                         period=args.log_period,
                     )
@@ -941,8 +942,16 @@ def run_eval(
     image_model: BaseModelNN,
     processor: Processor,
     model_info: ModelInfo,
+    save_json: bool = True,
 ):
     trainer = FocoosTrainer()
-    trainer.eval(args=train_args, model=image_model, processor=processor, model_info=model_info, data_val=data_val)
+    trainer.eval(
+        args=train_args,
+        model=image_model,
+        processor=processor,
+        model_info=model_info,
+        data_val=data_val,
+        save_json=save_json,
+    )
 
     return image_model, model_info

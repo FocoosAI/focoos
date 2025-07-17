@@ -5,13 +5,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch import Tensor
+from torch import Tensor, autocast
 from torch.nn.modules.utils import _pair
 
 from focoos.models.focoos_model import BaseModelNN
 from focoos.models.yoloxpose.config import YOLOXPoseConfig
 from focoos.models.yoloxpose.loss import KeypointCriterion
-from focoos.models.yoloxpose.ports import KeypointOutput, KeypointTargets, OptSampleList, YOLOXPoseModelOutput
+from focoos.models.yoloxpose.ports import KeypointOutput, KeypointTargets, YOLOXPoseModelOutput
 from focoos.models.yoloxpose.utils import bias_init_with_prob, filter_scores_and_topk, nms_torch, reduce_mean
 from focoos.nn.backbone.base import ShapeSpec
 from focoos.nn.backbone.build import load_backbone
@@ -495,7 +495,7 @@ class SimOTAAssigner:
             )
             valid_pred_scores = valid_pred_scores.unsqueeze(1).repeat(1, num_gt, 1)
             # disable AMP autocast to avoid overflow
-            with torch.cuda.amp.autocast(enabled=False):
+            with autocast(device_type="cuda", enabled=False):
                 cls_cost = (
                     F.binary_cross_entropy(
                         valid_pred_scores.to(dtype=torch.float32),
@@ -510,7 +510,7 @@ class SimOTAAssigner:
         if self.vis_weight > 0:
             valid_pred_kpts_vis = valid_pred_kpts_vis.unsqueeze(1).repeat(1, num_gt, 1)  # [num_valid, 1, k]
             gt_kpt_vis = gt_keypoints_visible.unsqueeze(0).float()  # [1, num_gt, k]
-            with torch.cuda.amp.autocast(enabled=False):
+            with autocast(device_type="cuda", enabled=False):
                 vis_cost = (
                     F.binary_cross_entropy(
                         valid_pred_kpts_vis.to(dtype=torch.float32),
@@ -942,13 +942,12 @@ class YOLOXPoseHead(nn.Module):
         assert isinstance(feats, (tuple, list))
         return self.head_module(feats)
 
-    def forward(self, features, targets=None):
+    def forward(self, features, targets: Optional[list[KeypointTargets]] = None):
         assert isinstance(features, (tuple, list))
         spatial_features, multi_scale_features = features
         if self.training:
             if targets:
-                targets = targets["instances"]
-                return None, self.loss(multi_scale_features, targets)
+                return None, self.loss(feats=multi_scale_features, targets=targets)
         outputs = self.predict(multi_scale_features)
         return outputs, {}
 
@@ -1032,7 +1031,7 @@ class YOLOXPoseHead(nn.Module):
 
         return losses
 
-    def loss(self, feats: Tuple[Tensor], batch_data_samples: OptSampleList) -> dict:
+    def loss(self, feats: Tuple[Tensor], targets: List[KeypointTargets]) -> dict:
         """Calculate losses from a batch of inputs and data samples.
 
         Args:
@@ -1083,14 +1082,14 @@ class YOLOXPoseHead(nn.Module):
         # flatten_bbox_decoded output format: XYXY ABS, flatten_bbox_decoded.shape = [batch_size, 8400, 4]
 
         # 2. generate targets
-        targets = self._get_targets(
+        _targets = self._get_targets(
             flatten_priors,
             flatten_cls_scores.detach(),
             flatten_objectness.detach(),
             flatten_bbox_decoded.detach(),
             flatten_kpt_decoded.detach(),
             flatten_kpt_vis.detach(),
-            batch_data_samples,
+            targets,
         )
 
         predictions = (
@@ -1104,7 +1103,7 @@ class YOLOXPoseHead(nn.Module):
             flatten_kpt_offsets,
         )
 
-        losses = self.losses(predictions, targets)
+        losses = self.losses(predictions, _targets)
         return losses
 
     @torch.no_grad()
@@ -1116,9 +1115,9 @@ class YOLOXPoseHead(nn.Module):
         batch_decoded_bboxes: Tensor,
         batch_decoded_kpts: Tensor,
         batch_kpt_vis: Tensor,
-        batch_data_samples: OptSampleList,
+        targets: List[KeypointTargets],
     ):
-        num_imgs = len(batch_data_samples)
+        num_imgs = len(targets)
 
         # use clip to avoid nan
         batch_cls_scores = batch_cls_scores.clip(min=-1e4, max=1e4).sigmoid()
@@ -1130,13 +1129,13 @@ class YOLOXPoseHead(nn.Module):
         targets_each = []
         for i in range(num_imgs):
             target = self._get_targets_single(
-                priors,
-                batch_cls_scores[i],
-                batch_objectness[i],
-                batch_decoded_bboxes[i],
-                batch_decoded_kpts[i],
-                batch_kpt_vis[i],
-                batch_data_samples[i],
+                priors=priors,
+                cls_scores=batch_cls_scores[i],
+                objectness=batch_objectness[i],
+                decoded_bboxes=batch_decoded_bboxes[i],
+                decoded_kpts=batch_decoded_kpts[i],
+                kpt_vis=batch_kpt_vis[i],
+                data_sample=targets[i],
             )
             targets_each.append(target)
 
@@ -1201,7 +1200,7 @@ class YOLOXPoseHead(nn.Module):
         decoded_bboxes: Tensor,
         decoded_kpts: Tensor,
         kpt_vis: Tensor,
-        data_sample: dict,
+        data_sample: KeypointTargets,
     ) -> tuple:
         """Compute classification, bbox, keypoints and objectness targets for
         priors in a single image.
@@ -1245,13 +1244,13 @@ class YOLOXPoseHead(nn.Module):
         num_priors = priors.size(0)
         # TODO: avoid using mmpose data structures
         gt_instances = KeypointTargets(
-            bboxes=data_sample["boxes"],
+            bboxes=data_sample.bboxes,
             scores=None,
             priors=None,
-            labels=data_sample["labels"],
-            keypoints=data_sample["keypoints"],
-            keypoints_visible=data_sample["keypoints_vis"],
-            areas=data_sample["areas"],
+            labels=data_sample.labels,
+            keypoints=data_sample.keypoints,
+            keypoints_visible=data_sample.keypoints_visible,
+            areas=data_sample.areas,
             keypoints_visible_weights=data_sample.get("keypoints_visible_weights", None),
         )
         gt_fields = data_sample.get("gt_fields", dict())
@@ -1326,7 +1325,7 @@ class YOLOXPoseHead(nn.Module):
         # obj target
         obj_target = torch.zeros_like(objectness)
         obj_target[pos_inds] = 1
-
+        # TODO: check if this is needed
         invalid_mask = gt_fields.get("heatmap_mask", None)
         if invalid_mask is not None and (invalid_mask != 0.0).any():
             # ignore the tokens that predict the unlabled instances

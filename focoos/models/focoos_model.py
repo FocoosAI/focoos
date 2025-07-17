@@ -209,7 +209,7 @@ class FocoosModel:
         else:
             run_train(args, data_train, data_val, self.model, self.processor, self.model_info, hub)
 
-    def eval(self, args: TrainerArgs, data_test: MapDataset):
+    def eval(self, args: TrainerArgs, data_test: MapDataset, save_json: bool = True):
         """evaluate the model on the provided test dataset.
 
         This method evaluates the model performance on a test dataset,
@@ -237,7 +237,7 @@ class FocoosModel:
                 run_eval,
                 args.num_gpus,
                 dist_url="auto",
-                args=(args, data_test, self.model, self.processor, self.model_info),
+                args=(args, data_test, self.model, self.processor, self.model_info, save_json),
             )
             logger.info("Testing done, resuming main process.")
             # here i should restore the best model and config since in DDP it is not updated
@@ -245,7 +245,14 @@ class FocoosModel:
             metadata_path = os.path.join(final_folder, ArtifactName.INFO)
             self.model_info = ModelInfo.from_json(metadata_path)
         else:
-            run_eval(args, data_test, self.model, self.processor, self.model_info)
+            run_eval(
+                train_args=args,
+                data_val=data_test,
+                image_model=self.model,
+                processor=self.processor,
+                model_info=self.model_info,
+                save_json=save_json,
+            )
 
     @property
     def name(self):

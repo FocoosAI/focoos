@@ -655,7 +655,7 @@ wheels = [
 
 [[package]]
 name = "focoos"
-version = "0.17.0"
+version = "0.18.0"
 source = { editable = "." }
 dependencies = [
     { name = "colorama" },
@@ -1970,7 +1970,6 @@ dependencies = [
     { name = "packaging" },
     { name = "typing-extensions" },
 ]
-
 sdist = { url = "https://files.pythonhosted.org/packages/fd/8e/1bb4821b4bd1e52c8be6a9edb3fd787875660caa3b0816fcb3e1eafb3568/onnxscript-0.3.2.tar.gz", hash = "sha256:60820d4c3e39f8ea7d945dd4f96fa5dd23c3c2e111022512477c52c9e78eb3d4", size = 575968, upload-time = "2025-07-11T20:04:19.683Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e4/88/008f82aca27fd6240d12d3084d24852f586cef2ccf2fb07612185fbb71f6/onnxscript-0.3.2-py3-none-any.whl", hash = "sha256:220bbecccae228a285bd385159c47a09f003c623c9636afd56cc91df50706a88", size = 667405, upload-time = "2025-07-11T20:04:22.036Z" },

@@ -10,7 +10,8 @@ from pycocotools.cocoeval import COCOeval
 from tabulate import tabulate
 
 from focoos.data.datasets.dict_dataset import DictDataset
-from focoos.structures import BoxMode
+from focoos.ports import DatasetEntry
+from focoos.structures import BoxMode, Instances
 from focoos.trainer.evaluation.evaluator import DatasetEvaluator
 from focoos.utils.distributed import comm
 from focoos.utils.logger import create_small_table, get_logger
@@ -96,7 +97,7 @@ class KeypointEvaluator(DatasetEvaluator):
         self._predictions = []
         self._inputs = []
 
-    def process(self, inputs, outputs):
+    def process(self, inputs: list[DatasetEntry], outputs: list[dict[str, Instances]]):
         """
         Process one batch of model inputs and outputs.
 
@@ -107,16 +108,16 @@ class KeypointEvaluator(DatasetEvaluator):
         """
         for input, output in zip(inputs, outputs):
             # prediction = {"image_id": input["image_id"]}
-            input_data = self.dataset_dict[input["image_id"]]
-            prediction = {"image_id": input["image_id"]}
+            input_data = self.dataset_dict[input.image_id]
+            prediction = {"image_id": input.image_id}
 
             if "instances" in output:
                 # in the dataset mapper, we did not applied augmentations, so we can directly use the gt instances
                 prediction["instances"] = self.instances_to_coco_json(
-                    output["instances"].to(self.cpu_device), input["image_id"]
+                    instances=output["instances"].to(self.cpu_device), img_id=input.image_id
                 )
                 for ann in input_data["annotations"]:
-                    ann["image_id"] = input["image_id"]
+                    ann["image_id"] = input.image_id
                 self._inputs.append(input_data)
                 self._predictions.append(prediction)
                 # we basically need to store a tensor with the ious of each prediction with each gt -> N x G
@@ -319,7 +320,7 @@ class KeypointEvaluator(DatasetEvaluator):
         results.update({"AP-" + name: ap for name, ap in results_per_category})
         return results
 
-    def instances_to_coco_json(self, instances, img_id):
+    def instances_to_coco_json(self, instances: Instances, img_id: int):
         """
         Convert Instances predictions to COCO json format.
 
@@ -334,19 +335,19 @@ class KeypointEvaluator(DatasetEvaluator):
         if num_instance == 0:
             return []
 
-        boxes = instances.pred_boxes.tensor.numpy()
+        boxes = instances.boxes.tensor.numpy()
         boxes = BoxMode.convert(boxes, BoxMode.XYXY_ABS, BoxMode.XYWH_ABS)
         boxes = boxes.tolist()  # type: ignore
         scores = instances.scores.tolist()
-        classes = instances.pred_classes.tolist()
+        classes = instances.classes.tolist()
 
-        has_mask = instances.has("pred_masks")
+        has_mask = instances.masks is not None
         if has_mask:
             # use RLE to encode the masks, because they are too large and takes memory
             # since this evaluator stores outputs of the entire dataset
             rles = [
                 mask_util.encode(np.array(mask[:, :, None], order="F", dtype="uint8"))[0]  # type: ignore
-                for mask in instances.pred_masks
+                for mask in instances.masks.tensor
             ]
             for rle in rles:
                 # "counts" is an array encoded by mask_util as a byte-stream. Python3's
@@ -355,9 +356,9 @@ class KeypointEvaluator(DatasetEvaluator):
                 # the pycocotools/_mask.pyx does).
                 rle["counts"] = rle["counts"].decode("utf-8")
 
-        has_keypoints = instances.has("pred_keypoints")
+        has_keypoints = instances.keypoints is not None
         if has_keypoints:
-            keypoints = instances.pred_keypoints
+            keypoints = instances.keypoints.tensor
 
         results = []
         for k in range(num_instance):
