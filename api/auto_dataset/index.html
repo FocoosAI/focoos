@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -1726,7 +1726,9 @@
 <span class="normal">155</span>
 <span class="normal">156</span>
 <span class="normal">157</span>
-<span class="normal">158</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AutoDataset</span><span class="p">:</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AutoDataset</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -1850,9 +1852,11 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            MapDataset: A DictDataset with DatasetMapper for training.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dict_split</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_split</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">dict_split</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Number of dataset classes must be greater than 0&quot;</span>
 
         <span class="k">return</span> <span class="n">MapDataset</span><span class="p">(</span>
-            <span class="n">dataset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_load_split</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">),</span>
+            <span class="n">dataset</span><span class="o">=</span><span class="n">dict_split</span><span class="p">,</span>
             <span class="n">mapper</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_load_mapper</span><span class="p">(</span>
                 <span class="n">augs</span><span class="o">=</span><span class="n">augs</span><span class="p">,</span>
                 <span class="n">is_validation_split</span><span class="o">=</span><span class="p">(</span><span class="n">split</span> <span class="o">==</span> <span class="n">DatasetSplitType</span><span class="o">.</span><span class="n">VAL</span><span class="p">),</span>
@@ -1998,7 +2002,9 @@
 <span class="normal">155</span>
 <span class="normal">156</span>
 <span class="normal">157</span>
-<span class="normal">158</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_split</span><span class="p">(</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_split</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">augs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">T</span><span class="o">.</span><span class="n">Transform</span><span class="p">],</span>
     <span class="n">split</span><span class="p">:</span> <span class="n">DatasetSplitType</span> <span class="o">=</span> <span class="n">DatasetSplitType</span><span class="o">.</span><span class="n">TRAIN</span><span class="p">,</span>
@@ -2014,9 +2020,11 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        MapDataset: A DictDataset with DatasetMapper for training.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dict_split</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_split</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">dict_split</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Number of dataset classes must be greater than 0&quot;</span>
 
     <span class="k">return</span> <span class="n">MapDataset</span><span class="p">(</span>
-        <span class="n">dataset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_load_split</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="n">split</span><span class="p">),</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">dict_split</span><span class="p">,</span>
         <span class="n">mapper</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_load_mapper</span><span class="p">(</span>
             <span class="n">augs</span><span class="o">=</span><span class="n">augs</span><span class="p">,</span>
             <span class="n">is_validation_split</span><span class="o">=</span><span class="p">(</span><span class="n">split</span> <span class="o">==</span> <span class="n">DatasetSplitType</span><span class="o">.</span><span class="n">VAL</span><span class="p">),</span>
@@ -2856,7 +2864,7 @@ Range [256, 1024]. Default: None.</p>
       <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
     
   </body>

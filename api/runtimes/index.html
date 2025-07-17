@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -1163,15 +1163,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#focoos.infer.runtimes.base.BaseRuntime.get_info" class="md-nav__link">
-    <span class="md-ellipsis">
-      get_info
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1606,15 +1597,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#focoos.infer.runtimes.base.BaseRuntime.get_info" class="md-nav__link">
-    <span class="md-ellipsis">
-      get_info
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1934,7 +1916,7 @@ It provides methods for model initialization, inference, and performance benchma
         <span class="k">pass</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_device_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the engine and device name.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -2293,43 +2275,6 @@ It provides methods for model initialization, inference, and performance benchma
 
 <span class="sd">    Returns:</span>
 <span class="sd">        LatencyMetrics: Performance metrics including mean, median, and percentile latencies.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">pass</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="focoos.infer.runtimes.base.BaseRuntime.get_info" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_info</span><span class="p">()</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
-  </span>
-
-<a href="#focoos.infer.runtimes.base.BaseRuntime.get_info" class="headerlink" title="Permanent link">#</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Get the engine and device name.</p>
-
-
-            <details class="quote">
-              <summary>Source code in <code>focoos/infer/runtimes/base.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span>
-<span class="normal">52</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">get_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Get the engine and device name.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span>
 </code></pre></div></td></tr></table></div>
@@ -2970,14 +2915,7 @@ and performance benchmarking.</p>
 <span class="normal">201</span>
 <span class="normal">202</span>
 <span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
-<span class="normal">206</span>
-<span class="normal">207</span>
-<span class="normal">208</span>
-<span class="normal">209</span>
-<span class="normal">210</span>
-<span class="normal">211</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ONNXRuntime</span><span class="p">(</span><span class="n">BaseRuntime</span><span class="p">):</span>
+<span class="normal">204</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ONNXRuntime</span><span class="p">(</span><span class="n">BaseRuntime</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    ONNX Runtime wrapper for model inference with different execution providers.</span>
 
@@ -3108,16 +3046,6 @@ and performance benchmarking.</p>
         <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">out_name</span><span class="p">,</span> <span class="p">{</span><span class="n">input_name</span><span class="p">:</span> <span class="n">im</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()})</span>
         <span class="k">return</span> <span class="n">out</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-        <span class="n">gpu_info</span> <span class="o">=</span> <span class="n">get_gpu_info</span><span class="p">()</span>
-        <span class="n">device_name</span> <span class="o">=</span> <span class="s2">&quot;CPU&quot;</span>
-        <span class="k">if</span> <span class="n">gpu_info</span><span class="o">.</span><span class="n">devices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">gpu_info</span><span class="o">.</span><span class="n">devices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">device_name</span> <span class="o">=</span> <span class="n">gpu_info</span><span class="o">.</span><span class="n">devices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">gpu_name</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_cpu_name</span><span class="p">()</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No GPU found, using CPU </span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;onnx.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">active_provider</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">device_name</span><span class="p">)</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Benchmark the model performance.</span>
@@ -3132,7 +3060,10 @@ and performance benchmarking.</p>
 <span class="sd">        Returns:</span>
 <span class="sd">            LatencyMetrics: Performance metrics including FPS, mean, min, max, and std latencies.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">engine</span><span class="p">,</span> <span class="n">device_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_info</span><span class="p">()</span>
+        <span class="n">engine</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;onnx.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">active_provider</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_device_name</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_provider</span> <span class="o">==</span> <span class="s2">&quot;CPUExecutionProvider&quot;</span><span class="p">:</span>
+            <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_cpu_name</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
             <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
 
@@ -3376,7 +3307,17 @@ performance metrics like FPS, mean latency, and other statistics.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/runtimes/onnx.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">165</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
 <span class="normal">166</span>
 <span class="normal">167</span>
 <span class="normal">168</span>
@@ -3415,14 +3356,7 @@ performance metrics like FPS, mean latency, and other statistics.</p>
 <span class="normal">201</span>
 <span class="normal">202</span>
 <span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
-<span class="normal">206</span>
-<span class="normal">207</span>
-<span class="normal">208</span>
-<span class="normal">209</span>
-<span class="normal">210</span>
-<span class="normal">211</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
+<span class="normal">204</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Benchmark the model performance.</span>
 
@@ -3436,7 +3370,10 @@ performance metrics like FPS, mean latency, and other statistics.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        LatencyMetrics: Performance metrics including FPS, mean, min, max, and std latencies.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">engine</span><span class="p">,</span> <span class="n">device_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_info</span><span class="p">()</span>
+    <span class="n">engine</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;onnx.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">active_provider</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_device_name</span><span class="p">()</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_provider</span> <span class="o">==</span> <span class="s2">&quot;CPUExecutionProvider&quot;</span><span class="p">:</span>
+        <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_cpu_name</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
         <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
 
@@ -3712,14 +3649,7 @@ device placement, warmup, inference, and performance benchmarking.</p>
 <span class="normal">116</span>
 <span class="normal">117</span>
 <span class="normal">118</span>
-<span class="normal">119</span>
-<span class="normal">120</span>
-<span class="normal">121</span>
-<span class="normal">122</span>
-<span class="normal">123</span>
-<span class="normal">124</span>
-<span class="normal">125</span>
-<span class="normal">126</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TorchscriptRuntime</span><span class="p">(</span><span class="n">BaseRuntime</span><span class="p">):</span>
+<span class="normal">119</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TorchscriptRuntime</span><span class="p">(</span><span class="n">BaseRuntime</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    TorchScript Runtime wrapper for model inference.</span>
 
@@ -3775,17 +3705,6 @@ device placement, warmup, inference, and performance benchmarking.</p>
             <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">im</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">res</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-        <span class="n">gpu_info</span> <span class="o">=</span> <span class="n">get_gpu_info</span><span class="p">()</span>
-        <span class="n">device_name</span> <span class="o">=</span> <span class="s2">&quot;CPU&quot;</span>
-        <span class="k">if</span> <span class="n">gpu_info</span><span class="o">.</span><span class="n">devices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">gpu_info</span><span class="o">.</span><span class="n">devices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">device_name</span> <span class="o">=</span> <span class="n">gpu_info</span><span class="o">.</span><span class="n">devices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">gpu_name</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_cpu_name</span><span class="p">()</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No GPU found, using CPU </span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="s2">&quot;torchscript&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">device_name</span><span class="p">)</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Benchmark the model performance.</span>
@@ -3799,7 +3718,11 @@ device placement, warmup, inference, and performance benchmarking.</p>
 <span class="sd">        Returns:</span>
 <span class="sd">            LatencyMetrics: Performance metrics including FPS, mean, min, max, and std latencies.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">engine</span><span class="p">,</span> <span class="n">device_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_info</span><span class="p">()</span>
+        <span class="n">engine</span> <span class="o">=</span> <span class="s2">&quot;torchscript&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;cpu&quot;</span><span class="p">:</span>
+            <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_cpu_name</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_device_name</span><span class="p">()</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Benchmarking latency on </span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
@@ -3826,7 +3749,7 @@ device placement, warmup, inference, and performance benchmarking.</p>
             <span class="nb">max</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
             <span class="nb">min</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
             <span class="n">std</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
-            <span class="n">im_size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span>
+            <span class="n">im_size</span><span class="o">=</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
             <span class="n">device</span><span class="o">=</span><span class="n">device_name</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔥 FPS: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2"> Mean latency: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">mean</span><span class="si">}</span><span class="s2"> ms &quot;</span><span class="p">)</span>
@@ -4024,7 +3947,18 @@ performance metrics like FPS, mean latency, and other statistics.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/runtimes/torchscript.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 82</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
 <span class="normal"> 83</span>
 <span class="normal"> 84</span>
 <span class="normal"> 85</span>
@@ -4061,14 +3995,7 @@ performance metrics like FPS, mean latency, and other statistics.</p>
 <span class="normal">116</span>
 <span class="normal">117</span>
 <span class="normal">118</span>
-<span class="normal">119</span>
-<span class="normal">120</span>
-<span class="normal">121</span>
-<span class="normal">122</span>
-<span class="normal">123</span>
-<span class="normal">124</span>
-<span class="normal">125</span>
-<span class="normal">126</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
+<span class="normal">119</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Benchmark the model performance.</span>
 
@@ -4081,7 +4008,11 @@ performance metrics like FPS, mean latency, and other statistics.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        LatencyMetrics: Performance metrics including FPS, mean, min, max, and std latencies.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">engine</span><span class="p">,</span> <span class="n">device_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_info</span><span class="p">()</span>
+    <span class="n">engine</span> <span class="o">=</span> <span class="s2">&quot;torchscript&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;cpu&quot;</span><span class="p">:</span>
+        <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_cpu_name</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_device_name</span><span class="p">()</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Benchmarking latency on </span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
@@ -4108,7 +4039,7 @@ performance metrics like FPS, mean latency, and other statistics.</p>
         <span class="nb">max</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
         <span class="nb">min</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
         <span class="n">std</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="n">im_size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span>
+        <span class="n">im_size</span><span class="o">=</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
         <span class="n">device</span><span class="o">=</span><span class="n">device_name</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔥 FPS: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2"> Mean latency: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">mean</span><span class="si">}</span><span class="s2"> ms &quot;</span><span class="p">)</span>
@@ -4218,7 +4149,7 @@ performance metrics like FPS, mean latency, and other statistics.</p>
       <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
     
   </body>

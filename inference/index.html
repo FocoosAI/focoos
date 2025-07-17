@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -1586,7 +1586,7 @@
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.hub</span><span class="w"> </span><span class="kn">import</span> <span class="n">FocoosHUB</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">FocoosHUB</span>
 
 <span class="n">FOCOOS_API_KEY</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;FOCOOS_API_KEY&quot;</span><span class="p">)</span>  <span class="c1"># write here your API key os set env variable FOCOOS_API_KEY, will be used as default</span>
 <span class="n">hub</span> <span class="o">=</span> <span class="n">FocoosHUB</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">FOCOOS_API_KEY</span><span class="p">)</span>
@@ -1619,7 +1619,7 @@ However, you can also list them using the Hub functionalities.</p>
 <p>If you want to visualize the result on the image, there's a utily for you.</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.utils.vision</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotate_image</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotate_image</span>
 
 <span class="n">annotate_image</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">detections</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">classes</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;predictions.png&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -1647,7 +1647,7 @@ We will load a model and then run inference on a sample image.</p>
 <span class="normal">3</span>
 <span class="normal">4</span>
 <span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.model_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelManager</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelManager</span>
 
 <span class="n">model_ref</span> <span class="o">=</span> <span class="s2">&quot;&lt;YOUR-MODEL-REF&gt;&quot;</span>
 
@@ -1664,7 +1664,7 @@ We will load a model and then run inference on a sample image.</p>
 <span class="normal">3</span>
 <span class="normal">4</span>
 <span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.model_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelManager</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelManager</span>
 
 <span class="n">model_path</span> <span class="o">=</span> <span class="s2">&quot;/path/to/model&quot;</span>
 
@@ -1676,7 +1676,7 @@ We will load a model and then run inference on a sample image.</p>
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.utils.vision</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotate_image</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotate_image</span>
 
 <span class="n">detections</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
 
@@ -1693,7 +1693,7 @@ We will load a model and then run inference on a sample image.</p>
 <p>We already provide multiple inference runtime, that you can see on the <a href="/focoos/api/ports/#focoos.ports.RuntimeType"><code>RuntimeTypes</code></a> enum. Let's select Torchscript as an example.</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.ports</span><span class="w"> </span><span class="kn">import</span> <span class="n">RuntimeType</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">RuntimeType</span>
 
 <span class="n">runtime</span> <span class="o">=</span> <span class="n">RuntimeType</span><span class="o">.</span><span class="n">TORCHSCRIPT_32</span>
 </code></pre></div></td></tr></table></div>
@@ -1704,7 +1704,7 @@ We will load a model and then run inference on a sample image.</p>
 <p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.utils.vision</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotate_image</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotate_image</span>
 
 <span class="n">detections</span> <span class="o">=</span> <span class="n">optimized_model</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
 <span class="n">annotate_image</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">detections</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">classes</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;prediction.png&quot;</span><span class="p">)</span>
@@ -1715,17 +1715,15 @@ We will load a model and then run inference on a sample image.</p>
 </code></pre></div></td></tr></table></div></p>
 <p>You can use different runtimes that may fit better your device, such as TensorRT. See the list of available Runtimes at <a href="/focoos/api/ports/#focoos.ports.RuntimeType"><code>RuntimeTypes</code></a>. Please note that you need to install the relative packages for onnx and tensorRT for using them.</p>
 <h3 id="onnx-with-tensorrt">ONNX with TensorRT<a class="headerlink" href="#onnx-with-tensorrt" title="Permanent link">#</a></h3>
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
-<span class="normal"> 2</span>
-<span class="normal"> 3</span>
-<span class="normal"> 4</span>
-<span class="normal"> 5</span>
-<span class="normal"> 6</span>
-<span class="normal"> 7</span>
-<span class="normal"> 8</span>
-<span class="normal"> 9</span>
-<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.ports</span><span class="w"> </span><span class="kn">import</span> <span class="n">RuntimeType</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">focoos.utils.vision</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotate_image</span>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">RuntimeType</span><span class="p">,</span> <span class="n">annotate_image</span>
 
 <span class="n">runtime</span> <span class="o">=</span> <span class="n">RuntimeType</span><span class="o">.</span><span class="n">ONNX_TRT16</span>
 <span class="n">optimized_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">runtime_type</span><span class="o">=</span><span class="n">runtime</span><span class="p">)</span>
@@ -1818,7 +1816,7 @@ We will load a model and then run inference on a sample image.</p>
       <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
     
   </body>

@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -1128,18 +1128,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#focoos.models.focoos_model.FocoosModel.export" class="md-nav__link">
+  <a href="#focoos.models.focoos_model.FocoosModel.eval" class="md-nav__link">
     <span class="md-ellipsis">
-      export
+      eval
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#focoos.models.focoos_model.FocoosModel.test" class="md-nav__link">
+  <a href="#focoos.models.focoos_model.FocoosModel.export" class="md-nav__link">
     <span class="md-ellipsis">
-      test
+      export
     </span>
   </a>
   
@@ -1733,18 +1733,18 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#focoos.models.focoos_model.FocoosModel.export" class="md-nav__link">
+  <a href="#focoos.models.focoos_model.FocoosModel.eval" class="md-nav__link">
     <span class="md-ellipsis">
-      export
+      eval
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#focoos.models.focoos_model.FocoosModel.test" class="md-nav__link">
+  <a href="#focoos.models.focoos_model.FocoosModel.export" class="md-nav__link">
     <span class="md-ellipsis">
-      test
+      export
     </span>
   </a>
   
@@ -2762,12 +2762,7 @@ weight loading, preprocessing, and postprocessing.</p>
 <span class="normal">605</span>
 <span class="normal">606</span>
 <span class="normal">607</span>
-<span class="normal">608</span>
-<span class="normal">609</span>
-<span class="normal">610</span>
-<span class="normal">611</span>
-<span class="normal">612</span>
-<span class="normal">613</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FocoosModel</span><span class="p">:</span>
+<span class="normal">608</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FocoosModel</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Main model class for Focoos computer vision models.</span>
 
 <span class="sd">    This class provides a high-level interface for training, testing, exporting,</span>
@@ -2876,26 +2871,20 @@ weight loading, preprocessing, and postprocessing.</p>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">focoos.trainer.trainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_train</span>
 
+        <span class="k">assert</span> <span class="n">data_train</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Number of dataset classes must be greater than 0&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_setup_model_for_training</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_train</span><span class="p">,</span> <span class="n">data_val</span><span class="p">)</span>
+
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">task</span> <span class="o">==</span> <span class="n">data_train</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;Task mismatch between model and dataset.&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;num_classes&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">data_train</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">num_classes</span><span class="p">,</span> <span class="p">(</span>
             <span class="s2">&quot;Number of classes mismatch between model and dataset.&quot;</span>
         <span class="p">)</span>
-        <span class="n">remote_model</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">sync_to_hub</span><span class="p">:</span>
-            <span class="n">hub</span> <span class="o">=</span> <span class="n">hub</span> <span class="ow">or</span> <span class="n">FocoosHUB</span><span class="p">()</span>
-            <span class="n">remote_model</span> <span class="o">=</span> <span class="n">hub</span><span class="o">.</span><span class="n">new_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">)</span>
-
-            <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">ref</span> <span class="o">=</span> <span class="n">remote_model</span><span class="o">.</span><span class="n">ref</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> created in hub with ref </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">ref</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
         <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">num_gpus</span><span class="p">,</span> <span class="s2">&quot;Training without GPUs is not supported. num_gpus must be greater than 0&quot;</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">num_gpus</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">launch</span><span class="p">(</span>
                 <span class="n">run_train</span><span class="p">,</span>
                 <span class="n">args</span><span class="o">.</span><span class="n">num_gpus</span><span class="p">,</span>
                 <span class="n">dist_url</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
-                <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_train</span><span class="p">,</span> <span class="n">data_val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">,</span> <span class="n">remote_model</span><span class="p">),</span>
+                <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_train</span><span class="p">,</span> <span class="n">data_val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">,</span> <span class="n">hub</span><span class="p">),</span>
             <span class="p">)</span>
 
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Training done, resuming main process.&quot;</span><span class="p">)</span>
@@ -2913,10 +2902,10 @@ weight loading, preprocessing, and postprocessing.</p>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reloading weights from </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">weights_uri</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_reload_model</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">run_train</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_train</span><span class="p">,</span> <span class="n">data_val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">,</span> <span class="n">remote_model</span><span class="p">)</span>
+            <span class="n">run_train</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_train</span><span class="p">,</span> <span class="n">data_val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">,</span> <span class="n">hub</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">TrainerArgs</span><span class="p">,</span> <span class="n">data_test</span><span class="p">:</span> <span class="n">MapDataset</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Test the model on the provided test dataset.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">TrainerArgs</span><span class="p">,</span> <span class="n">data_test</span><span class="p">:</span> <span class="n">MapDataset</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;evaluate the model on the provided test dataset.</span>
 
 <span class="sd">        This method evaluates the model performance on a test dataset,</span>
 <span class="sd">        supporting both single-GPU and multi-GPU testing.</span>
@@ -2929,7 +2918,7 @@ weight loading, preprocessing, and postprocessing.</p>
 <span class="sd">            AssertionError: If task mismatch between model and dataset.</span>
 <span class="sd">            AssertionError: If num_gpus is 0 (GPU testing is required).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">focoos.trainer.trainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_test</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">focoos.trainer.trainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_eval</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">val_dataset</span> <span class="o">=</span> <span class="n">data_test</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">val_metrics</span> <span class="o">=</span> <span class="kc">None</span>
@@ -2940,7 +2929,7 @@ weight loading, preprocessing, and postprocessing.</p>
         <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">num_gpus</span><span class="p">,</span> <span class="s2">&quot;Testing without GPUs is not supported. num_gpus must be greater than 0&quot;</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">num_gpus</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">launch</span><span class="p">(</span>
-                <span class="n">run_test</span><span class="p">,</span>
+                <span class="n">run_eval</span><span class="p">,</span>
                 <span class="n">args</span><span class="o">.</span><span class="n">num_gpus</span><span class="p">,</span>
                 <span class="n">dist_url</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
                 <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">),</span>
@@ -2951,7 +2940,7 @@ weight loading, preprocessing, and postprocessing.</p>
             <span class="n">metadata_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">final_folder</span><span class="p">,</span> <span class="n">ArtifactName</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span> <span class="o">=</span> <span class="n">ModelInfo</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">metadata_path</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">run_test</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">)</span>
+            <span class="n">run_eval</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -3261,9 +3250,7 @@ weight loading, preprocessing, and postprocessing.</p>
         <span class="n">metrics</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">benchmark</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="n">iterations</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">metrics</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">end2end_benchmark</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="s2">&quot;cpu&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">end2end_benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Benchmark the complete end-to-end inference pipeline.</span>
 
 <span class="sd">        This method measures the full inference latency including preprocessing,</span>
@@ -3279,12 +3266,15 @@ weight loading, preprocessing, and postprocessing.</p>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">im_size</span>
-
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;cpu&quot;</span><span class="p">:</span>
+            <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_cpu_name</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_device_name</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Unable to use CUDA&quot;</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Benchmarking latency on </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Benchmarking End-to-End latency on </span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="si">}</span><span class="s2">), size: </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
         <span class="c1"># warmup</span>
         <span class="n">data</span> <span class="o">=</span> <span class="mi">128</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 
@@ -3634,7 +3624,13 @@ model forward pass, and postprocessing to return detections.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/models/focoos_model.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">421</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
 <span class="normal">422</span>
 <span class="normal">423</span>
 <span class="normal">424</span>
@@ -3674,13 +3670,7 @@ model forward pass, and postprocessing to return detections.</p>
 <span class="normal">458</span>
 <span class="normal">459</span>
 <span class="normal">460</span>
-<span class="normal">461</span>
-<span class="normal">462</span>
-<span class="normal">463</span>
-<span class="normal">464</span>
-<span class="normal">465</span>
-<span class="normal">466</span>
-<span class="normal">467</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+<span class="normal">461</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
         <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
@@ -4057,7 +4047,13 @@ preprocessing and postprocessing overhead.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/models/focoos_model.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">535</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">529</span>
+<span class="normal">530</span>
+<span class="normal">531</span>
+<span class="normal">532</span>
+<span class="normal">533</span>
+<span class="normal">534</span>
+<span class="normal">535</span>
 <span class="normal">536</span>
 <span class="normal">537</span>
 <span class="normal">538</span>
@@ -4078,13 +4074,7 @@ preprocessing and postprocessing overhead.</p>
 <span class="normal">553</span>
 <span class="normal">554</span>
 <span class="normal">555</span>
-<span class="normal">556</span>
-<span class="normal">557</span>
-<span class="normal">558</span>
-<span class="normal">559</span>
-<span class="normal">560</span>
-<span class="normal">561</span>
-<span class="normal">562</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span>
+<span class="normal">556</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
     <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -4122,7 +4112,7 @@ preprocessing and postprocessing overhead.</p>
 
 
 <h3 id="focoos.models.focoos_model.FocoosModel.end2end_benchmark" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">end2end_benchmark</span><span class="p">(</span><span class="n">iterations</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s1">&#39;cuda&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">end2end_benchmark</span><span class="p">(</span><span class="n">iterations</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#focoos.models.focoos_model.FocoosModel.end2end_benchmark" class="headerlink" title="Permanent link">#</a></h3>
 
@@ -4182,7 +4172,6 @@ model forward pass, and postprocessing steps.</p>
                 <code>device</code>
             </td>
             <td>
-                  <code><span title="typing.Literal">Literal</span>[&#39;cuda&#39;, &#39;cpu&#39;]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4190,7 +4179,7 @@ model forward pass, and postprocessing steps.</p>
               </div>
             </td>
             <td>
-                  <code>&#39;cuda&#39;</code>
+                <em>required</em>
             </td>
           </tr>
       </tbody>
@@ -4227,7 +4216,13 @@ model forward pass, and postprocessing steps.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/models/focoos_model.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">564</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">558</span>
+<span class="normal">559</span>
+<span class="normal">560</span>
+<span class="normal">561</span>
+<span class="normal">562</span>
+<span class="normal">563</span>
+<span class="normal">564</span>
 <span class="normal">565</span>
 <span class="normal">566</span>
 <span class="normal">567</span>
@@ -4271,14 +4266,7 @@ model forward pass, and postprocessing steps.</p>
 <span class="normal">605</span>
 <span class="normal">606</span>
 <span class="normal">607</span>
-<span class="normal">608</span>
-<span class="normal">609</span>
-<span class="normal">610</span>
-<span class="normal">611</span>
-<span class="normal">612</span>
-<span class="normal">613</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">end2end_benchmark</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="s2">&quot;cpu&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
+<span class="normal">608</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">end2end_benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Benchmark the complete end-to-end inference pipeline.</span>
 
 <span class="sd">    This method measures the full inference latency including preprocessing,</span>
@@ -4294,12 +4282,15 @@ model forward pass, and postprocessing steps.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">im_size</span>
-
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;cpu&quot;</span><span class="p">:</span>
+        <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_cpu_name</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_device_name</span><span class="p">()</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Unable to use CUDA&quot;</span><span class="p">)</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Benchmarking latency on </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Benchmarking End-to-End latency on </span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="si">}</span><span class="s2">), size: </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
     <span class="c1"># warmup</span>
     <span class="n">data</span> <span class="o">=</span> <span class="mi">128</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 
@@ -4326,6 +4317,188 @@ model forward pass, and postprocessing steps.</p>
     <span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔥 FPS: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2"> Mean latency: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">mean</span><span class="si">}</span><span class="s2"> ms &quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">metrics</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="focoos.models.focoos_model.FocoosModel.eval" class="doc doc-heading">
+            <code class="highlight language-python"><span class="nb">eval</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_test</span><span class="p">)</span></code>
+
+<a href="#focoos.models.focoos_model.FocoosModel.eval" class="headerlink" title="Permanent link">#</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>evaluate the model on the provided test dataset.</p>
+<p>This method evaluates the model performance on a test dataset,
+supporting both single-GPU and multi-GPU testing.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>args</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="TrainerArgs
+
+
+  
+      dataclass
+   (focoos.ports.TrainerArgs)" href="../ports/#focoos.ports.TrainerArgs">TrainerArgs</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Test configuration arguments.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>data_test</code>
+            </td>
+            <td>
+                  <code><span title="focoos.data.datasets.map_dataset.MapDataset">MapDataset</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Test dataset for model evaluation.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="AssertionError">AssertionError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If task mismatch between model and dataset.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="AssertionError">AssertionError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If num_gpus is 0 (GPU testing is required).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>focoos/models/focoos_model.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">TrainerArgs</span><span class="p">,</span> <span class="n">data_test</span><span class="p">:</span> <span class="n">MapDataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;evaluate the model on the provided test dataset.</span>
+
+<span class="sd">    This method evaluates the model performance on a test dataset,</span>
+<span class="sd">    supporting both single-GPU and multi-GPU testing.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        args: Test configuration arguments.</span>
+<span class="sd">        data_test: Test dataset for model evaluation.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        AssertionError: If task mismatch between model and dataset.</span>
+<span class="sd">        AssertionError: If num_gpus is 0 (GPU testing is required).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">focoos.trainer.trainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_eval</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">val_dataset</span> <span class="o">=</span> <span class="n">data_test</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">val_metrics</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">classes</span> <span class="o">=</span> <span class="n">data_test</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">classes</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;num_classes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_test</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">num_classes</span>
+    <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">task</span> <span class="o">==</span> <span class="n">data_test</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;Task mismatch between model and dataset.&quot;</span>
+
+    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">num_gpus</span><span class="p">,</span> <span class="s2">&quot;Testing without GPUs is not supported. num_gpus must be greater than 0&quot;</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">num_gpus</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">launch</span><span class="p">(</span>
+            <span class="n">run_eval</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">num_gpus</span><span class="p">,</span>
+            <span class="n">dist_url</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Testing done, resuming main process.&quot;</span><span class="p">)</span>
+        <span class="c1"># here i should restore the best model and config since in DDP it is not updated</span>
+        <span class="n">final_folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">run_name</span><span class="p">)</span>
+        <span class="n">metadata_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">final_folder</span><span class="p">,</span> <span class="n">ArtifactName</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span> <span class="o">=</span> <span class="n">ModelInfo</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">metadata_path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">run_eval</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4507,7 +4680,13 @@ for deployment and inference optimization.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/models/focoos_model.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">305</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
 <span class="normal">306</span>
 <span class="normal">307</span>
 <span class="normal">308</span>
@@ -4615,13 +4794,7 @@ for deployment and inference optimization.</p>
 <span class="normal">410</span>
 <span class="normal">411</span>
 <span class="normal">412</span>
-<span class="normal">413</span>
-<span class="normal">414</span>
-<span class="normal">415</span>
-<span class="normal">416</span>
-<span class="normal">417</span>
-<span class="normal">418</span>
-<span class="normal">419</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">export</span><span class="p">(</span>
+<span class="normal">413</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">export</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">runtime_type</span><span class="p">:</span> <span class="n">RuntimeType</span> <span class="o">=</span> <span class="n">RuntimeType</span><span class="o">.</span><span class="n">TORCHSCRIPT_32</span><span class="p">,</span>
     <span class="n">onnx_opset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">17</span><span class="p">,</span>
@@ -4736,188 +4909,6 @@ for deployment and inference optimization.</p>
     <span class="c1"># Fixme: this may override the model_info with the one from the exportable model</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">dump_json</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">ArtifactName</span><span class="o">.</span><span class="n">INFO</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">InferModel</span><span class="p">(</span><span class="n">model_dir</span><span class="o">=</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">runtime_type</span><span class="o">=</span><span class="n">runtime_type</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="focoos.models.focoos_model.FocoosModel.test" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">test</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_test</span><span class="p">)</span></code>
-
-<a href="#focoos.models.focoos_model.FocoosModel.test" class="headerlink" title="Permanent link">#</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Test the model on the provided test dataset.</p>
-<p>This method evaluates the model performance on a test dataset,
-supporting both single-GPU and multi-GPU testing.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>args</code>
-            </td>
-            <td>
-                  <code><a class="autorefs autorefs-internal" title="TrainerArgs
-
-
-  
-      dataclass
-   (focoos.ports.TrainerArgs)" href="../ports/#focoos.ports.TrainerArgs">TrainerArgs</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Test configuration arguments.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>data_test</code>
-            </td>
-            <td>
-                  <code><span title="focoos.data.datasets.map_dataset.MapDataset">MapDataset</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Test dataset for model evaluation.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="AssertionError">AssertionError</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If task mismatch between model and dataset.</p>
-              </div>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="AssertionError">AssertionError</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If num_gpus is 0 (GPU testing is required).</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-            <details class="quote">
-              <summary>Source code in <code>focoos/models/focoos_model.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">218</span>
-<span class="normal">219</span>
-<span class="normal">220</span>
-<span class="normal">221</span>
-<span class="normal">222</span>
-<span class="normal">223</span>
-<span class="normal">224</span>
-<span class="normal">225</span>
-<span class="normal">226</span>
-<span class="normal">227</span>
-<span class="normal">228</span>
-<span class="normal">229</span>
-<span class="normal">230</span>
-<span class="normal">231</span>
-<span class="normal">232</span>
-<span class="normal">233</span>
-<span class="normal">234</span>
-<span class="normal">235</span>
-<span class="normal">236</span>
-<span class="normal">237</span>
-<span class="normal">238</span>
-<span class="normal">239</span>
-<span class="normal">240</span>
-<span class="normal">241</span>
-<span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
-<span class="normal">247</span>
-<span class="normal">248</span>
-<span class="normal">249</span>
-<span class="normal">250</span>
-<span class="normal">251</span>
-<span class="normal">252</span>
-<span class="normal">253</span>
-<span class="normal">254</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">TrainerArgs</span><span class="p">,</span> <span class="n">data_test</span><span class="p">:</span> <span class="n">MapDataset</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test the model on the provided test dataset.</span>
-
-<span class="sd">    This method evaluates the model performance on a test dataset,</span>
-<span class="sd">    supporting both single-GPU and multi-GPU testing.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        args: Test configuration arguments.</span>
-<span class="sd">        data_test: Test dataset for model evaluation.</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        AssertionError: If task mismatch between model and dataset.</span>
-<span class="sd">        AssertionError: If num_gpus is 0 (GPU testing is required).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">focoos.trainer.trainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_test</span>
-
-    <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">val_dataset</span> <span class="o">=</span> <span class="n">data_test</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">val_metrics</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">classes</span> <span class="o">=</span> <span class="n">data_test</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">classes</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;num_classes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_test</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">num_classes</span>
-    <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">task</span> <span class="o">==</span> <span class="n">data_test</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;Task mismatch between model and dataset.&quot;</span>
-
-    <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">num_gpus</span><span class="p">,</span> <span class="s2">&quot;Testing without GPUs is not supported. num_gpus must be greater than 0&quot;</span>
-    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">num_gpus</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">launch</span><span class="p">(</span>
-            <span class="n">run_test</span><span class="p">,</span>
-            <span class="n">args</span><span class="o">.</span><span class="n">num_gpus</span><span class="p">,</span>
-            <span class="n">dist_url</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
-            <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Testing done, resuming main process.&quot;</span><span class="p">)</span>
-        <span class="c1"># here i should restore the best model and config since in DDP it is not updated</span>
-        <span class="n">final_folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">run_name</span><span class="p">)</span>
-        <span class="n">metadata_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">final_folder</span><span class="p">,</span> <span class="n">ArtifactName</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span> <span class="o">=</span> <span class="n">ModelInfo</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">metadata_path</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">run_test</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5132,13 +5123,7 @@ and manages the training process.</p>
 <span class="normal">207</span>
 <span class="normal">208</span>
 <span class="normal">209</span>
-<span class="normal">210</span>
-<span class="normal">211</span>
-<span class="normal">212</span>
-<span class="normal">213</span>
-<span class="normal">214</span>
-<span class="normal">215</span>
-<span class="normal">216</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">TrainerArgs</span><span class="p">,</span> <span class="n">data_train</span><span class="p">:</span> <span class="n">MapDataset</span><span class="p">,</span> <span class="n">data_val</span><span class="p">:</span> <span class="n">MapDataset</span><span class="p">,</span> <span class="n">hub</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FocoosHUB</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="normal">210</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">TrainerArgs</span><span class="p">,</span> <span class="n">data_train</span><span class="p">:</span> <span class="n">MapDataset</span><span class="p">,</span> <span class="n">data_val</span><span class="p">:</span> <span class="n">MapDataset</span><span class="p">,</span> <span class="n">hub</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FocoosHUB</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Train the model on the provided datasets.</span>
 
 <span class="sd">    This method handles both single-GPU and multi-GPU distributed training.</span>
@@ -5159,26 +5144,20 @@ and manages the training process.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">focoos.trainer.trainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_train</span>
 
+    <span class="k">assert</span> <span class="n">data_train</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">num_classes</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;Number of dataset classes must be greater than 0&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_setup_model_for_training</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_train</span><span class="p">,</span> <span class="n">data_val</span><span class="p">)</span>
+
     <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">task</span> <span class="o">==</span> <span class="n">data_train</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="s2">&quot;Task mismatch between model and dataset.&quot;</span>
     <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;num_classes&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">data_train</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">num_classes</span><span class="p">,</span> <span class="p">(</span>
         <span class="s2">&quot;Number of classes mismatch between model and dataset.&quot;</span>
     <span class="p">)</span>
-    <span class="n">remote_model</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">sync_to_hub</span><span class="p">:</span>
-        <span class="n">hub</span> <span class="o">=</span> <span class="n">hub</span> <span class="ow">or</span> <span class="n">FocoosHUB</span><span class="p">()</span>
-        <span class="n">remote_model</span> <span class="o">=</span> <span class="n">hub</span><span class="o">.</span><span class="n">new_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">ref</span> <span class="o">=</span> <span class="n">remote_model</span><span class="o">.</span><span class="n">ref</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> created in hub with ref </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">ref</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
     <span class="k">assert</span> <span class="n">args</span><span class="o">.</span><span class="n">num_gpus</span><span class="p">,</span> <span class="s2">&quot;Training without GPUs is not supported. num_gpus must be greater than 0&quot;</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">num_gpus</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">launch</span><span class="p">(</span>
             <span class="n">run_train</span><span class="p">,</span>
             <span class="n">args</span><span class="o">.</span><span class="n">num_gpus</span><span class="p">,</span>
             <span class="n">dist_url</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
-            <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_train</span><span class="p">,</span> <span class="n">data_val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">,</span> <span class="n">remote_model</span><span class="p">),</span>
+            <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_train</span><span class="p">,</span> <span class="n">data_val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">,</span> <span class="n">hub</span><span class="p">),</span>
         <span class="p">)</span>
 
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Training done, resuming main process.&quot;</span><span class="p">)</span>
@@ -5196,7 +5175,7 @@ and manages the training process.</p>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reloading weights from </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">weights_uri</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_reload_model</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">run_train</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_train</span><span class="p">,</span> <span class="n">data_val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">,</span> <span class="n">remote_model</span><span class="p">)</span>
+        <span class="n">run_train</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">data_train</span><span class="p">,</span> <span class="n">data_val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">,</span> <span class="n">hub</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5302,7 +5281,7 @@ and manages the training process.</p>
       <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
     
   </body>

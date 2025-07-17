@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -1650,15 +1650,15 @@
 <li><a href="#3-test-the-model">🧪 Test model</a></li>
 </ol>
 <h2 id="0-optional-connect-to-the-focoos-hub">0. [Optional] Connect to the Focoos Hub<a class="headerlink" href="#0-optional-connect-to-the-focoos-hub" title="Permanent link">#</a></h2>
-<p>Focoos can be used without having an accont on the <a href="http://app.focoos.ai">Focoos Hub</a>. With it, you will unlock additional functionalities, as we will see below. If you have it, just connect to the HUB.
+<p>Focoos can be used without having an accont on the <a href="http://app.focoos.ai">Focoos Hub</a>. With it, you will unlock additional functionalities, as we will see below. If you have it, just connect to the HUB.</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>from focoos.hub import FocoosHUB
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">FocoosHUB</span>
 
-FOCOOS_API_KEY = None  # write here your API key
-hub = FocoosHUB(api_key=FOCOOS_API_KEY)
-</code></pre></div></td></tr></table></div></p>
+<span class="n">FOCOOS_API_KEY</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># write here your API key</span>
+<span class="n">hub</span> <span class="o">=</span> <span class="n">FocoosHUB</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="n">FOCOOS_API_KEY</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
 <h2 id="1-select-dataset">1. Select dataset<a class="headerlink" href="#1-select-dataset" title="Permanent link">#</a></h2>
 <p>Before starting the training, we need to get a dataset. You can either use a local dataset or you can download one from the hub.</p>
 <h3 id="optional-download-the-data-from-the-hub">[Optional] Download the data from the Hub<a class="headerlink" href="#optional-download-the-data-from-the-hub" title="Permanent link">#</a></h3>
@@ -1687,9 +1687,9 @@ Check the reference of your dataset on the platform and use it in the following 
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
-<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.data.auto_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoDataset</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">focoos.data.default_aug</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetAugmentations</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">focoos.ports</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetSplitType</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoDataset</span><span class="p">,</span><span class="n">DatasetAugmentations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetSplitType</span>
 
 <span class="n">task</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">task</span>  <span class="c1"># see ports.Task for more information</span>
 <span class="n">layout</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">layout</span>  <span class="c1"># see ports.DatasetLayout for more information</span>
@@ -1706,7 +1706,7 @@ Check the reference of your dataset on the platform and use it in the following 
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
-<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.model_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelManager</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelManager</span>
 
 <span class="n">model_ref</span> <span class="o">=</span> <span class="s2">&quot;&lt;YOUR-MODEL-REF&gt;&quot;</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">ModelManager</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hub://&quot;</span> <span class="o">+</span> <span class="n">model_ref</span><span class="p">,</span> <span class="n">hub</span><span class="o">=</span><span class="n">hub</span><span class="p">)</span>
@@ -1725,7 +1725,7 @@ Optionally, if you are using the hub, you can specify <code>sync_to_hub=True</co
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
-<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.ports</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrainerArgs</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrainerArgs</span>
 
 <span class="n">args</span> <span class="o">=</span> <span class="n">TrainerArgs</span><span class="p">(</span>
     <span class="n">run_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">train_dataset</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># the name of the experiment</span>
@@ -1757,7 +1757,7 @@ Optionally, if you are using the hub, you can specify <code>sync_to_hub=True</co
 <span class="normal">11</span>
 <span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">focoos.utils.vision</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotate_image</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotate_image</span>
 
 <span class="n">index</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">valid_dataset</span><span class="p">))</span>
 
@@ -1851,7 +1851,7 @@ Optionally, if you are using the hub, you can specify <code>sync_to_hub=True</co
       <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
     
   </body>
