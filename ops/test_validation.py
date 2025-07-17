@@ -55,7 +55,7 @@ def train(model_name: str):
     )
 
     # Start training
-    model.test(trainer_args, valid_dataset)
+    model.eval(trainer_args, valid_dataset)
 
     original_metrics = dict(model.model_info.val_metrics.items())
     diff = {k: abs(v - current_val_metrics[k]) for k, v in original_metrics.items() if v != current_val_metrics[k]}

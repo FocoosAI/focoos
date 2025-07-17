@@ -18,6 +18,7 @@ from focoos.ports import (
     RuntimeType,
     Task,
 )
+from focoos.utils.system import get_cpu_name, get_device_name
 
 
 @pytest.fixture
@@ -200,9 +201,9 @@ def test_call_method(
     mock_infer.assert_called_once_with(image_ndarray, 0.5)
 
 
-def test_end2end_benchmark(mocker: MockerFixture, mock_local_model_onnx: InferModel):
+def test_end2end_benchmark_onnx_cpu(mocker: MockerFixture, mock_local_model_onnx: InferModel):
     # Mock runtime.get_info
-    mock_local_model_onnx.runtime.get_info = MagicMock(return_value=("ONNX", "CPU"))
+    mock_local_model_onnx.runtime.active_provider = "CPUExecutionProvider"
 
     # Mock the infer method instead of __call__ to avoid the actual inference logic
     mock_infer = mocker.patch.object(mock_local_model_onnx, "infer", return_value=MagicMock())
@@ -213,8 +214,28 @@ def test_end2end_benchmark(mocker: MockerFixture, mock_local_model_onnx: InferMo
     # Assertions
     assert result is not None
     assert isinstance(result, LatencyMetrics)
-    assert result.engine == "ONNX"
-    assert result.device == "CPU"
+    assert result.engine == "onnx.CPUExecutionProvider"
+    assert result.device == get_cpu_name()
+    assert result.im_size == 640
+    # The method adds 5 warmup iterations, so total calls = iterations + 5
+    assert mock_infer.call_count == 10  # 5 iterations + 5 warmup iterations
+
+
+def test_end2end_benchmark_onnx_cuda(mocker: MockerFixture, mock_local_model_onnx: InferModel):
+    # Mock runtime.get_info
+    mock_local_model_onnx.runtime.active_provider = "CUDAExecutionProvider"
+
+    # Mock the infer method instead of __call__ to avoid the actual inference logic
+    mock_infer = mocker.patch.object(mock_local_model_onnx, "infer", return_value=MagicMock())
+
+    # Act
+    result = mock_local_model_onnx.end2end_benchmark(iterations=5, size=640)
+
+    # Assertions
+    assert result is not None
+    assert isinstance(result, LatencyMetrics)
+    assert result.engine == "onnx.CUDAExecutionProvider"
+    assert result.device == get_device_name()
     assert result.im_size == 640
     # The method adds 5 warmup iterations, so total calls = iterations + 5
     assert mock_infer.call_count == 10  # 5 iterations + 5 warmup iterations

@@ -7,7 +7,7 @@ import torch
 from focoos.infer.runtimes.base import BaseRuntime
 from focoos.ports import LatencyMetrics, ModelInfo, Task, TorchscriptRuntimeOpts
 from focoos.utils.logger import get_logger
-from focoos.utils.system import get_cpu_name, get_gpu_info
+from focoos.utils.system import get_cpu_name, get_device_name
 
 logger = get_logger("TorchscriptRuntime")
 
@@ -68,17 +68,6 @@ class TorchscriptRuntime(BaseRuntime):
             res = self.model(im)
             return res
 
-    def get_info(self) -> tuple[str, str]:
-        gpu_info = get_gpu_info()
-        device_name = "CPU"
-        if gpu_info.devices is not None and len(gpu_info.devices) > 0:
-            device_name = gpu_info.devices[0].gpu_name
-        else:
-            device_name = get_cpu_name()
-            logger.warning(f"No GPU found, using CPU {device_name}.")
-
-        return "torchscript", str(device_name)
-
     def benchmark(self, iterations: int = 20, size: Union[int, Tuple[int, int]] = 640) -> LatencyMetrics:
         """
         Benchmark the model performance.
@@ -92,7 +81,11 @@ class TorchscriptRuntime(BaseRuntime):
         Returns:
             LatencyMetrics: Performance metrics including FPS, mean, min, max, and std latencies.
         """
-        engine, device_name = self.get_info()
+        engine = "torchscript"
+        if self.device.type == "cpu":
+            device_name = get_cpu_name()
+        else:
+            device_name = get_device_name()
         logger.info(f"⏱️ Benchmarking latency on {device_name}, size: {size}x{size}..")
 
         if isinstance(size, int):
@@ -119,7 +112,7 @@ class TorchscriptRuntime(BaseRuntime):
             max=round(durations.max().astype(float), 3),
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
-            im_size=size,
+            im_size=size[0],
             device=device_name,
         )
         logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")

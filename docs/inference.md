@@ -25,7 +25,7 @@ In the following sections, we'll guide you through the different ways to use Foc
 
 Focoos can be used without having an accont on the [Focoos Hub](http://app.focoos.ai). With it, you will unlock additional functionalities, as we will see below. If you have it, just connect to the HUB.
 ```python
-from focoos.hub import FocoosHUB
+from focoos import FocoosHUB
 
 FOCOOS_API_KEY = os.getenv("FOCOOS_API_KEY")  # write here your API key os set env variable FOCOOS_API_KEY, will be used as default
 hub = FocoosHUB(api_key=FOCOOS_API_KEY)
@@ -70,7 +70,7 @@ detections = model(image)
 If you want to visualize the result on the image, there's a utily for you.
 
 ```python
-from focoos.utils.vision import annotate_image
+from focoos import annotate_image
 
 annotate_image(image, detections, task=model.model_info.task, classes=model.model_info.classes).save("predictions.png")
 ```
@@ -94,7 +94,7 @@ First, let's get a model. We need to use the `ModelManager` that will take care 
 === "HUB Model"
 
 ```python
-from focoos.model_manager import ModelManager
+from focoos import ModelManager
 
 model_ref = "<YOUR-MODEL-REF>"
 
@@ -105,7 +105,7 @@ model = ModelManager.get(f"hub://{model_ref}")
 === "Local Model "
 
 ```python
-from focoos.model_manager import ModelManager
+from focoos import ModelManager
 
 model_path = "/path/to/model"
 
@@ -116,7 +116,7 @@ model = ModelManager.get(model_path)
 Now, again, you can now run the model by simply passing it an image and visualize the results.
 
 ```python
-from focoos.utils.vision import annotate_image
+from focoos import annotate_image
 
 detections = model(image)
 
@@ -142,7 +142,7 @@ In the following cells, we will export the previous model for one of these and r
 We already provide multiple inference runtime, that you can see on the [`RuntimeTypes`](/focoos/api/ports/#focoos.ports.RuntimeType) enum. Let's select Torchscript as an example.
 
 ```python
-from focoos.ports import RuntimeType
+from focoos import RuntimeType
 
 runtime = RuntimeType.TORCHSCRIPT_32
 ```
@@ -156,7 +156,7 @@ optimized_model = model.export(runtime_type=runtime, image_size=512)
 Let's visualize the output. As you will see, there are not differences from the model in pure torch.
 
 ```python
-from focoos.utils.vision import annotate_image
+from focoos import annotate_image
 
 detections = optimized_model(image)
 annotate_image(image, detections, task=model.model_info.task, classes=model.model_info.classes).save("prediction.png")
@@ -173,8 +173,7 @@ You can use different runtimes that may fit better your device, such as TensorRT
 
 ### ONNX with TensorRT
 ```python
-from focoos.ports import RuntimeType
-from focoos.utils.vision import annotate_image
+from focoos import RuntimeType, annotate_image
 
 runtime = RuntimeType.ONNX_TRT16
 optimized_model = model.export(runtime_type=runtime)

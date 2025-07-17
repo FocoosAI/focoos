@@ -29,7 +29,7 @@ from focoos.processor.processor_manager import ProcessorManager
 from focoos.utils.distributed.dist import launch
 from focoos.utils.env import TORCH_VERSION
 from focoos.utils.logger import get_logger
-from focoos.utils.system import get_cpu_name, get_focoos_version, get_system_info
+from focoos.utils.system import get_cpu_name, get_device_name, get_focoos_version, get_system_info
 
 logger = get_logger("FocoosModel")
 
@@ -176,26 +176,20 @@ class FocoosModel:
         """
         from focoos.trainer.trainer import run_train
 
+        assert data_train.dataset.metadata.num_classes > 0, "Number of dataset classes must be greater than 0"
         self._setup_model_for_training(args, data_train, data_val)
+
         assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
         assert self.model_info.config["num_classes"] == data_train.dataset.metadata.num_classes, (
             "Number of classes mismatch between model and dataset."
         )
-        remote_model = None
-        if args.sync_to_hub:
-            hub = hub or FocoosHUB()
-            remote_model = hub.new_model(self.model_info)
-
-            self.model_info.ref = remote_model.ref
-            logger.info(f"Model {self.model_info.name} created in hub with ref {self.model_info.ref}")
-
         assert args.num_gpus, "Training without GPUs is not supported. num_gpus must be greater than 0"
         if args.num_gpus > 1:
             launch(
                 run_train,
                 args.num_gpus,
                 dist_url="auto",
-                args=(args, data_train, data_val, self.model, self.processor, self.model_info, remote_model),
+                args=(args, data_train, data_val, self.model, self.processor, self.model_info, hub),
             )
 
             logger.info("Training done, resuming main process.")
@@ -213,10 +207,10 @@ class FocoosModel:
             logger.info(f"Reloading weights from {self.model_info.weights_uri}")
             self._reload_model()
         else:
-            run_train(args, data_train, data_val, self.model, self.processor, self.model_info, remote_model)
+            run_train(args, data_train, data_val, self.model, self.processor, self.model_info, hub)
 
-    def test(self, args: TrainerArgs, data_test: MapDataset):
-        """Test the model on the provided test dataset.
+    def eval(self, args: TrainerArgs, data_test: MapDataset):
+        """evaluate the model on the provided test dataset.
 
         This method evaluates the model performance on a test dataset,
         supporting both single-GPU and multi-GPU testing.
@@ -229,7 +223,7 @@ class FocoosModel:
             AssertionError: If task mismatch between model and dataset.
             AssertionError: If num_gpus is 0 (GPU testing is required).
         """
-        from focoos.trainer.trainer import run_test
+        from focoos.trainer.trainer import run_eval
 
         self.model_info.val_dataset = data_test.dataset.metadata.name
         self.model_info.val_metrics = None
@@ -240,7 +234,7 @@ class FocoosModel:
         assert args.num_gpus, "Testing without GPUs is not supported. num_gpus must be greater than 0"
         if args.num_gpus > 1:
             launch(
-                run_test,
+                run_eval,
                 args.num_gpus,
                 dist_url="auto",
                 args=(args, data_test, self.model, self.processor, self.model_info),
@@ -251,7 +245,7 @@ class FocoosModel:
             metadata_path = os.path.join(final_folder, ArtifactName.INFO)
             self.model_info = ModelInfo.from_json(metadata_path)
         else:
-            run_test(args, data_test, self.model, self.processor, self.model_info)
+            run_eval(args, data_test, self.model, self.processor, self.model_info)
 
     @property
     def name(self):
@@ -561,9 +555,7 @@ class FocoosModel:
         metrics = model.benchmark(size=size, iterations=iterations)
         return metrics
 
-    def end2end_benchmark(
-        self, iterations: int = 50, size: Optional[int] = None, device: Literal["cuda", "cpu"] = "cuda"
-    ) -> LatencyMetrics:
+    def end2end_benchmark(self, iterations: int = 50, size: Optional[int] = None) -> LatencyMetrics:
         """Benchmark the complete end-to-end inference pipeline.
 
         This method measures the full inference latency including preprocessing,
@@ -579,12 +571,15 @@ class FocoosModel:
         """
         if size is None:
             size = self.model_info.im_size
-
+        if self.model.device.type == "cpu":
+            device_name = get_cpu_name()
+        else:
+            device_name = get_device_name()
         try:
             model = self.model.cuda()
         except Exception:
             logger.warning("Unable to use CUDA")
-        logger.info(f"⏱️ Benchmarking latency on {model.device}, size: {size}x{size}..")
+        logger.info(f"⏱️ Benchmarking End-to-End latency on {device_name} ({self.model.device}), size: {size}x{size}..")
         # warmup
         data = 128 * torch.randn(1, 3, size, size).to(model.device)
 
