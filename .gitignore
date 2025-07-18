@@ -90,11 +90,9 @@ notebooks/.data
 .venv
 /data
 tests/junit.xml
-notebooks/datasets
-notebooks/experiments
 site/
 /datasets/
 /examples/
-notebooks/test.ipynb
+notebooks/
 gradio/output/
 tutorials/experiments
