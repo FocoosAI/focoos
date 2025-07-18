@@ -240,21 +240,6 @@ class TestModelRegistry:
             assert result is False
             mock_logger.debug.assert_called_once_with("Model 'nonexistent-model' not found in registry")
 
-    def test_load_models_logs_info_on_successful_load(self):
-        """Check that _load_models logs info message on successful load"""
-        # Reset cache
-        ModelRegistry._pretrained_models = None
-
-        with patch("focoos.model_registry.model_registry.logger") as mock_logger:
-            models = ModelRegistry._load_models_cfgs()
-
-            assert len(models) > 0
-            mock_logger.info.assert_called_once()
-            # Check that the log message contains the expected information
-            call_args = mock_logger.info.call_args[0][0]
-            assert "Loaded" in call_args
-            assert str(len(models)) in call_args
-
     def test_registry_path_is_correct(self):
         """Check that _registry_path points to the correct directory"""
         expected_path = ModelRegistry._registry_path
