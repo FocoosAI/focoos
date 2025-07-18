@@ -7,12 +7,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor, autocast
 from torch.nn.modules.utils import _pair
+from torchvision.ops import nms
 
 from focoos.models.focoos_model import BaseModelNN
 from focoos.models.yoloxpose.config import YOLOXPoseConfig
 from focoos.models.yoloxpose.loss import KeypointCriterion
 from focoos.models.yoloxpose.ports import KeypointOutput, KeypointTargets, YOLOXPoseModelOutput
-from focoos.models.yoloxpose.utils import bias_init_with_prob, filter_scores_and_topk, nms_torch, reduce_mean
+from focoos.models.yoloxpose.utils import bias_init_with_prob, filter_scores_and_topk, reduce_mean
 from focoos.nn.backbone.base import ShapeSpec
 from focoos.nn.backbone.build import load_backbone
 from focoos.nn.layers.base import get_activation_fn
@@ -1464,7 +1465,7 @@ class YOLOXPoseHead(nn.Module):
             if bboxes.numel() > 0 and self.nms:
                 nms_thr = self.nms_thr
                 if nms_thr < 1.0:
-                    keep_idxs_nms = nms_torch(bboxes, scores, nms_thr)
+                    keep_idxs_nms = nms(bboxes, scores, nms_thr)
                     bboxes = bboxes[keep_idxs_nms]
                     stride = stride[keep_idxs_nms]
                     labels = labels[keep_idxs_nms]
