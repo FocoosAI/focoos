@@ -10,7 +10,7 @@ NormType = Literal["BN"]
 
 @dataclass
 class YOLOXPoseConfig(ModelConfig):
-    backbone_config: BackboneConfig = field(default_factory=lambda: DarkNetConfig(size="m", activation="silu"))
+    backbone_config: BackboneConfig = field(default_factory=lambda: DarkNetConfig(size="m", use_pretrained=True))
     num_classes: int
 
     num_keypoints: int = 17
