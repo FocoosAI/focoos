@@ -1057,7 +1057,7 @@ class RTMOHead(YOLOXPoseHead):
             use_aux_loss=use_aux_loss,
             overlaps_power=overlaps_power,
             score_thr=score_thr,
-            nms_pre=nms_pre,
+            nms_topk=nms_pre,
             nms_thr=nms_thr,
             featmap_strides_pointgenerator=featmap_strides_pointgenerator,
             centralize_points_pointgenerator=centralize_points_pointgenerator,

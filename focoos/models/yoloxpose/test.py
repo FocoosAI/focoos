@@ -41,7 +41,7 @@ if __name__ == "__main__":
     test_configs = [
         # Default config
         dict(
-            backbone_config=DarkNetConfig(size="s", activation="relu"),
+            backbone_config=DarkNetConfig(size="s"),
             neck_feat_dim=256,
             neck_out_dim=256,
             c2f_depth=1,
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         ),
         # Different backbone size and activation
         dict(
-            backbone_config=DarkNetConfig(size="m", activation="silu"),
+            backbone_config=DarkNetConfig(size="m"),
             neck_feat_dim=128,
             neck_out_dim=128,
             c2f_depth=2,
@@ -89,7 +89,9 @@ if __name__ == "__main__":
         ),
         # Different number of keypoints and classes, different normalization
         dict(
-            backbone_config=DarkNetConfig(size="l", activation="leaky_relu"),
+            backbone_config=DarkNetConfig(
+                size="l",
+            ),
             neck_feat_dim=64,
             neck_out_dim=64,
             c2f_depth=1,
@@ -113,7 +115,9 @@ if __name__ == "__main__":
         ),
         # Test with different image size and pixel normalization
         dict(
-            backbone_config=DarkNetConfig(size="x", activation="gelu"),
+            backbone_config=DarkNetConfig(
+                size="x",
+            ),
             neck_feat_dim=32,
             neck_out_dim=32,
             c2f_depth=2,

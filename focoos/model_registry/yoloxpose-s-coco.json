@@ -9,8 +9,7 @@
     "config": {
         "num_classes": 1,
         "backbone_config": {
-            "use_pretrained": false,
-            "backbone_url": null,
+            "use_pretrained": true,
             "model_type": "darknet",
             "size": "s"
         },
@@ -56,7 +55,7 @@
         "neck_feat_dim": 256,
         "neck_out_dim": 256,
         "c2f_depth": 2,
-        "nms_pre": 1000,
+        "nms_topk": 500,
         "nms_thr": 0.7,
         "score_thr": 0.01,
         "skeleton": [],
@@ -65,7 +64,7 @@
     "focoos_model": "yoloxpose-s-coco",
     "ref": null,
     "status": "TRAINING_COMPLETED",
-    "description": "YOLOXPOSE Medium model (COCO)",
+    "description": "YOLOXPOSE Small model (COCO)",
     "train_args": null,
     "weights_uri": null,
     "val_dataset": "coco_2017_det",

@@ -33,8 +33,8 @@ class YOLOXPoseConfig(ModelConfig):
     # TODO: In Anyma, depth (c2f_depth here) is a list [2, 4, 4, 2], but only the first element is used (see Anyma issue #160).
     c2f_depth: int = 2
 
-    # processing cofnig
-    nms_pre: int = 1000
+    # processing config
+    nms_topk: int = 500
     nms_thr: float = 0.7
     score_thr: float = 0.01
     skeleton: list[tuple[str, str]] = field(default_factory=lambda: [])
