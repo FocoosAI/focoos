@@ -17,8 +17,6 @@ logger = get_logger(__name__)
 class YOLOXPoseProcessor(Processor):
     def __init__(self, config: YOLOXPoseConfig):
         super().__init__(config)
-        self.nms_pre = config.nms_topk
-        self.nms_thr = config.nms_thr
         self.score_thr = config.score_thr
         self.skeleton = config.skeleton
         self.flip_map = config.flip_map

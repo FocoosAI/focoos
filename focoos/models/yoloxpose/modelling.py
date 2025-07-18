@@ -1450,8 +1450,9 @@ class YOLOXPoseHead(nn.Module):
             scores = scores.clone() * objectness
 
             scores, labels = scores.max(1, keepdim=True)
+            nms_topk = self.nms_topk
             scores, _, keep_idxs_score, results = filter_scores_and_topk(
-                scores, score_thr, self.nms_topk, results=dict(labels=labels[:, 0])
+                scores, score_thr, nms_topk, results=dict(labels=labels[:, 0])
             )
 
             labels = results["labels"] if results is not None else labels[:, 0]
