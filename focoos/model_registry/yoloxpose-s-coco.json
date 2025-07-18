@@ -55,7 +55,7 @@
         "neck_feat_dim": 256,
         "neck_out_dim": 256,
         "c2f_depth": 2,
-        "nms_topk": 500,
+        "nms_topk": 1000,
         "nms_thr": 0.7,
         "score_thr": 0.01,
         "skeleton": [],

@@ -34,7 +34,7 @@ class YOLOXPoseConfig(ModelConfig):
     c2f_depth: int = 2
 
     # processing config
-    nms_topk: int = 500
+    nms_topk: int = 1000
     nms_thr: float = 0.7
     score_thr: float = 0.01
     skeleton: list[tuple[str, str]] = field(default_factory=lambda: [])
