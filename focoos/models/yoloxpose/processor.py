@@ -22,7 +22,6 @@ class YOLOXPoseProcessor(Processor):
         self.score_thr = config.score_thr
         self.skeleton = config.skeleton
         self.flip_map = config.flip_map
-        self.resolution = config.resolution
 
     def preprocess(
         self,
@@ -84,10 +83,7 @@ class YOLOXPoseProcessor(Processor):
             if self.training:
                 raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
             images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
-            if image_size is not None:
-                images_torch = torch.nn.functional.interpolate(
-                    images_torch, size=(image_size, image_size), mode="bilinear", align_corners=False
-                )
+
         return images_torch, targets
 
     # TODO: implement nms threshold
@@ -130,9 +126,6 @@ class YOLOXPoseProcessor(Processor):
             size = image_sizes[i]
             h, w = int(size[0]), int(size[1])
 
-            scale_x = self.resolution / w
-            scale_y = self.resolution / h
-            logger.debug(f"scale_x: {scale_x}, scale_y: {scale_y}")
             logger.debug(f"outputs.outputs.scores[i].shape: {outputs.outputs.scores[i].shape}")
             # Scores
             filtered_scores = outputs.outputs.scores[i][filter_mask].to("cpu").numpy().tolist()
@@ -144,16 +137,13 @@ class YOLOXPoseProcessor(Processor):
             # Boxes
             filtered_boxes = outputs.outputs.pred_bboxes[i][filter_mask]
             logger.debug(f"filtered_boxes_shape: {filtered_boxes.shape}")
-            output_boxes = filtered_boxes * torch.tensor([scale_x, scale_y, scale_x, scale_y]).to(device)
-            output_boxes = output_boxes.clip(0, max(h, w))
+            output_boxes = filtered_boxes.clip(0, max(h, w))
             output_boxes = output_boxes.cpu().numpy().astype(int).tolist()
 
             # keypoints
             filtered_keypoints = outputs.outputs.pred_keypoints[i][filter_mask]
             keypoints_vis_expanded = outputs.outputs.keypoints_visible[i].unsqueeze(-1)
             keypoints_with_vis = torch.cat((filtered_keypoints, keypoints_vis_expanded), dim=2)
-            keypoints_with_vis[:, :, 0] *= scale_x
-            keypoints_with_vis[:, :, 1] *= scale_y
             keypoints = keypoints_with_vis.cpu().numpy().astype(int).tolist()
 
             res.append(
@@ -188,9 +178,9 @@ class YOLOXPoseProcessor(Processor):
 
         for i in range(batch_size):
             # Get original image size
-            height = batched_inputs[i].height or 1
-            width = batched_inputs[i].width or 1
-            image_size = (height, width)
+            original_height = batched_inputs[i].height or 1  # without augmentation
+            original_width = batched_inputs[i].width or 1  # without augmentation
+            image_size = (original_height, original_width)
 
             # Get predictions for this image
             scores = output.outputs.scores[i]
@@ -200,12 +190,16 @@ class YOLOXPoseProcessor(Processor):
             keypoints_visible = output.outputs.keypoints_visible[i]
 
             # Scale predictions back to original image size
-            scale_x = width / self.resolution
-            scale_y = height / self.resolution
+            if isinstance(batched_inputs[i].image, torch.Tensor):
+                image_height, image_width = batched_inputs[i].image.shape[-2:]  # type: ignore
+            else:
+                image_height, image_width = original_height, original_width
+            scale_x = original_width / image_width
+            scale_y = original_height / image_height
 
             # Scale bounding boxes
             scaled_bboxes = pred_bboxes * torch.tensor([scale_x, scale_y, scale_x, scale_y], device=pred_bboxes.device)
-            scaled_bboxes = scaled_bboxes.clip(0, max(width, height))
+            scaled_bboxes = scaled_bboxes.clip(0, max(original_width, original_height))
 
             # Scale keypoints
             scaled_keypoints = pred_keypoints.clone()
