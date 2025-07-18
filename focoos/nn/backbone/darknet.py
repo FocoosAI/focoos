@@ -7,6 +7,9 @@ from torch import nn
 from focoos.nn.backbone.base import BackboneConfig, BaseBackbone
 from focoos.nn.layers.block import C2f
 from focoos.nn.layers.conv import ConvNormLayer
+from focoos.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 DARKNET_SIZES = {
     "n": {"depth": [1, 2, 2, 1], "width": [3, 16, 32, 64, 128, 256]},
@@ -16,11 +19,12 @@ DARKNET_SIZES = {
     "x": {"depth": [3, 6, 6, 3], "width": [3, 80, 160, 320, 640, 640]},
 }
 
-ACTIVATION_MAPPING = {
-    "silu": nn.SiLU(inplace=True),
-    "relu": nn.ReLU(inplace=True),
-    "leaky_relu": nn.LeakyReLU(inplace=True),
-    "gelu": nn.GELU(),
+DARKNET_PRETRAINED_WEIGHTS = {
+    "n": "https://public.focoos.ai/pretrained_models/backbones/darknet_n.pth",
+    "s": "https://public.focoos.ai/pretrained_models/backbones/darknet_s.pth",
+    "m": "https://public.focoos.ai/pretrained_models/backbones/darknet_m.pth",
+    "l": "https://public.focoos.ai/pretrained_models/backbones/darknet_l.pth",
+    "x": "https://public.focoos.ai/pretrained_models/backbones/darknet_x.pth",
 }
 
 
@@ -28,7 +32,6 @@ ACTIVATION_MAPPING = {
 class DarkNetConfig(BackboneConfig):
     size: Literal["n", "s", "m", "l", "x"] = "m"
     model_type: Literal["darknet"] = "darknet"
-    activation: Literal["silu", "relu", "leaky_relu", "gelu"] = "silu"
 
 
 class DarkNet(BaseBackbone):
@@ -37,7 +40,7 @@ class DarkNet(BaseBackbone):
 
         self.width = DARKNET_SIZES[config.size]["width"]
         self.depth = DARKNET_SIZES[config.size]["depth"]
-        self.activation = ACTIVATION_MAPPING[config.activation]
+        self.activation = nn.SiLU(inplace=True)
 
         p1 = [
             ConvNormLayer(
@@ -74,6 +77,18 @@ class DarkNet(BaseBackbone):
         self.p3 = torch.nn.Sequential(*p3)
         self.p4 = torch.nn.Sequential(*p4)
         self.p5 = torch.nn.Sequential(*p5)
+
+        if config.use_pretrained:
+            if config.backbone_url:
+                state = torch.hub.load_state_dict_from_url(config.backbone_url)
+                self.load_state_dict(state)
+                logger.info(f"Loaded pretrained weights from {config.backbone_url}")
+            else:
+                state = torch.hub.load_state_dict_from_url(DARKNET_PRETRAINED_WEIGHTS[config.size])
+                # state = torch.load(DARKNET_PRETRAINED_WEIGHTS[config.size])
+                self.load_state_dict(state)
+                logger.info(f"Loaded pretrained weights from {DARKNET_PRETRAINED_WEIGHTS[config.size]}")
+
         # Define feature names, strides, and channels
         self.out_features = ["res2", "res3", "res4", "res5"]
         self.out_feature_strides = {"res2": 4, "res3": 8, "res4": 16, "res5": 32}
@@ -103,9 +118,8 @@ class DarkNet(BaseBackbone):
 
 
 if __name__ == "__main__":
-    for activation in ["silu", "relu", "leaky_relu", "gelu"]:
-        for size in ["n", "s", "m", "l", "x"]:
-            input_tensor = torch.ones(1, 3, 224, 224).float()
-            back = DarkNet(DarkNetConfig(size=size, activation=activation))
-            model_out = back.forward(input_tensor)
-            print([(k, o.shape) for k, o in model_out.items()])
+    for size in ["n", "s", "m", "l", "x"]:
+        input_tensor = torch.ones(1, 3, 224, 224).float()
+        back = DarkNet(DarkNetConfig(size=size, use_pretrained=True))
+        model_out = back.forward(input_tensor)
+        print([(k, o.shape) for k, o in model_out.items()])

@@ -12,8 +12,7 @@
             "use_pretrained": false,
             "backbone_url": null,
             "model_type": "darknet",
-            "size": "s",
-            "activation": "silu"
+            "size": "s"
         },
         "num_keypoints": 17,
         "in_channels": 256,
