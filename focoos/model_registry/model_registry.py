@@ -1,12 +1,11 @@
 import os
-from typing import Dict
+from pathlib import Path
+from typing import Dict, List, Optional
 
 from focoos.ports import ModelInfo
 from focoos.utils.logger import get_logger
 
 logger = get_logger(__name__)
-
-REGISTRY_PATH = os.path.dirname(__file__)
 
 
 class ModelRegistry:
@@ -16,23 +15,39 @@ class ModelRegistry:
     It provides methods to access model information, list available models, and check model existence.
 
     Attributes:
+        _registry_path (Path): Path to the directory containing model JSON files.
         _pretrained_models (Dict[str, str]): Dictionary mapping model names to their JSON file paths.
     """
 
-    _pretrained_models: Dict[str, str] = {
-        "fai-detr-l-obj365": os.path.join(REGISTRY_PATH, "fai-detr-l-obj365.json"),
-        "fai-detr-l-coco": os.path.join(REGISTRY_PATH, "fai-detr-l-coco.json"),
-        "fai-detr-m-coco": os.path.join(REGISTRY_PATH, "fai-detr-m-coco.json"),
-        "fai-mf-l-ade": os.path.join(REGISTRY_PATH, "fai-mf-l-ade.json"),
-        "fai-mf-m-ade": os.path.join(REGISTRY_PATH, "fai-mf-m-ade.json"),
-        "fai-mf-l-coco-ins": os.path.join(REGISTRY_PATH, "fai-mf-l-coco-ins.json"),
-        "fai-mf-m-coco-ins": os.path.join(REGISTRY_PATH, "fai-mf-m-coco-ins.json"),
-        "fai-mf-s-coco-ins": os.path.join(REGISTRY_PATH, "fai-mf-s-coco-ins.json"),
-        "bisenetformer-m-ade": os.path.join(REGISTRY_PATH, "bisenetformer-m-ade.json"),
-        "bisenetformer-l-ade": os.path.join(REGISTRY_PATH, "bisenetformer-l-ade.json"),
-        "bisenetformer-s-ade": os.path.join(REGISTRY_PATH, "bisenetformer-s-ade.json"),
-        "yoloxpose-s-coco": os.path.join(REGISTRY_PATH, "yoloxpose-s-coco.json"),
-    }
+    _registry_path = Path(__file__).parent
+    _pretrained_models: Optional[Dict[str, str]] = None
+
+    @classmethod
+    def _load_models(cls) -> Dict[str, str]:
+        """Load model configurations from JSON files.
+
+        Returns:
+            Dict[str, str]: Dictionary mapping model names to their JSON file paths.
+        """
+        if cls._pretrained_models is not None:
+            return cls._pretrained_models
+
+        models = {}
+        try:
+            json_files = [f for f in cls._registry_path.iterdir() if f.is_file() and f.suffix == ".json"]
+
+            for json_file in json_files:
+                model_name = json_file.stem  # Remove .json extension
+                models[model_name] = str(json_file)
+
+            logger.info(f"Loaded {len(models)} model configurations from {cls._registry_path}")
+
+        except OSError as e:
+            logger.error(f"Failed to load model configurations: {e}")
+            models = {}
+
+        cls._pretrained_models = models
+        return models
 
     @classmethod
     def get_model_info(cls, model_name: str) -> ModelInfo:
@@ -49,21 +64,24 @@ class ModelRegistry:
             ValueError: If the model is not found in the registry and the provided
                 path does not exist.
         """
-        if model_name in cls._pretrained_models:
-            return ModelInfo.from_json(cls._pretrained_models[model_name])
+        models = cls._load_models()
+
+        if model_name in models:
+            return ModelInfo.from_json(models[model_name])
         if not os.path.exists(model_name):
             logger.warning(f"⚠️ Model {model_name} not found")
             raise ValueError(f"⚠️ Model {model_name} not found")
         return ModelInfo.from_json(model_name)
 
     @classmethod
-    def list_models(cls) -> list[str]:
+    def list_models(cls) -> List[str]:
         """List all available pretrained models.
 
         Returns:
-            list[str]: A list of all available pretrained model names.
+            List[str]: A list of all available pretrained model names.
         """
-        return list(cls._pretrained_models.keys())
+        models = cls._load_models()
+        return list(models.keys())
 
     @classmethod
     def exists(cls, model_name: str) -> bool:
@@ -76,4 +94,17 @@ class ModelRegistry:
             bool: True if the model exists in the pretrained models registry,
                 False otherwise.
         """
-        return model_name in cls._pretrained_models
+        models = cls._load_models()
+        exists = model_name in models
+        if not exists:
+            logger.debug(f"Model '{model_name}' not found in registry")
+        return exists
+
+
+if __name__ == "__main__":
+    print("Available models:", ModelRegistry.list_models())
+    try:
+        model_info = ModelRegistry.get_model_info("fai-detr-l-obj365")
+        print(f"Model info: {model_info}")
+    except ValueError as e:
+        print(f"Error: {e}")

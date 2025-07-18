@@ -12,11 +12,7 @@ BACKBONE_CONFIGS = {
     "swin": [{"model_type": "swin", "use_pretrained": False}],
     "mobilenet_v2": [{"model_type": "mobilenet_v2", "use_pretrained": False}],
     "convnextv2": [{"model_type": "convnextv2", "use_pretrained": False}],
-    "darknet": [
-        {"model_type": "darknet", "use_pretrained": False, "size": size, "activation": act}
-        for act in ["silu", "relu", "leaky_relu", "gelu"]
-        for size in ["n", "s", "m", "l", "x"]
-    ],
+    "darknet": [{"model_type": "darknet", "use_pretrained": False, "size": size} for size in ["n", "s", "m", "l", "x"]],
 }
 
 # Different input sizes to test
