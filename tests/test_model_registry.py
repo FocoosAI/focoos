@@ -128,7 +128,7 @@ class TestModelRegistry:
         """Check that the _pretrained_models dictionary has the correct structure"""
         # Reset cache to ensure fresh load
         ModelRegistry._pretrained_models = None
-        pretrained_models = ModelRegistry._load_models()
+        pretrained_models = ModelRegistry._load_models_cfgs()
 
         assert isinstance(pretrained_models, dict)
         assert len(pretrained_models) > 0
@@ -175,12 +175,12 @@ class TestModelRegistry:
         ModelRegistry._pretrained_models = None
 
         # First call should load from filesystem
-        models1 = ModelRegistry._load_models()
+        models1 = ModelRegistry._load_models_cfgs()
         assert models1 is not None
         assert len(models1) > 0
 
         # Second call should return cached result
-        models2 = ModelRegistry._load_models()
+        models2 = ModelRegistry._load_models_cfgs()
         assert models2 is models1  # Same object reference (cached)
 
         # Verify cache is set
@@ -196,7 +196,7 @@ class TestModelRegistry:
         ModelRegistry._pretrained_models = None
 
         # Test
-        models = ModelRegistry._load_models()
+        models = ModelRegistry._load_models_cfgs()
 
         # Verification
         assert models == {}
@@ -207,7 +207,7 @@ class TestModelRegistry:
         # Reset cache to ensure fresh load
         ModelRegistry._pretrained_models = None
 
-        models = ModelRegistry._load_models()
+        models = ModelRegistry._load_models_cfgs()
 
         # Verify all paths end with .json
         for model_path in models.values():
@@ -246,7 +246,7 @@ class TestModelRegistry:
         ModelRegistry._pretrained_models = None
 
         with patch("focoos.model_registry.model_registry.logger") as mock_logger:
-            models = ModelRegistry._load_models()
+            models = ModelRegistry._load_models_cfgs()
 
             assert len(models) > 0
             mock_logger.info.assert_called_once()

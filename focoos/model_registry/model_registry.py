@@ -23,7 +23,7 @@ class ModelRegistry:
     _pretrained_models: Optional[Dict[str, str]] = None
 
     @classmethod
-    def _load_models(cls) -> Dict[str, str]:
+    def _load_models_cfgs(cls) -> Dict[str, str]:
         """Load model configurations from JSON files.
 
         Returns:
@@ -39,9 +39,6 @@ class ModelRegistry:
             for json_file in json_files:
                 model_name = json_file.stem  # Remove .json extension
                 models[model_name] = str(json_file)
-
-            logger.info(f"Loaded {len(models)} model configurations from {cls._registry_path}")
-
         except OSError as e:
             logger.error(f"Failed to load model configurations: {e}")
             models = {}
@@ -64,7 +61,7 @@ class ModelRegistry:
             ValueError: If the model is not found in the registry and the provided
                 path does not exist.
         """
-        models = cls._load_models()
+        models = cls._load_models_cfgs()
 
         if model_name in models:
             return ModelInfo.from_json(models[model_name])
@@ -80,7 +77,7 @@ class ModelRegistry:
         Returns:
             List[str]: A list of all available pretrained model names.
         """
-        models = cls._load_models()
+        models = cls._load_models_cfgs()
         return list(models.keys())
 
     @classmethod
@@ -94,7 +91,7 @@ class ModelRegistry:
             bool: True if the model exists in the pretrained models registry,
                 False otherwise.
         """
-        models = cls._load_models()
+        models = cls._load_models_cfgs()
         exists = model_name in models
         if not exists:
             logger.debug(f"Model '{model_name}' not found in registry")
