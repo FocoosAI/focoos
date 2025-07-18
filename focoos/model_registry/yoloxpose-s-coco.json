@@ -1,5 +1,5 @@
 {
-    "name": "yoloxpose-m-coco",
+    "name": "yoloxpose-s-coco",
     "model_family": "yoloxpose",
     "classes": [
         "person"
@@ -12,7 +12,7 @@
             "use_pretrained": false,
             "backbone_url": null,
             "model_type": "darknet",
-            "size": "m",
+            "size": "s",
             "activation": "silu"
         },
         "num_keypoints": 17,
@@ -63,7 +63,7 @@
         "skeleton": [],
         "flip_map": []
     },
-    "focoos_model": "yoloxpose-m-coco",
+    "focoos_model": "yoloxpose-s-coco",
     "ref": null,
     "status": "TRAINING_COMPLETED",
     "description": "YOLOXPOSE Medium model (COCO)",
