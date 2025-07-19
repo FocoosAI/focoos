@@ -725,7 +725,8 @@ class TrainerLoop:
                 else:
                     losses = sum(loss_dict.values())
         else:
-            loss_dict = self.model(data).loss
+            images, targets = self.processor.preprocess(data, dtype=self.precision, device=self.model.device)
+            loss_dict = self.model(images, targets).loss
             if isinstance(loss_dict, torch.Tensor):
                 losses = loss_dict
                 loss_dict = {"total_loss": loss_dict}
