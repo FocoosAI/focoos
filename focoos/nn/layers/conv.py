@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 from focoos.utils.env import TORCH_VERSION
 
-from .base import _get_activation_fn as get_activation
+from .base import get_activation_fn as get_activation
 from .norm import get_norm
 
 

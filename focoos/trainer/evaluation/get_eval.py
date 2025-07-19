@@ -19,6 +19,10 @@ def get_evaluator(dataset_dict: DictDataset, task: Task):
         from focoos.trainer.evaluation.classification_evaluation import ClassificationEvaluator
 
         return ClassificationEvaluator.from_datasetdict(dataset_dict=dataset_dict)
+    elif task == Task.KEYPOINT:
+        from focoos.trainer.evaluation.keypoint import KeypointEvaluator
+
+        return KeypointEvaluator.from_datasetdict(dataset_dict=dataset_dict)
     # elif task == Task.PANOPTIC_SEGMENTATION:
     #     from focoos.trainer.evaluation.panoptic_evaluation import PanopticEvaluator
     #     return PanopticEvaluator.from_datasetdict(dataset_dict=dataset_dict)

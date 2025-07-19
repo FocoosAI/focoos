@@ -99,6 +99,18 @@ CATALOG = [
         ),
     ),
     CatalogDataset(
+        name="coco_2017_person_keypoints",
+        task=Task.KEYPOINT,
+        train_split=CatalogSplit(
+            image_root="coco/train2017",
+            json_file="coco/annotations/person_keypoints_train2017.json",
+        ),
+        val_split=CatalogSplit(
+            image_root="coco/val2017",
+            json_file="coco/annotations/person_keypoints_val2017.json",
+        ),
+    ),
+    CatalogDataset(
         name="object365",
         task=Task.DETECTION,
         train_split=CatalogSplit(
@@ -139,7 +151,7 @@ def _load_dataset_split(
         task=task,
     )
 
-    if task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION]:
+    if task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION, Task.KEYPOINT]:
         dataset_dict = load_coco_json(json_file_path, image_root_path, metadata, task=task)
         if split.filter_empty:
             dataset_dict = filter_images_with_only_crowd_annotations(dataset_dicts=dataset_dict)

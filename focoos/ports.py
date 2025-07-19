@@ -121,12 +121,14 @@ class Task(str, Enum):
         - SEMSEG: Semantic segmentation
         - INSTANCE_SEGMENTATION: Instance segmentation
         - CLASSIFICATION: Image classification
+        - KEYPOINT: Keypoint detection
     """
 
     DETECTION = "detection"
     SEMSEG = "semseg"
     INSTANCE_SEGMENTATION = "instseg"
     CLASSIFICATION = "classification"
+    KEYPOINT = "keypoint"
 
 
 @dataclass
@@ -307,6 +309,7 @@ class FocoosDet(PydanticBase):
     cls_id: Optional[int] = None
     label: Optional[str] = None
     mask: Optional[str] = None
+    keypoints: Optional[list[tuple[int, int, float]]] = None  # TODO: check if float visibility is used or not
 
     @classmethod
     def from_json(cls, data: Union[str, dict]):
@@ -701,6 +704,7 @@ class ModelFamily(str, Enum):
     MASKFORMER = "fai_mf"
     BISENETFORMER = "bisenetformer"
     IMAGE_CLASSIFIER = "fai_cls"
+    YOLOXPOSE = "yoloxpose"
 
 
 # This should not be a dataclass, but their child must be
@@ -925,6 +929,10 @@ class DatasetMetadata:
         if self.task == Task.CLASSIFICATION:
             assert self.thing_classes is not None, "thing_classes is required for classification"
             return self.thing_classes
+        if self.task == Task.KEYPOINT:
+            assert self.thing_classes is not None, "thing_classes is required for keypoint"
+            return self.thing_classes
+
         raise ValueError(f"Task {self.task} not supported")
 
     @property

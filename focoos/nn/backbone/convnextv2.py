@@ -162,15 +162,15 @@ class ConvNeXtV2(BaseBackbone):
             self.load_state_dict(state)
             logger.info(f"Load ConvNeXtV2{config.model_size} state_dict")
 
-        self._out_features = ["res2", "res3", "res4", "res5"]
+        self.out_features = ["res2", "res3", "res4", "res5"]
 
-        self._out_feature_strides = {
+        self.out_feature_strides = {
             "res2": 4,
             "res3": 8,
             "res4": 16,
             "res5": 32,
         }
-        self._out_feature_channels = {
+        self.out_feature_channels = {
             "res2": dims[0],
             "res3": dims[1],
             "res4": dims[2],
@@ -196,8 +196,8 @@ class ConvNeXtV2(BaseBackbone):
     def output_shape(self):
         return {
             name: ShapeSpec(
-                channels=self._out_feature_channels[name],
-                stride=self._out_feature_strides[name],
+                channels=self.out_feature_channels[name],
+                stride=self.out_feature_strides[name],
             )
-            for name in self._out_features
+            for name in self.out_features
         }

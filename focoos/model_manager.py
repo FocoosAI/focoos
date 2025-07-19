@@ -252,6 +252,7 @@ class BackboneManager:
         "mobilenet_v2": "mobilenet_v2.MobileNetV2",
         "mit": "mit.MIT",
         "convnextv2": "convnextv2.ConvNeXtV2",
+        "darknet": "darknet.DarkNet",
     }
 
     @classmethod
@@ -406,6 +407,7 @@ class ConfigBackboneManager:
         "mobilenet_v2": "mobilenet_v2.MobileNetV2Config",
         "mit": "mit.MITConfig",
         "convnextv2": "convnextv2.ConvNeXtV2Config",
+        "darknet": "darknet.DarkNetConfig",
     }
 
     @classmethod
