@@ -32,7 +32,6 @@ from focoos.trainer.hooks import hook
 from focoos.trainer.hooks.early_stop import EarlyStopException, EarlyStoppingHook
 from focoos.trainer.hooks.metrics_json_writer import JSONWriter
 from focoos.trainer.hooks.metrics_printer import CommonMetricPrinter
-from focoos.trainer.hooks.nan_gradients import NaNGradientCheckHook
 from focoos.trainer.hooks.sync_to_hub import SyncToHubHook
 from focoos.trainer.hooks.tensorboard_writer import TensorboardXWriter
 from focoos.trainer.hooks.visualization import VisualizationHook
@@ -187,7 +186,8 @@ class FocoosTrainer:
                 start_iter = 0
 
             output_lines = [
-                f"🚀 Starting training from iteration {start_iter}",
+                f"🚀 Starting training from iteration {start_iter}/{self.args.max_iters} ",
+                f"📁 output_dir: {self.output_dir}",
                 "========== 🔧 Main Hyperparameters 🔧 ==========",
                 f" - max_iter: {self.args.max_iters}",
                 f" - batch_size: {self.args.batch_size}",
@@ -197,6 +197,7 @@ class FocoosTrainer:
                 f" - scheduler: {self.args.scheduler}",
                 f" - weight_decay: {self.args.weight_decay}",
                 f" - ema_enabled: {self.args.ema_enabled}",
+                f" - amp_enabled: {self.args.amp_enabled}",
                 "================================================",
             ]
             logger.info("\n".join(output_lines))
@@ -401,7 +402,7 @@ class FocoosTrainer:
                 logger.warning(f"Error parsing metrics.json: {e}")
                 pass
 
-            self._update_training_info_and_dump(ModelStatus.TRAINING_COMPLETED, self.args.max_iters)
+            self._update_training_info_and_dump(ModelStatus.TRAINING_COMPLETED, str(self.args.max_iters))
 
     def _do_eval(self, model):
         """Internal method to evaluate model.
@@ -471,8 +472,8 @@ class FocoosTrainer:
         trainer.register_hooks(
             [
                 hook.IterationTimer(),
+                # NaNGradientCheckHook(verbose=True, limit_incidents=10),
                 hook.LRScheduler(optimizer=optim, scheduler=scheduler),
-                NaNGradientCheckHook(fix_nans=True, skip_update=False, verbose=True),
                 (
                     ema.EMAHook(
                         model,
@@ -609,6 +610,7 @@ class TrainerLoop:
         self.start_iter = 0
         self.max_iter = 0
         self.storage = None
+        self.skip_optimizer_step = False  # Flag to skip optimizer step
 
         # Set model to training mode
         model.train()
@@ -799,9 +801,8 @@ class TrainerLoop:
         if (iter + 1) % self.gather_metric_period == 0:
             try:
                 self.write_metrics(loss_dict, data_time, iter, prefix)
-            except Exception:
-                logger.exception("Exception in writing metrics: ")
-                raise
+            except Exception as e:
+                logger.warning(f"🚨 skipping write metrics due to exception: {e}")
 
     @staticmethod
     def write_metrics(
