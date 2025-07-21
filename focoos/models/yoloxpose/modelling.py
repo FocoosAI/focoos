@@ -1037,7 +1037,7 @@ class YOLOXPoseHead(nn.Module):
 
         Args:
             feats (Tuple[Tensor]): The multi-stage features
-            batch_data_samples (List[:obj:`PoseDataSample`]): The batch
+            targets (List[KeypointTargets]): The batch
                 data samples
 
         Returns:

@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, Literal, Tuple
 
 from focoos.nn.backbone.base import BackboneConfig
+from focoos.nn.backbone.darknet import DarkNetConfig
 from focoos.ports import ModelConfig
 
 NormType = Literal["BN"]
@@ -9,7 +10,7 @@ NormType = Literal["BN"]
 
 @dataclass
 class RTMOConfig(ModelConfig):
-    backbone_config: BackboneConfig
+    backbone_config: BackboneConfig = field(default_factory=lambda: DarkNetConfig(size="m", use_pretrained=True))
     num_classes: int
 
     num_keypoints: int = 17
@@ -44,5 +45,5 @@ class RTMOConfig(ModelConfig):
     nms_pre: int = 1000
     nms_thr: float = 0.7
     score_thr: float = 0.01
-    skeleton: list[tuple[str, str]] = []
-    flip_map: list[tuple[str, str]] = []
+    skeleton: list[tuple[str, str]] = field(default_factory=lambda: [])
+    flip_map: list[tuple[str, str]] = field(default_factory=lambda: [])

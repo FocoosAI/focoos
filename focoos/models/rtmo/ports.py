@@ -1,9 +1,14 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Literal, Optional
 
 import torch
 
 from focoos.ports import DictClass, ModelOutput
+
+KeypointLossLiteral = Literal[
+    "objectness", "boxes", "oks", "visibility", "classification", "bbox_aux", "mle", "classification_varifocal"
+]
+KeypointLoss = dict[KeypointLossLiteral, torch.Tensor]
 
 
 @dataclass
@@ -40,5 +45,5 @@ class KeypointOutput(DictClass):
 
 @dataclass
 class RTMOModelOutput(ModelOutput):
-    outputs: dict[str, KeypointOutput]
-    loss: dict[str, torch.Tensor]
+    outputs: KeypointOutput
+    loss: KeypointLoss

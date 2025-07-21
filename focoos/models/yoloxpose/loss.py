@@ -286,7 +286,7 @@ class MLECCLoss(nn.Module):
 
         assert len(outputs) == len(targets), "Outputs and targets must have the same length"
 
-        prob = torch.Tensor(1.0)
+        prob = 1.0
         for o, t in zip(outputs, targets):
             prob *= (o * t).sum(dim=-1)
 

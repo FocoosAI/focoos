@@ -24,6 +24,7 @@ class TestModelRegistry:
             "bisenetformer-l-ade",
             "bisenetformer-s-ade",
             "yoloxpose-s-coco",
+            "rtmo-s-coco",
         ]
 
         models = ModelRegistry.list_models()

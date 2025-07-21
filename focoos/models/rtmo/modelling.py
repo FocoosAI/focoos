@@ -8,19 +8,18 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
+from torchvision.ops import nms
 
 from focoos.models.focoos_model import BaseModelNN
 from focoos.models.rtmo.config import RTMOConfig
 from focoos.models.rtmo.ports import KeypointOutput, KeypointTargets, RTMOModelOutput
 from focoos.models.rtmo.utlis import ChannelWiseScale, ScaleNorm
 from focoos.models.yoloxpose.modelling import KeypointCriterion, PoseOKS, SimOTAAssigner, YoloNeck, YOLOXPoseHead
-from focoos.models.yoloxpose.ports import OptSampleList
 from focoos.models.yoloxpose.utils import (
     Scale,
     bbox_xyxy2cs,
     bias_init_with_prob,
     filter_scores_and_topk,
-    nms_torch,
     reduce_mean,
 )
 from focoos.nn.backbone.build import load_backbone
@@ -1105,13 +1104,12 @@ class RTMOHead(YOLOXPoseHead):
         assert isinstance(feats, (tuple, list))
         return self.head_module(feats)
 
-    def forward(self, features, targets=None):
+    def forward(self, features, targets: Optional[list[KeypointTargets]] = None):
         assert isinstance(features, (tuple, list))
         spatial_features, multi_scale_features = features
         if self.training:
             if targets:
-                targets = targets["instances"]
-                return None, self.loss(multi_scale_features, targets)
+                return None, self.loss(feats=multi_scale_features, targets=targets)
         outputs = self.predict(multi_scale_features)
         return outputs, {}
 
@@ -1221,12 +1219,12 @@ class RTMOHead(YOLOXPoseHead):
 
         return losses
 
-    def loss(self, feats: Tuple[Tensor], batch_data_samples: OptSampleList) -> dict:
+    def loss(self, feats: Tuple[Tensor], targets: List[KeypointTargets]) -> dict:
         """Calculate losses from a batch of inputs and data samples.
 
         Args:
             feats (Tuple[Tensor]): The multi-stage features
-            batch_data_samples (List[:obj:`PoseDataSample`]): The batch
+            targets (List[KeypointTargets]): The batch
                 data samples
 
         Returns:
@@ -1273,14 +1271,14 @@ class RTMOHead(YOLOXPoseHead):
         assert flatten_bbox_decoded is not None, "flatten_bbox_decoded is None"
         assert flatten_kpt_decoded is not None, "flatten_kpt_decoded is None"
         assert flatten_kpt_vis is not None, "flatten_kpt_vis is None"
-        targets = self._get_targets(
+        _targets = self._get_targets(
             flatten_priors,
             flatten_cls_scores.detach(),
             flatten_objectness.detach(),
             flatten_bbox_decoded.detach(),
             flatten_kpt_decoded.detach(),
             flatten_kpt_vis.detach(),
-            batch_data_samples,
+            targets,
         )
 
         predictions = (
@@ -1294,7 +1292,7 @@ class RTMOHead(YOLOXPoseHead):
             flatten_kpt_decoded,
         )
 
-        losses = self.losses(predictions, targets)
+        losses = self.losses(predictions, _targets)
         return losses
 
     def predict(self, feats: Tuple[Tensor]) -> KeypointOutput:
@@ -1372,7 +1370,7 @@ class RTMOHead(YOLOXPoseHead):
 
             if bboxes.numel() > 0 and self.nms:
                 nms_thr = self.nms_thr
-                keep_idxs_nms = nms_torch(bboxes, scores, nms_thr)
+                keep_idxs_nms = nms(bboxes, scores, nms_thr)
                 if nms_thr < 1.0:
                     bboxes = bboxes[keep_idxs_nms]
                     stride = stride[keep_idxs_nms]

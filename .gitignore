@@ -96,6 +96,4 @@ site/
 notebooks/
 gradio/output/
 tutorials/experiments
-experiments/
-run_keypoint.py
-wandb/
+experiments
