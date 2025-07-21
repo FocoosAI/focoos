@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from focoos.models.yoloxpose.ports import KeypointLossLiteral
+from focoos.models.yoloxpose.ports import YoloXPoseKeypointLossLiteral
 from focoos.utils.box import bbox_overlaps
 
 
@@ -23,8 +23,8 @@ class KeypointCriterion(nn.Module):
         self.loss_mle = MLECCLoss(use_target_weight=True, loss_weight=1.0)
         self.loss_cls_varifocal = VariFocalLoss(reduction="sum", use_target_weight=True, loss_weight=1.0)
 
-    def get_loss(self, loss: KeypointLossLiteral, outputs, targets, **kwargs) -> torch.Tensor:
-        loss_map: dict[KeypointLossLiteral, nn.Module] = {
+    def get_loss(self, loss: YoloXPoseKeypointLossLiteral, outputs, targets, **kwargs) -> torch.Tensor:
+        loss_map: dict[YoloXPoseKeypointLossLiteral, nn.Module] = {
             "objectness": self.loss_obj,
             "boxes": self.loss_bbox,
             "oks": self.loss_oks,

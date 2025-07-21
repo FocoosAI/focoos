@@ -6,6 +6,7 @@ import torch
 import torch.distributed as dist
 import torch.nn as nn
 from torch import Tensor
+from typing_extensions import List
 
 
 def bias_init_with_prob(prior_prob: Union[float, int]) -> float:
@@ -173,3 +174,80 @@ class DropPath(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return drop_path(x, self.drop_prob, self.training)
+
+
+def flatten_predictions(preds: List[Tensor]) -> Optional[Tensor]:
+    """Flattens the predictions from a list of tensors to a single
+    tensor."""
+    if len(preds) == 0:
+        return None
+
+    preds = [x.permute(0, 2, 3, 1).flatten(1, 2) for x in preds]
+    return torch.cat(preds, dim=1)
+
+
+def decode_bbox(pred_bboxes: torch.Tensor, priors: torch.Tensor, stride: Union[torch.Tensor, int]) -> torch.Tensor:
+    """Decode regression results (delta_x, delta_y, log_w, log_h) to
+    bounding boxes (tl_x, tl_y, br_x, br_y).
+
+    Note:
+        - batch size: B
+        - token number: N
+
+    Args:
+        pred_bboxes (torch.Tensor): Encoded boxes with shape (B, N, 4),
+            representing (delta_x, delta_y, log_w, log_h) for each box.
+        priors (torch.Tensor): Anchors coordinates, with shape (N, 2).
+        stride (torch.Tensor | int): Strides of the bboxes. It can be a
+            single value if the same stride applies to all boxes, or it
+            can be a tensor of shape (N, ) if different strides are used
+            for each box.
+
+    Returns:
+        torch.Tensor: Decoded bounding boxes with shape (N, 4),
+            representing (tl_x, tl_y, br_x, br_y) for each box.
+    """
+    if isinstance(stride, int):
+        stride = torch.tensor([stride], device=pred_bboxes.device, dtype=pred_bboxes.dtype)
+
+    stride = stride.view(1, stride.size(0), 1)
+    priors = priors.view(1, priors.size(0), 2)
+
+    xys = (pred_bboxes[..., :2] * stride) + priors  # xys.shape = [batch_size, 8400, 2], cxcy ABS
+    whs = pred_bboxes[..., 2:].exp() * stride
+
+    # Calculate bounding box corners
+    tl_x = xys[..., 0] - whs[..., 0] / 2
+    tl_y = xys[..., 1] - whs[..., 1] / 2
+    br_x = xys[..., 0] + whs[..., 0] / 2
+    br_y = xys[..., 1] + whs[..., 1] / 2
+
+    decoded_bboxes = torch.stack([tl_x, tl_y, br_x, br_y], -1)
+    return decoded_bboxes
+
+
+def decode_kpt_reg(
+    pred_kpt_offsets: torch.Tensor, priors: torch.Tensor, stride: torch.Tensor, num_keypoints: int
+) -> torch.Tensor:
+    """Decode regression results (delta_x, delta_y) to keypoints
+    coordinates (x, y).
+
+    Args:
+        pred_kpt_offsets (torch.Tensor): Encoded keypoints offsets with
+            shape (batch_size, num_anchors, num_keypoints, 2).
+        priors (torch.Tensor): Anchors coordinates with shape
+            (num_anchors, 2).
+        stride (torch.Tensor): Strides of the anchors.
+
+    Returns:
+        torch.Tensor: Decoded keypoints coordinates with shape
+            (batch_size, num_boxes, num_keypoints, 2).
+    """
+    stride = stride.view(1, stride.size(0), 1, 1)
+    priors = priors.view(1, priors.size(0), 1, 2)
+    pred_kpt_offsets = pred_kpt_offsets.reshape(
+        *pred_kpt_offsets.shape[:-1], num_keypoints, 2
+    )  # pred_kpt_offsets.shape = [batch_size, 8400, 17, 2]
+
+    decoded_kpts = pred_kpt_offsets * stride + priors
+    return decoded_kpts

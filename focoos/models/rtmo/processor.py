@@ -5,7 +5,8 @@ import torch
 from PIL import Image
 
 from focoos.models.rtmo.config import RTMOConfig
-from focoos.models.rtmo.ports import KeypointOutput, KeypointTargets, RTMOModelOutput
+from focoos.models.rtmo.ports import RTMOModelOutput
+from focoos.models.yoloxpose.ports import KeypointOutput, KeypointTargets
 from focoos.ports import DatasetEntry, DynamicAxes, FocoosDet, FocoosDetections
 from focoos.processor.base_processor import Processor
 from focoos.structures import Boxes, ImageList, Instances, Keypoints
@@ -73,6 +74,7 @@ class RTMOProcessor(Processor):
                             bboxes=gt_boxes,
                             keypoints=gt_keypoints,
                             keypoints_visible=gt_visibility,
+                            keypoints_visible_weights=None,
                             areas=gt_areas,
                             scores=None,
                             priors=None,

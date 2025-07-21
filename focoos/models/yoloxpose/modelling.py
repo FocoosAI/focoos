@@ -13,7 +13,14 @@ from focoos.models.focoos_model import BaseModelNN
 from focoos.models.yoloxpose.config import YOLOXPoseConfig
 from focoos.models.yoloxpose.loss import KeypointCriterion
 from focoos.models.yoloxpose.ports import KeypointOutput, KeypointTargets, YOLOXPoseModelOutput
-from focoos.models.yoloxpose.utils import bias_init_with_prob, filter_scores_and_topk, reduce_mean
+from focoos.models.yoloxpose.utils import (
+    bias_init_with_prob,
+    decode_bbox,
+    decode_kpt_reg,
+    filter_scores_and_topk,
+    flatten_predictions,
+    reduce_mean,
+)
 from focoos.nn.backbone.base import ShapeSpec
 from focoos.nn.backbone.build import load_backbone
 from focoos.nn.layers.base import get_activation_fn
@@ -321,14 +328,6 @@ class BBoxOverlaps2D:
 
 class PoseOKS:
     """OKS score Calculator."""
-
-    def __init__(self, metainfo: Optional[str] = "configs/_base_/datasets/coco.py"):
-        return
-        # if metainfo is not None:
-        #     metainfo = parse_pose_metainfo(dict(from_file=metainfo))
-        #     sigmas = metainfo.get('sigmas', None)
-        #     if sigmas is not None:
-        #         self.sigmas = torch.as_tensor(sigmas)
 
     @torch.no_grad()
     def __call__(
@@ -939,10 +938,6 @@ class YOLOXPoseHead(nn.Module):
         if loss_kpt_aux is not None:
             self.loss_kpt_aux = loss_kpt_aux
 
-    def _forward(self, feats: Tuple[Tensor]):
-        assert isinstance(feats, (tuple, list))
-        return self.head_module(feats)
-
     def forward(self, features, targets: Optional[list[KeypointTargets]] = None):
         assert isinstance(features, (tuple, list))
         spatial_features, multi_scale_features = features
@@ -1045,7 +1040,8 @@ class YOLOXPoseHead(nn.Module):
         """
 
         # 1. collect & reform predictions
-        cls_scores, objectnesses, bbox_preds, kpt_offsets, kpt_vis = self._forward(feats)
+        assert isinstance(feats, (tuple, list)), "feats must be a tuple or list"
+        cls_scores, objectnesses, bbox_preds, kpt_offsets, kpt_vis = self.head_module(feats)
 
         featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
         mlvl_priors = self.prior_generator.grid_priors(  # mlvl_priors.shape = [torch.Size([400, 4]), torch.Size([1600, 4]), torch.Size([6400, 4])]
@@ -1054,11 +1050,11 @@ class YOLOXPoseHead(nn.Module):
         flatten_priors = torch.cat(mlvl_priors)  # flatten_priors.shape = [8400, 4], format cxcywh ABS
 
         # flatten cls_scores, bbox_preds and objectness
-        flatten_cls_scores = self._flatten_predictions(cls_scores)
-        flatten_bbox_preds = self._flatten_predictions(bbox_preds)
-        flatten_objectness = self._flatten_predictions(objectnesses)
-        flatten_kpt_offsets = self._flatten_predictions(kpt_offsets)
-        flatten_kpt_vis = self._flatten_predictions(kpt_vis)
+        flatten_cls_scores = flatten_predictions(cls_scores)
+        flatten_bbox_preds = flatten_predictions(bbox_preds)
+        flatten_objectness = flatten_predictions(objectnesses)
+        flatten_kpt_offsets = flatten_predictions(kpt_offsets)
+        flatten_kpt_vis = flatten_predictions(kpt_vis)
 
         if (
             flatten_cls_scores is None
@@ -1069,15 +1065,17 @@ class YOLOXPoseHead(nn.Module):
         ):
             raise ValueError("One or more flattened predictions are None")
 
-        flatten_bbox_decoded = self.decode_bbox(
-            flatten_bbox_preds,  # flatten_bbox_preds.shape = [batch_size, 8400, 4]
-            flatten_priors[..., :2],  # flatten_priors[..., :2].shape = [8400, 2]
-            flatten_priors[..., -1],
+        flatten_bbox_decoded = decode_bbox(
+            pred_bboxes=flatten_bbox_preds,  # flatten_bbox_preds.shape = [batch_size, 8400, 4]
+            priors=flatten_priors[..., :2],  # flatten_priors[..., :2].shape = [8400, 2]
+            stride=flatten_priors[..., -1],
         )  # flatten_priors[..., -1].shape = [8400]
-        flatten_kpt_decoded = self.decode_kpt_reg(
-            flatten_kpt_offsets,  # flatten_kpt_offsets.shape = [batch_size, 8400, 34]
-            flatten_priors[..., :2],  # flatten_priors[..., :2].shape = [8400, 2]
-            flatten_priors[..., -1],
+        num_keypoints = self.num_keypoints
+        flatten_kpt_decoded = decode_kpt_reg(
+            pred_kpt_offsets=flatten_kpt_offsets,  # flatten_kpt_offsets.shape = [batch_size, 8400, 34]
+            priors=flatten_priors[..., :2],  # flatten_priors[..., :2].shape = [8400, 2]
+            stride=flatten_priors[..., -1],
+            num_keypoints=num_keypoints,
         )  # flatten_priors[..., -1].shape = [8400]
         # flatten_kpt_decoded.shape = [batch_size, 8400, 17, 2], format xy ABS
         # flatten_bbox_decoded output format: XYXY ABS, flatten_bbox_decoded.shape = [batch_size, 8400, 4]
@@ -1252,7 +1250,7 @@ class YOLOXPoseHead(nn.Module):
             keypoints=data_sample.keypoints,
             keypoints_visible=data_sample.keypoints_visible,
             areas=data_sample.areas,
-            keypoints_visible_weights=data_sample.get("keypoints_visible_weights", None),
+            keypoints_visible_weights=data_sample.keypoints_visible_weights,
         )
         gt_fields = data_sample.get("gt_fields", dict())
         num_gts = len(gt_instances)
@@ -1390,8 +1388,8 @@ class YOLOXPoseHead(nn.Module):
                 - N is the number of instances
                 - K is the number of keypoints per instance
         """
-
-        cls_scores, objectnesses, bbox_preds, kpt_offsets, kpt_vis = self._forward(feats)
+        assert isinstance(feats, (tuple, list)), "feats must be a tuple or list"
+        cls_scores, objectnesses, bbox_preds, kpt_offsets, kpt_vis = self.head_module(feats)
         featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
 
         # If the shape does not change, use the previous mlvl_priors
@@ -1409,21 +1407,27 @@ class YOLOXPoseHead(nn.Module):
         flatten_stride = torch.cat(mlvl_strides)
 
         # flatten cls_scores, bbox_preds and objectness
-        flatten_cls_scores = self._flatten_predictions(cls_scores)
+        flatten_cls_scores = flatten_predictions(cls_scores)
         flatten_cls_scores = flatten_cls_scores.sigmoid() if flatten_cls_scores is not None else None
-        flatten_bbox_preds = self._flatten_predictions(bbox_preds)
-        flatten_objectness = self._flatten_predictions(objectnesses)
+        flatten_bbox_preds = flatten_predictions(bbox_preds)
+        flatten_objectness = flatten_predictions(objectnesses)
         flatten_objectness = flatten_objectness.sigmoid() if flatten_objectness is not None else None
-        flatten_kpt_offsets = self._flatten_predictions(kpt_offsets)
-        flatten_kpt_vis = self._flatten_predictions(kpt_vis)
+        flatten_kpt_offsets = flatten_predictions(kpt_offsets)
+        flatten_kpt_vis = flatten_predictions(kpt_vis)
         flatten_kpt_vis = flatten_kpt_vis.sigmoid() if flatten_kpt_vis is not None else None
+        num_keypoints = self.num_keypoints
         flatten_bbox_preds = (
-            self.decode_bbox(flatten_bbox_preds, flatten_priors, flatten_stride)
+            decode_bbox(pred_bboxes=flatten_bbox_preds, priors=flatten_priors, stride=flatten_stride)
             if flatten_bbox_preds is not None
             else None
         )
         flatten_kpt_reg = (
-            self.decode_kpt_reg(flatten_kpt_offsets, flatten_priors, flatten_stride)
+            decode_kpt_reg(
+                pred_kpt_offsets=flatten_kpt_offsets,
+                priors=flatten_priors,
+                stride=flatten_stride,
+                num_keypoints=num_keypoints,
+            )
             if flatten_kpt_offsets is not None
             else None
         )
@@ -1491,81 +1495,7 @@ class YOLOXPoseHead(nn.Module):
             keypoints_visible=torch.cat(all_keypoints_visible, dim=0),
         )
 
-    def decode_bbox(
-        self, pred_bboxes: torch.Tensor, priors: torch.Tensor, stride: Union[torch.Tensor, int]
-    ) -> torch.Tensor:
-        """Decode regression results (delta_x, delta_y, log_w, log_h) to
-        bounding boxes (tl_x, tl_y, br_x, br_y).
-
-        Note:
-            - batch size: B
-            - token number: N
-
-        Args:
-            pred_bboxes (torch.Tensor): Encoded boxes with shape (B, N, 4),
-                representing (delta_x, delta_y, log_w, log_h) for each box.
-            priors (torch.Tensor): Anchors coordinates, with shape (N, 2).
-            stride (torch.Tensor | int): Strides of the bboxes. It can be a
-                single value if the same stride applies to all boxes, or it
-                can be a tensor of shape (N, ) if different strides are used
-                for each box.
-
-        Returns:
-            torch.Tensor: Decoded bounding boxes with shape (N, 4),
-                representing (tl_x, tl_y, br_x, br_y) for each box.
-        """
-        if isinstance(stride, int):
-            stride = torch.tensor([stride], device=pred_bboxes.device, dtype=pred_bboxes.dtype)
-
-        stride = stride.view(1, stride.size(0), 1)
-        priors = priors.view(1, priors.size(0), 2)
-
-        xys = (pred_bboxes[..., :2] * stride) + priors  # xys.shape = [batch_size, 8400, 2], cxcy ABS
-        whs = pred_bboxes[..., 2:].exp() * stride
-
-        # Calculate bounding box corners
-        tl_x = xys[..., 0] - whs[..., 0] / 2
-        tl_y = xys[..., 1] - whs[..., 1] / 2
-        br_x = xys[..., 0] + whs[..., 0] / 2
-        br_y = xys[..., 1] + whs[..., 1] / 2
-
-        decoded_bboxes = torch.stack([tl_x, tl_y, br_x, br_y], -1)
-        return decoded_bboxes  # decoded_bboxes format = XYXY ABS
-
-    def decode_kpt_reg(
-        self, pred_kpt_offsets: torch.Tensor, priors: torch.Tensor, stride: torch.Tensor
-    ) -> torch.Tensor:
-        """Decode regression results (delta_x, delta_y) to keypoints
-        coordinates (x, y).
-
-        Args:
-            pred_kpt_offsets (torch.Tensor): Encoded keypoints offsets with
-                shape (batch_size, num_anchors, num_keypoints, 2).
-            priors (torch.Tensor): Anchors coordinates with shape
-                (num_anchors, 2).
-            stride (torch.Tensor): Strides of the anchors.
-
-        Returns:
-            torch.Tensor: Decoded keypoints coordinates with shape
-                (batch_size, num_boxes, num_keypoints, 2).
-        """
-        stride = stride.view(1, stride.size(0), 1, 1)
-        priors = priors.view(1, priors.size(0), 1, 2)
-        pred_kpt_offsets = pred_kpt_offsets.reshape(
-            *pred_kpt_offsets.shape[:-1], self.num_keypoints, 2
-        )  # pred_kpt_offsets.shape = [batch_size, 8400, 17, 2]
-
-        decoded_kpts = pred_kpt_offsets * stride + priors
-        return decoded_kpts  # decoded_kpts.shape = [batch_size, 8400, 17, 2], format xy ABS
-
-    def _flatten_predictions(self, preds: List[Tensor]) -> Optional[Tensor]:
-        """Flattens the predictions from a list of tensors to a single
-        tensor."""
-        if len(preds) == 0:
-            return None
-
-        preds = [x.permute(0, 2, 3, 1).flatten(1, 2) for x in preds]
-        return torch.cat(preds, dim=1)
+    # decoded_kpts.shape = [batch_size, 8400, 17, 2], format xy ABS
 
 
 class YOLOXPose(BaseModelNN):

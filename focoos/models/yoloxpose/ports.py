@@ -5,10 +5,10 @@ import torch
 
 from focoos.ports import DictClass, ModelOutput
 
-KeypointLossLiteral = Literal[
+YoloXPoseKeypointLossLiteral = Literal[
     "objectness", "boxes", "oks", "visibility", "classification", "bbox_aux", "mle", "classification_varifocal"
 ]
-KeypointLoss = dict[KeypointLossLiteral, torch.Tensor]
+YoloXPoseKeypointLoss = dict[YoloXPoseKeypointLossLiteral, torch.Tensor]
 
 
 @dataclass
@@ -21,16 +21,6 @@ class KeypointTargets(DictClass):
     keypoints_visible: Optional[torch.Tensor]
     keypoints_visible_weights: Optional[torch.Tensor]
     areas: Optional[torch.Tensor]
-
-
-@dataclass
-class OptSampleList(DictClass):
-    boxes: torch.Tensor
-    labels: torch.Tensor
-    keypoints: torch.Tensor
-    keypoints_vis: torch.Tensor
-    areas: torch.Tensor
-    gt_fields: torch.Tensor
 
 
 @dataclass
@@ -47,4 +37,4 @@ class KeypointOutput(DictClass):
 @dataclass
 class YOLOXPoseModelOutput(ModelOutput):
     outputs: KeypointOutput
-    loss: KeypointLoss
+    loss: YoloXPoseKeypointLoss

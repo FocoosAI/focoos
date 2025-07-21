@@ -12,14 +12,24 @@ from torchvision.ops import nms
 
 from focoos.models.focoos_model import BaseModelNN
 from focoos.models.rtmo.config import RTMOConfig
-from focoos.models.rtmo.ports import KeypointOutput, KeypointTargets, RTMOModelOutput
+from focoos.models.rtmo.ports import RTMOModelOutput
 from focoos.models.rtmo.utlis import ChannelWiseScale, ScaleNorm
-from focoos.models.yoloxpose.modelling import KeypointCriterion, PoseOKS, SimOTAAssigner, YoloNeck, YOLOXPoseHead
+from focoos.models.yoloxpose.modelling import (
+    KeypointCriterion,
+    MlvlPointGenerator,
+    PoseOKS,
+    SimOTAAssigner,
+    YoloNeck,
+)
+from focoos.models.yoloxpose.ports import KeypointOutput, KeypointTargets
 from focoos.models.yoloxpose.utils import (
     Scale,
     bbox_xyxy2cs,
     bias_init_with_prob,
+    decode_bbox,
+    decode_kpt_reg,
     filter_scores_and_topk,
+    flatten_predictions,
     reduce_mean,
 )
 from focoos.nn.backbone.build import load_backbone
@@ -412,7 +422,7 @@ class RTMOHeadModule(nn.Module):
         in_channels: int,
         num_classes: int = 1,
         widen_factor: float = 1.0,
-        cls_feat_channels: int = 256,
+        feat_channels: int = 256,
         stacked_convs: int = 2,
         num_groups: int = 8,
         channels_per_group: int = 36,
@@ -424,7 +434,7 @@ class RTMOHeadModule(nn.Module):
     ):
         super().__init__()
         self.num_classes = num_classes
-        self.cls_feat_channels = int(cls_feat_channels * widen_factor)
+        self.cls_feat_channels = int(feat_channels * widen_factor)
         self.stacked_convs = stacked_convs
         assert conv_bias == "auto" or isinstance(conv_bias, bool)
         self.conv_bias = conv_bias
@@ -979,7 +989,7 @@ class DCC(nn.Module):
         self.forward_test = types.MethodType(_forward_test, self)
 
 
-class RTMOHead(YOLOXPoseHead):
+class RTMOHead(nn.Module):
     """One-stage coordinate classification head introduced in RTMO (2023). This
     head incorporates dynamic coordinate classification and YOLO structure for
     precise keypoint localization.
@@ -1023,11 +1033,9 @@ class RTMOHead(YOLOXPoseHead):
         norm: Optional[str] = "BN",
         activation: Optional[Callable[[Tensor], Tensor]] = F.relu,
         # YOLOXHead related params
-        in_channels_yolo: int = 256,
         widen_factor_yolo: float = 1.0,
         feat_channels: int = 256,
         # RTMOHead related params
-        in_channels_rtmo: int = 256,
         pose_vec_channels: int = 256,
         widen_factor_rtmo: float = 1.0,
         proxy_target_cc: bool = False,
@@ -1039,43 +1047,33 @@ class RTMOHead(YOLOXPoseHead):
         spe_channels: int = 128,
         gau_cfg: dict = dict(s=128, expansion_factor=2, dropout_rate=0.0),
     ):
-        if in_channels is not None:
-            in_channels_yolo = in_channels
-            feat_channels = in_channels
-            in_channels_rtmo = in_channels
+        super().__init__()
 
-        super().__init__(
-            num_keypoints=num_keypoints,
-            num_classes=num_classes,
-            in_channels=in_channels_yolo,
-            widen_factor=widen_factor_yolo,
-            feat_channels=feat_channels,
-            featmap_strides=featmap_strides,
-            norm=norm,
-            activation=activation,
-            use_aux_loss=use_aux_loss,
-            overlaps_power=overlaps_power,
-            score_thr=score_thr,
-            nms_topk=nms_pre,
-            nms_thr=nms_thr,
-            featmap_strides_pointgenerator=featmap_strides_pointgenerator,
-            centralize_points_pointgenerator=centralize_points_pointgenerator,
-        )
-
+        self.featmap_sizes = None
+        self.num_keypoints = num_keypoints
+        self.num_classes = num_classes
+        self.in_channels = in_channels
+        self.widen_factor = widen_factor
+        self.stacked_convs = stacked_convs
+        self.featmap_strides = featmap_strides
+        self.featmap_strides_pointgenerator = featmap_strides_pointgenerator
         self.criterion = KeypointCriterion()
+        self.use_aux_loss = use_aux_loss
+        self.overlaps_power = overlaps_power
         self.bbox_padding = bbox_padding
         self.nms_pre = nms_pre
         self.nms_thr = nms_thr
+        self.score_thr = score_thr
         self.nms = True
 
         # build modules
         self.head_module = RTMOHeadModule(
             num_keypoints=num_keypoints,
-            in_channels=in_channels_rtmo,
+            in_channels=in_channels,
             pose_vec_channels=pose_vec_channels,
             num_classes=num_classes,
             widen_factor=widen_factor_rtmo,
-            cls_feat_channels=in_channels_rtmo,
+            feat_channels=feat_channels,
             stacked_convs=stacked_convs,
             num_groups=8,
             channels_per_group=36,
@@ -1087,6 +1085,9 @@ class RTMOHead(YOLOXPoseHead):
 
         self.proxy_target_cc = proxy_target_cc
         in_channels_dcc = pose_vec_channels
+        self.prior_generator = MlvlPointGenerator(
+            strides=featmap_strides_pointgenerator, centralize_points=centralize_points_pointgenerator
+        )
         self.assigner = SimOTAAssigner(
             dynamic_k_indicator="oks", oks_calculator=PoseOKS(), use_keypoints_for_center=True
         )
@@ -1099,10 +1100,6 @@ class RTMOHead(YOLOXPoseHead):
                 spe_channels=spe_channels,
                 gau_cfg=gau_cfg,
             )
-
-    def _forward(self, feats: Tuple[Tensor]):
-        assert isinstance(feats, (tuple, list))
-        return self.head_module(feats)
 
     def forward(self, features, targets: Optional[list[KeypointTargets]] = None):
         assert isinstance(features, (tuple, list))
@@ -1233,7 +1230,8 @@ class RTMOHead(YOLOXPoseHead):
 
         # 1. collect & reform predictions
         # feats.shape = [torch.Size([8, 128, 20, 20]), torch.Size([8, 128, 40, 40]), torch.Size([8, 128, 80, 80])]
-        cls_scores, bbox_preds, kpt_offsets, kpt_vis, pose_vecs = self._forward(
+        assert isinstance(feats, (tuple, list)), "feats must be a tuple or list"
+        cls_scores, bbox_preds, kpt_offsets, kpt_vis, pose_vecs = self.head_module(
             feats
         )  # pose_vecs.shape = [(8, 144, 20, 20), (8, 144, 40, 40), (8, 144, 80, 80)]
 
@@ -1244,23 +1242,29 @@ class RTMOHead(YOLOXPoseHead):
         flatten_priors = torch.cat(mlvl_priors)
 
         # flatten cls_scores, bbox_preds and objectness
-        flatten_cls_scores = self._flatten_predictions(cls_scores)
-        flatten_bbox_preds = self._flatten_predictions(bbox_preds)
+        flatten_cls_scores = flatten_predictions(cls_scores)
+        flatten_bbox_preds = flatten_predictions(bbox_preds)
         flatten_objectness = (
             torch.ones_like(flatten_cls_scores).detach().narrow(-1, 0, 1) * 1e4
             if flatten_cls_scores is not None
             else None
         )
-        flatten_kpt_offsets = self._flatten_predictions(kpt_offsets)
-        flatten_kpt_vis = self._flatten_predictions(kpt_vis)
-        flatten_pose_vecs = self._flatten_predictions(pose_vecs)  # flatten_pose_vecs.shape = torch.Size([8, 8400, 144])
+        flatten_kpt_offsets = flatten_predictions(kpt_offsets)
+        flatten_kpt_vis = flatten_predictions(kpt_vis)
+        flatten_pose_vecs = flatten_predictions(pose_vecs)  # flatten_pose_vecs.shape = torch.Size([8, 8400, 144])
         flatten_bbox_decoded = (
-            self.decode_bbox(flatten_bbox_preds, flatten_priors[..., :2], flatten_priors[..., -1])
+            decode_bbox(pred_bboxes=flatten_bbox_preds, priors=flatten_priors[..., :2], stride=flatten_priors[..., -1])
             if flatten_bbox_preds is not None
             else None
         )
+        num_keypoints = self.num_keypoints
         flatten_kpt_decoded = (
-            self.decode_kpt_reg(flatten_kpt_offsets, flatten_priors[..., :2], flatten_priors[..., -1])
+            decode_kpt_reg(
+                pred_kpt_offsets=flatten_kpt_offsets,
+                priors=flatten_priors[..., :2],
+                stride=flatten_priors[..., -1],
+                num_keypoints=num_keypoints,
+            )
             if flatten_kpt_offsets is not None
             else None
         )
@@ -1295,6 +1299,261 @@ class RTMOHead(YOLOXPoseHead):
         losses = self.losses(predictions, _targets)
         return losses
 
+    @torch.no_grad()
+    def _get_targets(
+        self,
+        priors: Tensor,
+        batch_cls_scores: Tensor,
+        batch_objectness: Tensor,
+        batch_decoded_bboxes: Tensor,
+        batch_decoded_kpts: Tensor,
+        batch_kpt_vis: Tensor,
+        targets: List[KeypointTargets],
+    ):
+        num_imgs = len(targets)
+
+        # use clip to avoid nan
+        batch_cls_scores = batch_cls_scores.clip(min=-1e4, max=1e4).sigmoid()
+        batch_objectness = batch_objectness.clip(min=-1e4, max=1e4).sigmoid()
+        batch_kpt_vis = batch_kpt_vis.clip(min=-1e4, max=1e4).sigmoid()
+        batch_cls_scores[torch.isnan(batch_cls_scores)] = 0
+        batch_objectness[torch.isnan(batch_objectness)] = 0
+
+        targets_each = []
+        for i in range(num_imgs):
+            target = self._get_targets_single(
+                priors=priors,
+                cls_scores=batch_cls_scores[i],
+                objectness=batch_objectness[i],
+                decoded_bboxes=batch_decoded_bboxes[i],
+                decoded_kpts=batch_decoded_kpts[i],
+                kpt_vis=batch_kpt_vis[i],
+                data_sample=targets[i],
+            )
+            targets_each.append(target)
+
+        targets = list(zip(*targets_each))
+        for i, target in enumerate(targets):
+            if torch.is_tensor(target[0]):
+                target = tuple(filter(lambda x: x.size(0) > 0, target))
+                if len(target) > 0:
+                    targets[i] = torch.cat(target)
+
+        (
+            foreground_masks,
+            cls_targets,
+            obj_targets,
+            obj_weights,
+            bbox_targets,
+            kpt_targets,
+            vis_targets,
+            vis_weights,
+            pos_areas,
+            pos_priors,
+            group_indices,
+            num_pos_per_img,
+        ) = targets
+
+        # post-processing for targets
+        if self.use_aux_loss:
+            bbox_cxcy = (bbox_targets[:, :2] + bbox_targets[:, 2:]) / 2.0
+            bbox_wh = bbox_targets[:, 2:] - bbox_targets[:, :2]
+            bbox_aux_targets = torch.cat(
+                [(bbox_cxcy - pos_priors[:, :2]) / pos_priors[:, 2:], torch.log(bbox_wh / pos_priors[:, 2:] + 1e-8)],
+                dim=-1,
+            )
+
+            kpt_aux_targets = (kpt_targets - pos_priors[:, None, :2]) / pos_priors[:, None, 2:]
+        else:
+            bbox_aux_targets, kpt_aux_targets = None, None
+
+        return (
+            foreground_masks,
+            cls_targets,
+            obj_targets,
+            obj_weights,
+            bbox_targets,
+            bbox_aux_targets,
+            kpt_targets,
+            kpt_aux_targets,
+            vis_targets,
+            vis_weights,
+            pos_areas,
+            pos_priors,
+            group_indices,
+            num_pos_per_img,
+        )
+
+    @torch.no_grad()
+    def _get_targets_single(
+        self,
+        priors: Tensor,
+        cls_scores: Tensor,
+        objectness: Tensor,
+        decoded_bboxes: Tensor,
+        decoded_kpts: Tensor,
+        kpt_vis: Tensor,
+        data_sample: KeypointTargets,
+    ) -> tuple:
+        """Compute classification, bbox, keypoints and objectness targets for
+        priors in a single image.
+
+        Args:
+            priors (Tensor): All priors of one image, a 2D-Tensor with shape
+                [num_priors, 4] in [cx, xy, stride_w, stride_y] format.
+            cls_scores (Tensor): Classification predictions of one image,
+                a 2D-Tensor with shape [num_priors, num_classes]
+            objectness (Tensor): Objectness predictions of one image,
+                a 1D-Tensor with shape [num_priors]
+            decoded_bboxes (Tensor): Decoded bboxes predictions of one image,
+                a 2D-Tensor with shape [num_priors, 4] in xyxy format.
+            decoded_kpts (Tensor): Decoded keypoints predictions of one image,
+                a 3D-Tensor with shape [num_priors, num_keypoints, 2].
+            kpt_vis (Tensor): Keypoints visibility predictions of one image,
+                a 2D-Tensor with shape [num_priors, num_keypoints].
+            data_sample (PoseDataSample): Data sample that contains the ground
+                truth annotations for current image.
+
+        Returns:
+            tuple: A tuple containing various target tensors for training:
+                - foreground_mask (Tensor): Binary mask indicating foreground
+                    priors.
+                - cls_target (Tensor): Classification targets.
+                - obj_target (Tensor): Objectness targets.
+                - obj_weight (Tensor): Weights for objectness targets.
+                - bbox_target (Tensor): BBox targets.
+                - kpt_target (Tensor): Keypoints targets.
+                - vis_target (Tensor): Visibility targets for keypoints.
+                - vis_weight (Tensor): Weights for keypoints visibility
+                    targets.
+                - pos_areas (Tensor): Areas of positive samples.
+                - pos_priors (Tensor): Priors corresponding to positive
+                    samples.
+                - group_index (List[Tensor]): Indices of groups for positive
+                    samples.
+                - num_pos_per_img (int): Number of positive samples.
+        """
+        # TODO: change the shape of objectness to [num_priors]
+        num_priors = priors.size(0)
+        # TODO: avoid using mmpose data structures
+        gt_instances = KeypointTargets(
+            bboxes=data_sample.bboxes,
+            scores=None,
+            priors=None,
+            labels=data_sample.labels,
+            keypoints=data_sample.keypoints,
+            keypoints_visible=data_sample.keypoints_visible,
+            areas=data_sample.areas,
+            keypoints_visible_weights=data_sample.get("keypoints_visible_weights", None),
+        )
+        gt_fields = data_sample.get("gt_fields", dict())
+        num_gts = len(gt_instances)
+
+        # No target
+        if num_gts == 0:
+            cls_target = cls_scores.new_zeros((0, self.num_classes))
+            bbox_target = cls_scores.new_zeros((0, 4))
+            obj_target = cls_scores.new_zeros((num_priors, 1))
+            obj_weight = cls_scores.new_ones((num_priors, 1))
+            kpt_target = cls_scores.new_zeros((0, self.num_keypoints, 2))
+            vis_target = cls_scores.new_zeros((0, self.num_keypoints))
+            vis_weight = cls_scores.new_zeros((0, self.num_keypoints))
+            pos_areas = cls_scores.new_zeros((0,))
+            pos_priors = priors[:0]
+            foreground_mask = cls_scores.new_zeros(num_priors).bool()
+            return (
+                foreground_mask,
+                cls_target,
+                obj_target,
+                obj_weight,
+                bbox_target,
+                kpt_target,
+                vis_target,
+                vis_weight,
+                pos_areas,
+                pos_priors,
+                [],
+                0,
+            )
+
+        # assign positive samples
+        scores = cls_scores * objectness
+        pred_instances = KeypointTargets(
+            bboxes=decoded_bboxes,
+            scores=scores.sqrt_(),
+            priors=priors,
+            keypoints=decoded_kpts,
+            keypoints_visible=kpt_vis,
+            keypoints_visible_weights=None,
+            areas=None,
+            labels=None,
+        )
+        assign_result = self.assigner.assign(pred_instances=pred_instances, gt_instances=gt_instances)
+
+        # sampling
+        pos_inds = torch.nonzero(assign_result["gt_inds"] > 0, as_tuple=False).squeeze(-1).unique()
+        num_pos_per_img = pos_inds.size(0)
+        pos_gt_labels = assign_result["labels"][pos_inds]
+        pos_assigned_gt_inds = assign_result["gt_inds"][pos_inds] - 1
+
+        # bbox target
+        assert gt_instances.bboxes is not None, "gt_instances.bboxes is None"
+        bbox_target = gt_instances.bboxes[pos_assigned_gt_inds.long()]
+
+        # cls target
+        max_overlaps = assign_result["max_overlaps"][pos_inds]
+        cls_target = F.one_hot(pos_gt_labels, self.num_classes) * max_overlaps.unsqueeze(-1)
+
+        # pose targets
+        assert gt_instances.keypoints is not None, "gt_instances.keypoints is None"
+        assert gt_instances.keypoints_visible is not None, "gt_instances.keypoints_visible is None"
+        kpt_target = gt_instances.keypoints[pos_assigned_gt_inds]
+        vis_target = gt_instances.keypoints_visible[pos_assigned_gt_inds]
+        if gt_instances.keypoints_visible_weights is not None:
+            vis_weight = gt_instances.keypoints_visible_weights[pos_assigned_gt_inds]
+        else:
+            vis_weight = vis_target.new_ones(vis_target.shape)
+        pos_areas = gt_instances.areas[pos_assigned_gt_inds] if gt_instances.areas is not None else None
+
+        # obj target
+        obj_target = torch.zeros_like(objectness)
+        obj_target[pos_inds] = 1
+        # TODO: check if this is needed
+        invalid_mask = gt_fields.get("heatmap_mask", None)
+        if invalid_mask is not None and (invalid_mask != 0.0).any():
+            # ignore the tokens that predict the unlabled instances
+            pred_vis = (kpt_vis.unsqueeze(-1) > 0.3).float()
+            mean_kpts = (decoded_kpts * pred_vis).sum(dim=1) / pred_vis.sum(dim=1).clamp(min=1e-8)
+            mean_kpts = mean_kpts.reshape(1, -1, 1, 2)
+            wh = invalid_mask.shape[-1]
+            grids = mean_kpts / (wh - 1) * 2 - 1
+            mask = invalid_mask.unsqueeze(0).float()
+            weight = F.grid_sample(mask, grids, mode="bilinear", padding_mode="zeros")
+            obj_weight = 1.0 - weight.reshape(num_priors, 1)
+        else:
+            obj_weight = obj_target.new_ones(obj_target.shape)
+
+        # misc
+        foreground_mask = torch.zeros_like(objectness.squeeze()).to(torch.bool)
+        foreground_mask[pos_inds] = 1
+        pos_priors = priors[pos_inds]
+        group_index = [torch.where(pos_assigned_gt_inds == num)[0] for num in torch.unique(pos_assigned_gt_inds)]
+
+        return (
+            foreground_mask,
+            cls_target,
+            obj_target,
+            obj_weight,
+            bbox_target,
+            kpt_target,
+            vis_target,
+            vis_weight,
+            pos_areas,
+            pos_priors,
+            group_index,
+            num_pos_per_img,
+        )
+
     def predict(self, feats: Tuple[Tensor]) -> KeypointOutput:
         """Predict results from features.
 
@@ -1308,8 +1567,8 @@ class RTMOHead(YOLOXPoseHead):
                 - kpt_vis (List[Tensor]): Keypoint visibility predictions for each level
                 - pose_vecs (List[Tensor]): Pose feature vectors for each level
         """
-
-        cls_scores, bbox_preds, _, kpt_vis, pose_vecs = self._forward(feats)
+        assert isinstance(feats, (tuple, list)), "feats must be a tuple or list"
+        cls_scores, bbox_preds, _, kpt_vis, pose_vecs = self.head_module(feats)
 
         featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
 
@@ -1328,12 +1587,12 @@ class RTMOHead(YOLOXPoseHead):
         flatten_stride = torch.cat(mlvl_strides)
 
         # flatten predictions
-        flatten_cls_scores = self._flatten_predictions(cls_scores) if cls_scores is not None else None
+        flatten_cls_scores = flatten_predictions(cls_scores) if cls_scores is not None else None
         flatten_cls_scores = flatten_cls_scores.sigmoid() if flatten_cls_scores is not None else None
-        flatten_bbox_preds = self._flatten_predictions(bbox_preds) if bbox_preds is not None else None
-        flatten_kpt_vis = self._flatten_predictions(kpt_vis) if kpt_vis is not None else None
+        flatten_bbox_preds = flatten_predictions(bbox_preds) if bbox_preds is not None else None
+        flatten_kpt_vis = flatten_predictions(kpt_vis) if kpt_vis is not None else None
         flatten_kpt_vis = flatten_kpt_vis.sigmoid() if flatten_kpt_vis is not None else None
-        flatten_pose_vecs = self._flatten_predictions(pose_vecs) if pose_vecs is not None else None
+        flatten_pose_vecs = flatten_predictions(pose_vecs) if pose_vecs is not None else None
         if flatten_pose_vecs is None:
             flatten_pose_vecs = [None] * len(feats[0])
         assert flatten_bbox_preds is not None, "flatten_bbox_preds is None"
@@ -1341,7 +1600,7 @@ class RTMOHead(YOLOXPoseHead):
         assert flatten_kpt_vis is not None, "flatten_kpt_vis is None"
         assert flatten_pose_vecs is not None, "flatten_pose_vecs is None"
 
-        flatten_bbox_preds = self.decode_bbox(flatten_bbox_preds, flatten_priors, flatten_stride)
+        flatten_bbox_preds = decode_bbox(pred_bboxes=flatten_bbox_preds, priors=flatten_priors, stride=flatten_stride)
 
         all_scores = []
         all_labels = []
