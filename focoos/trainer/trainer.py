@@ -32,6 +32,7 @@ from focoos.trainer.hooks import hook
 from focoos.trainer.hooks.early_stop import EarlyStopException, EarlyStoppingHook
 from focoos.trainer.hooks.metrics_json_writer import JSONWriter
 from focoos.trainer.hooks.metrics_printer import CommonMetricPrinter
+from focoos.trainer.hooks.nan_gradients import NaNGradientCheckHook
 from focoos.trainer.hooks.sync_to_hub import SyncToHubHook
 from focoos.trainer.hooks.tensorboard_writer import TensorboardXWriter
 from focoos.trainer.hooks.visualization import VisualizationHook
@@ -471,6 +472,7 @@ class FocoosTrainer:
             [
                 hook.IterationTimer(),
                 hook.LRScheduler(optimizer=optim, scheduler=scheduler),
+                NaNGradientCheckHook(fix_nans=True, skip_update=False, verbose=True),
                 (
                     ema.EMAHook(
                         model,
