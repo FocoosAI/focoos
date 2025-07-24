@@ -25,7 +25,7 @@ from focoos.nn.backbone.base import ShapeSpec
 from focoos.nn.backbone.build import load_backbone
 from focoos.nn.layers.base import get_activation_fn
 from focoos.nn.layers.block import SPPF, C2f
-from focoos.nn.layers.conv import Conv2d, ConvNormLayer
+from focoos.nn.layers.conv import Conv2d, ConvNormLayerDarknet
 from focoos.nn.layers.norm import get_norm
 from focoos.utils.box import bbox_overlaps
 
@@ -646,16 +646,12 @@ class YoloNeck(nn.Module):
         self.sppf = SPPF(ch_5, ch_5, 5)
         self.c2f12 = C2f(ch_4 + ch_5, ch_4, c2f_depth)
         self.c2f15 = C2f(ch_3 + ch_4, feat_dim, c2f_depth)
-        self.cv1 = ConvNormLayer(
-            ch_in=feat_dim, ch_out=ch_3, kernel_size=3, stride=2, padding=1, act=nn.SiLU(inplace=True)
-        )
+        self.cv1 = ConvNormLayerDarknet(ch_in=feat_dim, ch_out=ch_3, kernel_size=3, stride=2, padding=1)
         self.c2f18 = C2f(ch_3 + ch_4, feat_dim, c2f_depth)
-        self.cv2 = ConvNormLayer(
-            ch_in=feat_dim, ch_out=ch_4, kernel_size=3, stride=2, padding=1, act=nn.SiLU(inplace=True)
-        )
+        self.cv2 = ConvNormLayerDarknet(ch_in=feat_dim, ch_out=ch_4, kernel_size=3, stride=2, padding=1)
         self.c2f21 = C2f(ch_4 + ch_5, feat_dim)
 
-        self.cv_out = ConvNormLayer(ch_in=feat_dim, ch_out=out_dim, kernel_size=1, stride=1)
+        self.cv_out = ConvNormLayerDarknet(ch_in=feat_dim, ch_out=out_dim, kernel_size=1, stride=1)
 
     def forward_features(self, features):
         p3, p4, p5 = (features[f] for f in self.in_features)

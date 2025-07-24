@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from focoos.nn.layers.conv import ConvNormLayer
+from focoos.nn.layers.conv import ConvNormLayerDarknet
 
 
 class SPPF(nn.Module):
@@ -15,8 +15,8 @@ class SPPF(nn.Module):
         """
         super().__init__()
         c_ = c1 // 2  # hidden channels
-        self.cv1 = ConvNormLayer(ch_in=c1, ch_out=c_, kernel_size=1, stride=1)
-        self.cv2 = ConvNormLayer(ch_in=c_ * 4, ch_out=c2, kernel_size=1, stride=1)
+        self.cv1 = ConvNormLayerDarknet(ch_in=c1, ch_out=c_, kernel_size=1, stride=1)
+        self.cv2 = ConvNormLayerDarknet(ch_in=c_ * 4, ch_out=c2, kernel_size=1, stride=1)
         self.m = nn.MaxPool2d(kernel_size=k, stride=1, padding=k // 2)
 
     def forward(self, x):
@@ -29,14 +29,13 @@ class SPPF(nn.Module):
 class C2f(nn.Module):
     """Faster Implementation of CSP Bottleneck with 2 convolutions."""
 
-    def __init__(self, ch_in, ch_out, n=1, shortcut=False, groups=1, e=0.5, activation=None):
+    def __init__(self, ch_in, ch_out, n=1, shortcut=False, groups=1, e=0.5):
         """Initializes a CSP bottleneck with 2 convolutions and n Bottleneck blocks for faster processing."""
         super().__init__()
         self.c = int(ch_out * e)  # hidden channels
-        activation = activation or nn.SiLU(inplace=True)
-        self.cv1 = ConvNormLayer(ch_in=ch_in, ch_out=2 * self.c, kernel_size=1, stride=1, act=activation)
-        self.cv2 = ConvNormLayer(
-            ch_in=(2 + n) * self.c, ch_out=ch_out, kernel_size=1, stride=1, act=activation
+        self.cv1 = ConvNormLayerDarknet(ch_in=ch_in, ch_out=2 * self.c, kernel_size=1, stride=1)
+        self.cv2 = ConvNormLayerDarknet(
+            ch_in=(2 + n) * self.c, ch_out=ch_out, kernel_size=1, stride=1
         )  # optional act=FReLU(c2)
         self.m = nn.ModuleList(Bottleneck(self.c, self.c, shortcut, groups, k=(3, 3), e=1.0) for _ in range(n))
 
@@ -60,8 +59,8 @@ class Bottleneck(nn.Module):
         """Initializes a standard bottleneck module with optional shortcut connection and configurable parameters."""
         super().__init__()
         c_ = int(channels_out * e)  # hidden channels
-        self.cv1 = ConvNormLayer(ch_in=channels_in, ch_out=c_, kernel_size=k[0], stride=1)
-        self.cv2 = ConvNormLayer(ch_in=c_, ch_out=channels_out, kernel_size=k[1], stride=1)
+        self.cv1 = ConvNormLayerDarknet(ch_in=channels_in, ch_out=c_, kernel_size=k[0], stride=1)
+        self.cv2 = ConvNormLayerDarknet(ch_in=c_, ch_out=channels_out, kernel_size=k[1], stride=1)
         self.add = shortcut and channels_in == channels_out
 
     def forward(self, x):

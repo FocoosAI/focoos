@@ -98,6 +98,29 @@ class ConvNormLayer(nn.Module):
         return x
 
 
+class ConvNormLayerDarknet(nn.Module):
+    def __init__(self, ch_in, ch_out, kernel_size, stride, padding=None, bias=False):
+        super().__init__()
+        self.conv = nn.Conv2d(
+            ch_in,
+            ch_out,
+            kernel_size,
+            stride,
+            padding=(kernel_size - 1) // 2 if padding is None else padding,
+            bias=bias,
+        )
+        self.norm = nn.BatchNorm2d(ch_out, eps=0.001, momentum=0.03)
+        self.act = nn.SiLU(inplace=True)
+
+    def forward(self, x):
+        x = self.conv(x)
+        if self.norm is not None:
+            x = self.norm(x)
+        if self.act is not None:
+            x = self.act(x)
+        return x
+
+
 class DepthwiseSeparableConv2d(nn.Module):
     """
     A kxk depthwise convolution + a 1x1 convolution.

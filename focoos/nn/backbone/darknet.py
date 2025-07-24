@@ -6,7 +6,7 @@ from torch import nn
 
 from focoos.nn.backbone.base import BackboneConfig, BaseBackbone
 from focoos.nn.layers.block import C2f
-from focoos.nn.layers.conv import ConvNormLayer
+from focoos.nn.layers.conv import ConvNormLayerDarknet
 from focoos.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -42,34 +42,22 @@ class DarkNet(BaseBackbone):
         self.depth = DARKNET_SIZES[config.size]["depth"]
         self.activation = nn.SiLU(inplace=True)
 
-        p1 = [
-            ConvNormLayer(
-                ch_in=self.width[0], ch_out=self.width[1], kernel_size=3, stride=2, padding=1, act=self.activation
-            )
-        ]
+        p1 = [ConvNormLayerDarknet(ch_in=self.width[0], ch_out=self.width[1], kernel_size=3, stride=2, padding=1)]
         p2 = [
-            ConvNormLayer(
-                ch_in=self.width[1], ch_out=self.width[2], kernel_size=3, stride=2, padding=1, act=self.activation
-            ),
-            C2f(ch_in=self.width[2], ch_out=self.width[2], shortcut=True, n=self.depth[0], activation=self.activation),
+            ConvNormLayerDarknet(ch_in=self.width[1], ch_out=self.width[2], kernel_size=3, stride=2, padding=1),
+            C2f(ch_in=self.width[2], ch_out=self.width[2], shortcut=True, n=self.depth[0]),
         ]
         p3 = [
-            ConvNormLayer(
-                ch_in=self.width[2], ch_out=self.width[3], kernel_size=3, stride=2, padding=1, act=self.activation
-            ),
-            C2f(ch_in=self.width[3], ch_out=self.width[3], shortcut=True, n=self.depth[1], activation=self.activation),
+            ConvNormLayerDarknet(ch_in=self.width[2], ch_out=self.width[3], kernel_size=3, stride=2, padding=1),
+            C2f(ch_in=self.width[3], ch_out=self.width[3], shortcut=True, n=self.depth[1]),
         ]
         p4 = [
-            ConvNormLayer(
-                ch_in=self.width[3], ch_out=self.width[4], kernel_size=3, stride=2, padding=1, act=self.activation
-            ),
-            C2f(ch_in=self.width[4], ch_out=self.width[4], shortcut=True, n=self.depth[2], activation=self.activation),
+            ConvNormLayerDarknet(ch_in=self.width[3], ch_out=self.width[4], kernel_size=3, stride=2, padding=1),
+            C2f(ch_in=self.width[4], ch_out=self.width[4], shortcut=True, n=self.depth[2]),
         ]
         p5 = [
-            ConvNormLayer(
-                ch_in=self.width[4], ch_out=self.width[5], kernel_size=3, stride=2, padding=1, act=self.activation
-            ),
-            C2f(ch_in=self.width[5], ch_out=self.width[5], shortcut=True, n=self.depth[3], activation=self.activation),
+            ConvNormLayerDarknet(ch_in=self.width[4], ch_out=self.width[5], kernel_size=3, stride=2, padding=1),
+            C2f(ch_in=self.width[5], ch_out=self.width[5], shortcut=True, n=self.depth[3]),
         ]
 
         self.p1 = torch.nn.Sequential(*p1)

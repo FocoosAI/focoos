@@ -472,7 +472,6 @@ class FocoosTrainer:
         trainer.register_hooks(
             [
                 hook.IterationTimer(),
-                # NaNGradientCheckHook(verbose=True, limit_incidents=10),
                 hook.LRScheduler(optimizer=optim, scheduler=scheduler),
                 (
                     ema.EMAHook(

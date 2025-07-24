@@ -9,7 +9,7 @@
     "config": {
         "num_classes": 1,
         "backbone_config": {
-            "use_pretrained": true,
+            "use_pretrained": false,
             "model_type": "darknet",
             "size": "s"
         },
@@ -76,10 +76,17 @@
     "status": "TRAINING_COMPLETED",
     "description": "RTMO Small model (COCO)",
     "train_args": null,
-    "weights_uri": null,
-    "val_dataset": "coco_2017_det",
-    "val_metrics": {},
-    "focoos_version": "0.17.0",
+    "weights_uri": "https://public.focoos.ai/pretrained_models/rtmo-s-coco/model_final.pth",
+    "val_dataset": "person_keypoints_val2017",
+    "val_metrics": {
+        "keypoints/AP": 60.220,
+        "keypoints/AP50": 82.662,
+        "keypoints/AP75": 65.541,
+        "keypoints/APs": 54.998,
+        "keypoints/APm": 68.412,
+        "keypoints/APl": 65.227
+    },
+    "focoos_version": "0.18.0",
     "latency": [],
     "updated_at": null
 }
