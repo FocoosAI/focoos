@@ -23,7 +23,6 @@ class TestModelRegistry:
             "bisenetformer-m-ade",
             "bisenetformer-l-ade",
             "bisenetformer-s-ade",
-            "yoloxpose-s-coco",
             "rtmo-s-coco",
         ]
 

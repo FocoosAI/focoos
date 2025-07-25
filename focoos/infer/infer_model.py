@@ -135,14 +135,14 @@ class InferModel:
         return ModelInfo.from_json(model_info_path)
 
     def __call__(
-        self, image: Union[bytes, str, Path, np.ndarray, Image.Image], threshold: Optional[float] = None
+        self, image: Union[bytes, str, Path, np.ndarray, Image.Image], threshold: float = 0.5
     ) -> FocoosDetections:
         return self.infer(image, threshold)
 
     def infer(
         self,
         image: Union[bytes, str, Path, np.ndarray, Image.Image],
-        threshold: Optional[float] = None,
+        threshold: float = 0.5,
     ) -> FocoosDetections:
         """
         Run inference on an input image and optionally annotate the results.
@@ -192,7 +192,7 @@ class InferModel:
         res.latency = latency
 
         logger.debug(
-            f"Found {len(res)} detections. Inference time: {(t2 - t1) * 1000:.0f}ms, preprocess: {(t1 - t0) * 1000:.0f}ms, postprocess: {(t3 - t2) * 1000:.0f}ms"
+            f"Found {len(res)} detections. thr: {threshold} Inference time: {(t2 - t1) * 1000:.0f}ms, preprocess: {(t1 - t0) * 1000:.0f}ms, postprocess: {(t3 - t2) * 1000:.0f}ms"
         )
         return res
 
