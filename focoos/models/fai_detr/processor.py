@@ -219,7 +219,7 @@ class DETRProcessor(Processor):
         ],
         class_names: list[str] = [],
         top_k: Optional[int] = None,
-        threshold: Optional[float] = None,
+        threshold: float = 0.5,
     ) -> list[FocoosDetections]:
         boxes = output[0]
         logits = output[1]
@@ -229,7 +229,6 @@ class DETRProcessor(Processor):
             logits = torch.from_numpy(logits)
         model_output = DETRModelOutput(boxes=boxes, logits=logits, loss=None)
         top_k = 300 if top_k is None else top_k
-        threshold = 0.5 if threshold is None else threshold
         return self.postprocess(model_output, inputs, class_names, top_k, threshold)
 
     def get_dynamic_axes(self) -> DynamicAxes:
