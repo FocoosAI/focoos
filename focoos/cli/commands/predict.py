@@ -57,12 +57,13 @@ from io import BytesIO
 from pathlib import Path
 from typing import Optional
 
+import cv2
 from PIL import Image
 
 from focoos.model_manager import ModelManager
 from focoos.ports import PREDICTIONS_DIR, FocoosDetections, RuntimeType
 from focoos.utils.logger import get_logger
-from focoos.utils.vision import annotate_image, image_loader
+from focoos.utils.vision import image_loader
 
 logger = get_logger("predict")
 
@@ -70,9 +71,9 @@ logger = get_logger("predict")
 def predict_command(
     model_name: str,
     source: str,
+    conf: float = 0.5,
     runtime: Optional[RuntimeType] = None,
     im_size: Optional[int] = 640,
-    conf: Optional[float] = 0.5,
     save: Optional[bool] = True,
     output_dir: Optional[str] = PREDICTIONS_DIR,
     save_json: Optional[bool] = True,
@@ -165,14 +166,17 @@ def predict_command(
 
     logger.info(f"🔄 Loading model: {model_name}")
     model = ModelManager.get(model_name)
-
+    if save or save_masks:
+        annotate = True
+    else:
+        annotate = False
     if runtime:
         logger.info(f"🚀 Using runtime: {runtime}")
         exported_model = model.export(runtime_type=runtime, image_size=im_size)
-        results = exported_model.infer(image, threshold=conf)
+        results = exported_model.infer(image, threshold=conf, annotate=annotate)
     else:
         logger.info("🚀 Using default model runtime")
-        results = model(image, threshold=conf)
+        results = model.infer(image, threshold=conf, annotate=annotate)
 
     # Print detections to console by default
     print_detections(results)
@@ -185,11 +189,12 @@ def predict_command(
             base_name = source_path.stem
 
             # Save annotated image
-            if save:
-                annotated_image = annotate_image(im=image, detections=results, task=model.task, classes=model.classes)
+            if save and results.image is not None:
+                annotated_image = results.image
                 save_path = os.path.join(output_dir, f"{base_name}_annotated{source_path.suffix}")
                 logger.info(f"💾 Saving annotated image to {save_path}")
-                annotated_image.save(save_path)
+                cv2.imwrite(save_path, annotated_image)  # type: ignore
+                # annotated_image.save(save_path)
 
             # Save detections as JSON
             if save_json:

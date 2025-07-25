@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from pathlib import Path
+from time import perf_counter
 from typing import Literal, Optional, Tuple, Union
 from urllib.parse import urlparse
 
@@ -30,6 +31,7 @@ from focoos.utils.distributed.dist import launch
 from focoos.utils.env import TORCH_VERSION
 from focoos.utils.logger import get_logger
 from focoos.utils.system import get_cpu_name, get_device_name, get_focoos_version, get_system_info
+from focoos.utils.vision import annotate_frame, image_loader
 
 logger = get_logger("FocoosModel")
 
@@ -318,6 +320,48 @@ class FocoosModel:
         """
         return self.model_info.task
 
+    def infer(
+        self, image: Union[bytes, str, Path, np.ndarray, Image.Image], threshold: float = 0.5, annotate: bool = False
+    ) -> FocoosDetections:
+        """
+        Perform inference on an input image and optionally annotate the results.
+
+        This method processes the input image, runs it through the model, and returns the detections.
+        Optionally, it can also annotate the image with the detection results.
+
+        Args:
+            image: The input image to run inference on. Accepts a file path, bytes, PIL Image, or numpy array.
+            threshold: Minimum confidence score for a detection to be included in the results. Default is 0.5.
+            annotate: If True, annotate the image with detection results and include it in the output.
+
+        Returns:
+            FocoosDetections: An object containing the detection results, optional annotated image, and latency metrics.
+
+        Usage:
+            Use this method to obtain detection results from a local model, with optional annotation for visualization or further processing.
+        """
+        t0 = perf_counter()
+        im = image_loader(image)
+        t1 = perf_counter()
+        focoos_det = self.__call__(inputs=im, threshold=threshold)
+        if focoos_det.latency is not None and focoos_det.latency.get("preprocess") is not None:
+            focoos_det.latency["preprocess"] += t1 - t0
+            focoos_det.latency["preprocess"] = round(focoos_det.latency["inference"], 3)
+
+        if annotate:
+            t0 = perf_counter()
+            focoos_det.image = annotate_frame(
+                im, focoos_det, task=self.model_info.task, classes=self.model_info.classes
+            )
+            t1 = perf_counter()
+            if focoos_det.latency is not None:
+                focoos_det.latency["annotate"] = round(t1 - t0, 3)
+        if focoos_det.latency is not None:
+            logger.debug(
+                f"Found {len(focoos_det)} detections. thr: {threshold} Inference time: {(focoos_det.latency['inference']) * 1000:.0f}ms, preprocess: {(focoos_det.latency['preprocess']) * 1000:.0f}ms, postprocess: {(focoos_det.latency['postprocess']) * 1000:.0f}ms, annotate: {(focoos_det.latency['annotate']) * 1000:.0f}ms"
+            )
+        return focoos_det
+
     def export(
         self,
         runtime_type: RuntimeType = RuntimeType.TORCHSCRIPT_32,
@@ -466,6 +510,7 @@ class FocoosModel:
         Returns:
             FocoosDetections containing the detection results.
         """
+        t0 = perf_counter()
         model = self.model.eval()
         processor = self.processor.eval()
         try:
@@ -478,16 +523,25 @@ class FocoosModel:
             dtype=model.dtype,
             image_size=self.model_info.im_size,
         )  # second output is targets that we're not using
+        t1 = perf_counter()
         with torch.no_grad():
             try:
                 with torch.autocast(device_type="cuda", dtype=torch.float16):
                     output = model.forward(images)
             except Exception:
                 output = model.forward(images)
+        t2 = perf_counter()
         class_names = self.model_info.classes
         output_fdet = processor.postprocess(output, inputs, class_names=class_names, **kwargs)
-
+        t3 = perf_counter()
         # FIXME: we don't support batching yet
+
+        latency = {
+            "preprocess": round(t1 - t0, 3),
+            "inference": round(t2 - t1, 3),
+            "postprocess": round(t3 - t2, 3),
+        }
+        output_fdet[0].latency = latency
         return output_fdet[0]
 
     def _reload_model(self):

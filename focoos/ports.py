@@ -9,6 +9,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, List, Literal, Optional, Tuple, Union
 
+import numpy as np
 from pydantic import BaseModel
 from torch import Tensor
 
@@ -280,28 +281,31 @@ class RemoteModelInfo(PydanticBase):
     focoos_version: Optional[str] = None
 
 
-class FocoosDet(PydanticBase):
-    """Single detection result from a model.
+@dataclass
+class FocoosDet:
+    """
+    Represents a single result from a Focoos model.
 
-    This class represents a single detection or segmentation result from a Focoos model.
-    It contains information about the detected object including its position, class,
-    confidence score, and optional segmentation mask.
+    This dataclass encapsulates all relevant information for a detected object, including:
+      - Bounding box coordinates (bbox) in [x1, y1, x2, y2] format, where (x1, y1) is the top-left and (x2, y2) is the bottom-right.
+      - Confidence score (conf) between 0 and 1.
+      - Class ID (cls_id) corresponding to the model's class list.
+      - Human-readable label (label) for the detected class.
+      - Optional segmentation mask (mask) as a base64-encoded PNG, cropped to the bbox region.
+      - Optional keypoints for pose estimation or similar tasks.
+
+    Notes:
+        - The mask field is only present for instance or semantic segmentation models.
+        - The mask is a base64-encoded PNG string, with its origin at the top-left of the bbox and dimensions matching the bbox.
+        - Keypoints, if present, are a list of (x, y, visibility) tuples.
 
     Attributes:
-        bbox (Optional[list[int]]): Bounding box coordinates in [x1, y1, x2, y2] format,
-            where (x1, y1) is the top-left corner and (x2, y2) is the bottom-right corner.
-        conf (Optional[float]): Confidence score of the detection, ranging from 0 to 1.
-        cls_id (Optional[int]): Class ID of the detected object, corresponding to the index
-            in the model's class list.
-        label (Optional[str]): Human-readable label of the detected object.
-        mask (Optional[str]): Base64-encoded PNG image representing the segmentation mask.
-            Note that the mask is cropped to the bounding box coordinates and does not
-            have the same shape as the input image.
-
-    !!! Note
-        The mask is only present if the model is an instance segmentation or semantic segmentation model.
-        The mask is a base64 encoded string having origin in the top left corner of bbox and the same width and height of the bbox.
-
+        bbox (Optional[list[int]]): Bounding box [x1, y1, x2, y2].
+        conf (Optional[float]): Detection confidence score.
+        cls_id (Optional[int]): Class index.
+        label (Optional[str]): Class label.
+        mask (Optional[str]): Base64-encoded PNG mask (cropped to bbox).
+        keypoints (Optional[list[tuple[int, int, float]]]): Optional keypoints.
     """
 
     bbox: Optional[list[int]] = None
@@ -323,29 +327,63 @@ class FocoosDet(PydanticBase):
         if bbox is not None:  # Retrocompatibility fix for remote results with float bbox, !TODO remove asap
             data_dict["bbox"] = list(map(int, bbox))
 
-        return cls.model_validate(data_dict)
+        return cls(**data_dict)
+
+    def __repr__(self):
+        # Show "hidden" if mask is not None, else show the actual mask value
+        mask_repr = "hidden" if self.mask is not None else self.mask
+        return (
+            f"FocoosDet(bbox={self.bbox}, conf={self.conf}, cls_id={self.cls_id}, "
+            f"label={self.label}, mask={mask_repr}, keypoints={self.keypoints})"
+        )
 
 
-class FocoosDetections(PydanticBase):
-    """Collection of detection results from a model.
+@dataclass
+class FocoosDetections:
+    """
+    Represents a collection of detection or segmentation results from a Focoos model.
 
-    This class represents a collection of detection or segmentation results from a Focoos model.
-    It contains a list of individual detections and optional latency information.
+    This dataclass holds a list of FocoosDet objects, and optionally:
+      - The image (as a base64 string or numpy array) associated with the detections.
+      - Latency information for the inference process, such as time spent in preprocessing,
+        inference, postprocessing, and annotation.
 
     Attributes:
-        detections (list[FocoosDet]): List of detection results, where each detection contains
-            information about a detected object including its position, class, confidence score,
-            and optional segmentation mask.
-        latency (Optional[dict]): Dictionary containing latency information for the inference process.
-            Typically includes keys like 'inference', 'preprocess', and 'postprocess' with values
-            representing the time taken in seconds for each step.
+        detections (list[FocoosDet]): List of detection results.
+        image (Optional[Union[str, np.ndarray]]): The image associated with the detections,
+            either as a base64-encoded string or a numpy array. If present, the string is
+            typically a base64-encoded annotated image.
+        latency (Optional[dict]): Dictionary with timing information for each inference step.
+            Keys may include 'inference', 'preprocess', 'postprocess', and 'annotate', with
+            values in seconds.
     """
 
     detections: list[FocoosDet]
+    image: Optional[Union[str, np.ndarray]] = None  # can be Base64 encoded image or numpy array
     latency: Optional[dict] = None
 
     def __len__(self):
         return len(self.detections)
+
+    def model_dump(self):
+        return {
+            "detections": [asdict(det) for det in self.detections],
+            "image": self.image if isinstance(self.image, str) else None,
+            "latency": self.latency,
+        }
+
+    def __repr__(self):
+        # Show "hidden" if image is not None, else exclude 'image'
+        fields = []
+        for field_name in self.__dataclass_fields__:
+            if field_name == "image":
+                value = getattr(self, field_name)
+                if value is not None:
+                    fields.append(f"{field_name}=hidden")
+                continue
+            value = getattr(self, field_name)
+            fields.append(f"{field_name}={value!r}")
+        return f"{self.__class__.__name__}({', '.join(fields)})"
 
 
 @dataclass
