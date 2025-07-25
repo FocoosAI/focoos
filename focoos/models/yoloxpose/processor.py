@@ -38,16 +38,20 @@ class YOLOXPoseProcessor(Processor):
         **kwargs,
     ) -> tuple[torch.Tensor, list[KeypointTargets]]:
         targets = []
+
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DatasetEntry):
-            images = [x.image.to(device) for x in inputs]  # type: ignore
-            images = ImageList.from_tensors(
-                tensors=images,
-            )
+            # Batch transfer images to device for better performance
+            images = [x.image.to(device, non_blocking=True) for x in inputs]  # type: ignore
+            images = ImageList.from_tensors(tensors=images)
             images_torch = images.tensor
+
             if self.training:
-                # mask classification target
+                # Batch transfer instances to device
                 gt_instances = [x.instances.to(device) for x in inputs]  # type: ignore
-                targets = []
+
+                # Pre-create tensors for better performance
+                one_tensor = torch.tensor(1, device=device, dtype=torch.long)
+
                 for targets_per_image in gt_instances:
                     assert targets_per_image.boxes is not None and targets_per_image.classes is not None, (
                         "boxes and classes are required for training"
@@ -56,22 +60,24 @@ class YOLOXPoseProcessor(Processor):
                         "gt_keypoints and gt_areas are required for training"
                     )
 
+                    # Extract data efficiently
                     gt_classes = targets_per_image.classes
                     gt_boxes = targets_per_image.boxes.tensor
-                    gt_keypoints = targets_per_image.keypoints.tensor[..., :2]
-                    gt_visibility = targets_per_image.keypoints.tensor[..., -1]
-                    gt_visibility = torch.where(gt_visibility == 2, torch.tensor(1, device=device), gt_visibility)
-                    gt_num_keypoints = torch.count_nonzero(
-                        targets_per_image.keypoints.tensor.max(dim=2, keepdim=True).values, dim=1
-                    ).squeeze(-1)
+                    keypoints_tensor = targets_per_image.keypoints.tensor
+                    gt_keypoints = keypoints_tensor[..., :2]
+                    gt_visibility = keypoints_tensor[..., -1]
+
+                    # Optimize visibility conversion - avoid repeated tensor creation
+                    gt_visibility = torch.where(gt_visibility == 2, one_tensor, gt_visibility)
                     gt_areas = targets_per_image.areas
+
                     targets.append(
                         KeypointTargets(
                             labels=gt_classes,
                             bboxes=gt_boxes,
                             keypoints=gt_keypoints,
                             keypoints_visible=gt_visibility,
-                            keypoints_visible_weights=gt_num_keypoints,
+                            keypoints_visible_weights=None,
                             areas=gt_areas,
                             scores=None,
                             priors=None,
@@ -79,12 +85,15 @@ class YOLOXPoseProcessor(Processor):
                     )
         else:
             if self.training:
-                raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
-            images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
-
+                raise ValueError("During training, inputs should be a list of DatasetEntry")
+            # Type cast is safe here since we know inputs is not list[DatasetEntry]
+            images_torch = self.get_tensors(inputs).to(device, dtype=dtype, non_blocking=True)  # type: ignore
+            if image_size is not None:
+                images_torch = torch.nn.functional.interpolate(
+                    images_torch, size=(image_size, image_size), mode="bilinear", align_corners=False
+                )
         return images_torch, targets
 
-    # TODO: implement nms threshold
     def postprocess(
         self,
         outputs: YOLOXPoseModelOutput,
@@ -114,7 +123,6 @@ class YOLOXPoseProcessor(Processor):
         )
 
         for i in range(batch_size):
-            results = FocoosDetections(detections=[])
             filter_mask = outputs.outputs.scores[i] > threshold
             if outputs.outputs.pred_bboxes is not None:
                 output_boxes = outputs.outputs.pred_bboxes
@@ -125,24 +133,35 @@ class YOLOXPoseProcessor(Processor):
             h, w = int(size[0]), int(size[1])
 
             logger.debug(f"outputs.outputs.scores[i].shape: {outputs.outputs.scores[i].shape}")
-            # Scores
-            filtered_scores = outputs.outputs.scores[i][filter_mask].to("cpu").numpy().tolist()
-            logger.debug(f"filtered_scores_shape: {outputs.outputs.scores[i][filter_mask].shape}")
 
-            # Labels
-            filtered_labels = outputs.outputs.labels[i][filter_mask].to("cpu").numpy().tolist()
-
-            # Boxes
+            # Apply filtering to all outputs consistently
+            filtered_scores = outputs.outputs.scores[i][filter_mask]
+            filtered_labels = outputs.outputs.labels[i][filter_mask]
             filtered_boxes = outputs.outputs.pred_bboxes[i][filter_mask]
-            logger.debug(f"filtered_boxes_shape: {filtered_boxes.shape}")
-            output_boxes = filtered_boxes.clip(0, max(h, w))
-            output_boxes = output_boxes.cpu().numpy().astype(int).tolist()
 
-            # keypoints
-            filtered_keypoints = outputs.outputs.pred_keypoints[i][filter_mask]
-            keypoints_vis_expanded = outputs.outputs.keypoints_visible[i].unsqueeze(-1)
+            # Handle keypoints with potential extra batch dimension
+            pred_keypoints_i = outputs.outputs.pred_keypoints[i]
+            if pred_keypoints_i.ndim == 4 and pred_keypoints_i.shape[0] == 1:
+                pred_keypoints_i = pred_keypoints_i.squeeze(0)
+            filtered_keypoints = pred_keypoints_i[filter_mask]
+
+            keypoints_visible_i = outputs.outputs.keypoints_visible[i]
+            if keypoints_visible_i.ndim == 3 and keypoints_visible_i.shape[0] == 1:
+                keypoints_visible_i = keypoints_visible_i.squeeze(0)
+            filtered_keypoints_visible = keypoints_visible_i[filter_mask]
+
+            # Process boxes
+            output_boxes = filtered_boxes.clip(0, max(h, w))
+
+            # Process keypoints with visibility
+            keypoints_vis_expanded = filtered_keypoints_visible.unsqueeze(-1)
             keypoints_with_vis = torch.cat((filtered_keypoints, keypoints_vis_expanded), dim=2)
-            keypoints = keypoints_with_vis.cpu().numpy().astype(int).tolist()
+
+            # Convert to CPU and numpy in one go for better performance
+            output_boxes_np = output_boxes.cpu().numpy().astype(int).tolist()
+            filtered_scores_np = filtered_scores.cpu().numpy().tolist()
+            filtered_labels_np = filtered_labels.cpu().numpy().tolist()
+            keypoints_np = keypoints_with_vis.cpu().numpy().astype(int).tolist()
 
             res.append(
                 FocoosDetections(
@@ -155,12 +174,11 @@ class YOLOXPoseProcessor(Processor):
                             keypoints=keypoint,
                         )
                         for box, score, label, keypoint in zip(
-                            output_boxes, filtered_scores, filtered_labels, keypoints
+                            output_boxes_np, filtered_scores_np, filtered_labels_np, keypoints_np
                         )
                     ]
                 )
             )
-            res.append(results)
 
         return res
 
@@ -256,7 +274,7 @@ class YOLOXPoseProcessor(Processor):
         if isinstance(keypoints_visible, np.ndarray):
             keypoints_visible = torch.from_numpy(keypoints_visible)
 
-        # Create KeypointOutput and YOLOXPoseModelOutput
+        # Create KeypointOutput and RTMOModelOutput
         keypoint_output = KeypointOutput(
             scores=scores.to(device),
             labels=labels.to(device),
@@ -272,8 +290,14 @@ class YOLOXPoseProcessor(Processor):
         # Use the regular postprocess method
         threshold = threshold or self.score_thr
         # Filter inputs to exclude DatasetEntry type for postprocess
-        filtered_inputs = [x for x in inputs if not isinstance(x, DatasetEntry)]
-        return self.postprocess(model_output, filtered_inputs, threshold=threshold, **kwargs)
+        # Handle both single inputs and list inputs
+        if isinstance(inputs, list):
+            filtered_inputs = [x for x in inputs if not isinstance(x, DatasetEntry)]
+        else:
+            # Single input case - wrap in list if not DatasetEntry
+            filtered_inputs = [inputs] if not isinstance(inputs, DatasetEntry) else []
+
+        return self.postprocess(model_output, filtered_inputs, threshold=threshold, **kwargs)  # type: ignore
 
     def get_dynamic_axes(self) -> DynamicAxes:
         return DynamicAxes(

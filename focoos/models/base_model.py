@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -200,3 +200,6 @@ class BaseModelNN(ABC, nn.Module):
         )
         logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")
         return metrics
+
+    def switch_to_export(self, test_cfg: Optional[dict] = None):
+        pass

@@ -849,16 +849,13 @@ class DCC(nn.Module):
         pose_preds = self._decode_xy_heatmaps(x_hms, y_hms, bbox_cs)
         return pose_preds
 
-    def switch_to_deploy(self, test_cfg: Optional[Dict] = None):
-        if getattr(self, "deploy", False):
-            return
-
+    def switch_to_export(self):
         self._convert_pose_to_kpts()
         if hasattr(self, "gau"):
             self._convert_gau()
         self._convert_forward_test()
 
-        self.deploy = True
+        self.export = True
 
     def _convert_pose_to_kpts(self):
         """Merge BatchNorm layer into Fully Connected layer.
@@ -901,10 +898,10 @@ class DCC(nn.Module):
             beta_q = beta_q + pos_enc
             beta_k = beta_k + pos_enc
 
-        gamma_q = gamma_q.detach().cpu()
-        gamma_k = gamma_k.detach().cpu()
-        beta_q = beta_q.detach().cpu()
-        beta_k = beta_k.detach().cpu()
+        gamma_q = gamma_q.detach()
+        gamma_k = gamma_k.detach()
+        beta_q = beta_q.detach()
+        beta_k = beta_k.detach()
 
         @torch.no_grad()
         def _forward(self, x, *args, **kwargs):
@@ -915,6 +912,7 @@ class DCC(nn.Module):
             uv = self.act_fn(uv)
 
             u, v, base = torch.split(uv, [self.e, self.e, self.s], dim=-1)
+
             if not torch.onnx.is_in_onnx_export():
                 q = base * gamma_q.to(base) + beta_q.to(base)
                 k = base * gamma_k.to(base) + beta_k.to(base)
@@ -925,6 +923,7 @@ class DCC(nn.Module):
 
             kernel = torch.square(torch.nn.functional.relu(qk / self.sqrt_s))
             x = u * torch.matmul(kernel, v)
+
             x = self.o(x)
             return x
 
@@ -939,9 +938,9 @@ class DCC(nn.Module):
         calculating 1-D heatmaps, and decoding these heatmaps to produce final
         pose predictions.
         """
-        x_bins_ = self.x_bins.view(1, 1, -1).detach().cpu()
-        y_bins_ = self.y_bins.view(1, 1, -1).detach().cpu()
-        dim_t = self.spe.dim_t.view(1, 1, 1, -1).detach().cpu()
+        x_bins_ = self.x_bins.view(1, 1, -1)
+        y_bins_ = self.y_bins.view(1, 1, -1)
+        dim_t = self.spe.dim_t.view(1, 1, 1, -1)
 
         @torch.no_grad()
         def _forward_test(self, pose_feats, bbox_cs, grids):
@@ -1667,13 +1666,10 @@ class RTMOHead(nn.Module):
     def _fuse(self):
         self.nms = False
 
-    def switch_to_deploy(self, test_cfg: Optional[Dict]):
+    def switch_to_export(self, test_cfg: Optional[Dict]):
         """Precompute and save the grid coordinates and strides."""
 
-        if getattr(self, "deploy", False):
-            return
-
-        self.deploy = True
+        self.export = True
 
         # grid generator
         input_size = test_cfg.get("input_size", (640, 640)) if test_cfg is not None else (640, 640)
@@ -1760,3 +1756,13 @@ class RTMO(BaseModelNN):
         features = self.pixel_decoder(features)
         outputs, losses = self.head(features, targets)
         return RTMOModelOutput(outputs=outputs, loss=losses)
+
+    def switch_to_export(self, test_cfg: Optional[Dict] = None):
+        # Get input size from config if test_cfg is not provided
+        if test_cfg is None:
+            input_size = (self.config.im_size, self.config.im_size)
+            test_cfg = {"input_size": input_size}
+
+        self.head.switch_to_export(test_cfg=test_cfg)
+        if hasattr(self.head, "dcc") and self.head.dcc is not None:
+            self.head.dcc.switch_to_export()

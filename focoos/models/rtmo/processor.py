@@ -91,7 +91,10 @@ class RTMOProcessor(Processor):
                 raise ValueError("During training, inputs should be a list of DatasetEntry")
             # Type cast is safe here since we know inputs is not list[DatasetEntry]
             images_torch = self.get_tensors(inputs).to(device, dtype=dtype, non_blocking=True)  # type: ignore
-
+            if image_size is not None:
+                images_torch = torch.nn.functional.interpolate(
+                    images_torch, size=(image_size, image_size), mode="bilinear", align_corners=False
+                )
         return images_torch, targets
 
     def postprocess(
@@ -138,8 +141,17 @@ class RTMOProcessor(Processor):
             filtered_scores = outputs.outputs.scores[i][filter_mask]
             filtered_labels = outputs.outputs.labels[i][filter_mask]
             filtered_boxes = outputs.outputs.pred_bboxes[i][filter_mask]
-            filtered_keypoints = outputs.outputs.pred_keypoints[i][filter_mask]
-            filtered_keypoints_visible = outputs.outputs.keypoints_visible[i][filter_mask]
+
+            # Handle keypoints with potential extra batch dimension
+            pred_keypoints_i = outputs.outputs.pred_keypoints[i]
+            if pred_keypoints_i.ndim == 4 and pred_keypoints_i.shape[0] == 1:
+                pred_keypoints_i = pred_keypoints_i.squeeze(0)
+            filtered_keypoints = pred_keypoints_i[filter_mask]
+
+            keypoints_visible_i = outputs.outputs.keypoints_visible[i]
+            if keypoints_visible_i.ndim == 3 and keypoints_visible_i.shape[0] == 1:
+                keypoints_visible_i = keypoints_visible_i.squeeze(0)
+            filtered_keypoints_visible = keypoints_visible_i[filter_mask]
 
             # Process boxes
             output_boxes = filtered_boxes.clip(0, max(h, w))

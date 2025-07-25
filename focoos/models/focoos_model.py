@@ -45,15 +45,30 @@ class ExportableModel(torch.nn.Module):
         device: The device to move the model to. Defaults to "cuda".
     """
 
-    def __init__(self, model: BaseModelNN, device="cuda"):
+    def __init__(self, model: BaseModelNN, device="cuda", input_size: Optional[Union[int, Tuple[int, int]]] = None):
         """Initialize the ExportableModel.
 
         Args:
             model: The base model to wrap for export.
             device: The device to move the model to. Defaults to "cuda".
+            input_size: Input image size for export optimization. Can be int (square) or tuple (height, width).
         """
         super().__init__()
+
+        # Configure export mode with correct input size
+        test_cfg = None
+        if input_size is not None:
+            if isinstance(input_size, int):
+                # Square image: convert int to tuple
+                test_cfg = {"input_size": (input_size, input_size)}
+            else:
+                # Already a tuple (height, width)
+                test_cfg = {"input_size": input_size}
+
+        # Use BaseModelNN's switch_to_export method which accepts test_cfg
+
         self.model = model.eval().to(device)
+        self.model.switch_to_export(test_cfg)
 
     def forward(self, x):
         """Forward pass through the wrapped model.
@@ -88,7 +103,7 @@ class FocoosModel:
         """
         self.model = model
         self.model_info = model_info
-        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)
+        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)  # type: ignore
         if self.model_info.weights_uri:
             self._load_weights()
         else:
@@ -152,7 +167,7 @@ class FocoosModel:
         self.model_info.config["num_classes"] = len(data_train.dataset.metadata.classes)
         self._reload_model()
         self.model_info.name = train_args.run_name.strip()
-        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)
+        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)  # type: ignore
         assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
 
     def train(self, args: TrainerArgs, data_train: MapDataset, data_val: MapDataset, hub: Optional[FocoosHUB] = None):
@@ -310,7 +325,7 @@ class FocoosModel:
         out_dir: Optional[str] = None,
         device: Literal["cuda", "cpu"] = "cuda",
         overwrite: bool = False,
-        image_size: Optional[int] = None,
+        image_size: Optional[Union[int, Tuple[int, int]]] = None,
     ) -> InferModel:
         """Export the model to different runtime formats.
 
@@ -323,7 +338,7 @@ class FocoosModel:
             out_dir: Output directory for exported model. If None, uses default location.
             device: Device to use for export ("cuda" or "cpu").
             overwrite: Whether to overwrite existing exported model files.
-            image_size: Custom image size for export. If None, uses model's default size.
+            image_size: Custom image size for export. Can be int (square) or tuple (height, width). If None, uses model's default size.
 
         Returns:
             InferModel instance for the exported model.
@@ -338,13 +353,21 @@ class FocoosModel:
             out_dir = os.path.join(MODELS_DIR, self.model_info.ref or self.model_info.name)
 
         format = runtime_type.to_export_format()
-        exportable_model = ExportableModel(self.model, device=device)
+        export_image_size = image_size if image_size is not None else self.model_info.im_size
+        exportable_model = ExportableModel(self.model, device=device, input_size=export_image_size)
         os.makedirs(out_dir, exist_ok=True)
         if image_size is None:
             data = 128 * torch.randn(1, 3, self.model_info.im_size, self.model_info.im_size).to(device)
         else:
-            data = 128 * torch.randn(1, 3, image_size, image_size).to(device)
-            self.model_info.im_size = image_size
+            if isinstance(image_size, int):
+                # Square image
+                data = 128 * torch.randn(1, 3, image_size, image_size).to(device)
+                self.model_info.im_size = image_size
+            else:
+                # Tuple (height, width)
+                height, width = image_size
+                data = 128 * torch.randn(1, 3, height, width).to(device)
+                self.model_info.im_size = max(height, width)  # Use max dimension for compatibility
 
         export_model_name = ArtifactName.ONNX if format == ExportFormat.ONNX else ArtifactName.PT
         _out_file = os.path.join(out_dir, export_model_name)
