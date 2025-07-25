@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 import random
 
-import cv2
+import cv2  # noqa
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -14,12 +14,6 @@ from fvcore.transforms.transform import (
 )
 from PIL import Image
 
-try:
-    import cv2  # noqa
-except ImportError:
-    # OpenCV is an optional dependency at the moment
-    pass
-
 __all__ = [
     "ExtentTransform",
     "ResizeTransform",
@@ -27,6 +21,7 @@ __all__ = [
     "ColorTransform",
     "PILColorTransform",
     "ColorAugSSDTransform",
+    "HFlipTransform",
 ]
 
 

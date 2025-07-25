@@ -41,6 +41,7 @@ from focoos.ports import (
 )
 from focoos.utils.logger import get_logger
 from focoos.utils.metrics import MetricsVisualizer, parse_metrics
+from focoos.utils.vision import annotate_frame, image_loader
 
 logger = get_logger()
 
@@ -241,56 +242,50 @@ class RemoteModel:
         self,
         image: Union[str, Path, np.ndarray, bytes, Image.Image],
         threshold: float = 0.5,
+        annotate: bool = False,
     ) -> FocoosDetections:
         """
-        Perform inference on the provided image using the remote model.
+        Run inference on an image using the remote model and return detection results.
 
-        This method sends an image to the remote model for inference and retrieves the detection results.
+        This method uploads an image to the remote model for inference. The image can be provided as a file path,
+        a string path, a NumPy array, raw bytes, or a PIL Image. The method returns detection results, including
+        class IDs, confidence scores, bounding boxes, and segmentation masks if available. Optionally, the results
+        can be returned with the image annotated with detections.
 
         Args:
-            image (Union[str, Path, np.ndarray, bytes]): The image to infer on, which can be a file path,
-                a string representing the path, a NumPy array, or raw bytes.
-            threshold (float, optional): The confidence threshold for detections. Defaults to 0.5.
-                Detections with confidence scores below this threshold will be discarded.
+            image (Union[str, Path, np.ndarray, bytes, Image.Image]): The image to run inference on.
+            threshold (float, optional): Minimum confidence threshold for detections. Detections below this
+                threshold are filtered out. Default is 0.5.
+            annotate (bool, optional): If True, returns the image with detections drawn on it. Default is False.
 
         Returns:
-            FocoosDetections: The detection results including class IDs, confidence scores, bounding boxes,
-                and segmentation masks (if applicable).
+            FocoosDetections: Detection results, including a list of detections and optional annotated image.
 
         Raises:
-            FileNotFoundError: If the provided image file path is invalid.
-            ValueError: If the inference request fails.
+            FileNotFoundError: If the image file path does not exist or cannot be loaded.
+            ValueError: If the inference request to the remote model fails.
 
         Example:
             ```python
             from focoos import Focoos
+            from PIL import Image
 
             focoos = Focoos()
             model = focoos.get_remote_model("my-model")
-            results = model.infer("image.jpg", threshold=0.5)
+            results = model.infer("image.jpg", threshold=0.5, annotate=True)
 
-            # Print detection results
             for det in results.detections:
-                print(f"Found {det.label} with confidence {det.conf:.2f}")
-                print(f"Bounding box: {det.bbox}")
-                if det.mask:
-                    print("Instance segmentation mask included")
+                print(f"Label: {det.label}, Confidence: {det.conf:.2f}, BBox: {det.bbox}")
+                if det.mask is not None:
+                    print("Segmentation mask available")
+            if results.image is not None:
+                Image.fromarray(results.image)
             ```
         """
-        if isinstance(image, Image.Image):
-            image = np.array(image)
 
-        image_bytes = None
-        if isinstance(image, str) or isinstance(image, Path):
-            if not os.path.exists(image):
-                logger.error(f"Image file not found: {image}")
-                raise FileNotFoundError(f"Image file not found: {image}")
-            image_bytes = open(image, "rb").read()
-        elif isinstance(image, np.ndarray):
-            _, buffer = cv2.imencode(".jpg", image)
-            image_bytes = buffer.tobytes()
-        else:
-            image_bytes = image
+        image = image_loader(image)
+        _, buffer = cv2.imencode(".jpg", image)
+        image_bytes = buffer.tobytes()
         files = {"file": ("image", image_bytes, "image/jpeg")}
         t0 = time.time()
         res = self.api_client.post(
@@ -306,7 +301,8 @@ class RemoteModel:
             logger.debug(
                 f"Found {len(detections.detections)} detections. Inference Request time: {(t1 - t0) * 1000:.0f}ms"
             )
-
+            if annotate:
+                detections.image = annotate_frame(image, detections, self.model_info.task, self.model_info.classes)
             return detections
         else:
             logger.error(f"Failed to infer: {res.status_code} {res.text}")

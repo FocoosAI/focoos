@@ -118,7 +118,7 @@ class Processor(ABC):
             list[np.ndarray],
             list[torch.Tensor],
         ],
-        threshold: Optional[float] = None,
+        threshold: float = 0.5,
         **kwargs,
     ) -> list[FocoosDetections]:
         """Postprocess outputs from exported model for inference.

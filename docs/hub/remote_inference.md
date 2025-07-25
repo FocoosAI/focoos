@@ -44,7 +44,7 @@ Remote models can also be called directly like functions:
 
 ```python
 # This is equivalent to calling remote_model.infer()
-results = remote_model("path/to/image.jpg", threshold=0.5)
+results = remote_model.infer("path/to/image.jpg", threshold=0.5)
 ```
 
 ## Supported Input Types
@@ -129,13 +129,10 @@ for i, detection in enumerate(results.detections):
 Visualize results using the built-in utilities:
 
 ```python
-from focoos import annotate_image
 
-results = model.infer(image=image, threshold=0.5)
+results = model.infer(image=image, threshold=0.5,annotate=True)
 
-annotated_image = annotate_image(
-    im=image, detections=results, task=model.model_info.task, classes=model.model_info.classes
-)
+Image.fromarray(results.image)
 ```
 
 ## Model Management for Remote Inference

@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from pathlib import Path
+from time import perf_counter
 from typing import Literal, Optional, Tuple, Union
 from urllib.parse import urlparse
 
@@ -30,6 +31,7 @@ from focoos.utils.distributed.dist import launch
 from focoos.utils.env import TORCH_VERSION
 from focoos.utils.logger import get_logger
 from focoos.utils.system import get_cpu_name, get_device_name, get_focoos_version, get_system_info
+from focoos.utils.vision import annotate_frame, image_loader
 
 logger = get_logger("FocoosModel")
 
@@ -45,15 +47,30 @@ class ExportableModel(torch.nn.Module):
         device: The device to move the model to. Defaults to "cuda".
     """
 
-    def __init__(self, model: BaseModelNN, device="cuda"):
+    def __init__(self, model: BaseModelNN, device="cuda", input_size: Optional[Union[int, Tuple[int, int]]] = None):
         """Initialize the ExportableModel.
 
         Args:
             model: The base model to wrap for export.
             device: The device to move the model to. Defaults to "cuda".
+            input_size: Input image size for export optimization. Can be int (square) or tuple (height, width).
         """
         super().__init__()
+
+        # Configure export mode with correct input size
+        test_cfg = None
+        if input_size is not None:
+            if isinstance(input_size, int):
+                # Square image: convert int to tuple
+                test_cfg = {"input_size": (input_size, input_size)}
+            else:
+                # Already a tuple (height, width)
+                test_cfg = {"input_size": input_size}
+
+        # Use BaseModelNN's switch_to_export method which accepts test_cfg
+
         self.model = model.eval().to(device)
+        self.model.switch_to_export(test_cfg)
 
     def forward(self, x):
         """Forward pass through the wrapped model.
@@ -88,7 +105,7 @@ class FocoosModel:
         """
         self.model = model
         self.model_info = model_info
-        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)
+        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)  # type: ignore
         if self.model_info.weights_uri:
             self._load_weights()
         else:
@@ -152,7 +169,7 @@ class FocoosModel:
         self.model_info.config["num_classes"] = len(data_train.dataset.metadata.classes)
         self._reload_model()
         self.model_info.name = train_args.run_name.strip()
-        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)
+        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)  # type: ignore
         assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
 
     def train(self, args: TrainerArgs, data_train: MapDataset, data_val: MapDataset, hub: Optional[FocoosHUB] = None):
@@ -209,7 +226,7 @@ class FocoosModel:
         else:
             run_train(args, data_train, data_val, self.model, self.processor, self.model_info, hub)
 
-    def eval(self, args: TrainerArgs, data_test: MapDataset):
+    def eval(self, args: TrainerArgs, data_test: MapDataset, save_json: bool = True):
         """evaluate the model on the provided test dataset.
 
         This method evaluates the model performance on a test dataset,
@@ -237,7 +254,7 @@ class FocoosModel:
                 run_eval,
                 args.num_gpus,
                 dist_url="auto",
-                args=(args, data_test, self.model, self.processor, self.model_info),
+                args=(args, data_test, self.model, self.processor, self.model_info, save_json),
             )
             logger.info("Testing done, resuming main process.")
             # here i should restore the best model and config since in DDP it is not updated
@@ -245,7 +262,14 @@ class FocoosModel:
             metadata_path = os.path.join(final_folder, ArtifactName.INFO)
             self.model_info = ModelInfo.from_json(metadata_path)
         else:
-            run_eval(args, data_test, self.model, self.processor, self.model_info)
+            run_eval(
+                train_args=args,
+                data_val=data_test,
+                image_model=self.model,
+                processor=self.processor,
+                model_info=self.model_info,
+                save_json=save_json,
+            )
 
     @property
     def name(self):
@@ -296,6 +320,48 @@ class FocoosModel:
         """
         return self.model_info.task
 
+    def infer(
+        self, image: Union[bytes, str, Path, np.ndarray, Image.Image], threshold: float = 0.5, annotate: bool = False
+    ) -> FocoosDetections:
+        """
+        Perform inference on an input image and optionally annotate the results.
+
+        This method processes the input image, runs it through the model, and returns the detections.
+        Optionally, it can also annotate the image with the detection results.
+
+        Args:
+            image: The input image to run inference on. Accepts a file path, bytes, PIL Image, or numpy array.
+            threshold: Minimum confidence score for a detection to be included in the results. Default is 0.5.
+            annotate: If True, annotate the image with detection results and include it in the output.
+
+        Returns:
+            FocoosDetections: An object containing the detection results, optional annotated image, and latency metrics.
+
+        Usage:
+            Use this method to obtain detection results from a local model, with optional annotation for visualization or further processing.
+        """
+        t0 = perf_counter()
+        im = image_loader(image)
+        t1 = perf_counter()
+        focoos_det = self.__call__(inputs=im, threshold=threshold)
+        if focoos_det.latency is not None and focoos_det.latency.get("preprocess") is not None:
+            focoos_det.latency["preprocess"] += t1 - t0
+            focoos_det.latency["preprocess"] = round(focoos_det.latency["inference"], 3)
+
+        if annotate:
+            t0 = perf_counter()
+            focoos_det.image = annotate_frame(
+                im, focoos_det, task=self.model_info.task, classes=self.model_info.classes
+            )
+            t1 = perf_counter()
+            if focoos_det.latency is not None:
+                focoos_det.latency["annotate"] = round(t1 - t0, 3)
+        if focoos_det.latency is not None:
+            logger.debug(
+                f"Found {len(focoos_det)} detections. thr: {threshold} Inference time: {(focoos_det.latency['inference']) * 1000:.0f}ms, preprocess: {(focoos_det.latency['preprocess']) * 1000:.0f}ms, postprocess: {(focoos_det.latency['postprocess']) * 1000:.0f}ms, annotate: {(focoos_det.latency['annotate']) * 1000:.0f}ms"
+            )
+        return focoos_det
+
     def export(
         self,
         runtime_type: RuntimeType = RuntimeType.TORCHSCRIPT_32,
@@ -303,7 +369,7 @@ class FocoosModel:
         out_dir: Optional[str] = None,
         device: Literal["cuda", "cpu"] = "cuda",
         overwrite: bool = False,
-        image_size: Optional[int] = None,
+        image_size: Optional[Union[int, Tuple[int, int]]] = None,
     ) -> InferModel:
         """Export the model to different runtime formats.
 
@@ -316,7 +382,7 @@ class FocoosModel:
             out_dir: Output directory for exported model. If None, uses default location.
             device: Device to use for export ("cuda" or "cpu").
             overwrite: Whether to overwrite existing exported model files.
-            image_size: Custom image size for export. If None, uses model's default size.
+            image_size: Custom image size for export. Can be int (square) or tuple (height, width). If None, uses model's default size.
 
         Returns:
             InferModel instance for the exported model.
@@ -331,13 +397,21 @@ class FocoosModel:
             out_dir = os.path.join(MODELS_DIR, self.model_info.ref or self.model_info.name)
 
         format = runtime_type.to_export_format()
-        exportable_model = ExportableModel(self.model, device=device)
+        export_image_size = image_size if image_size is not None else self.model_info.im_size
+        exportable_model = ExportableModel(self.model, device=device, input_size=export_image_size)
         os.makedirs(out_dir, exist_ok=True)
         if image_size is None:
             data = 128 * torch.randn(1, 3, self.model_info.im_size, self.model_info.im_size).to(device)
         else:
-            data = 128 * torch.randn(1, 3, image_size, image_size).to(device)
-            self.model_info.im_size = image_size
+            if isinstance(image_size, int):
+                # Square image
+                data = 128 * torch.randn(1, 3, image_size, image_size).to(device)
+                self.model_info.im_size = image_size
+            else:
+                # Tuple (height, width)
+                height, width = image_size
+                data = 128 * torch.randn(1, 3, height, width).to(device)
+                self.model_info.im_size = max(height, width)  # Use max dimension for compatibility
 
         export_model_name = ArtifactName.ONNX if format == ExportFormat.ONNX else ArtifactName.PT
         _out_file = os.path.join(out_dir, export_model_name)
@@ -436,6 +510,7 @@ class FocoosModel:
         Returns:
             FocoosDetections containing the detection results.
         """
+        t0 = perf_counter()
         model = self.model.eval()
         processor = self.processor.eval()
         try:
@@ -448,16 +523,25 @@ class FocoosModel:
             dtype=model.dtype,
             image_size=self.model_info.im_size,
         )  # second output is targets that we're not using
+        t1 = perf_counter()
         with torch.no_grad():
             try:
                 with torch.autocast(device_type="cuda", dtype=torch.float16):
                     output = model.forward(images)
             except Exception:
                 output = model.forward(images)
+        t2 = perf_counter()
         class_names = self.model_info.classes
         output_fdet = processor.postprocess(output, inputs, class_names=class_names, **kwargs)
-
+        t3 = perf_counter()
         # FIXME: we don't support batching yet
+
+        latency = {
+            "preprocess": round(t1 - t0, 3),
+            "inference": round(t2 - t1, 3),
+            "postprocess": round(t3 - t2, 3),
+        }
+        output_fdet[0].latency = latency
         return output_fdet[0]
 
     def _reload_model(self):

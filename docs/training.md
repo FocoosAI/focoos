@@ -123,7 +123,7 @@ index = random.randint(0, len(valid_dataset))
 ground_truth = valid_dataset.preview(index, use_augmentations=False).save("ground_truth.jpg")
 
 image = Image.open(valid_dataset[index]["file_name"])
-outputs = model(image)
+outputs = model.infer(image,annotate=True)
 
-prediction = annotate_image(image, outputs, task=task, classes=model.model_info.classes).save("prediction.jpg")
+Image.fromarray(detections.image)
 ```
