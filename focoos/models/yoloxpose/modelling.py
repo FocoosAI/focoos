@@ -991,7 +991,7 @@ class YOLOXPoseHead(nn.Module):
 
             # 3.3 keypoint loss
             kpt_preds = flatten_kpt_decoded.view(-1, self.num_keypoints, 2)[pos_masks]
-            losses["loss_kpt"] = self.criterion.get_loss(
+            losses["loss_oks"] = self.criterion.get_loss(
                 "oks", kpt_preds, kpt_targets, target_weight=vis_targets, areas=pos_areas
             )
 

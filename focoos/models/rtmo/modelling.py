@@ -1207,7 +1207,7 @@ class RTMOHead(nn.Module):
             obj_targets[pos_masks] = cls_targets.to(obj_targets)
 
         # 3.4 classification loss
-        losses["classification_varifocal_loss"] = (
+        losses["loss_cls"] = (
             self.criterion.get_loss("classification_varifocal", cls_preds_all, obj_targets, target_weight=obj_weights)
             / num_total_samples
         )
