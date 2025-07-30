@@ -55,7 +55,7 @@ def image_loader(im: Union[bytes, str, Path, np.ndarray, Image.Image]) -> np.nda
         im = response.content
 
     if isinstance(im, np.ndarray):
-        cv_image = im
+        return im
     elif isinstance(im, str) or isinstance(im, Path):
         cv_image = cv2.imread(str(im))
         if cv_image is None:
@@ -361,6 +361,7 @@ def masks_to_xyxy(masks: np.ndarray) -> np.ndarray:
     return xyxy
 
 
+#!TODO DEPRECATED
 def annotate_image(
     im: Union[np.ndarray, Image.Image], detections: FocoosDetections, task: Task, classes: Optional[list[str]] = None
 ) -> Image.Image:
