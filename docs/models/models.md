@@ -42,3 +42,15 @@ With the Focoos SDK, you can take advantage of a collection of foundational mode
 <small> AP = Average Precision averaged by class </small> <br>
 <small> AP50 = Average Precision at IoU threshold 0.50 averaged by class </small> <br>
 <small> FPS = Frames per second computed using TensorRT with resolution 640x640 </small> <br>
+
+## Keypoint Detection 🥷
+
+| Model Name | Architecture | Domain (Classes) | Dataset | Metric | FPS Nvidia-T4 |
+|------------|--------------|------------------|----------|---------|--------------|
+| [rtmo-s-coco](rtmo.md) | [RTMO](https://github.com/open-mmlab/mmpose/tree/main/projects/rtmo) ([STDC-2](https://github.com/MichaelFan01/STDC-Seg)) | Persons (1) | [COCO](https://cocodataset.org/#home) | keypoints/AP: 59.9<br>keypoints/AP50: 83.3 | <ins>TODO<ins> |
+
+
+<small> AP = Average Precision averaged by class </small> <br>
+<small> AP50 = Average Precision at IoU threshold 0.50 averaged by class </small> <br>
+<ins>TODO<ins>
+<small> FPS = Frames per second computed using TensorRT with resolution 640x640 </small> <br>
