@@ -6,7 +6,7 @@ import cv2
 import gradio as gr
 from focoos.model_manager import ModelManager
 from focoos.model_registry import ModelRegistry
-from focoos.utils.vision import annotate_frame, annotate_image
+from focoos.utils.vision import annotate_frame
 
 ASSETS_DIR = os.path.dirname(os.path.abspath(__file__)) + "/assets"
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/output"
@@ -23,6 +23,7 @@ image_examples = [
     [f"{ASSETS_DIR}/ADE_val_00000821.jpg", "fai-detr-m-coco"],
     [f"{ASSETS_DIR}/ADE_val_00000461.jpg", "fai-mf-m-ade"],
     [f"{ASSETS_DIR}/ADE_val_00000034.jpg", "fai-mf-l-coco-ins"],
+    [f"{ASSETS_DIR}/federer.jpg", "rtmo-s-coco"],
 ]
 
 
@@ -35,7 +36,7 @@ def run_inference(image, model_name: str, conf: float, progress=gr.Progress()):
     else:
         model = loaded_models[model_name]
     detections = model(image, threshold=conf)
-    annotated_image = annotate_image(image, detections, task=model.task, classes=model.classes)
+    annotated_image = annotate_frame(image, detections, task=model.task, classes=model.classes)
     return annotated_image, detections.model_dump()
 
 
