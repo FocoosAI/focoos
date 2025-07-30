@@ -16,13 +16,13 @@ from focoos.structures import ImageList
 class ClassificationProcessor(Processor):
     """Processor for image classification model inputs and outputs."""
 
-    def __init__(self, config: ClassificationConfig):
+    def __init__(self, config: ClassificationConfig, image_size: Optional[int] = None):
         """Initialize the processor with model configuration.
 
         Args:
             config: Model configuration
         """
-        super().__init__(config)
+        super().__init__(config, image_size)
         self.config = config
         self.multi_label = config.multi_label
 
@@ -39,7 +39,6 @@ class ClassificationProcessor(Processor):
         ],
         device: torch.device,
         dtype: torch.dtype,
-        image_size: Optional[int] = None,
     ) -> Tuple[torch.Tensor, List[ClassificationTargets]]:
         """Process input images for model inference.
 
@@ -70,9 +69,9 @@ class ClassificationProcessor(Processor):
         if self.training:
             raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
         images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
-        if image_size is not None:
+        if self.image_size is not None:
             images_torch = torch.nn.functional.interpolate(
-                images_torch, size=(image_size, image_size), mode="bilinear", align_corners=False
+                images_torch, size=(self.image_size, self.image_size), mode="bilinear", align_corners=False
             )
         return images_torch, targets
 

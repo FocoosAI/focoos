@@ -105,7 +105,9 @@ class FocoosModel:
         """
         self.model = model
         self.model_info = model_info
-        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)  # type: ignore
+        self.processor = ProcessorManager.get_processor(
+            self.model_info.model_family, self.model_info.config, self.model_info.im_size
+        )  # type: ignore
         if self.model_info.weights_uri:
             self._load_weights()
         else:
@@ -357,9 +359,10 @@ class FocoosModel:
             if focoos_det.latency is not None:
                 focoos_det.latency["annotate"] = round(t1 - t0, 3)
         if focoos_det.latency is not None:
-            logger.debug(
-                f"Found {len(focoos_det)} detections. thr: {threshold} Inference time: {(focoos_det.latency['inference']) * 1000:.0f}ms, preprocess: {(focoos_det.latency['preprocess']) * 1000:.0f}ms, postprocess: {(focoos_det.latency['postprocess']) * 1000:.0f}ms, annotate: {(focoos_det.latency['annotate']) * 1000:.0f}ms"
-            )
+            msg = f"Found {len(focoos_det)} detections. thr: {threshold} Inference time: {(focoos_det.latency['inference']) * 1000:.0f}ms, preprocess: {(focoos_det.latency['preprocess']) * 1000:.0f}ms, postprocess: {(focoos_det.latency['postprocess']) * 1000:.0f}ms"
+            if focoos_det.latency.get("annotate"):
+                msg += f", annotate: {(focoos_det.latency['annotate']) * 1000:.0f}ms"
+            logger.debug(msg)
         return focoos_det
 
     def export(
@@ -518,10 +521,7 @@ class FocoosModel:
         except Exception:
             logger.warning("Unable to use CUDA")
         images, _ = processor.preprocess(
-            inputs,
-            device=model.device,
-            dtype=model.dtype,
-            image_size=self.model_info.im_size,
+            inputs, device=model.device, dtype=model.dtype
         )  # second output is targets that we're not using
         t1 = perf_counter()
         with torch.no_grad():

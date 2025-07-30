@@ -15,11 +15,9 @@ logger = get_logger(__name__)
 
 
 class YOLOXPoseProcessor(Processor):
-    def __init__(self, config: YOLOXPoseConfig):
-        super().__init__(config)
+    def __init__(self, config: YOLOXPoseConfig, image_size: Optional[int] = None):
+        super().__init__(config, image_size)
         self.score_thr = config.score_thr
-        self.skeleton = config.skeleton
-        self.flip_map = config.flip_map
 
     def preprocess(
         self,

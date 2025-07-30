@@ -1,5 +1,5 @@
 import importlib
-from typing import Callable, Dict, Type
+from typing import Callable, Dict, Optional, Type
 
 from focoos.ports import ModelConfig, ModelFamily
 from focoos.processor.base_processor import Processor
@@ -29,7 +29,9 @@ class ProcessorManager:
                         register_func()
 
     @classmethod
-    def get_processor(cls, model_family: ModelFamily, model_config: ModelConfig) -> Processor:
+    def get_processor(
+        cls, model_family: ModelFamily, model_config: ModelConfig, image_size: Optional[int] = None
+    ) -> Processor:
         """
         Get a processor instance for the given model family.
         """
@@ -37,4 +39,4 @@ class ProcessorManager:
         if model_family.value not in cls._PROCESSOR_MAPPING:
             raise ValueError(f"Processor for {model_family} not supported")
         processor_class = cls._PROCESSOR_MAPPING[model_family.value]()
-        return processor_class(config=model_config)
+        return processor_class(config=model_config, image_size=image_size)

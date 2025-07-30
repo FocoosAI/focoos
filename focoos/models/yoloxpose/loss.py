@@ -23,21 +23,20 @@ class KeypointCriterion(nn.Module):
         self.loss_mle = MLECCLoss(use_target_weight=True, loss_weight=1.0)
         self.loss_cls_varifocal = VariFocalLoss(reduction="sum", use_target_weight=True, loss_weight=1.0)
 
-
-def get_loss(self, loss: YoloXPoseKeypointLossLiteral, outputs, targets, **kwargs) -> torch.Tensor:
-    loss_map: dict[YoloXPoseKeypointLossLiteral, nn.Module] = {
-        "objectness": self.loss_obj,
-        "boxes": self.loss_bbox,
-        "oks": self.loss_oks,
-        "visibility": self.loss_vis,
-        "classification": self.loss_cls,
-        "bbox_aux": self.loss_bbox_aux,
-        # RTMO specific
-        "mle": self.loss_mle,
-        "classification_varifocal": self.loss_cls_varifocal,
-    }
-    assert loss in loss_map, f"do you really want to compute {loss} loss?"
-    return loss_map[loss](outputs, targets, **kwargs)
+    def get_loss(self, loss: YoloXPoseKeypointLossLiteral, outputs, targets, **kwargs) -> torch.Tensor:
+        loss_map: dict[YoloXPoseKeypointLossLiteral, nn.Module] = {
+            "objectness": self.loss_obj,
+            "boxes": self.loss_bbox,
+            "oks": self.loss_oks,
+            "visibility": self.loss_vis,
+            "classification": self.loss_cls,
+            "bbox_aux": self.loss_bbox_aux,
+            # RTMO specific
+            "mle": self.loss_mle,
+            "classification_varifocal": self.loss_cls_varifocal,
+        }
+        assert loss in loss_map, f"do you really want to compute {loss} loss?"
+        return loss_map[loss](outputs, targets, **kwargs)
 
 
 class IoULoss(nn.Module):

@@ -11,9 +11,10 @@ from typing_extensions import Buffer
 
 from focoos.ports import FocoosDet, FocoosDetections, Task
 
-label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
+label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10, smart_position=True)
 box_annotator = sv.BoxAnnotator()
 mask_annotator = sv.MaskAnnotator()
+edge_annotator = sv.EdgeAnnotator()
 
 
 def index_to_class(class_ids: list[int], classes: list[str]) -> list[str]:
@@ -234,6 +235,23 @@ def fai_detections_to_sv(inference_output: FocoosDetections, im0_shape: tuple) -
     )
 
 
+def fai_keypoints_to_sv(inference_output: FocoosDetections, im0_shape: tuple) -> sv.KeyPoints:
+    detections = inference_output.detections
+    keypoints_data = np.array([d.keypoints for d in detections if d.keypoints is not None], dtype=np.float32)
+
+    # Extract xy coordinates (first two columns) and confidence (third column)
+    keypoints_xy = keypoints_data[:, :, :2]  # Shape: (num_detections, num_keypoints, 2)
+    keypoints_confidence = keypoints_data[:, :, 2]  # Shape: (num_detections, num_keypoints)
+
+    class_id = np.array([d.cls_id for d in detections], dtype=int)
+
+    return sv.KeyPoints(
+        xy=keypoints_xy,
+        class_id=class_id,
+        confidence=keypoints_confidence,
+    )
+
+
 def trim_mask(mask: np.ndarray, bbox: np.ndarray) -> np.ndarray:
     x1, y1, x2, y2 = map(int, bbox)
     y2, x2 = min(y2, mask.shape[0]), min(x2, mask.shape[1])  # type: ignore
@@ -386,26 +404,23 @@ def annotate_frame(
     if isinstance(im, Image.Image):
         im = np.array(im)
 
-    # Input image is expected to be in RGB format, but supervision annotators expect BGR
-    # Convert RGB to BGR for annotation, then back to RGB
-
     has_bbox = detections.detections[0].bbox is not None
     has_mask = detections.detections[0].mask is not None
-    # has_keypoints = detections.detections[0].keypoints is not None
-
+    has_keypoints = detections.detections[0].keypoints is not None
+    if has_keypoints:
+        sv_keypoints = fai_keypoints_to_sv(detections, im.shape[:2])
     sv_detections = fai_detections_to_sv(detections, im.shape[:2])
-    # Optimized early return - check if there are detections
     if sv_detections.xyxy.shape[0] == 0:
         return im  # Return original RGB image
 
-    # Use BGR image for annotation (supervision expects BGR)
     annotated_im = im
 
     if has_bbox and task != Task.SEMSEG:
         annotated_im = box_annotator.annotate(scene=annotated_im, detections=sv_detections)
     if has_mask:
         annotated_im = mask_annotator.annotate(scene=annotated_im, detections=sv_detections)
-
+    if has_keypoints:
+        annotated_im = edge_annotator.annotate(scene=annotated_im, key_points=sv_keypoints)
     # Optimize label creation
     if classes is not None and sv_detections.class_id is not None and sv_detections.confidence is not None:
         labels = [
@@ -414,6 +429,4 @@ def annotate_frame(
         ]
         annotated_im = label_annotator.annotate(scene=annotated_im, detections=sv_detections, labels=labels)
 
-    # Convert back from BGR to RGB before returning
     return annotated_im
-    # return cv2.cvtColor(annotated_im, cv2.COLOR_BGR2RGB)

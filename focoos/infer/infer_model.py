@@ -108,7 +108,9 @@ class InferModel:
             from focoos.model_manager import ConfigManager
 
             model_config = ConfigManager.from_dict(self.model_info.model_family, self.model_info.config)
-            self.processor = ProcessorManager.get_processor(self.model_info.model_family, model_config)
+            self.processor = ProcessorManager.get_processor(
+                self.model_info.model_family, model_config, self.model_info.im_size
+            )
         except Exception as e:
             logger.error(f"Error creating model config: {e}")
             raise e
@@ -171,7 +173,7 @@ class InferModel:
 
         t0 = perf_counter()
         im = image_loader(image)
-        tensors, _ = self.processor.preprocess(inputs=im, device="cuda", image_size=self.model_info.im_size)
+        tensors, _ = self.processor.preprocess(inputs=im, device="cuda")
         logger.debug(f"Input image size: {im.shape}")
         t1 = perf_counter()
 

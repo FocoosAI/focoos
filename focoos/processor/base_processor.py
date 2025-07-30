@@ -19,7 +19,7 @@ class Processor(ABC):
         training (bool): Flag indicating whether the processor is in training mode.
     """
 
-    def __init__(self, config: ModelConfig):
+    def __init__(self, config: ModelConfig, image_size: Optional[int] = None):
         """Initialize the processor with the given configuration.
 
         Args:
@@ -27,6 +27,7 @@ class Processor(ABC):
         """
         self.config = config
         self.training = False
+        self.image_size = image_size
 
     def eval(self):
         """Set the processor to evaluation mode.
@@ -55,7 +56,6 @@ class Processor(ABC):
         inputs: Union[torch.Tensor, np.ndarray, Image.Image, list[Image.Image], list[np.ndarray], list[torch.Tensor]],
         device: Union[Literal["cuda", "cpu"], torch.device] = "cuda",
         dtype: torch.dtype = torch.float32,
-        image_size: Optional[int] = None,
     ) -> tuple[torch.Tensor, Any]:
         """Preprocess input data for model inference.
 

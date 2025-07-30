@@ -16,13 +16,10 @@ logger = get_logger(__name__)
 
 
 class RTMOProcessor(Processor):
-    def __init__(self, config: RTMOConfig):
-        super().__init__(config)
-        self.nms_pre = config.nms_pre
-        self.nms_thr = config.nms_thr
+    def __init__(self, config: RTMOConfig, image_size: Optional[int] = None):
+        super().__init__(config, image_size)
+
         self.score_thr = config.score_thr
-        self.skeleton = config.skeleton
-        self.flip_map = config.flip_map
 
     def preprocess(
         self,
@@ -37,7 +34,6 @@ class RTMOProcessor(Processor):
         ],
         device: torch.device,
         dtype: torch.dtype = torch.float32,
-        image_size: Optional[int] = None,
         **kwargs,
     ) -> tuple[torch.Tensor, list[KeypointTargets]]:
         targets = []
@@ -91,9 +87,9 @@ class RTMOProcessor(Processor):
                 raise ValueError("During training, inputs should be a list of DatasetEntry")
             # Type cast is safe here since we know inputs is not list[DatasetEntry]
             images_torch = self.get_tensors(inputs).to(device, dtype=dtype, non_blocking=True)  # type: ignore
-            if image_size is not None:
+            if self.image_size is not None:
                 images_torch = torch.nn.functional.interpolate(
-                    images_torch, size=(image_size, image_size), mode="bilinear", align_corners=False
+                    images_torch, size=(self.image_size, self.image_size), mode="bilinear", align_corners=False
                 )
         return images_torch, targets
 
@@ -135,7 +131,7 @@ class RTMOProcessor(Processor):
             size = image_sizes[i]
             h, w = int(size[0]), int(size[1])
 
-            logger.debug(f"outputs.outputs.scores[i].shape: {outputs.outputs.scores[i].shape}")
+            # logger.debug(f"outputs.outputs.scores[i].shape: {outputs.outputs.scores[i].shape}")
 
             # Apply filtering to all outputs consistently
             filtered_scores = outputs.outputs.scores[i][filter_mask]
@@ -152,6 +148,11 @@ class RTMOProcessor(Processor):
             if keypoints_visible_i.ndim == 3 and keypoints_visible_i.shape[0] == 1:
                 keypoints_visible_i = keypoints_visible_i.squeeze(0)
             filtered_keypoints_visible = keypoints_visible_i[filter_mask]
+
+            logger.debug(f"filtered_boxes.shape: {filtered_boxes.shape}")
+            # Multiply boxes by image size
+            # filtered_boxes[:, 0::2] = filtered_boxes[:, 0::2] * h
+            # filtered_boxes[:, 1::2] = filtered_boxes[:, 1::2] * w
 
             # Process boxes
             output_boxes = filtered_boxes.clip(0, max(h, w))

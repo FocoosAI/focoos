@@ -58,8 +58,8 @@ def detector_postprocess(
 
 
 class DETRProcessor(Processor):
-    def __init__(self, config: DETRConfig):
-        super().__init__(config)
+    def __init__(self, config: DETRConfig, image_size: Optional[int] = None):
+        super().__init__(config, image_size)
         self.top_k = config.top_k
         self.threshold = config.threshold
         self.resolution = config.resolution
@@ -77,7 +77,6 @@ class DETRProcessor(Processor):
         ],
         device: torch.device,
         dtype: torch.dtype = torch.float32,
-        image_size: Optional[int] = None,
     ) -> tuple[torch.Tensor, list[DETRTargets]]:
         targets = []
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DatasetEntry):
@@ -104,9 +103,9 @@ class DETRProcessor(Processor):
             if self.training:
                 raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
             images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
-            if image_size is not None:
+            if self.image_size is not None:
                 images_torch = torch.nn.functional.interpolate(
-                    images_torch, size=(image_size, image_size), mode="bilinear", align_corners=False
+                    images_torch, size=(self.image_size, self.image_size), mode="bilinear", align_corners=False
                 )
         return images_torch, targets
 
