@@ -69,7 +69,7 @@ The RTMO architecture consists of three main components:
 4.  **Keypoint Visibility Loss (`loss_vis`)**: A **Binary Cross-Entropy (BCE) Loss** is used to supervise the visibility prediction for each keypoint.
 5. **OKS Loss (`loss_oks`)**: Auxiliary loss supervising keypoint regression with **OKS (Object Keypoint Similarity) Loss**. It uses DCC predictions as targets for further refinement.
 
-<ins>TODO: add also auxiliary losses?<ins>
+<ins>TODO: add also auxiliary losses??<ins>
 
 The total loss is a weighted sum of these components.
 
