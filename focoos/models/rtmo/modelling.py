@@ -1435,7 +1435,7 @@ class RTMOHead(nn.Module):
         num_priors = priors.size(0)
         # TODO: avoid using mmpose data structures
         gt_instances = KeypointTargets(
-            bboxes=data_sample.bboxes,
+            boxes=data_sample.boxes,
             scores=None,
             priors=None,
             labels=data_sample.labels,
@@ -1477,7 +1477,7 @@ class RTMOHead(nn.Module):
         # assign positive samples
         scores = cls_scores * objectness
         pred_instances = KeypointTargets(
-            bboxes=decoded_bboxes,
+            boxes=decoded_bboxes,
             scores=scores.sqrt_(),
             priors=priors,
             keypoints=decoded_kpts,
@@ -1495,8 +1495,8 @@ class RTMOHead(nn.Module):
         pos_assigned_gt_inds = assign_result["gt_inds"][pos_inds] - 1
 
         # bbox target
-        assert gt_instances.bboxes is not None, "gt_instances.bboxes is None"
-        bbox_target = gt_instances.bboxes[pos_assigned_gt_inds.long()]
+        assert gt_instances.boxes is not None, "gt_instances.bboxes is None"
+        bbox_target = gt_instances.boxes[pos_assigned_gt_inds.long()]
 
         # cls target
         max_overlaps = assign_result["max_overlaps"][pos_inds]
@@ -1655,10 +1655,10 @@ class RTMOHead(nn.Module):
         return KeypointOutput(
             scores=torch.cat(all_scores, dim=0),
             labels=torch.cat(all_labels, dim=0),
-            pred_bboxes=torch.cat(all_pred_bboxes, dim=0),
-            bbox_scores=torch.cat(all_bbox_scores, dim=0),
-            pred_keypoints=torch.cat(all_pred_keypoints, dim=0),
-            keypoint_scores=torch.cat(all_keypoint_scores, dim=0),
+            boxes=torch.cat(all_pred_bboxes, dim=0),
+            boxes_scores=torch.cat(all_bbox_scores, dim=0),
+            keypoints=torch.cat(all_pred_keypoints, dim=0),
+            keypoints_scores=torch.cat(all_keypoint_scores, dim=0),
             keypoints_visible=torch.cat(all_keypoints_visible, dim=0),
         )
 
@@ -1759,10 +1759,10 @@ class RTMO(BaseModelNN):
             return RTMOModelOutput(
                 scores=torch.zeros(0, 0, 0),
                 labels=torch.zeros(0, 0, 0),
-                pred_bboxes=torch.zeros(0, 0, 4),
-                bbox_scores=torch.zeros(0, 0, 0),
-                pred_keypoints=torch.zeros(0, 0, 0),
-                keypoint_scores=torch.zeros(0, 0, 0),
+                boxes=torch.zeros(0, 0, 4),
+                boxes_scores=torch.zeros(0, 0, 0),
+                keypoints=torch.zeros(0, 0, 0),
+                keypoints_scores=torch.zeros(0, 0, 0),
                 keypoints_visible=torch.zeros(0, 0, 0),
                 loss=losses,
             )
@@ -1770,10 +1770,10 @@ class RTMO(BaseModelNN):
         return RTMOModelOutput(
             scores=outputs.scores,
             labels=outputs.labels,
-            pred_bboxes=outputs.pred_bboxes,
-            bbox_scores=outputs.bbox_scores,
-            pred_keypoints=outputs.pred_keypoints,
-            keypoint_scores=outputs.keypoint_scores,
+            boxes=outputs.boxes,
+            boxes_scores=outputs.boxes_scores,
+            keypoints=outputs.keypoints,
+            keypoints_scores=outputs.keypoints_scores,
             keypoints_visible=outputs.keypoints_visible,
             loss=None,
         )

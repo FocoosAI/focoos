@@ -15,9 +15,9 @@ RTMOLoss = dict[RTMOKeypointLossLiteral, torch.Tensor]
 class RTMOModelOutput(ModelOutput):
     scores: torch.Tensor
     labels: torch.Tensor
-    pred_bboxes: torch.Tensor
-    bbox_scores: torch.Tensor
-    pred_keypoints: torch.Tensor
-    keypoint_scores: torch.Tensor
+    boxes: torch.Tensor
+    boxes_scores: torch.Tensor
+    keypoints: torch.Tensor
+    keypoints_scores: torch.Tensor
     keypoints_visible: torch.Tensor
     loss: Optional[RTMOLoss]

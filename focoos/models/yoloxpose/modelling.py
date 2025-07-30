@@ -420,25 +420,25 @@ class SimOTAAssigner:
         """
         assert gt_instances is not None, "gt_instances is None"
         assert pred_instances is not None, "pred_instances is None"
-        assert gt_instances.bboxes is not None, "gt_instances.bboxes is None"
+        assert gt_instances.boxes is not None, "gt_instances.bboxes is None"
         assert gt_instances.labels is not None, "gt_instances.labels is None"
         assert gt_instances.keypoints is not None, "gt_instances.keypoints is None"
         assert gt_instances.keypoints_visible is not None, "gt_instances.keypoints_visible is None"
         assert gt_instances.areas is not None, "gt_instances.areas is None"
-        assert pred_instances.bboxes is not None, "pred_instances.bboxes is None"
+        assert pred_instances.boxes is not None, "pred_instances.bboxes is None"
         assert pred_instances.scores is not None, "pred_instances.scores is None"
         assert pred_instances.priors is not None, "pred_instances.priors is None"
         assert pred_instances.keypoints is not None, "pred_instances.keypoints is None"
         assert pred_instances.keypoints_visible is not None, "pred_instances.keypoints_visible is None"
 
-        gt_bboxes = gt_instances.bboxes
+        gt_bboxes = gt_instances.boxes
         gt_labels = gt_instances.labels
         gt_keypoints = gt_instances.keypoints
         gt_keypoints_visible = gt_instances.keypoints_visible
         gt_areas = gt_instances.areas
         num_gt = gt_bboxes.size(0) if gt_bboxes is not None else 0
 
-        decoded_bboxes = pred_instances.bboxes
+        decoded_bboxes = pred_instances.boxes
         pred_scores = pred_instances.scores
         priors = pred_instances.priors
         keypoints = pred_instances.keypoints
@@ -1239,7 +1239,7 @@ class YOLOXPoseHead(nn.Module):
         num_priors = priors.size(0)
         # TODO: avoid using mmpose data structures
         gt_instances = KeypointTargets(
-            bboxes=data_sample.bboxes,
+            boxes=data_sample.boxes,
             scores=None,
             priors=None,
             labels=data_sample.labels,
@@ -1281,7 +1281,7 @@ class YOLOXPoseHead(nn.Module):
         # assign positive samples
         scores = cls_scores * objectness
         pred_instances = KeypointTargets(
-            bboxes=decoded_bboxes,
+            boxes=decoded_bboxes,
             scores=scores.sqrt_(),
             priors=priors,
             keypoints=decoded_kpts,
@@ -1299,8 +1299,8 @@ class YOLOXPoseHead(nn.Module):
         pos_assigned_gt_inds = assign_result["gt_inds"][pos_inds] - 1
 
         # bbox target
-        assert gt_instances.bboxes is not None, "gt_instances.bboxes is None"
-        bbox_target = gt_instances.bboxes[pos_assigned_gt_inds.long()]
+        assert gt_instances.boxes is not None, "gt_instances.bboxes is None"
+        bbox_target = gt_instances.boxes[pos_assigned_gt_inds.long()]
 
         # cls target
         max_overlaps = assign_result["max_overlaps"][pos_inds]
@@ -1484,10 +1484,10 @@ class YOLOXPoseHead(nn.Module):
         return KeypointOutput(
             scores=torch.cat(all_scores, dim=0),
             labels=torch.cat(all_labels, dim=0),
-            pred_bboxes=torch.cat(all_pred_bboxes, dim=0),
-            bbox_scores=torch.cat(all_bbox_scores, dim=0),
-            pred_keypoints=torch.cat(all_pred_keypoints, dim=0),
-            keypoint_scores=torch.cat(all_keypoint_scores, dim=0),
+            boxes=torch.cat(all_pred_bboxes, dim=0),
+            boxes_scores=torch.cat(all_bbox_scores, dim=0),
+            keypoints=torch.cat(all_pred_keypoints, dim=0),
+            keypoints_scores=torch.cat(all_keypoint_scores, dim=0),
             keypoints_visible=torch.cat(all_keypoints_visible, dim=0),
         )
 
@@ -1552,10 +1552,10 @@ class YOLOXPose(BaseModelNN):
             return YOLOXPoseModelOutput(
                 scores=torch.zeros(0, 0, 0),
                 labels=torch.zeros(0, 0, 0),
-                pred_bboxes=torch.zeros(0, 0, 4),
-                bbox_scores=torch.zeros(0, 0, 0),
-                pred_keypoints=torch.zeros(0, 0, 0),
-                keypoint_scores=torch.zeros(0, 0, 0),
+                boxes=torch.zeros(0, 0, 4),
+                boxes_scores=torch.zeros(0, 0, 0),
+                keypoints=torch.zeros(0, 0, 0),
+                keypoints_scores=torch.zeros(0, 0, 0),
                 keypoints_visible=torch.zeros(0, 0, 0),
                 loss=losses,
             )
@@ -1563,10 +1563,10 @@ class YOLOXPose(BaseModelNN):
         return YOLOXPoseModelOutput(
             scores=outputs.scores,
             labels=outputs.labels,
-            pred_bboxes=outputs.pred_bboxes,
-            bbox_scores=outputs.bbox_scores,
-            pred_keypoints=outputs.pred_keypoints,
-            keypoint_scores=outputs.keypoint_scores,
+            boxes=outputs.boxes,
+            boxes_scores=outputs.boxes_scores,
+            keypoints=outputs.keypoints,
+            keypoints_scores=outputs.keypoints_scores,
             keypoints_visible=outputs.keypoints_visible,
             loss=losses,
         )

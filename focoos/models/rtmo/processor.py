@@ -73,7 +73,7 @@ class RTMOProcessor(Processor):
                     targets.append(
                         KeypointTargets(
                             labels=gt_classes,
-                            bboxes=gt_boxes,
+                            boxes=gt_boxes,
                             keypoints=gt_keypoints,
                             keypoints_visible=gt_visibility,
                             keypoints_visible_weights=None,
@@ -123,8 +123,8 @@ class RTMOProcessor(Processor):
 
         for i in range(batch_size):
             filter_mask = outputs.scores[i] > threshold
-            if outputs.pred_bboxes is not None:
-                output_boxes = outputs.pred_bboxes
+            if outputs.boxes is not None:
+                output_boxes = outputs.boxes
             else:
                 raise ValueError("Predictions must contain boxes!")
 
@@ -141,10 +141,10 @@ class RTMOProcessor(Processor):
             # Apply filtering to all outputs consistently
             filtered_scores = outputs.scores[i][filter_mask]
             filtered_labels = outputs.labels[i][filter_mask]
-            filtered_boxes = outputs.pred_bboxes[i][filter_mask]
+            filtered_boxes = outputs.boxes[i][filter_mask]
 
             # Handle keypoints with potential extra batch dimension
-            pred_keypoints_i = outputs.pred_keypoints[i]
+            pred_keypoints_i = outputs.keypoints[i]
             if pred_keypoints_i.ndim == 4 and pred_keypoints_i.shape[0] == 1:
                 pred_keypoints_i = pred_keypoints_i.squeeze(0)
             filtered_keypoints = pred_keypoints_i[filter_mask]
@@ -218,8 +218,8 @@ class RTMOProcessor(Processor):
             # Get predictions for this image
             scores = output.scores[i]
             labels = output.labels[i]
-            pred_bboxes = output.pred_bboxes[i]
-            pred_keypoints = output.pred_keypoints[i]
+            pred_bboxes = output.boxes[i]
+            pred_keypoints = output.keypoints[i]
             keypoints_visible = output.keypoints_visible[i]
 
             # Scale predictions back to original image size
@@ -294,10 +294,10 @@ class RTMOProcessor(Processor):
         model_output = RTMOModelOutput(
             scores=scores.to(device),
             labels=labels.to(device),
-            pred_bboxes=pred_bboxes.to(device),
-            bbox_scores=bbox_scores.to(device),
-            pred_keypoints=pred_keypoints.to(device),
-            keypoint_scores=keypoint_scores.to(device),
+            boxes=pred_bboxes.to(device),
+            boxes_scores=bbox_scores.to(device),
+            keypoints=pred_keypoints.to(device),
+            keypoints_scores=keypoint_scores.to(device),
             keypoints_visible=keypoints_visible.to(device),
             loss=None,
         )

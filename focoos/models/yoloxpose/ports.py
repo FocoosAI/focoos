@@ -13,7 +13,7 @@ YoloXPoseKeypointLoss = dict[YoloXPoseKeypointLossLiteral, torch.Tensor]
 
 @dataclass
 class KeypointTargets(DictClass):
-    bboxes: Optional[torch.Tensor]
+    boxes: Optional[torch.Tensor]
     scores: Optional[torch.Tensor]
     priors: Optional[torch.Tensor]
     labels: Optional[torch.Tensor]
@@ -27,10 +27,10 @@ class KeypointTargets(DictClass):
 class KeypointOutput(DictClass):
     scores: torch.Tensor
     labels: torch.Tensor
-    pred_bboxes: torch.Tensor
-    bbox_scores: torch.Tensor
-    pred_keypoints: torch.Tensor
-    keypoint_scores: torch.Tensor
+    boxes: torch.Tensor
+    boxes_scores: torch.Tensor
+    keypoints: torch.Tensor
+    keypoints_scores: torch.Tensor
     keypoints_visible: torch.Tensor
 
 
@@ -38,9 +38,9 @@ class KeypointOutput(DictClass):
 class YOLOXPoseModelOutput(ModelOutput):
     scores: torch.Tensor
     labels: torch.Tensor
-    pred_bboxes: torch.Tensor
-    bbox_scores: torch.Tensor
-    pred_keypoints: torch.Tensor
-    keypoint_scores: torch.Tensor
+    boxes: torch.Tensor
+    boxes_scores: torch.Tensor
+    keypoints: torch.Tensor
+    keypoints_scores: torch.Tensor
     keypoints_visible: torch.Tensor
     loss: Optional[YoloXPoseKeypointLoss]
