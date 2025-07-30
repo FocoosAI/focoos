@@ -130,6 +130,11 @@ class RTMOProcessor(Processor):
 
             size = image_sizes[i]
             h, w = int(size[0]), int(size[1])
+            scale = False
+            if self.image_size is not None:
+                scale_x = w / self.image_size
+                scale_y = h / self.image_size
+                scale = True
 
             # logger.debug(f"outputs.outputs.scores[i].shape: {outputs.outputs.scores[i].shape}")
 
@@ -149,23 +154,31 @@ class RTMOProcessor(Processor):
                 keypoints_visible_i = keypoints_visible_i.squeeze(0)
             filtered_keypoints_visible = keypoints_visible_i[filter_mask]
 
-            logger.debug(f"filtered_boxes.shape: {filtered_boxes.shape}")
-            # Multiply boxes by image size
-            # filtered_boxes[:, 0::2] = filtered_boxes[:, 0::2] * h
-            # filtered_boxes[:, 1::2] = filtered_boxes[:, 1::2] * w
-
-            # Process boxes
-            output_boxes = filtered_boxes.clip(0, max(h, w))
+            #  logger.debug(f"filtered_boxes.shape: {filtered_boxes.shape}")
 
             # Process keypoints with visibility
             keypoints_vis_expanded = filtered_keypoints_visible.unsqueeze(-1)
             keypoints_with_vis = torch.cat((filtered_keypoints, keypoints_vis_expanded), dim=2)
 
+            if scale:
+                # Multiply boxes by image size
+                filtered_boxes[:, 0::2] *= scale_x
+                filtered_boxes[:, 1::2] *= scale_y
+                keypoints_with_vis[:, :, 0] *= scale_x
+                keypoints_with_vis[:, :, 1] *= scale_y
+
+            # Clip and map keypoints (x, y) as int
+            keypoints_with_vis[:, :, 0] = keypoints_with_vis[:, :, 0].clip(0, w).int()
+            keypoints_with_vis[:, :, 1] = keypoints_with_vis[:, :, 1].clip(0, h).int()
+
+            # Process boxes
+            output_boxes = filtered_boxes.clip(0, max(h, w))
+
             # Convert to CPU and numpy in one go for better performance
             output_boxes_np = output_boxes.cpu().numpy().astype(int).tolist()
             filtered_scores_np = filtered_scores.cpu().numpy().tolist()
             filtered_labels_np = filtered_labels.cpu().numpy().tolist()
-            keypoints_np = keypoints_with_vis.cpu().numpy().astype(int).tolist()
+            keypoints_np = keypoints_with_vis.cpu().numpy().tolist()
 
             res.append(
                 FocoosDetections(
