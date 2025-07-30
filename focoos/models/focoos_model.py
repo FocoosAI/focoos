@@ -107,8 +107,8 @@ class FocoosModel:
         self.model_info = model_info
         self.processor = ProcessorManager.get_processor(
             self.model_info.model_family,
-            self.model_info.config,
-            self.model_info.im_size,  # type: ignore
+            self.model_info.config,  # type: ignore
+            self.model_info.im_size,
         )
         self.processor.eval()
         self.model = model.eval()
@@ -179,6 +179,11 @@ class FocoosModel:
 
         self.model_info.classes = data_train.dataset.metadata.classes
         self.model_info.config["num_classes"] = len(data_train.dataset.metadata.classes)
+        if data_train.dataset.metadata.keypoints is not None:
+            self.model_info.config["keypoints"] = data_train.dataset.metadata.keypoints
+            self.model_info.config["num_keypoints"] = len(data_train.dataset.metadata.keypoints)
+        if data_train.dataset.metadata.keypoints_skeleton is not None:
+            self.model_info.config["skeleton"] = data_train.dataset.metadata.keypoints_skeleton
         self._reload_model()
         self.model_info.name = train_args.run_name.strip()
         self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)  # type: ignore
@@ -359,8 +364,9 @@ class FocoosModel:
 
         if annotate:
             t0 = perf_counter()
+            skeleton = self.model_info.config.get("skeleton", None)
             focoos_det.image = annotate_frame(
-                im, focoos_det, task=self.model_info.task, classes=self.model_info.classes
+                im, focoos_det, task=self.model_info.task, classes=self.model_info.classes, keypoints_skeleton=skeleton
             )
             t1 = perf_counter()
             if focoos_det.latency is not None:

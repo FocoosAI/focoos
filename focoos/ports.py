@@ -955,6 +955,8 @@ class DatasetMetadata:
     thing_dataset_id_to_contiguous_id: Optional[dict] = None
     stuff_dataset_id_to_contiguous_id: Optional[dict] = None
     json_file: Optional[str] = None
+    keypoints: Optional[List[str]] = None
+    keypoints_skeleton: Optional[List[Tuple[int, int]]] = None
 
     @property
     def classes(self) -> List[str]:  #!TODO: check if this is correct

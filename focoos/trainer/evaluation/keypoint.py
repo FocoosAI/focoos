@@ -19,6 +19,47 @@ from focoos.utils.logger import create_small_table, get_logger
 logger = get_logger("KeypointEvaluator")
 
 
+COCO_OKS_SIGMAS = [
+    0.026,
+    0.025,
+    0.025,
+    0.035,
+    0.035,
+    0.079,
+    0.079,
+    0.072,
+    0.072,
+    0.062,
+    0.062,
+    0.107,
+    0.107,
+    0.087,
+    0.087,
+    0.089,
+    0.089,
+]
+
+COCO_KEYPOINTS = [
+    "nose",
+    "left_eye",
+    "right_eye",
+    "left_ear",
+    "right_ear",
+    "left_shoulder",
+    "right_shoulder",
+    "left_elbow",
+    "right_elbow",
+    "left_wrist",
+    "right_wrist",
+    "left_hip",
+    "right_hip",
+    "left_knee",
+    "right_knee",
+    "left_ankle",
+    "right_ankle",
+]
+
+
 class KeypointEvaluator(DatasetEvaluator):
     """
     Evaluate object detection and instance segmentation predictions using COCO-style metrics.
@@ -43,7 +84,6 @@ class KeypointEvaluator(DatasetEvaluator):
         dataset_dict: DictDataset,
         task="keypoints",
         distributed=True,
-        kpt_oks_sigmas=None,
     ):
         """
         Args:
@@ -57,36 +97,17 @@ class KeypointEvaluator(DatasetEvaluator):
         self.metadata = self.dataset_dict.metadata
 
         assert task in {"bbox", "segm", "keypoints"}, f"Got unknown task: {task}!"
+        assert self.metadata.keypoints is not None, "Keypoints are not defined in the dataset!"
         self.iou_type = task
 
         self.num_classes = self.metadata.num_classes
         self.class_names = self.metadata.thing_classes
-        self.kpt_oks_sigmas = kpt_oks_sigmas
-        if self.kpt_oks_sigmas is None:
-            self.kpt_oks_sigmas = (
-                np.array(
-                    [
-                        0.26,
-                        0.25,
-                        0.25,
-                        0.35,
-                        0.35,
-                        0.79,
-                        0.79,
-                        0.72,
-                        0.72,
-                        0.62,
-                        0.62,
-                        1.07,
-                        1.07,
-                        0.87,
-                        0.87,
-                        0.89,
-                        0.89,
-                    ]
-                )
-                / 10.0
-            )
+
+        if self.metadata.keypoints is not None and self.metadata.keypoints == COCO_KEYPOINTS:
+            self.kpt_oks_sigmas = np.array(COCO_OKS_SIGMAS)
+        else:
+            self.kpt_oks_sigmas = np.array([0.05 for i in range(len(self.metadata.keypoints))])
+        logger.info(f"Using keypoints oks sigmas: {self.kpt_oks_sigmas}")
         self.cpu_device = torch.device("cpu")
 
         self._predictions = []
@@ -228,9 +249,9 @@ class KeypointEvaluator(DatasetEvaluator):
 
         coco_eval = COCOeval(coco_gt, coco_dt, self.iou_type)
 
-        if self.kpt_oks_sigmas is not None:
-            assert hasattr(coco_eval.params, "kpt_oks_sigmas"), "pycocotools is too old!"
-            coco_eval.params.kpt_oks_sigmas = np.array(self.kpt_oks_sigmas)
+        if hasattr(coco_eval.params, "kpt_oks_sigmas"):
+            coco_eval.params.kpt_oks_sigmas = self.kpt_oks_sigmas
+
         # COCOAPI requires every detection and every gt to have keypoints, so
         # we just take the first entry from both
         num_keypoints_dt = len(coco_results[0]["keypoints"]) // 3
@@ -239,7 +260,7 @@ class KeypointEvaluator(DatasetEvaluator):
         assert num_keypoints_oks == num_keypoints_dt == num_keypoints_gt, (
             f"[COCOEvaluator] Prediction contain {num_keypoints_dt} keypoints. "
             f"Ground truth contains {num_keypoints_gt} keypoints. "
-            f"The length of cfg.TEST.KEYPOINT_OKS_SIGMAS is {num_keypoints_oks}. "
+            f"The length of KEYPOINT_OKS_SIGMAS is {num_keypoints_oks}. "
             "They have to agree with each other. For meaning of OKS, please refer to "
             "http://cocodataset.org/#keypoints-eval."
         )

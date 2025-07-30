@@ -37,5 +37,5 @@ class YOLOXPoseConfig(ModelConfig):
     nms_topk: int = 1000
     nms_thr: float = 0.7
     score_thr: float = 0.01
-    skeleton: list[tuple[str, str]] = field(default_factory=lambda: [])
-    flip_map: list[tuple[str, str]] = field(default_factory=lambda: [])
+    skeleton: list[tuple[int, int]] = field(default_factory=lambda: [])
+    keypoints: list[str] = field(default_factory=lambda: [])

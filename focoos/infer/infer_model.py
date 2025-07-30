@@ -186,8 +186,13 @@ class InferModel:
         t3 = perf_counter()
         if annotate:
             t4 = perf_counter()
+            skeleton = self.model_info.config.get("skeleton", None)
             detections[0].image = annotate_frame(
-                im, detections[0], task=self.model_info.task, classes=self.model_info.classes
+                im,
+                detections[0],
+                task=self.model_info.task,
+                classes=self.model_info.classes,
+                keypoints_skeleton=skeleton,
             )
         else:
             t4 = t3

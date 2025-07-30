@@ -14,7 +14,8 @@ from focoos.ports import FocoosDet, FocoosDetections, Task
 label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10, smart_position=True)
 box_annotator = sv.BoxAnnotator()
 mask_annotator = sv.MaskAnnotator()
-edge_annotator = sv.EdgeAnnotator()
+edge_annotator = sv.EdgeAnnotator(color=sv.Color.GREEN)
+vertex_annotator = sv.VertexAnnotator(color=sv.Color.YELLOW)
 
 
 def index_to_class(class_ids: list[int], classes: list[str]) -> list[str]:
@@ -401,6 +402,7 @@ def annotate_frame(
     detections: FocoosDetections,
     task: Task,
     classes: Optional[list[str]] = None,
+    keypoints_skeleton: Optional[list[tuple[int, int]]] = None,
 ) -> np.ndarray:
     if isinstance(im, Image.Image):
         im = np.array(im)
@@ -421,7 +423,10 @@ def annotate_frame(
     if has_mask:
         annotated_im = mask_annotator.annotate(scene=annotated_im, detections=sv_detections)
     if has_keypoints:
+        edge_annotator.edges = keypoints_skeleton
+
         annotated_im = edge_annotator.annotate(scene=annotated_im, key_points=sv_keypoints)
+        annotated_im = vertex_annotator.annotate(scene=annotated_im, key_points=sv_keypoints)
     # Optimize label creation
     if classes is not None and sv_detections.class_id is not None and sv_detections.confidence is not None:
         labels = [

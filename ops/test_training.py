@@ -58,6 +58,9 @@ def get_dataset(task: Task):
     elif task == Task.INSTANCE_SEGMENTATION:
         ds_name = "fire-coco-instseg.zip"
         layout = DatasetLayout.ROBOFLOW_COCO
+    elif task == Task.KEYPOINT:
+        ds_name = "basket-court-keypoint.zip"
+        layout = DatasetLayout.ROBOFLOW_COCO
     else:
         raise ValueError(f"Error: task {task} not supported")
     url = f"https://public.focoos.ai/datasets/{ds_name}"
