@@ -41,8 +41,8 @@ class RTMOConfig(ModelConfig):
     gau_expansion_factor: int = 2
     gau_dropout_rate: float = 0.0
 
-    # processing cofnig
-    nms_pre: int = 1000
+    # processing config
+    nms_topk: int = 1000
     nms_thr: float = 0.7
     score_thr: float = 0.01
     skeleton: list[tuple[str, str]] = field(default_factory=lambda: [])
