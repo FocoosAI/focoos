@@ -1026,7 +1026,7 @@ class RTMOHead(nn.Module):
         centralize_points_pointgenerator: bool = True,
         use_aux_loss: bool = False,
         use_dcc: bool = True,
-        nms_pre: int = 100000,
+        nms_topk: int = 100000,
         nms_thr: float = 1,
         score_thr: float = 0.01,
         norm: Optional[str] = "BN",
@@ -1060,7 +1060,7 @@ class RTMOHead(nn.Module):
         self.use_aux_loss = use_aux_loss
         self.overlaps_power = overlaps_power
         self.bbox_padding = bbox_padding
-        self.nms_pre = nms_pre
+        self.nms_topk = nms_topk
         self.nms_thr = nms_thr
         self.score_thr = score_thr
         self.nms = True
@@ -1614,10 +1614,10 @@ class RTMOHead(nn.Module):
         ):
             score_thr = self.score_thr
             # NMS
-            nms_pre = self.nms_pre
+            nms_topk = self.nms_topk
             scores, labels = scores.max(1, keepdim=True)
             scores, _, keep_idxs_score, results = filter_scores_and_topk(
-                scores, score_thr, nms_pre, results=dict(labels=labels[:, 0])
+                scores, score_thr, nms_topk, results=dict(labels=labels[:, 0])
             )
             labels = results["labels"]
 
@@ -1719,7 +1719,7 @@ class RTMO(BaseModelNN):
             use_aux_loss=self.config.use_aux_loss,
             overlaps_power=self.config.overlaps_power,
             score_thr=self.config.score_thr,
-            nms_pre=self.config.nms_pre,
+            nms_topk=self.config.nms_topk,
             nms_thr=self.config.nms_thr,
             featmap_strides_pointgenerator=self.config.featmap_strides_pointgenerator,
             centralize_points_pointgenerator=self.config.centralize_points_pointgenerator,
