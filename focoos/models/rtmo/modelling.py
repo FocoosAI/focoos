@@ -1103,11 +1103,10 @@ class RTMOHead(nn.Module):
     def forward(self, features, targets: Optional[list[KeypointTargets]] = None):
         assert isinstance(features, (tuple, list))
         spatial_features, multi_scale_features = features
-        if self.training:
-            if targets:
-                return None, self.loss(feats=multi_scale_features, targets=targets)
+        if self.training and targets is not None:
+            return None, self.loss(feats=multi_scale_features, targets=targets)
         outputs = self.predict(multi_scale_features)
-        return outputs, {}
+        return outputs, None
 
     def losses(self, predictions, targets):
         (
@@ -1755,7 +1754,29 @@ class RTMO(BaseModelNN):
         features = self.backbone(images)
         features = self.pixel_decoder(features)
         outputs, losses = self.head(features, targets)
-        return RTMOModelOutput(outputs=outputs, loss=losses)
+        if self.training:
+            assert targets is not None and len(targets) > 0, "targets should not be None or empty - training mode"
+            return RTMOModelOutput(
+                scores=torch.zeros(0, 0, 0),
+                labels=torch.zeros(0, 0, 0),
+                pred_bboxes=torch.zeros(0, 0, 4),
+                bbox_scores=torch.zeros(0, 0, 0),
+                pred_keypoints=torch.zeros(0, 0, 0),
+                keypoint_scores=torch.zeros(0, 0, 0),
+                keypoints_visible=torch.zeros(0, 0, 0),
+                loss=losses,
+            )
+
+        return RTMOModelOutput(
+            scores=outputs.scores,
+            labels=outputs.labels,
+            pred_bboxes=outputs.pred_bboxes,
+            bbox_scores=outputs.bbox_scores,
+            pred_keypoints=outputs.pred_keypoints,
+            keypoint_scores=outputs.keypoint_scores,
+            keypoints_visible=outputs.keypoints_visible,
+            loss=None,
+        )
 
     def switch_to_export(self, test_cfg: Optional[Dict] = None):
         # Get input size from config if test_cfg is not provided

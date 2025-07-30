@@ -36,5 +36,11 @@ class KeypointOutput(DictClass):
 
 @dataclass
 class YOLOXPoseModelOutput(ModelOutput):
-    outputs: KeypointOutput
-    loss: YoloXPoseKeypointLoss
+    scores: torch.Tensor
+    labels: torch.Tensor
+    pred_bboxes: torch.Tensor
+    bbox_scores: torch.Tensor
+    pred_keypoints: torch.Tensor
+    keypoint_scores: torch.Tensor
+    keypoints_visible: torch.Tensor
+    loss: Optional[YoloXPoseKeypointLoss]

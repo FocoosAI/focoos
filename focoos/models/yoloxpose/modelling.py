@@ -1547,4 +1547,26 @@ class YOLOXPose(BaseModelNN):
         features = self.backbone(images)
         features = self.pixel_decoder(features)
         outputs, losses = self.head(features, targets)
-        return YOLOXPoseModelOutput(outputs=outputs, loss=losses)
+        if self.training:
+            assert targets is not None and len(targets) > 0, "targets should not be None or empty - training mode"
+            return YOLOXPoseModelOutput(
+                scores=torch.zeros(0, 0, 0),
+                labels=torch.zeros(0, 0, 0),
+                pred_bboxes=torch.zeros(0, 0, 4),
+                bbox_scores=torch.zeros(0, 0, 0),
+                pred_keypoints=torch.zeros(0, 0, 0),
+                keypoint_scores=torch.zeros(0, 0, 0),
+                keypoints_visible=torch.zeros(0, 0, 0),
+                loss=losses,
+            )
+
+        return YOLOXPoseModelOutput(
+            scores=outputs.scores,
+            labels=outputs.labels,
+            pred_bboxes=outputs.pred_bboxes,
+            bbox_scores=outputs.bbox_scores,
+            pred_keypoints=outputs.pred_keypoints,
+            keypoint_scores=outputs.keypoint_scores,
+            keypoints_visible=outputs.keypoints_visible,
+            loss=losses,
+        )

@@ -5,7 +5,7 @@ import torch
 from PIL import Image
 
 from focoos.models.yoloxpose.config import YOLOXPoseConfig
-from focoos.models.yoloxpose.ports import KeypointOutput, KeypointTargets, YOLOXPoseModelOutput
+from focoos.models.yoloxpose.ports import KeypointTargets, YOLOXPoseModelOutput
 from focoos.ports import DatasetEntry, DynamicAxes, FocoosDet, FocoosDetections
 from focoos.processor.base_processor import Processor
 from focoos.structures import Boxes, ImageList, Instances, Keypoints
@@ -184,7 +184,7 @@ class YOLOXPoseProcessor(Processor):
         self, output: YOLOXPoseModelOutput, batched_inputs: list[DatasetEntry]
     ) -> list[dict[str, Instances]]:
         results = []
-        batch_size = output.outputs.scores.shape[0]
+        batch_size = output.scores.shape[0]
 
         assert len(batched_inputs) == batch_size, (
             f"Expected batched_inputs {len(batched_inputs)} to match batch size {batch_size}"
@@ -197,11 +197,11 @@ class YOLOXPoseProcessor(Processor):
             image_size = (original_height, original_width)
 
             # Get predictions for this image
-            scores = output.outputs.scores[i]
-            labels = output.outputs.labels[i]
-            pred_bboxes = output.outputs.pred_bboxes[i]
-            pred_keypoints = output.outputs.pred_keypoints[i]
-            keypoints_visible = output.outputs.keypoints_visible[i]
+            scores = output.scores[i]
+            labels = output.labels[i]
+            pred_bboxes = output.pred_bboxes[i]
+            pred_keypoints = output.pred_keypoints[i]
+            keypoints_visible = output.keypoints_visible[i]
 
             # Scale predictions back to original image size
             if isinstance(batched_inputs[i].image, torch.Tensor):
@@ -273,7 +273,8 @@ class YOLOXPoseProcessor(Processor):
             keypoints_visible = torch.from_numpy(keypoints_visible)
 
         # Create KeypointOutput and RTMOModelOutput
-        keypoint_output = KeypointOutput(
+
+        model_output = YOLOXPoseModelOutput(
             scores=scores.to(device),
             labels=labels.to(device),
             pred_bboxes=pred_bboxes.to(device),
@@ -281,9 +282,8 @@ class YOLOXPoseProcessor(Processor):
             pred_keypoints=pred_keypoints.to(device),
             keypoint_scores=keypoint_scores.to(device),
             keypoints_visible=keypoints_visible.to(device),
+            loss=None,
         )
-
-        model_output = YOLOXPoseModelOutput(outputs=keypoint_output, loss={})
 
         # Use the regular postprocess method
         threshold = threshold or self.score_thr

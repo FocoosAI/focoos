@@ -6,7 +6,7 @@ from PIL import Image
 
 from focoos.models.rtmo.config import RTMOConfig
 from focoos.models.rtmo.ports import RTMOModelOutput
-from focoos.models.yoloxpose.ports import KeypointOutput, KeypointTargets
+from focoos.models.yoloxpose.ports import KeypointTargets
 from focoos.ports import DatasetEntry, DynamicAxes, FocoosDet, FocoosDetections
 from focoos.processor.base_processor import Processor
 from focoos.structures import Boxes, ImageList, Instances, Keypoints
@@ -115,16 +115,16 @@ class RTMOProcessor(Processor):
 
         res = []
 
-        batch_size = outputs.outputs.scores.shape[0]
+        batch_size = outputs.scores.shape[0]
 
         assert len(image_sizes) == batch_size, (
             f"Expected image sizes {len(image_sizes)} to match batch size {batch_size}"
         )
 
         for i in range(batch_size):
-            filter_mask = outputs.outputs.scores[i] > threshold
-            if outputs.outputs.pred_bboxes is not None:
-                output_boxes = outputs.outputs.pred_bboxes
+            filter_mask = outputs.scores[i] > threshold
+            if outputs.pred_bboxes is not None:
+                output_boxes = outputs.pred_bboxes
             else:
                 raise ValueError("Predictions must contain boxes!")
 
@@ -139,17 +139,17 @@ class RTMOProcessor(Processor):
             # logger.debug(f"outputs.outputs.scores[i].shape: {outputs.outputs.scores[i].shape}")
 
             # Apply filtering to all outputs consistently
-            filtered_scores = outputs.outputs.scores[i][filter_mask]
-            filtered_labels = outputs.outputs.labels[i][filter_mask]
-            filtered_boxes = outputs.outputs.pred_bboxes[i][filter_mask]
+            filtered_scores = outputs.scores[i][filter_mask]
+            filtered_labels = outputs.labels[i][filter_mask]
+            filtered_boxes = outputs.pred_bboxes[i][filter_mask]
 
             # Handle keypoints with potential extra batch dimension
-            pred_keypoints_i = outputs.outputs.pred_keypoints[i]
+            pred_keypoints_i = outputs.pred_keypoints[i]
             if pred_keypoints_i.ndim == 4 and pred_keypoints_i.shape[0] == 1:
                 pred_keypoints_i = pred_keypoints_i.squeeze(0)
             filtered_keypoints = pred_keypoints_i[filter_mask]
 
-            keypoints_visible_i = outputs.outputs.keypoints_visible[i]
+            keypoints_visible_i = outputs.keypoints_visible[i]
             if keypoints_visible_i.ndim == 3 and keypoints_visible_i.shape[0] == 1:
                 keypoints_visible_i = keypoints_visible_i.squeeze(0)
             filtered_keypoints_visible = keypoints_visible_i[filter_mask]
@@ -203,7 +203,7 @@ class RTMOProcessor(Processor):
         self, output: RTMOModelOutput, batched_inputs: list[DatasetEntry]
     ) -> list[dict[str, Instances]]:
         results = []
-        batch_size = output.outputs.scores.shape[0]
+        batch_size = output.scores.shape[0]
 
         assert len(batched_inputs) == batch_size, (
             f"Expected batched_inputs {len(batched_inputs)} to match batch size {batch_size}"
@@ -216,11 +216,11 @@ class RTMOProcessor(Processor):
             image_size = (original_height, original_width)
 
             # Get predictions for this image
-            scores = output.outputs.scores[i]
-            labels = output.outputs.labels[i]
-            pred_bboxes = output.outputs.pred_bboxes[i]
-            pred_keypoints = output.outputs.pred_keypoints[i]
-            keypoints_visible = output.outputs.keypoints_visible[i]
+            scores = output.scores[i]
+            labels = output.labels[i]
+            pred_bboxes = output.pred_bboxes[i]
+            pred_keypoints = output.pred_keypoints[i]
+            keypoints_visible = output.keypoints_visible[i]
 
             # Scale predictions back to original image size
             if isinstance(batched_inputs[i].image, torch.Tensor):
@@ -291,8 +291,7 @@ class RTMOProcessor(Processor):
         if isinstance(keypoints_visible, np.ndarray):
             keypoints_visible = torch.from_numpy(keypoints_visible)
 
-        # Create KeypointOutput and RTMOModelOutput
-        keypoint_output = KeypointOutput(
+        model_output = RTMOModelOutput(
             scores=scores.to(device),
             labels=labels.to(device),
             pred_bboxes=pred_bboxes.to(device),
@@ -300,9 +299,8 @@ class RTMOProcessor(Processor):
             pred_keypoints=pred_keypoints.to(device),
             keypoint_scores=keypoint_scores.to(device),
             keypoints_visible=keypoints_visible.to(device),
+            loss=None,
         )
-
-        model_output = RTMOModelOutput(outputs=keypoint_output, loss={})
 
         # Use the regular postprocess method
         threshold = threshold or self.score_thr
