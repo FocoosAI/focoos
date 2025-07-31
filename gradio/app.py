@@ -6,7 +6,6 @@ import cv2
 import gradio as gr
 from focoos.model_manager import ModelManager
 from focoos.model_registry import ModelRegistry
-from focoos.utils.vision import annotate_frame
 
 ASSETS_DIR = os.path.dirname(os.path.abspath(__file__)) + "/assets"
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/output"
@@ -30,14 +29,16 @@ image_examples = [
 def run_inference(image, model_name: str, conf: float, progress=gr.Progress()):
     assert model_name is not None, "model_name is required"
     assert model_name in model_registry.list_models(), "model_name is not valid"
+    progress(0, desc="Loading Model...")
     if model_name not in loaded_models:
         model = ModelManager.get(model_name)
         loaded_models[model_name] = model
     else:
         model = loaded_models[model_name]
-    detections = model(image, threshold=conf)
-    annotated_image = annotate_frame(image, detections, task=model.task, classes=model.classes)
-    return annotated_image, detections.model_dump()
+    progress(0.3, desc="Run Inference...")
+    res = model.infer(image, threshold=conf, annotate=True)
+    progress(0.9, desc="Done!")
+    return res.image, res.model_dump()
 
 
 def run_video_inference(
@@ -50,7 +51,7 @@ def run_video_inference(
     assert model_name is not None, "model_name is required"
     assert model_name in model_registry.list_models(), "model_name is not valid"
 
-    progress(0, desc="Load Model...")
+    progress(0, desc="Loading Model...")
     if model_name not in loaded_models:
         model = ModelManager.get(model_name)
         loaded_models[model_name] = model
@@ -99,14 +100,11 @@ def run_video_inference(
             continue
 
         frame = cv2.resize(frame, (desired_width, desired_height))
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        res = model(frame, threshold=threshold)
+        res = model.infer(frame, threshold=threshold, annotate=True)
         last_latency = res.latency.get("inference") if res.latency is not None else None
 
-        annotated_frame = annotate_frame(frame, res, task=model.task, classes=model.classes)
-
         # Write frame directly to video
-        output_video.write(annotated_frame[:, :, ::-1])
+        output_video.write(res.image)  # type: ignore
 
         n_frames += 1
 

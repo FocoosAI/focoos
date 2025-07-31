@@ -12,12 +12,6 @@ from focoos.utils.logger import get_logger
 
 logger = get_logger("TestTraning")
 
-datasets = [
-    "chess-coco-detection.zip",
-    "fire-coco-instseg.zip",
-    "balloons-coco-sem.zip",
-]
-
 
 def list_files_with_extensions_recursively(
     base_dir: Union[str, Path], extensions: Optional[List[str]] = None

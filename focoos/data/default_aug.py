@@ -235,6 +235,20 @@ classification_val_augs = DatasetAugmentations(
     resolution=224,
 )
 
+keypoints_train_augs = DatasetAugmentations(
+    resolution=640,
+    crop=False,
+    scale_ratio=0.0,
+    color_augmentation=1.0,
+    horizontal_flip=0.0,
+    aspect_ratio=0.0,
+    rotation=0.0,
+)
+
+keypoints_val_augs = DatasetAugmentations(
+    resolution=640,
+)
+
 
 def get_default_by_task(
     task: Task, resolution: int = 640, advanced: bool = False
@@ -258,6 +272,11 @@ def get_default_by_task(
         train, val = (
             classification_train_augs,
             classification_val_augs,
+        )
+    elif task == Task.KEYPOINTS:
+        train, val = (
+            keypoints_train_augs,
+            keypoints_val_augs,
         )
     else:
         raise ValueError(f"Invalid task: {task}")
