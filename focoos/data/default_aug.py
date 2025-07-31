@@ -273,13 +273,11 @@ def get_default_by_task(
             classification_train_augs,
             classification_val_augs,
         )
-    elif task == Task.KEYPOINTS:
+    elif task == Task.KEYPOINT:
         train, val = (
             keypoints_train_augs,
             keypoints_val_augs,
         )
-    else:
-        raise ValueError(f"Invalid task: {task}")
 
     train.resolution = resolution
     val.resolution = resolution
