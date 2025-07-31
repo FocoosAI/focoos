@@ -1,3 +1,7 @@
+<a href="https://www.focoos.ai" target="_blank">
+  <img src="https://public.focoos.ai/library/focoos_banner.png" alt="FocoosAI" style="max-width:100%;">
+</a>
+
 ![Tests](https://github.com/FocoosAI/focoos/actions/workflows/test.yml/badge.svg??event=push&branch=main)
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/main/tutorials/training.ipynb)
 [![Documentation](https://img.shields.io/badge/docs-latest-blue)](https://focoosai.github.io/focoos/)
