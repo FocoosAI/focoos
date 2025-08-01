@@ -20,7 +20,7 @@ Whether you're working in the cloud or on edge devices, the Focoos library seaml
 ### Key Features 🔑
 
 1. **Frugal Pretrained Models** 🌿
-   Get started quickly by selecting one of our efficient, [pre-trained models](https://focoosai.github.io/focoos/models/models/) that best suits your data and application needs.
+   Get started quickly by selecting one of our efficient, [pre-trained models](https://focoosai.github.io/focoos/models/) that best suits your data and application needs.
    Focoos Model Registry give access to 11 pretrained models of different size from different families: RTDetr, Maskformer, BisenetFormer
 
 2. **Fine Tune Your Model** ✨ Adapt the model to your specific use case by customize its config and training it on your own dataset.
@@ -114,7 +114,7 @@ Using Focoos AI helps you save both time and money while delivering high-perform
 - **4x Cheaper** 💰: Our models require up to 4x less computational power, letting you save on hardware or cloud bill while ensuring high-quality results.
 - **Tons of CO2 saved annually per model** 🌱: Our models are energy-efficient, helping you reduce your carbon footprint by using less powerful hardware with respect to mainstream models.
 
-See the list of our models in the [models](https://focoosai.github.io/focoos/models/models) section.
+See the list of our models in the [models](https://focoosai.github.io/focoos/models/) section.
 
 ---
 ### Start now!

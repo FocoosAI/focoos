@@ -12,12 +12,10 @@ The model avoids the typical slowdown of two-stage (top-down) methods in crowded
 The RTMO architecture consists of three main components:
 
 ### Backbone
-<ins>TODO if backbone changes<ins>
 - **Purpose**: To extract multi-scale feature maps from the input image.
 - **Design**: Configurable backbone network (e.g., ResNet, STDC), default is **CSPDarknet**.
 
 ### Neck
-<ins>TODO if neck changes<ins>
 - **Purpose**: To fuse and refine the features from the backbone.
 - **Design**: A **YOLO neck** processes the last three feature maps from the backbone (with downsampling rates of 8, 16 and 32) to generate enhanced features for the head.
 
@@ -69,8 +67,6 @@ The RTMO architecture consists of three main components:
 4.  **Keypoint Visibility Loss (`loss_vis`)**: A **Binary Cross-Entropy (BCE) Loss** is used to supervise the visibility prediction for each keypoint.
 5. **OKS Loss (`loss_oks`)**: Auxiliary loss supervising keypoint regression with **OKS (Object Keypoint Similarity) Loss**. It uses DCC predictions as targets for further refinement.
 
-<ins>TODO: add also auxiliary losses??<ins>
-
 The total loss is a weighted sum of these components.
 
 ## Supported Tasks
@@ -104,7 +100,7 @@ For each detected object:
 - `conf` (float): Confidence score
 - `cls_id` (int): Class identifier
 - `label` (Optional[str]): Human-readable class name
-- `keypoints` (List[List[int]]): Keypoints [x, y, visibility] <ins>TODO: change if visibility becomes float<ins>
+- `keypoints` (List[List[int]]): Keypoints [x, y, visibility]
 
 
 ## Available Models
@@ -115,7 +111,6 @@ Currently, you can find 1 model on the Focoos Hub for multi-person Pose Estimati
 |------------|--------------|----------|---------|--------------|
 | rtmo-s-coco | RTMO (STDC-2) | COCO | AP: 59.9<br>AP50: 83.3 | - |
 
-<ins>TODO: update metrics if new architecture used<ins>
 
 ## Example Usage
 
@@ -129,15 +124,11 @@ model = ModelManager.get("rtmo-s-coco")
 
 # Run inference on an image
 image = Image.open("path/to/image.jpg")
-result = model(image)
+result = model.infer(image)
 
-# Process results
-for detection in result.detections:
-    print(f"Class: {detection.label}, Confidence: {detection.conf:.3f}")
 ```
 
 ### Custom Model Configuration
-<ins>TODO: change if backbone changes<ins>
 ```python
 from focoos.models.rtmo.config import RTMOConfig
 from focoos.models.rtmo.modelling import RTMO
