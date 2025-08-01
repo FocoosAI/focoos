@@ -34,6 +34,7 @@ from focoos.ports import (
     FocoosDet,
     FocoosDetections,
     HubSyncLocalTraining,
+    InferLatency,
     Metrics,
     ModelStatus,
     RemoteModelInfo,
@@ -296,11 +297,10 @@ class RemoteModel:
         if res.status_code == 200:
             detections = FocoosDetections(
                 detections=[FocoosDet.from_json(d) for d in res.json().get("detections", [])],
-                latency=res.json().get("latency", None),
+                latency=InferLatency(**res.json().get("latency", {})),
             )
-            logger.debug(
-                f"Found {len(detections.detections)} detections. Inference Request time: {(t1 - t0) * 1000:.0f}ms"
-            )
+            detections.infer_print()
+            print(f"Request time: {(t1 - t0) * 1000:.0f}ms")
             if annotate:
                 detections.image = annotate_frame(image, detections, self.model_info.task, self.model_info.classes)
             return detections

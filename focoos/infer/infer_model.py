@@ -33,6 +33,7 @@ from focoos.infer.runtimes.base import BaseRuntime
 from focoos.infer.runtimes.load_runtime import load_runtime
 from focoos.ports import (
     FocoosDetections,
+    InferLatency,
     LatencyMetrics,
     ModelExtension,
     ModelInfo,
@@ -185,7 +186,6 @@ class InferModel:
         )
         t3 = perf_counter()
         if annotate:
-            t4 = perf_counter()
             skeleton = self.model_info.config.get("skeleton", None)
             detections[0].image = annotate_frame(
                 im,
@@ -194,21 +194,17 @@ class InferModel:
                 classes=self.model_info.classes,
                 keypoints_skeleton=skeleton,
             )
-        else:
-            t4 = t3
+        t4 = perf_counter()
 
-        latency = {
-            "inference": round(t2 - t1, 3),
-            "preprocess": round(t1 - t0, 3),
-            "postprocess": round(t3 - t2, 3),
-            "annotate": round(t4 - t3, 3),
-        }
         res = detections[0]  #!TODO  check for batching
-        res.latency = latency
-
-        logger.debug(
-            f"Found {len(res)} detections. thr: {threshold} Inference time: {(t2 - t1) * 1000:.0f}ms, preprocess: {(t1 - t0) * 1000:.0f}ms, postprocess: {(t3 - t2) * 1000:.0f}ms"
+        res.latency = InferLatency(
+            inference=round(t2 - t1, 3),
+            preprocess=round(t1 - t0, 3),
+            postprocess=round(t3 - t2, 3),
+            annotate=round(t4 - t3, 3) if annotate else None,
         )
+
+        res.infer_print()
         return res
 
     def benchmark(self, iterations: int = 50, size: Optional[Union[int, Tuple[int, int]]] = None) -> LatencyMetrics:

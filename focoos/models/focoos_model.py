@@ -20,6 +20,7 @@ from focoos.ports import (
     ArtifactName,
     ExportFormat,
     FocoosDetections,
+    InferLatency,
     LatencyMetrics,
     ModelInfo,
     ModelStatus,
@@ -371,12 +372,8 @@ class FocoosModel:
             )
             t1 = perf_counter()
             if focoos_det.latency is not None:
-                focoos_det.latency["annotate"] = round(t1 - t0, 3)
-        if focoos_det.latency is not None:
-            msg = f"Found {len(focoos_det)} detections. thr: {threshold} Inference time: {(focoos_det.latency['inference']) * 1000:.0f}ms, preprocess: {(focoos_det.latency['preprocess']) * 1000:.0f}ms, postprocess: {(focoos_det.latency['postprocess']) * 1000:.0f}ms"
-            if focoos_det.latency.get("annotate"):
-                msg += f", annotate: {(focoos_det.latency['annotate']) * 1000:.0f}ms"
-            logger.debug(msg)
+                focoos_det.latency.annotate = round(t1 - t0, 3)
+        focoos_det.infer_print()
         return focoos_det
 
     def export(
@@ -547,14 +544,13 @@ class FocoosModel:
         class_names = self.model_info.classes
         output_fdet = self.processor.postprocess(output, inputs, class_names=class_names, **kwargs)
         t3 = perf_counter()
-        # FIXME: we don't support batching yet
 
-        latency = {
-            "preprocess": round(t1 - t0, 3),
-            "inference": round(t2 - t1, 3),
-            "postprocess": round(t3 - t2, 3),
-        }
-        output_fdet[0].latency = latency
+        # FIXME: we don't support batching yet
+        output_fdet[0].latency = InferLatency(
+            preprocess=round(t1 - t0, 3),
+            inference=round(t2 - t1, 3),
+            postprocess=round(t3 - t2, 3),
+        )
         return output_fdet[0]
 
     def _reload_model(self):

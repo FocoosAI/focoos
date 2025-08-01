@@ -178,7 +178,7 @@ def run_video_inference(
 
         frame = cv2.resize(frame, (desired_width, desired_height))
         res = model.infer(frame, threshold=threshold, annotate=True)
-        last_latency = res.latency.get("inference") if res.latency is not None else None
+        last_latency = res.latency.inference if res.latency is not None else None
 
         # Write frame directly to video
         output_video.write(res.image)  # type: ignore

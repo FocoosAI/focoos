@@ -12,6 +12,7 @@ from focoos.infer.runtimes.torchscript import TorchscriptRuntime
 from focoos.ports import (
     FocoosDet,
     FocoosDetections,
+    InferLatency,
     LatencyMetrics,
     ModelFamily,
     ModelInfo,
@@ -121,7 +122,7 @@ def mock_focoos_detections():
     )
     return FocoosDetections(
         detections=[mock_detection],
-        latency={"inference": 0.1, "preprocess": 0.05, "postprocess": 0.02},
+        latency=InferLatency(inference=0.1, preprocess=0.05, postprocess=0.02),
     )
 
 

@@ -339,6 +339,18 @@ class FocoosDet:
 
 
 @dataclass
+class InferLatency:
+    """
+    Represents the latency data for a Focoos model.
+    """
+
+    preprocess: Optional[float] = None
+    inference: Optional[float] = None
+    postprocess: Optional[float] = None
+    annotate: Optional[float] = None
+
+
+@dataclass
 class FocoosDetections:
     """
     Represents a collection of detection or segmentation results from a Focoos model.
@@ -360,7 +372,7 @@ class FocoosDetections:
 
     detections: list[FocoosDet]
     image: Optional[Union[str, np.ndarray]] = None  # can be Base64 encoded image or numpy array
-    latency: Optional[dict] = None
+    latency: Optional[InferLatency] = None
 
     def __len__(self):
         return len(self.detections)
@@ -369,7 +381,7 @@ class FocoosDetections:
         return {
             "detections": [asdict(det) for det in self.detections],
             "image": self.image if isinstance(self.image, str) else None,
-            "latency": self.latency,
+            "latency": asdict(self.latency) if self.latency is not None else None,
         }
 
     def __repr__(self):
@@ -384,6 +396,94 @@ class FocoosDetections:
             value = getattr(self, field_name)
             fields.append(f"{field_name}={value!r}")
         return f"{self.__class__.__name__}({', '.join(fields)})"
+
+    def infer_print(self):
+        """Print a formatted summary of the detections and timing information."""
+        num_detections = len(self.detections)
+
+        # Handle special case of zero detections
+        if num_detections == 0:
+            print("No detections!")
+        else:
+            # Count detections by class
+            class_counts = {}
+            for det in self.detections:
+                # Determine class key with fallback logic
+                if det.label is not None and det.label != "":
+                    class_key = det.label
+                elif det.cls_id is not None:
+                    class_key = f"(id_class={det.cls_id})"
+                else:
+                    class_key = "unknown"
+
+                class_counts[class_key] = class_counts.get(class_key, 0) + 1
+
+            # Format class counts as comma-separated string
+            if not class_counts:
+                formatted_classes = "no_classes"
+            else:
+                sorted_classes = sorted(class_counts.items())
+                formatted_classes = ", ".join(f"{count} {class_name}" for class_name, count in sorted_classes)
+
+            print(formatted_classes)
+
+        # Print latency information with total time at the end
+        if self.latency is not None:
+            times = [
+                self.latency.preprocess or 0,
+                self.latency.inference or 0,
+                self.latency.postprocess or 0,
+                self.latency.annotate or 0,
+            ]
+            total_time_ms = sum(times) * 1000
+            total_time_str = f"{total_time_ms:.1f}ms"
+
+            latency_parts = []
+            if self.latency.preprocess is not None:
+                latency_parts.append(f"preprocess {self.latency.preprocess * 1000:.1f}ms")
+            if self.latency.inference is not None:
+                latency_parts.append(f"inference {self.latency.inference * 1000:.1f}ms")
+            if self.latency.postprocess is not None:
+                latency_parts.append(f"postprocess {self.latency.postprocess * 1000:.1f}ms")
+
+            if latency_parts:
+                print(f"Latency: {', '.join(latency_parts)}, total {total_time_str}")
+            else:
+                print(f"Latency: total {total_time_str}")
+
+    def pprint(self):
+        print("\n" + "=" * 50)
+        print("DETECTION RESULTS")
+        print("=" * 50)
+
+        num_detections = len(self.detections)
+        print(f"Found {num_detections} detections{': ' if num_detections > 0 else ''}")
+        print()
+
+        for i, det in enumerate(self.detections):
+            # Get values from FocoosDet object
+            x1, y1, x2, y2 = det.bbox if det.bbox else [-1, -1, -1, -1]
+            conf = det.conf if det.conf is not None else -1
+
+            print(f"  {i + 1}. {det.label or f'Class {det.cls_id}'}")
+            print(f"     Confidence: {conf:.3f}")
+            print(f"     Bbox: [{x1}, {y1}, {x2}, {y2}]")
+            print(f"     Size: {x2 - x1} x {y2 - y1}")
+            if det.mask:
+                print("     Has mask: Yes (base64 encoded)")
+            print()
+
+        # Print latency information if available
+        if self.latency is not None:
+            print("Latencies:")
+            print("-" * 50)
+            for key, value in asdict(self.latency).items():
+                if isinstance(value, (int, float)):
+                    print(f"  {key}: {value:.3f}s")
+                else:
+                    print(f"  {key}: {value}")
+        print()
+        print("=" * 50 + "\n")
 
 
 @dataclass

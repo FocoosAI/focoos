@@ -135,8 +135,6 @@ class ONNXRuntime(BaseRuntime):
         for _ in range(self.opts.warmup_iter):
             self.ort_sess.run(out_name, {input_name: np_image})
 
-        logger.info("⏱️ Warmup done")
-
     def __call__(self, im: torch.Tensor) -> list[np.ndarray]:
         """
         Run inference on the input image.

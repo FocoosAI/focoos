@@ -858,7 +858,6 @@ class DCC(nn.Module):
         self.export = True
 
     def _convert_pose_to_kpts(self):
-        print("convert_pose_to_kpts")
         """Merge BatchNorm layer into Fully Connected layer.
 
         This function merges a BatchNorm layer into the associated Fully
@@ -948,7 +947,8 @@ class DCC(nn.Module):
             # step 1: pose features -> keypoint features
             kpt_feats = self.pose_to_kpts(pose_feats)
             kpt_feats = kpt_feats.reshape(*kpt_feats.shape[:-1], self.num_keypoints, self.feat_channels)
-            kpt_feats = self.gau(kpt_feats)
+            if hasattr(self, "gau"):
+                kpt_feats = self.gau(kpt_feats)
 
             # step 2: dynamic bin encoding
             center, scale = bbox_cs.split(2, dim=-1)
