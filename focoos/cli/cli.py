@@ -1133,4 +1133,12 @@ def benchmark(
         typer.echo(f"❌ Benchmark failed: {e}")
 
 
+@app.command("gradio")
+def gradio():
+    """Launch the Focoos Gradio app."""
+    from focoos.cli.gradio_app import launch_gradio
+
+    launch_gradio(share=False)
+
+
 app.add_typer(hub_app, name="hub")

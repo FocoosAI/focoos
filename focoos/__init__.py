@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from .config import FOCOOS_CONFIG
 from .hub import ApiClient, FocoosHUB, RemoteDataset, RemoteModel
 from .infer.infer_model import InferModel
@@ -76,6 +78,10 @@ from .utils.vision import (
 )
 
 _setup_logging()
+
+PACKAGE_DIR = Path(__file__).parent.resolve()
+ROOT_PACKAGE_DIR = PACKAGE_DIR.parent
+ASSETS_DIR = ROOT_PACKAGE_DIR / "assets"
 
 __all__ = [
     "FOCOOS_CONFIG",
@@ -162,4 +168,7 @@ __all__ = [
     "annotate_image",
     "ModelRegistry",
     "InferLatency",
+    "ASSETS_DIR",
+    "PACKAGE_DIR",
+    "ROOT_PACKAGE_DIR",
 ]

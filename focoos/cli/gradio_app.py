@@ -5,14 +5,12 @@ from typing import Iterable
 import cv2
 
 import gradio as gr
+from focoos import ASSETS_DIR, PREDICTIONS_DIR
 from focoos.model_manager import ModelManager
 from focoos.model_registry import ModelRegistry
 from gradio.themes.base import Base, colors, fonts, sizes
 
-ASSETS_DIR = os.path.dirname(os.path.abspath(__file__)) + "/assets"
-OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/output"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-SUBSAMPLE = 2
+os.makedirs(PREDICTIONS_DIR, exist_ok=True)
 
 
 class FocoosTheme(Base):
@@ -156,7 +154,7 @@ def run_video_inference(
     progress(0.1, desc="Initializing video...")
 
     # Use UUID to create a unique video file
-    output_video_name = f"{OUTPUT_DIR}/output_{uuid.uuid4()}.mp4"
+    output_video_name = f"{PREDICTIONS_DIR}/gradio_output_{uuid.uuid4()}.mp4"
 
     # Output Video
     output_video = cv2.VideoWriter(output_video_name, video_codec, desired_fps, (desired_width, desired_height))  # type: ignore
@@ -237,17 +235,21 @@ video_interface = gr.Interface(
 )
 
 
-demo = gr.Blocks(title="Focoos Pretrained Models", theme=focoos_theme)
+def launch_gradio(share: bool = False):
+    demo = gr.Blocks(title="Focoos Pretrained Models", theme=focoos_theme)
 
-with demo:
-    gr.HTML(html)
+    with demo:
+        gr.HTML(html)
 
-    with gr.Tabs():
-        with gr.Tab("Image Inference"):
-            image_interface.render()
+        with gr.Tabs():
+            with gr.Tab("Image Inference"):
+                image_interface.render()
 
-        with gr.Tab("Video Inference"):
-            video_interface.render()
+            with gr.Tab("Video Inference"):
+                video_interface.render()
+
+    demo.launch(share=share)
+
 
 if __name__ == "__main__":
-    demo.launch()
+    launch_gradio()
