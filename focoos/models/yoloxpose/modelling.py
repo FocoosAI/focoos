@@ -1356,9 +1356,6 @@ class YOLOXPoseHead(nn.Module):
             num_pos_per_img,
         )
 
-    def _fuse(self):
-        self.nms = False
-
     def predict(
         self,
         feats: Tuple[Tensor],

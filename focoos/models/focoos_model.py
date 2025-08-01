@@ -1,3 +1,4 @@
+import copy
 import os
 from datetime import datetime
 from pathlib import Path
@@ -70,7 +71,7 @@ class ExportableModel(torch.nn.Module):
         # Use BaseModelNN's switch_to_export method which accepts test_cfg
 
         self.model = model.eval().to(device)
-        self.model.switch_to_export(test_cfg)
+        self.model.switch_to_export(test_cfg=test_cfg, device=device)
 
     def forward(self, x):
         """Forward pass through the wrapped model.
@@ -414,7 +415,12 @@ class FocoosModel:
 
         format = runtime_type.to_export_format()
         export_image_size = image_size if image_size is not None else self.model_info.im_size
-        exportable_model = ExportableModel(self.model, device=device, input_size=export_image_size)
+
+        exportable_model = ExportableModel(
+            model=copy.deepcopy(self.model),
+            device=device,
+            input_size=export_image_size,
+        )
         os.makedirs(out_dir, exist_ok=True)
         if image_size is None:
             data = 128 * torch.randn(1, 3, self.model_info.im_size, self.model_info.im_size).to(device)
@@ -435,7 +441,7 @@ class FocoosModel:
         dynamic_axes = self.processor.get_dynamic_axes()
 
         # Hack to warm up the model and record the spacial shapes if needed
-        self.model(data)
+        exportable_model(data)
 
         if not overwrite and os.path.exists(_out_file):
             logger.info(f"Model file {_out_file} already exists. Set overwrite to True to overwrite.")

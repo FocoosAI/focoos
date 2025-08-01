@@ -858,6 +858,7 @@ class DCC(nn.Module):
         self.export = True
 
     def _convert_pose_to_kpts(self):
+        print("convert_pose_to_kpts")
         """Merge BatchNorm layer into Fully Connected layer.
 
         This function merges a BatchNorm layer into the associated Fully
@@ -1662,10 +1663,7 @@ class RTMOHead(nn.Module):
             keypoints_visible=torch.cat(all_keypoints_visible, dim=0),
         )
 
-    def _fuse(self):
-        self.nms = False
-
-    def switch_to_export(self, test_cfg: Optional[Dict]):
+    def switch_to_export(self, test_cfg: Optional[Dict], device: str = "cuda"):
         """Precompute and save the grid coordinates and strides."""
 
         self.export = True
@@ -1678,8 +1676,9 @@ class RTMOHead(nn.Module):
         featmap_sizes = [fmap.shape[2:] for fmap in featmaps]
 
         self.mlvl_priors = self.prior_generator.grid_priors(
-            featmap_sizes, dtype=torch.float32, device=torch.device("cpu")
+            featmap_sizes, dtype=torch.float32, device=torch.device(device)
         )
+
         self.flatten_priors = torch.cat(self.mlvl_priors)
 
         mlvl_strides = [
@@ -1778,7 +1777,7 @@ class RTMO(BaseModelNN):
             loss=None,
         )
 
-    def switch_to_export(self, test_cfg: Optional[Dict] = None):
+    def switch_to_export(self, test_cfg: Optional[Dict] = None, device: str = "cuda"):
         # Get input size from config if test_cfg is not provided
         if test_cfg is None:
             input_size = (self.config.im_size, self.config.im_size)

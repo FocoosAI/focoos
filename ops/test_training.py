@@ -63,7 +63,7 @@ def get_dataset(task: Task):
     return ds_name, layout
 
 
-def train(model_name: str):
+def train(model_name: str, iter: int):
     model = ModelManager.get(model_name)
 
     # Convert string task to Task enum
@@ -97,7 +97,7 @@ def train(model_name: str):
         # output_dir=out_dir,
         amp_enabled=True,
         batch_size=8,
-        max_iters=50,
+        max_iters=iter,
         eval_period=50,
         learning_rate=1e-4,
         scheduler="MULTISTEP",
@@ -128,8 +128,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Train a pretrained model")
     parser.add_argument("--model", type=str, required=True, help="Name of the model to train")
+    parser.add_argument("--iter", type=int, default=50, help="Number of iterations")
 
     args = parser.parse_args()
     logger.info(f"🚀 Start training test: {args.model} =================================================")
     torch.cuda.empty_cache()
-    train(args.model)
+    train(args.model, args.iter)

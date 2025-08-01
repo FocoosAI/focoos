@@ -201,5 +201,5 @@ class BaseModelNN(ABC, nn.Module):
         logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")
         return metrics
 
-    def switch_to_export(self, test_cfg: Optional[dict] = None):
+    def switch_to_export(self, test_cfg: Optional[dict] = None, device: str = "cuda"):
         pass
