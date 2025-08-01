@@ -24,7 +24,7 @@ include = ["focoos**"]
 
 [tool.setuptools.package-data]
 "focoos.model_registry" = ["*.json"]
-
+"assets" = ["assets/*"]
 
 [project]
 name = "focoos"

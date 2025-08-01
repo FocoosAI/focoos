@@ -23,8 +23,8 @@ def interpolate_image(image, size):
 
 
 class BisenetFormerProcessor(Processor):
-    def __init__(self, config: BisenetFormerConfig):
-        super().__init__(config)
+    def __init__(self, config: BisenetFormerConfig, image_size: Optional[int] = None):
+        super().__init__(config, image_size)
         self.config = config
         processing_functions = {
             "semantic": self.semantic_inference,
@@ -56,7 +56,6 @@ class BisenetFormerProcessor(Processor):
         ],
         device: torch.device,
         dtype: torch.dtype = torch.float32,
-        image_size: Optional[int] = None,
     ) -> tuple[torch.Tensor, list[BisenetFormerTargets]]:
         targets = []
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DatasetEntry):

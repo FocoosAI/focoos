@@ -72,6 +72,14 @@ def load_coco_json(
 
     cat_ids = sorted(coco_api.getCatIds())
     cats = coco_api.loadCats(cat_ids)
+    keypoints = None
+    keypoints_skeleton = None
+    if len(cats) > 0 and cats[0].get("keypoints", None) is not None:
+        keypoints = cats[0].get("keypoints", None)
+        if cats[0].get("skeleton", None) is not None:
+            keypoints_skeleton = cats[0].get("skeleton")
+            keypoints_skeleton = [tuple(x) for x in keypoints_skeleton]
+
     # The categories in a custom json file may not be sorted.
     thing_classes = [c["name"] for c in sorted(cats, key=lambda x: x["id"])]
 
@@ -208,6 +216,8 @@ def load_coco_json(
     metadata.num_classes = len(thing_classes)
     metadata.thing_classes = thing_classes
     metadata.thing_dataset_id_to_contiguous_id = id_map
+    metadata.keypoints = keypoints
+    metadata.keypoints_skeleton = keypoints_skeleton
     if "color" in cats[0]:
         thing_colors = [c["color"] for c in sorted(cats, key=lambda x: x["id"])]
         metadata.thing_colors = thing_colors

@@ -1,18 +1,86 @@
 import os
 import uuid
+from typing import Iterable
 
 import cv2
 
 import gradio as gr
+from focoos import ASSETS_DIR, PREDICTIONS_DIR
 from focoos.model_manager import ModelManager
 from focoos.model_registry import ModelRegistry
-from focoos.utils.vision import annotate_frame, annotate_image
+from gradio.themes.base import Base, colors, fonts, sizes
 
-ASSETS_DIR = os.path.dirname(os.path.abspath(__file__)) + "/assets"
-OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/output"
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-SUBSAMPLE = 2
+os.makedirs(PREDICTIONS_DIR, exist_ok=True)
 
+
+class FocoosTheme(Base):
+    def __init__(
+        self,
+        primary_hue: colors.Color | str = colors.blue,
+        secondary_hue: colors.Color | str = colors.emerald,
+        neutral_hue: colors.Color | str = colors.zinc,
+        text_size: sizes.Size | str = sizes.text_md,
+        spacing_size: sizes.Size | str = sizes.spacing_md,
+        radius_size: sizes.Size | str = sizes.radius_md,
+        font: fonts.Font | str | Iterable[fonts.Font | str] = (
+            fonts.LocalFont("IBM Plex Sans"),
+            "ui-sans-serif",
+            "system-ui",
+            "sans-serif",
+        ),
+        font_mono: fonts.Font | str | Iterable[fonts.Font | str] = (
+            fonts.LocalFont("IBM Plex Mono"),
+            "ui-monospace",
+            "Consolas",
+            "monospace",
+        ),
+    ):
+        super().__init__(
+            primary_hue=primary_hue,
+            secondary_hue=secondary_hue,
+            neutral_hue=neutral_hue,
+            text_size=text_size,
+            spacing_size=spacing_size,
+            radius_size=radius_size,
+            font=font,
+            font_mono=font_mono,
+        )
+
+        # Custom theme styling with blue-green gradient
+        super().set(
+            # Primary buttons with blue-green gradient
+            button_primary_background_fill="linear-gradient(135deg, #0060e6 0%, #5fd49f 100%)",
+            button_primary_background_fill_hover="linear-gradient(135deg, #5fd49f 0%, #0060e6 100%)",
+            button_primary_background_fill_dark="linear-gradient(135deg, #0060e6 0%, #5fd49f 100%)",
+            button_primary_text_color="white",
+            button_primary_text_color_dark="white",
+            # Slider with base colors (gradients added via CSS)
+            slider_color="#0060e6",
+            slider_color_dark="#0060e6",
+            # Tab styling
+            button_secondary_background_fill_hover="*primary_50",
+            button_secondary_background_fill_hover_dark="*primary_900",
+            # Progress bar base color (gradient added via CSS)
+            loader_color="#0060e6",
+            # Link colors
+            link_text_color="#0060e6",
+            link_text_color_hover="#5fd49f",
+            link_text_color_dark="#0060e6",
+            link_text_color_hover_dark="#5fd49f",
+            # Checkbox and radio buttons
+            checkbox_background_color_selected="#0060e6",
+            checkbox_background_color_selected_dark="#0060e6",
+            radio_circle="#0060e6",
+            # Input focus
+            input_border_color_focus="#0060e6",
+            input_border_color_focus_dark="#0060e6",
+            # Elegant borders and shadows
+            block_border_width="1px",
+            block_shadow="0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+        )
+
+
+focoos_theme = FocoosTheme()
 
 model_registry = ModelRegistry()
 focoos_models = list(model_registry.list_models())
@@ -23,20 +91,29 @@ image_examples = [
     [f"{ASSETS_DIR}/ADE_val_00000821.jpg", "fai-detr-m-coco"],
     [f"{ASSETS_DIR}/ADE_val_00000461.jpg", "fai-mf-m-ade"],
     [f"{ASSETS_DIR}/ADE_val_00000034.jpg", "fai-mf-l-coco-ins"],
+    [f"{ASSETS_DIR}/federer.jpg", "rtmo-s-coco"],
 ]
+
+html = """
+<a href="https://www.focoos.ai" target="_blank">
+  <img src="https://public.focoos.ai/library/focoos_banner.png" alt="FocoosAI" style="max-width:100%;">
+</a>
+"""
 
 
 def run_inference(image, model_name: str, conf: float, progress=gr.Progress()):
     assert model_name is not None, "model_name is required"
     assert model_name in model_registry.list_models(), "model_name is not valid"
+    progress(0, desc="Loading Model...")
     if model_name not in loaded_models:
         model = ModelManager.get(model_name)
         loaded_models[model_name] = model
     else:
         model = loaded_models[model_name]
-    detections = model(image, threshold=conf)
-    annotated_image = annotate_image(image, detections, task=model.task, classes=model.classes)
-    return annotated_image, detections.model_dump()
+    progress(0.3, desc="Run Inference...")
+    res = model.infer(image, threshold=conf, annotate=True)
+    progress(0.9, desc="Done!")
+    return res.image, res.model_dump()
 
 
 def run_video_inference(
@@ -49,7 +126,7 @@ def run_video_inference(
     assert model_name is not None, "model_name is required"
     assert model_name in model_registry.list_models(), "model_name is not valid"
 
-    progress(0, desc="Load Model...")
+    progress(0, desc="Loading Model...")
     if model_name not in loaded_models:
         model = ModelManager.get(model_name)
         loaded_models[model_name] = model
@@ -77,7 +154,7 @@ def run_video_inference(
     progress(0.1, desc="Initializing video...")
 
     # Use UUID to create a unique video file
-    output_video_name = f"{OUTPUT_DIR}/output_{uuid.uuid4()}.mp4"
+    output_video_name = f"{PREDICTIONS_DIR}/gradio_output_{uuid.uuid4()}.mp4"
 
     # Output Video
     output_video = cv2.VideoWriter(output_video_name, video_codec, desired_fps, (desired_width, desired_height))  # type: ignore
@@ -98,14 +175,11 @@ def run_video_inference(
             continue
 
         frame = cv2.resize(frame, (desired_width, desired_height))
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        res = model(frame, threshold=threshold)
-        last_latency = res.latency.get("inference") if res.latency is not None else None
-
-        annotated_frame = annotate_frame(frame, res, task=model.task, classes=model.classes)
+        res = model.infer(frame, threshold=threshold, annotate=True)
+        last_latency = res.latency.inference if res.latency is not None else None
 
         # Write frame directly to video
-        output_video.write(annotated_frame[:, :, ::-1])
+        output_video.write(res.image)  # type: ignore
 
         n_frames += 1
 
@@ -161,9 +235,21 @@ video_interface = gr.Interface(
 )
 
 
-demo = gr.TabbedInterface(
-    title="Focoos Pretrained Models",
-    interface_list=[image_interface, video_interface],
-    tab_names=["Image Inference", "Video Inference"],
-)
-demo.launch()
+def launch_gradio(share: bool = False):
+    demo = gr.Blocks(title="Focoos Pretrained Models", theme=focoos_theme)
+
+    with demo:
+        gr.HTML(html)
+
+        with gr.Tabs():
+            with gr.Tab("Image Inference"):
+                image_interface.render()
+
+            with gr.Tab("Video Inference"):
+                video_interface.render()
+
+    demo.launch(share=share)
+
+
+if __name__ == "__main__":
+    launch_gradio()

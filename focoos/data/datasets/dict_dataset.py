@@ -246,6 +246,14 @@ class DictDataset(Dataset):
             if cat_id <= 0:
                 cat_ids.pop(cat_id)
         cats = coco_api.loadCats(cat_ids)
+        keypoints = None
+        keypoints_skeleton = None
+        if len(cats) > 0 and cats[0].get("keypoints", None) is not None:
+            keypoints = cats[0].get("keypoints", None)
+            if cats[0].get("skeleton", None) is not None:
+                keypoints_skeleton = cats[0].get("skeleton")
+                keypoints_skeleton = [tuple(x) for x in keypoints_skeleton]
+
         # The categories in a custom json file may not be sorted.
         thing_classes = [c["name"] for c in sorted(cats, key=lambda x: x["id"])]
         id_map = {v: i for i, v in enumerate(cat_ids)}
@@ -325,6 +333,8 @@ class DictDataset(Dataset):
             image_root=ds_dir,
             thing_dataset_id_to_contiguous_id=id_map,
             json_file=json_file,
+            keypoints=keypoints,
+            keypoints_skeleton=keypoints_skeleton,
         )
 
         return cls(dicts=dataset_dicts, task=task, metadata=metadata)

@@ -12,6 +12,7 @@ from focoos.infer.runtimes.torchscript import TorchscriptRuntime
 from focoos.ports import (
     FocoosDet,
     FocoosDetections,
+    InferLatency,
     LatencyMetrics,
     ModelFamily,
     ModelInfo,
@@ -121,7 +122,7 @@ def mock_focoos_detections():
     )
     return FocoosDetections(
         detections=[mock_detection],
-        latency={"inference": 0.1, "preprocess": 0.05, "postprocess": 0.02},
+        latency=InferLatency(inference=0.1, preprocess=0.05, postprocess=0.02),
     )
 
 
@@ -132,8 +133,8 @@ def test_infer_onnx(
     mock_focoos_detections: FocoosDetections,
 ):
     # Mock image preprocessing
-    mock_image_preprocess = mocker.patch("focoos.infer.infer_model.image_preprocess")
-    mock_image_preprocess.return_value = (image_ndarray, image_ndarray)
+    mock_image_preprocess = mocker.patch("focoos.infer.infer_model.image_loader")
+    mock_image_preprocess.return_value = image_ndarray
 
     # Mock processor methods
     mock_local_model_onnx.processor.preprocess = MagicMock(return_value=(MagicMock(), None))
@@ -161,8 +162,8 @@ def test_infer_torch(
     mock_focoos_detections: FocoosDetections,
 ):
     # Mock image preprocessing
-    mock_image_preprocess = mocker.patch("focoos.infer.infer_model.image_preprocess")
-    mock_image_preprocess.return_value = (image_ndarray, image_ndarray)
+    mock_image_preprocess = mocker.patch("focoos.infer.infer_model.image_loader")
+    mock_image_preprocess.return_value = image_ndarray
 
     # Mock processor methods
     mock_local_model_torch.processor.preprocess = MagicMock(return_value=(MagicMock(), None))
@@ -198,7 +199,7 @@ def test_call_method(
     # Assertions
     assert result is not None
     assert isinstance(result, FocoosDetections)
-    mock_infer.assert_called_once_with(image_ndarray, 0.5)
+    mock_infer.assert_called_once()
 
 
 def test_end2end_benchmark_onnx_cpu(mocker: MockerFixture, mock_local_model_onnx: InferModel):

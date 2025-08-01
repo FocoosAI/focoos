@@ -159,9 +159,9 @@ class MobileNetV2(BaseBackbone):
 
         self.in_channels = int(32 * config.widen_factor)
 
-        self._out_feature_strides = {}
-        self._out_feature_channels = {}
-        self._out_features = ["res2", "res3", "res4", "res5"]
+        self.out_feature_strides = {}
+        self.out_feature_channels = {}
+        self.out_features = ["res2", "res3", "res4", "res5"]
 
         self.conv1 = Conv2d(
             in_channels=config.in_chans,
@@ -199,8 +199,8 @@ class MobileNetV2(BaseBackbone):
             layer_name = f"layer{i + 1}"
             if layer_name in self.layer_to_res:
                 res_block = self.layer_to_res[layer_name]
-                self._out_feature_strides[res_block] = tot_stride
-                self._out_feature_channels[res_block] = out_channels
+                self.out_feature_strides[res_block] = tot_stride
+                self.out_feature_channels[res_block] = out_channels
             self.add_module(layer_name, inverted_res_layer)
             self.layers.append(layer_name)
 
@@ -246,7 +246,7 @@ class MobileNetV2(BaseBackbone):
             x = layer(x)
             if layer_name in self.layer_to_res:
                 res_block = self.layer_to_res[layer_name]
-                if res_block in self._out_features:
+                if res_block in self.out_features:
                     outs[res_block] = x
 
         return outs

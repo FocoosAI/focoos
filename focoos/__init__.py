@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from .config import FOCOOS_CONFIG
 from .hub import ApiClient, FocoosHUB, RemoteDataset, RemoteModel
 from .infer.infer_model import InferModel
@@ -31,6 +33,7 @@ from .ports import (
     GPUDevice,
     GPUInfo,
     HubSyncLocalTraining,
+    InferLatency,
     LatencyMetrics,
     Metrics,
     ModelConfig,
@@ -60,6 +63,7 @@ from .ports import (
 from .processor import ProcessorManager
 from .utils.logger import _setup_logging, get_logger
 from .utils.system import get_cpu_name, get_cuda_version, get_device_name, get_system_info
+from .utils.timer import took
 from .utils.vision import (
     annotate_frame,
     annotate_image,
@@ -75,6 +79,10 @@ from .utils.vision import (
 
 _setup_logging()
 
+PACKAGE_DIR = Path(__file__).parent.resolve()
+ROOT_PACKAGE_DIR = PACKAGE_DIR.parent
+ASSETS_DIR = ROOT_PACKAGE_DIR / "assets"
+
 __all__ = [
     "FOCOOS_CONFIG",
     "RemoteModel",
@@ -87,6 +95,7 @@ __all__ = [
     "ModelStatus",
     "DatasetLayout",
     "DatasetPreview",
+    "DatasetSplitType",
     "GPUDevice",
     "GPUInfo",
     "LatencyMetrics",
@@ -149,10 +158,17 @@ __all__ = [
     "ConfigManager",
     "ModelFamily",
     "FocoosHUB",
+    "took",
     "DatasetSplitType",
     "get_cpu_name",
     "get_device_name",
+    "get_gpus_count",
+    "get_cuda_version",
     "annotate_frame",
     "annotate_image",
     "ModelRegistry",
+    "InferLatency",
+    "ASSETS_DIR",
+    "PACKAGE_DIR",
+    "ROOT_PACKAGE_DIR",
 ]

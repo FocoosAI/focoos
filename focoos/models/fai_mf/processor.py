@@ -26,8 +26,9 @@ class MaskFormerProcessor(Processor):
     def __init__(
         self,
         config: MaskFormerConfig,
+        image_size: Optional[int] = None,
     ):
-        super().__init__(config)
+        super().__init__(config, image_size)
         processing_functions = {
             "semantic": self.semantic_inference,
             "instance": self.instance_inference,
@@ -59,7 +60,6 @@ class MaskFormerProcessor(Processor):
         ],
         device: torch.device,
         dtype: torch.dtype = torch.float32,
-        image_size: Optional[int] = None,
     ) -> tuple[torch.Tensor, list[MaskFormerTargets]]:
         targets = []
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DatasetEntry):

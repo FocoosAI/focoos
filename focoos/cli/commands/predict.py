@@ -57,12 +57,13 @@ from io import BytesIO
 from pathlib import Path
 from typing import Optional
 
+import cv2
 from PIL import Image
 
 from focoos.model_manager import ModelManager
 from focoos.ports import PREDICTIONS_DIR, FocoosDetections, RuntimeType
 from focoos.utils.logger import get_logger
-from focoos.utils.vision import annotate_image, image_loader
+from focoos.utils.vision import image_loader
 
 logger = get_logger("predict")
 
@@ -70,9 +71,9 @@ logger = get_logger("predict")
 def predict_command(
     model_name: str,
     source: str,
+    conf: float = 0.5,
     runtime: Optional[RuntimeType] = None,
     im_size: Optional[int] = 640,
-    conf: Optional[float] = 0.5,
     save: Optional[bool] = True,
     output_dir: Optional[str] = PREDICTIONS_DIR,
     save_json: Optional[bool] = True,
@@ -165,17 +166,20 @@ def predict_command(
 
     logger.info(f"🔄 Loading model: {model_name}")
     model = ModelManager.get(model_name)
-
+    if save or save_masks:
+        annotate = True
+    else:
+        annotate = False
     if runtime:
         logger.info(f"🚀 Using runtime: {runtime}")
         exported_model = model.export(runtime_type=runtime, image_size=im_size)
-        results = exported_model.infer(image, threshold=conf)
+        results = exported_model.infer(image, threshold=conf, annotate=annotate)
     else:
         logger.info("🚀 Using default model runtime")
-        results = model(image, threshold=conf)
+        results = model.infer(image, threshold=conf, annotate=annotate)
 
     # Print detections to console by default
-    print_detections(results)
+    results.pprint()
 
     # Handle saving based on arguments
     if save or save_json or save_masks:
@@ -185,11 +189,12 @@ def predict_command(
             base_name = source_path.stem
 
             # Save annotated image
-            if save:
-                annotated_image = annotate_image(im=image, detections=results, task=model.task, classes=model.classes)
+            if save and results.image is not None:
+                annotated_image = results.image
                 save_path = os.path.join(output_dir, f"{base_name}_annotated{source_path.suffix}")
                 logger.info(f"💾 Saving annotated image to {save_path}")
-                annotated_image.save(save_path)
+                cv2.imwrite(save_path, annotated_image)  # type: ignore
+                # annotated_image.save(save_path)
 
             # Save detections as JSON
             if save_json:
@@ -203,80 +208,6 @@ def predict_command(
                 logger.info(f"💾 Saving masks to {output_dir}")
 
     logger.info("✅ Prediction completed successfully!")
-
-
-def print_detections(results: FocoosDetections):
-    """Print detection results to console in a formatted table.
-
-    Displays detection results in a user-friendly table format with detailed
-    information about each detection including bounding boxes, confidence scores,
-    class labels, and mask availability. Also shows inference latency metrics
-    if available.
-
-    Args:
-        results (FocoosDetections): Detection results from model inference
-            containing detection objects and optional timing information.
-
-    Examples:
-        Output format:
-        ```
-        ==================================================
-        DETECTION RESULTS
-        ==================================================
-        Found 3 detections:
-
-          1. person
-             Confidence: 0.892
-             Bbox: [120, 50, 300, 400]
-             Size: 180 x 350
-             Has mask: Yes (base64 encoded)
-
-          2. car
-             Confidence: 0.756
-             Bbox: [450, 200, 650, 320]
-             Size: 200 x 120
-
-        Latencies:
-        --------------------------------------------------
-          preprocessing: 0.005s
-          inference: 0.045s
-          postprocessing: 0.012s
-        ==================================================
-        ```
-    """
-    print("\n" + "=" * 50)
-    print("DETECTION RESULTS")
-    print("=" * 50)
-
-    detections = results.detections
-    num_detections = len(detections)
-    print(f"Found {num_detections} detections{': ' if num_detections > 0 else ''}")
-    print()
-
-    for i, det in enumerate(detections):
-        # Get values from FocoosDet object
-        x1, y1, x2, y2 = det.bbox if det.bbox else [-1, -1, -1, -1]
-        conf = det.conf if det.conf is not None else -1
-
-        print(f"  {i + 1}. {det.label or f'Class {det.cls_id}'}")
-        print(f"     Confidence: {conf:.3f}")
-        print(f"     Bbox: [{x1}, {y1}, {x2}, {y2}]")
-        print(f"     Size: {x2 - x1} x {y2 - y1}")
-        if det.mask:
-            print("     Has mask: Yes (base64 encoded)")
-        print()
-
-    # Print latency information if available
-    if results.latency:
-        print("Latencies:")
-        print("-" * 50)
-        for key, value in results.latency.items():
-            if isinstance(value, (int, float)):
-                print(f"  {key}: {value:.3f}s")
-            else:
-                print(f"  {key}: {value}")
-    print()
-    print("=" * 50 + "\n")
 
 
 def save_detections_json(results: FocoosDetections, json_path: str):
@@ -321,30 +252,16 @@ def save_detections_json(results: FocoosDetections, json_path: str):
         IOError: If the file cannot be written to the specified path.
         PermissionError: If write permissions are insufficient.
     """
-    detections_data = {"detections": [], "summary": {"total_detections": 0, "classes_detected": 0}}
-
-    detections = results.detections
-    num_detections = len(detections)
-    detections_data["summary"]["total_detections"] = num_detections
 
     # Convert detections to dictionary format
     results_dict = results.model_dump()
-    detections_data["detections"] = results_dict["detections"]
-
-    # Count unique classes
-    unique_classes = set(det.cls_id for det in detections if det.cls_id is not None)
-    detections_data["summary"]["classes_detected"] = len(unique_classes)
-
-    # Add latency information if available
-    if results.latency:
-        detections_data["latency"] = results.latency
 
     # Ensure output directory exists
     os.makedirs(os.path.dirname(json_path), exist_ok=True)
 
     # Save to JSON file
     with open(json_path, "w") as f:
-        json.dump(detections_data, f, indent=2)
+        json.dump(results_dict, f, indent=2)
 
 
 def has_masks(results: FocoosDetections) -> bool:
