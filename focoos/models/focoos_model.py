@@ -595,13 +595,18 @@ class FocoosModel:
 
         # Get weights path
         if is_remote:
-            logger.info(f"Downloading weights from remote URL: {self.model_info.weights_uri}")
             model_dir = Path(MODELS_DIR) / self.model_info.name
-            weights_path = ApiClient().download_ext_file(
-                self.model_info.weights_uri, str(model_dir), skip_if_exists=True
-            )
+            local_path = model_dir / "model_final.pth"
+            if not local_path.exists():
+                logger.info(f"Downloading weights from remote URL: {self.model_info.weights_uri}")
+                weights_path = ApiClient().download_ext_file(
+                    self.model_info.weights_uri, str(model_dir), skip_if_exists=False
+                )
+            else:
+                weights_path = local_path
+                logger.info(f"Skipping download, using weights from local path: {weights_path}")
         else:
-            logger.info(f"Using weights from local path: {self.model_info.weights_uri}")
+            logger.info(f"Loading weights from local path: {self.model_info.weights_uri}")
             weights_path = self.model_info.weights_uri
 
         try:

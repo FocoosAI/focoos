@@ -1,7 +1,8 @@
 import importlib
 import os
 from dataclasses import fields
-from typing import Callable, Dict, Optional, Tuple, Type
+from pathlib import Path
+from typing import Callable, Dict, Optional, Tuple, Type, Union
 
 from focoos.hub.focoos_hub import FocoosHUB
 from focoos.model_registry.model_registry import ModelRegistry
@@ -41,7 +42,7 @@ class ModelManager:
     @classmethod
     def get(
         cls,
-        name: str,
+        name: Union[str, Path],
         model_info: Optional[ModelInfo] = None,
         config: Optional[ModelConfig] = None,
         hub: Optional[FocoosHUB] = None,
@@ -76,16 +77,16 @@ class ModelManager:
             return cls._from_model_info(model_info=model_info, config=config, **kwargs)
 
         # If name starts with "hub://", load from Focoos Hub
-        if name.startswith("hub://"):
+        if isinstance(name, str) and name.startswith("hub://"):
             model_info, hub_config = cls._from_hub(hub_uri=name, hub=hub, cache=cache, **kwargs)
             if config is None:
                 config = hub_config  # Use hub config if no config is provided
         # If model exists in ModelRegistry, load as pretrained model
-        elif ModelRegistry.exists(name):
+        elif isinstance(name, str) and ModelRegistry.exists(name):
             model_info = ModelRegistry.get_model_info(name)
         # Otherwise, attempt to load from a local directory
         else:
-            model_info = cls._from_local_dir(name=name)
+            model_info = cls._from_local_dir(name=str(name))
         # Load model from the resolved ModelInfo
         return cls._from_model_info(model_info=model_info, config=config, **kwargs)
 
