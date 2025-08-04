@@ -81,7 +81,7 @@ _setup_logging()
 
 PACKAGE_DIR = Path(__file__).parent.resolve()
 ROOT_PACKAGE_DIR = PACKAGE_DIR.parent
-ASSETS_DIR = ROOT_PACKAGE_DIR / "assets"
+ASSETS_DIR = PACKAGE_DIR / "assets"
 
 __all__ = [
     "FOCOOS_CONFIG",
