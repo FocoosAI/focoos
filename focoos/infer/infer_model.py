@@ -175,7 +175,7 @@ class InferModel:
         t0 = perf_counter()
         im = image_loader(image)
         tensors, _ = self.processor.preprocess(inputs=im, device="cuda")
-        logger.debug(f"Input image size: {im.shape}")
+        # logger.debug(f"Input image size: {im.shape}")
         t1 = perf_counter()
 
         raw_detections = self.runtime(tensors)

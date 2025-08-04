@@ -403,7 +403,7 @@ class FocoosDetections:
 
         # Handle special case of zero detections
         if num_detections == 0:
-            print("No detections!")
+            print("\n No detections!")
         else:
             # Count detections by class
             class_counts = {}
@@ -425,7 +425,7 @@ class FocoosDetections:
                 sorted_classes = sorted(class_counts.items())
                 formatted_classes = ", ".join(f"{count} {class_name}" for class_name, count in sorted_classes)
 
-            print(formatted_classes)
+            print(f"\n{formatted_classes}")
 
         # Print latency information with total time at the end
         if self.latency is not None:
