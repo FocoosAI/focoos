@@ -36,6 +36,9 @@ focoos predict --model fai-detr-m-coco --source image.jpg
 
 # Export model
 focoos export --model fai-detr-m-coco --format onnx
+
+# Launch gradio interface
+focoos gradio
 ```
 
 ## 📚 Usage
@@ -47,7 +50,7 @@ focoos COMMAND [OPTIONS]
 ```
 
 Where:
-- **COMMAND**: Main operations like `train`, `val`, `predict`, `export`, `benchmark`, `hub`
+- **COMMAND**: Main operations like `train`, `val`, `predict`, `export`, `benchmark`, `gradio`, `hub`
 - **OPTIONS**: Command-specific flags and parameters with intelligent defaults
 
 ## 🛠️ Available Commands
@@ -60,6 +63,9 @@ Where:
 | **`predict`**   | Run inference on images            | `focoos predict --model fai-detr-m-coco --source image.jpg` |
 | **`export`**    | Export models to different formats | `focoos export --model fai-detr-m-coco --format onnx`       |
 | **`benchmark`** | Benchmark model performance        | `focoos benchmark --model fai-detr-m-coco --iterations 100` |
+| **`gradio`**    | Launch interactive web interface   | `focoos gradio`                                             |
+
+
 
 ### Hub Commands
 | Command            | Description                      | Example                                |
@@ -216,6 +222,23 @@ focoos hub datasets
 # List both private and shared datasets
 focoos hub datasets --include-shared
 ```
+
+### 🖥️ Interactive Web Interface
+
+```bash
+# Launch Gradio web interface
+focoos gradio
+```
+
+The Gradio interface provides an interactive web-based experience for running inference with Focoos models:
+
+- **Image Inference**: Upload images and run detection/segmentation with real-time results
+- **Video Inference**: Process video files with object detection and tracking
+- **Model Selection**: Choose from available pretrained models
+- **Confidence Tuning**: Adjust detection thresholds interactively
+- **Visual Results**: View annotated outputs with bounding boxes and masks
+
+The interface will automatically open in your default web browser, typically at `http://localhost:7860`.
 
 ## ⚙️ Configuration Options
 
