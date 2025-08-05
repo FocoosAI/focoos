@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, Literal, Tuple
 
 from focoos.nn.backbone.base import BackboneConfig
-from focoos.nn.backbone.darknet import DarkNetConfig
+from focoos.nn.backbone.darknet import C2fDarkNetConfig
 from focoos.ports import ModelConfig
 
 NormType = Literal["BN"]
@@ -10,7 +10,7 @@ NormType = Literal["BN"]
 
 @dataclass
 class RTMOConfig(ModelConfig):
-    backbone_config: BackboneConfig = field(default_factory=lambda: DarkNetConfig(size="m", use_pretrained=True))
+    backbone_config: BackboneConfig = field(default_factory=lambda: C2fDarkNetConfig(size="m", use_pretrained=True))
     num_classes: int
 
     num_keypoints: int = 17

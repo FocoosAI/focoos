@@ -10,7 +10,7 @@
         "num_classes": 1,
         "backbone_config": {
             "use_pretrained": false,
-            "model_type": "darknet",
+            "model_type": "c2f_darknet",
             "size": "s"
         },
         "num_keypoints": 17,

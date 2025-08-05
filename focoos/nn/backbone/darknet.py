@@ -29,42 +29,38 @@ DARKNET_PRETRAINED_WEIGHTS = {
 
 
 @dataclass
-class DarkNetConfig(BackboneConfig):
+class C2fDarkNetConfig(BackboneConfig):
     size: Literal["n", "s", "m", "l", "x"] = "m"
-    model_type: Literal["darknet"] = "darknet"
+    model_type: Literal["c2f_darknet"] = "c2f_darknet"
 
 
-class DarkNet(BaseBackbone):
-    def __init__(self, config: DarkNetConfig):
+class C2fDarkNet(BaseBackbone):
+    def __init__(self, config: C2fDarkNetConfig):
         super().__init__(config)
 
         self.width = DARKNET_SIZES[config.size]["width"]
         self.depth = DARKNET_SIZES[config.size]["depth"]
         self.activation = nn.SiLU(inplace=True)
 
-        p1 = [ConvNormLayerDarknet(ch_in=self.width[0], ch_out=self.width[1], kernel_size=3, stride=2, padding=1)]
-        p2 = [
+        self.p1 = torch.nn.Sequential(
+            ConvNormLayerDarknet(ch_in=self.width[0], ch_out=self.width[1], kernel_size=3, stride=2, padding=1)
+        )
+        self.p2 = torch.nn.Sequential(
             ConvNormLayerDarknet(ch_in=self.width[1], ch_out=self.width[2], kernel_size=3, stride=2, padding=1),
             C2f(ch_in=self.width[2], ch_out=self.width[2], shortcut=True, n=self.depth[0]),
-        ]
-        p3 = [
+        )
+        self.p3 = torch.nn.Sequential(
             ConvNormLayerDarknet(ch_in=self.width[2], ch_out=self.width[3], kernel_size=3, stride=2, padding=1),
             C2f(ch_in=self.width[3], ch_out=self.width[3], shortcut=True, n=self.depth[1]),
-        ]
-        p4 = [
+        )
+        self.p4 = torch.nn.Sequential(
             ConvNormLayerDarknet(ch_in=self.width[3], ch_out=self.width[4], kernel_size=3, stride=2, padding=1),
             C2f(ch_in=self.width[4], ch_out=self.width[4], shortcut=True, n=self.depth[2]),
-        ]
-        p5 = [
+        )
+        self.p5 = torch.nn.Sequential(
             ConvNormLayerDarknet(ch_in=self.width[4], ch_out=self.width[5], kernel_size=3, stride=2, padding=1),
             C2f(ch_in=self.width[5], ch_out=self.width[5], shortcut=True, n=self.depth[3]),
-        ]
-
-        self.p1 = torch.nn.Sequential(*p1)
-        self.p2 = torch.nn.Sequential(*p2)
-        self.p3 = torch.nn.Sequential(*p3)
-        self.p4 = torch.nn.Sequential(*p4)
-        self.p5 = torch.nn.Sequential(*p5)
+        )
 
         if config.use_pretrained:
             if config.backbone_url:
@@ -108,6 +104,6 @@ class DarkNet(BaseBackbone):
 if __name__ == "__main__":
     for size in ["n", "s", "m", "l", "x"]:
         input_tensor = torch.ones(1, 3, 224, 224).float()
-        back = DarkNet(DarkNetConfig(size=size, use_pretrained=True))
+        back = C2fDarkNet(C2fDarkNetConfig(size=size, use_pretrained=True))
         model_out = back.forward(input_tensor)
         print([(k, o.shape) for k, o in model_out.items()])

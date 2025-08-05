@@ -1,4 +1,5 @@
 import warnings
+from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -99,7 +100,17 @@ class ConvNormLayer(nn.Module):
 
 
 class ConvNormLayerDarknet(nn.Module):
-    def __init__(self, ch_in, ch_out, kernel_size, stride, padding=None, bias=False):
+    def __init__(
+        self,
+        ch_in: int,
+        ch_out: int,
+        kernel_size: int,
+        stride: int,
+        padding: Optional[int] = None,
+        bias: bool = False,
+        eps: float = 0.001,
+        momentum: float = 0.03,
+    ):
         super().__init__()
         self.conv = nn.Conv2d(
             ch_in,
@@ -109,7 +120,7 @@ class ConvNormLayerDarknet(nn.Module):
             padding=(kernel_size - 1) // 2 if padding is None else padding,
             bias=bias,
         )
-        self.norm = nn.BatchNorm2d(ch_out, eps=0.001, momentum=0.03)
+        self.norm = nn.BatchNorm2d(ch_out, eps=eps, momentum=momentum)
         self.act = nn.SiLU(inplace=True)
 
     def forward(self, x):

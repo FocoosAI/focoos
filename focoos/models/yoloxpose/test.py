@@ -2,7 +2,7 @@ import torch
 
 from focoos.models.yoloxpose.config import YOLOXPoseConfig
 from focoos.models.yoloxpose.modelling import YOLOXPose
-from focoos.nn.backbone.darknet import DarkNetConfig
+from focoos.nn.backbone.darknet import C2fDarkNetConfig
 
 # Script to test the YOLOXPose model from modelling.py with various configurations
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     test_configs = [
         # Default config
         dict(
-            backbone_config=DarkNetConfig(size="s"),
+            backbone_config=C2fDarkNetConfig(size="s"),
             neck_feat_dim=256,
             neck_out_dim=256,
             c2f_depth=1,
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         ),
         # Different backbone size and activation
         dict(
-            backbone_config=DarkNetConfig(size="m"),
+            backbone_config=C2fDarkNetConfig(size="m"),
             neck_feat_dim=128,
             neck_out_dim=128,
             c2f_depth=2,
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         ),
         # Different number of keypoints and classes, different normalization
         dict(
-            backbone_config=DarkNetConfig(
+            backbone_config=C2fDarkNetConfig(
                 size="l",
             ),
             neck_feat_dim=64,
@@ -115,7 +115,7 @@ if __name__ == "__main__":
         ),
         # Test with different image size and pixel normalization
         dict(
-            backbone_config=DarkNetConfig(
+            backbone_config=C2fDarkNetConfig(
                 size="x",
             ),
             neck_feat_dim=32,
