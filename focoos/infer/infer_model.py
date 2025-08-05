@@ -172,8 +172,8 @@ class InferModel:
         """
         assert self.runtime is not None, "Model is not deployed (locally)"
 
-        t0 = perf_counter()
         im = image_loader(image)
+        t0 = perf_counter()
         tensors, _ = self.processor.preprocess(inputs=im, device="cuda")
         # logger.debug(f"Input image size: {im.shape}")
         t1 = perf_counter()

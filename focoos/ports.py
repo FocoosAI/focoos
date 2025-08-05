@@ -25,6 +25,7 @@ ROOT_DIR = str(ROOT_DIR) if os.name == "nt" else ROOT_DIR
 MODELS_DIR = os.path.join(ROOT_DIR, "models")
 DATASETS_DIR = os.path.join(ROOT_DIR, "datasets")
 PREDICTIONS_DIR = os.path.join(ROOT_DIR, "predictions")
+CACHE_DIR = os.path.join(ROOT_DIR, ".cache")
 
 
 class PydanticBase(BaseModel, ABC):

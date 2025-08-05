@@ -11,7 +11,6 @@ import torch
 from PIL import Image
 
 from focoos.data.datasets.map_dataset import MapDataset
-from focoos.hub.api_client import ApiClient
 from focoos.hub.focoos_hub import FocoosHUB
 from focoos.infer.infer_model import InferModel
 from focoos.models.base_model import BaseModelNN
@@ -29,6 +28,7 @@ from focoos.ports import (
     TrainingInfo,
 )
 from focoos.processor.processor_manager import ProcessorManager
+from focoos.utils.api_client import ApiClient
 from focoos.utils.distributed.dist import launch
 from focoos.utils.env import TORCH_VERSION
 from focoos.utils.logger import get_logger

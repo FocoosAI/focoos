@@ -13,7 +13,7 @@ from focoos.ports import ModelStatus, RemoteModelInfo, Task
 @pytest.fixture
 def mock_api_client():
     """Fixture to create a mock ApiClient."""
-    with patch("focoos.hub.api_client.ApiClient") as MockApiClient:
+    with patch("focoos.utils.api_client.ApiClient") as MockApiClient:
         mock_client = MockApiClient.return_value
         yield mock_client
 

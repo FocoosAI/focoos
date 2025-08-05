@@ -9,7 +9,10 @@ import supervision as sv
 from scipy.ndimage import zoom
 from typing_extensions import Buffer
 
-from focoos.ports import FocoosDet, FocoosDetections, Task
+from focoos.ports import CACHE_DIR, FocoosDet, FocoosDetections, Task
+from focoos.utils.api_client import ApiClient
+
+api_client = ApiClient()
 
 label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10, smart_position=True)
 box_annotator = sv.BoxAnnotator()
@@ -49,11 +52,8 @@ def image_loader(im: Union[bytes, str, Path, np.ndarray, Image.Image]) -> np.nda
         ValueError: If the input type is not one of the accepted types.
     """
     if isinstance(im, str) and im.startswith(("http://", "https://")):
-        import requests
-
-        response = requests.get(im)
-        response.raise_for_status()
-        im = response.content
+        file_path = api_client.download_ext_file(im, CACHE_DIR, skip_if_exists=True)
+        im = file_path
 
     if isinstance(im, np.ndarray):
         return im

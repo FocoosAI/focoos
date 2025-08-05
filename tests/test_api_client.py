@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from focoos.hub.api_client import ApiClient
+from focoos.utils.api_client import ApiClient
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def test_api_client_initialization():
 
 
 def test_api_client_initialization_with_defaults():
-    with patch("focoos.hub.api_client.FOCOOS_CONFIG") as mock_config:
+    with patch("focoos.utils.api_client.FOCOOS_CONFIG") as mock_config:
         mock_config.focoos_api_key = "default_key"
         mock_config.default_host_url = "http://default.com"
         client = ApiClient()
@@ -49,7 +49,7 @@ def test_api_client_check_api_key_whitespace():
 
 
 def test_api_client_check_api_key_none():
-    with patch("focoos.hub.api_client.FOCOOS_CONFIG") as mock_config:
+    with patch("focoos.utils.api_client.FOCOOS_CONFIG") as mock_config:
         mock_config.focoos_api_key = None
         mock_config.default_host_url = "http://example.com"
         client = ApiClient(api_key=None, host_url="http://example.com")
@@ -254,8 +254,8 @@ def test_api_client_download_ext_file_skip_if_exists(api_client):
             )
 
             assert file_path == existing_file
-            # HTTP request is made, but file is not overwritten due to skip_if_exists
-            mock_get.assert_called_once()
+            # test that the file is not downloaded again
+            mock_get.assert_not_called()
             # Verify original content is preserved
             with open(existing_file, "r") as f:
                 content = f.read()

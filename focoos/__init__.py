@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from .config import FOCOOS_CONFIG
-from .hub import ApiClient, FocoosHUB, RemoteDataset, RemoteModel
+from .hub import FocoosHUB, RemoteDataset, RemoteModel
 from .infer.infer_model import InferModel
 from .infer.runtimes.load_runtime import load_runtime
 from .model_manager import ConfigManager, ModelManager
@@ -61,6 +61,7 @@ from .ports import (
     get_gpus_count,
 )
 from .processor import ProcessorManager
+from .utils.api_client import ApiClient
 from .utils.logger import _setup_logging, get_logger
 from .utils.system import get_cpu_name, get_cuda_version, get_device_name, get_system_info
 from .utils.timer import took

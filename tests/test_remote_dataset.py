@@ -2,9 +2,9 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
-from focoos.hub.api_client import ApiClient
 from focoos.hub.remote_dataset import RemoteDataset
 from focoos.ports import DatasetLayout, DatasetPreview, Task
+from focoos.utils.api_client import ApiClient
 
 
 @pytest.fixture

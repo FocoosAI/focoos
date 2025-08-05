@@ -5,9 +5,9 @@ from typing import List, Optional, Union
 
 from focoos.data.auto_dataset import AutoDataset
 from focoos.data.default_aug import get_default_by_task
-from focoos.hub.api_client import ApiClient
 from focoos.model_manager import ModelManager
 from focoos.ports import DATASETS_DIR, DatasetLayout, DatasetSplitType, RuntimeType, Task, TrainerArgs
+from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
 
 logger = get_logger("TestTraning")

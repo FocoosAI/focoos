@@ -28,7 +28,6 @@ import cv2
 import numpy as np
 from PIL import Image
 
-from focoos.hub.api_client import ApiClient
 from focoos.ports import (
     ArtifactName,
     FocoosDet,
@@ -40,6 +39,7 @@ from focoos.ports import (
     RemoteModelInfo,
     TrainingInfo,
 )
+from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
 from focoos.utils.metrics import MetricsVisualizer, parse_metrics
 from focoos.utils.vision import annotate_frame, image_loader
