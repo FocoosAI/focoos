@@ -7,6 +7,8 @@ import numpy as np
 import PIL.Image as Image
 import supervision as sv
 from scipy.ndimage import zoom
+from torchvision.io import ImageReadMode
+from torchvision.io.image import read_image
 from typing_extensions import Buffer
 
 from focoos.ports import CACHE_DIR, FocoosDet, FocoosDetections, Task
@@ -58,9 +60,7 @@ def image_loader(im: Union[bytes, str, Path, np.ndarray, Image.Image]) -> np.nda
     if isinstance(im, np.ndarray):
         return im
     elif isinstance(im, str) or isinstance(im, Path):
-        cv_image = cv2.imread(str(im))
-        if cv_image is None:
-            raise ValueError(f"Could not load image from {im}")
+        return read_image(str(im), mode=ImageReadMode.RGB).permute(1, 2, 0).numpy()
     elif isinstance(im, Image.Image):
         cv_image = np.array(im)
     elif isinstance(im, Buffer):
