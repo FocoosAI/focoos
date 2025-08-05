@@ -376,7 +376,7 @@ class FocoosModel:
             if focoos_det.latency is not None:
                 focoos_det.latency.annotate = round(t1 - t0, 3)
         if focoos_det.latency is not None:
-            focoos_det.latency.im_load = round(t1 - t0, 3)
+            focoos_det.latency.imload = round(t1 - t0, 3)
         focoos_det.infer_print()
         return focoos_det
 
@@ -386,7 +386,7 @@ class FocoosModel:
         onnx_opset: int = 17,
         out_dir: Optional[str] = None,
         device: Literal["cuda", "cpu"] = "cuda",
-        overwrite: bool = False,
+        overwrite: bool = True,
         image_size: Optional[Union[int, Tuple[int, int]]] = None,
     ) -> InferModel:
         """Export the model to different runtime formats.

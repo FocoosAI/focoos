@@ -345,7 +345,7 @@ class InferLatency:
     Represents the latency data for a Focoos model.
     """
 
-    im_load: Optional[float] = None
+    imload: Optional[float] = None
     preprocess: Optional[float] = None
     inference: Optional[float] = None
     postprocess: Optional[float] = None
@@ -432,6 +432,7 @@ class FocoosDetections:
         # Print latency information with total time at the end
         if self.latency is not None:
             times = [
+                self.latency.imload or 0,
                 self.latency.preprocess or 0,
                 self.latency.inference or 0,
                 self.latency.postprocess or 0,
@@ -441,8 +442,8 @@ class FocoosDetections:
             total_time_str = f"{total_time_ms:.0f}ms"
 
             latency_parts = []
-            if self.latency.im_load is not None:
-                latency_parts.append(f"im_load {self.latency.im_load * 1000:.0f}ms")
+            if self.latency.imload is not None:
+                latency_parts.append(f"imload {self.latency.imload * 1000:.0f}ms")
             if self.latency.preprocess is not None:
                 latency_parts.append(f"preprocess {self.latency.preprocess * 1000:.0f}ms")
             if self.latency.inference is not None:

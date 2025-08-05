@@ -199,7 +199,7 @@ class InferModel:
 
         res = detections[0]  #!TODO  check for batching
         res.latency = InferLatency(
-            im_load=round(t1 - t0, 3),
+            imload=round(t1 - t0, 3),
             preprocess=round(t2 - t1, 3),
             inference=round(t3 - t2, 3),
             postprocess=round(t4 - t3, 3),
