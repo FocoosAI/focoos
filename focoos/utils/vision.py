@@ -406,7 +406,8 @@ def annotate_frame(
 ) -> np.ndarray:
     if isinstance(im, Image.Image):
         im = np.array(im)
-
+    if len(detections.detections) == 0:
+        return im
     has_bbox = detections.detections[0].bbox is not None
     has_mask = detections.detections[0].mask is not None
     has_keypoints = detections.detections[0].keypoints is not None
