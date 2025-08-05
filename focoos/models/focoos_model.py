@@ -365,18 +365,17 @@ class FocoosModel:
         t1 = perf_counter()
 
         focoos_det = self.__call__(inputs=im, threshold=threshold)
-
+        if focoos_det.latency is not None:
+            focoos_det.latency.imload = round(t1 - t0, 3)
         if annotate:
-            t0 = perf_counter()
+            t2 = perf_counter()
             skeleton = self.model_info.config.get("skeleton", None)
             focoos_det.image = annotate_frame(
                 im, focoos_det, task=self.model_info.task, classes=self.model_info.classes, keypoints_skeleton=skeleton
             )
-            t1 = perf_counter()
+            t3 = perf_counter()
             if focoos_det.latency is not None:
-                focoos_det.latency.annotate = round(t1 - t0, 3)
-        if focoos_det.latency is not None:
-            focoos_det.latency.imload = round(t1 - t0, 3)
+                focoos_det.latency.annotate = round(t3 - t2, 3)
         focoos_det.infer_print()
         return focoos_det
 
