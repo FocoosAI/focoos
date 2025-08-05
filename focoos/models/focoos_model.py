@@ -360,7 +360,9 @@ class FocoosModel:
         Usage:
             Use this method to obtain detection results from a local model, with optional annotation for visualization or further processing.
         """
+        t0 = perf_counter()
         im = image_loader(image)
+        t1 = perf_counter()
 
         focoos_det = self.__call__(inputs=im, threshold=threshold)
 
@@ -373,6 +375,8 @@ class FocoosModel:
             t1 = perf_counter()
             if focoos_det.latency is not None:
                 focoos_det.latency.annotate = round(t1 - t0, 3)
+        if focoos_det.latency is not None:
+            focoos_det.latency.im_load = round(t1 - t0, 3)
         focoos_det.infer_print()
         return focoos_det
 

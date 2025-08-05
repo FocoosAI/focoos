@@ -345,6 +345,7 @@ class InferLatency:
     Represents the latency data for a Focoos model.
     """
 
+    im_load: Optional[float] = None
     preprocess: Optional[float] = None
     inference: Optional[float] = None
     postprocess: Optional[float] = None
@@ -404,7 +405,7 @@ class FocoosDetections:
 
         # Handle special case of zero detections
         if num_detections == 0:
-            print("\n No detections!")
+            print("\nNo detections!")
         else:
             # Count detections by class
             class_counts = {}
@@ -437,15 +438,17 @@ class FocoosDetections:
                 self.latency.annotate or 0,
             ]
             total_time_ms = sum(times) * 1000
-            total_time_str = f"{total_time_ms:.1f}ms"
+            total_time_str = f"{total_time_ms:.0f}ms"
 
             latency_parts = []
+            if self.latency.im_load is not None:
+                latency_parts.append(f"im_load {self.latency.im_load * 1000:.0f}ms")
             if self.latency.preprocess is not None:
-                latency_parts.append(f"preprocess {self.latency.preprocess * 1000:.1f}ms")
+                latency_parts.append(f"preprocess {self.latency.preprocess * 1000:.0f}ms")
             if self.latency.inference is not None:
-                latency_parts.append(f"inference {self.latency.inference * 1000:.1f}ms")
+                latency_parts.append(f"inference {self.latency.inference * 1000:.0f}ms")
             if self.latency.postprocess is not None:
-                latency_parts.append(f"postprocess {self.latency.postprocess * 1000:.1f}ms")
+                latency_parts.append(f"postprocess {self.latency.postprocess * 1000:.0f}ms")
 
             if latency_parts:
                 print(f"Latency: {', '.join(latency_parts)}, total {total_time_str}")

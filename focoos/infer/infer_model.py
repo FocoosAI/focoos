@@ -172,19 +172,20 @@ class InferModel:
         """
         assert self.runtime is not None, "Model is not deployed (locally)"
 
-        im = image_loader(image)
         t0 = perf_counter()
+        im = image_loader(image)
+        t1 = perf_counter()
         tensors, _ = self.processor.preprocess(inputs=im, device="cuda")
         # logger.debug(f"Input image size: {im.shape}")
-        t1 = perf_counter()
+        t2 = perf_counter()
 
         raw_detections = self.runtime(tensors)
 
-        t2 = perf_counter()
+        t3 = perf_counter()
         detections = self.processor.export_postprocess(
             raw_detections, im, threshold=threshold, class_names=self.model_info.classes
         )
-        t3 = perf_counter()
+        t4 = perf_counter()
         if annotate:
             skeleton = self.model_info.config.get("skeleton", None)
             detections[0].image = annotate_frame(
@@ -194,14 +195,15 @@ class InferModel:
                 classes=self.model_info.classes,
                 keypoints_skeleton=skeleton,
             )
-        t4 = perf_counter()
+        t5 = perf_counter()
 
         res = detections[0]  #!TODO  check for batching
         res.latency = InferLatency(
-            inference=round(t2 - t1, 3),
-            preprocess=round(t1 - t0, 3),
-            postprocess=round(t3 - t2, 3),
-            annotate=round(t4 - t3, 3) if annotate else None,
+            im_load=round(t1 - t0, 3),
+            preprocess=round(t2 - t1, 3),
+            inference=round(t3 - t2, 3),
+            postprocess=round(t4 - t3, 3),
+            annotate=round(t5 - t4, 3) if annotate else None,
         )
 
         res.infer_print()
