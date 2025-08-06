@@ -15,10 +15,10 @@ from focoos.ports import CACHE_DIR, FocoosDet, FocoosDetections, Task
 from focoos.utils.api_client import ApiClient
 
 api_client = ApiClient()
-
-label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10, smart_position=True)
-box_annotator = sv.BoxAnnotator()
-mask_annotator = sv.MaskAnnotator()
+focoos_color_palette = sv.ColorPalette.from_hex(["#015fe6", "#3faebd", "#63dba6", "#a151ff", "#df923a"])
+label_annotator = sv.LabelAnnotator(color=focoos_color_palette, text_padding=10, border_radius=10, smart_position=False)
+box_annotator = sv.BoxAnnotator(color=focoos_color_palette)
+mask_annotator = sv.MaskAnnotator(color=focoos_color_palette)
 edge_annotator = sv.EdgeAnnotator(color=sv.Color.GREEN)
 vertex_annotator = sv.VertexAnnotator(color=sv.Color.YELLOW)
 
@@ -421,6 +421,7 @@ def annotate_frame(
 
     if has_bbox and task != Task.SEMSEG:
         annotated_im = box_annotator.annotate(scene=annotated_im, detections=sv_detections)
+
     if has_mask:
         annotated_im = mask_annotator.annotate(scene=annotated_im, detections=sv_detections)
     if has_keypoints:
@@ -435,5 +436,4 @@ def annotate_frame(
             for class_id, confid in zip(sv_detections.class_id, sv_detections.confidence)
         ]
         annotated_im = label_annotator.annotate(scene=annotated_im, detections=sv_detections, labels=labels)
-
     return annotated_im
