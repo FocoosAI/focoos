@@ -87,7 +87,7 @@ class BisenetFormerProcessor(Processor):
         else:
             if self.training:
                 raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
-            images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
+            images_torch = self.get_tensors(inputs).to(device, non_blocking=True, dtype=dtype)  # type: ignore
             # since we can process input of different sizes, we are not using image_size input
         return images_torch, targets
 

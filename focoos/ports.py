@@ -450,6 +450,8 @@ class FocoosDetections:
                 latency_parts.append(f"inference {self.latency.inference * 1000:.0f}ms")
             if self.latency.postprocess is not None:
                 latency_parts.append(f"postprocess {self.latency.postprocess * 1000:.0f}ms")
+            if self.latency.annotate is not None:
+                latency_parts.append(f"annotate {self.latency.annotate * 1000:.0f}ms")
 
             if latency_parts:
                 print(f"Latency: {', '.join(latency_parts)}, total {total_time_str}")

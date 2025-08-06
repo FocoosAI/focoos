@@ -68,7 +68,7 @@ class ClassificationProcessor(Processor):
 
         if self.training:
             raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
-        images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
+        images_torch = self.get_tensors(inputs).to(device, non_blocking=True, dtype=dtype)  # type: ignore
         if self.image_size is not None:
             images_torch = torch.nn.functional.interpolate(
                 images_torch, size=(self.image_size, self.image_size), mode="bilinear", align_corners=False
