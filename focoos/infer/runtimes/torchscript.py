@@ -52,7 +52,6 @@ class TorchscriptRuntime(BaseRuntime):
                 np_image = torch.rand(1, 3, size, size, device=self.device)
                 for _ in range(self.opts.warmup_iter):
                     self.model(np_image)
-            logger.info("⏱️ WARMUP DONE")
 
     def __call__(self, im: torch.Tensor) -> list[np.ndarray]:
         """

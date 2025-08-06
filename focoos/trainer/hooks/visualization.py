@@ -100,7 +100,12 @@ class VisualizationHook(HookBase):
             h, w = img.shape[:2]
             ratio = min(target_height / h, target_width / w)
             new_h, new_w = int(h * ratio), int(w * ratio)
-            resized = cv2.resize(img, (new_w, new_h))
+            # Ensure images are in RGB before resizing
+            if img.shape[2] == 3:
+                img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            else:
+                img_rgb = img
+            resized = cv2.resize(img_rgb, (new_w, new_h))
 
             # Create padding to make all images the same size
             padded = np.zeros((target_height, target_width, 3), dtype=np.uint8)

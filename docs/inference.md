@@ -56,7 +56,7 @@ Using the model is as simple as it could! Just call it with an image.
 ```python
 from PIL import Image
 image = Image.open("<PATH-TO-IMAGE>")
-detections = model(image)
+detections = model.infer(image)
 ```
 
 `detections` is a [FocoosDetections](/focoos/api/ports/#focoos.ports.FocoosDetections) object, containing a list of [FocoosDet](/focoos/api/ports/#focoos.ports.FocoosDet) objects and optionally a dict of information about the latency of the inference. The `FocoosDet` object contains the following attributes:
@@ -66,13 +66,14 @@ detections = model(image)
 - `cls_id`: Class ID (0-indexed).
 - `label`: Label (name of the class).
 - `mask`: Mask (base64 encoded string having origin in the top left corner of bbox and the same width and height of the bbox).
+- `keypoints`: keypoints detected
 
-If you want to visualize the result on the image, there's a utily for you.
+If you want to visualize the result on the image,just set annotate=true
 
 ```python
-from focoos import annotate_image
-
-annotate_image(image, detections, task=model.model_info.task, classes=model.model_info.classes).save("predictions.png")
+from PIL import Image
+detections = model.infer(image,annotate=True)
+Image.fromarray(detections.image)
 ```
 
 ## 2. 🔥 PyTorch Inference
@@ -118,9 +119,9 @@ Now, again, you can now run the model by simply passing it an image and visualiz
 ```python
 from focoos import annotate_image
 
-detections = model(image)
+detections = model.infer(image,annotate=True)
 
-annotate_image(image, detections, task=model.model_info.task, classes=model.model_info.classes).save("predictions.png")
+Image.fromarray(detections.image)
 ```
 
 `detections` is a [FocoosDetections](/focoos/api/ports/#focoos.ports.FocoosDetections) object.
@@ -158,15 +159,16 @@ Let's visualize the output. As you will see, there are not differences from the 
 ```python
 from focoos import annotate_image
 
-detections = optimized_model(image)
-annotate_image(image, detections, task=model.model_info.task, classes=model.model_info.classes).save("prediction.png")
+detections = optimized_model(image, annotate = True)
+Image.fromarray(detections.image)
 ```
+
 `detections` is a [FocoosDetections](/focoos/api/ports/#focoos.ports.FocoosDetections) object.
 
 
 But, let's see its latency, that should be substantially lower than the pure pytorch model.
 ```python
-optimized_model.benchmark(iterations=10, size=512)
+optimized_model.benchmark(iterations=10)
 ```
 
 You can use different runtimes that may fit better your device, such as TensorRT. See the list of available Runtimes at [`RuntimeTypes`](/focoos/api/ports/#focoos.ports.RuntimeType). Please note that you need to install the relative packages for onnx and tensorRT for using them.

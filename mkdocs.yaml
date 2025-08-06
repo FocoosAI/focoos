@@ -40,14 +40,15 @@ nav:
       - Training: training.md
       - CLI: cli.md
   - HUB:
-      - Overview: hub/overview.md
+      - Overview: hub/index.md
       - HUB: hub/hub.md
       - Remote Inference: hub/remote_inference.md
   - Models:
-      - Overview: models/models.md
+      - Overview: models/index.md
       - fai-detr: models/fai_detr.md
       - fai-mf: models/fai_mf.md
       - bisenetformer: models/bisenetformer.md
+      - rtmo: models/rtmo.md
       - fai-cls: models/fai_cls.md
 
   - API Reference:

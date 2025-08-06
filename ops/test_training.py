@@ -5,18 +5,12 @@ from typing import List, Optional, Union
 
 from focoos.data.auto_dataset import AutoDataset
 from focoos.data.default_aug import get_default_by_task
-from focoos.hub.api_client import ApiClient
 from focoos.model_manager import ModelManager
 from focoos.ports import DATASETS_DIR, DatasetLayout, DatasetSplitType, RuntimeType, Task, TrainerArgs
+from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
 
 logger = get_logger("TestTraning")
-
-datasets = [
-    "chess-coco-detection.zip",
-    "fire-coco-instseg.zip",
-    "balloons-coco-sem.zip",
-]
 
 
 def list_files_with_extensions_recursively(
@@ -58,6 +52,9 @@ def get_dataset(task: Task):
     elif task == Task.INSTANCE_SEGMENTATION:
         ds_name = "fire-coco-instseg.zip"
         layout = DatasetLayout.ROBOFLOW_COCO
+    elif task == Task.KEYPOINT:
+        ds_name = "basket-court-keypoint.zip"
+        layout = DatasetLayout.ROBOFLOW_COCO
     else:
         raise ValueError(f"Error: task {task} not supported")
     url = f"https://public.focoos.ai/datasets/{ds_name}"
@@ -66,7 +63,7 @@ def get_dataset(task: Task):
     return ds_name, layout
 
 
-def train(model_name: str):
+def train(model_name: str, iter: int):
     model = ModelManager.get(model_name)
 
     # Convert string task to Task enum
@@ -100,7 +97,7 @@ def train(model_name: str):
         # output_dir=out_dir,
         amp_enabled=True,
         batch_size=8,
-        max_iters=50,
+        max_iters=iter,
         eval_period=50,
         learning_rate=1e-4,
         scheduler="MULTISTEP",
@@ -131,8 +128,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Train a pretrained model")
     parser.add_argument("--model", type=str, required=True, help="Name of the model to train")
+    parser.add_argument("--iter", type=int, default=50, help="Number of iterations")
 
     args = parser.parse_args()
     logger.info(f"🚀 Start training test: {args.model} =================================================")
     torch.cuda.empty_cache()
-    train(args.model)
+    train(args.model, args.iter)

@@ -1,8 +1,8 @@
 import os
 from typing import Optional
 
-from focoos.hub.api_client import ApiClient
 from focoos.ports import DATASETS_DIR, DatasetPreview, DatasetSpec
+from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
 
 logger = get_logger(__name__)

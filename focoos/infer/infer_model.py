@@ -33,6 +33,7 @@ from focoos.infer.runtimes.base import BaseRuntime
 from focoos.infer.runtimes.load_runtime import load_runtime
 from focoos.ports import (
     FocoosDetections,
+    InferLatency,
     LatencyMetrics,
     ModelExtension,
     ModelInfo,
@@ -42,7 +43,8 @@ from focoos.processor.processor_manager import ProcessorManager
 from focoos.utils.logger import get_logger
 from focoos.utils.system import get_cpu_name, get_device_name
 from focoos.utils.vision import (
-    image_preprocess,
+    annotate_frame,
+    image_loader,
 )
 
 logger = get_logger("InferModel")
@@ -107,7 +109,9 @@ class InferModel:
             from focoos.model_manager import ConfigManager
 
             model_config = ConfigManager.from_dict(self.model_info.model_family, self.model_info.config)
-            self.processor = ProcessorManager.get_processor(self.model_info.model_family, model_config)
+            self.processor = ProcessorManager.get_processor(
+                self.model_info.model_family, model_config, self.model_info.im_size
+            )
         except Exception as e:
             logger.error(f"Error creating model config: {e}")
             raise e
@@ -135,65 +139,74 @@ class InferModel:
         return ModelInfo.from_json(model_info_path)
 
     def __call__(
-        self, image: Union[bytes, str, Path, np.ndarray, Image.Image], threshold: Optional[float] = None
+        self, image: Union[bytes, str, Path, np.ndarray, Image.Image], threshold: float = 0.5, annotate: bool = False
     ) -> FocoosDetections:
-        return self.infer(image, threshold)
+        return self.infer(image, threshold, annotate)
 
     def infer(
         self,
         image: Union[bytes, str, Path, np.ndarray, Image.Image],
-        threshold: Optional[float] = None,
+        threshold: float = 0.5,
+        annotate: bool = False,
     ) -> FocoosDetections:
         """
-        Run inference on an input image and optionally annotate the results.
+        Perform inference on an input image and optionally return an annotated result.
+
+        This method processes the input image, runs it through the model, and returns the detections.
+        Optionally, it can also annotate the image with the detection results.
 
         Args:
-            image (Union[bytes, str, Path, np.ndarray, Image.Image]): The input image to infer on.
-                This can be a byte array, file path, or a PIL Image object, or a NumPy array representing the image.
-            threshold (float, optional): The confidence threshold for detections. Defaults to 0.5.
-                Detections with confidence scores below this threshold will be discarded.
+            image: The input image to run inference on. Accepts a file path, bytes, PIL Image, or numpy array.
+            threshold: Minimum confidence score for a detection to be included in the results. Default is 0.5.
+            annotate: If True, annotate the image with detection results and include it in the output.
 
         Returns:
-            FocoosDetections: The detections from the inference, represented as a custom object (`FocoosDetections`).
+            FocoosDetections: An object containing the detection results, optional annotated image, and latency metrics.
 
         Raises:
-            ValueError: If the model is not deployed locally (i.e., `self.runtime` is `None`).
+            AssertionError: If the model runtime is not initialized.
 
-        Example:
-            ```python
-            from focoos import Focoos, LocalModel
-
-            focoos = Focoos()
-            model = focoos.get_local_model(model_ref="<model_ref>")
-            detections = model.infer(image, threshold=0.5)
-            ```
+        Usage:
+            This method is intended for users who want to obtain detection results from a local model,
+            with optional annotation for visualization or further processing.
         """
         assert self.runtime is not None, "Model is not deployed (locally)"
 
         t0 = perf_counter()
-        im1, im0 = image_preprocess(image)
-        tensors, _ = self.processor.preprocess(inputs=im1, device="cuda", image_size=self.model_info.im_size)
-        logger.debug(f"Input image size: {im0.shape}")
+        im = image_loader(image)
         t1 = perf_counter()
+        tensors, _ = self.processor.preprocess(inputs=im, device="cuda")
+        # logger.debug(f"Input image size: {im.shape}")
+        t2 = perf_counter()
 
         raw_detections = self.runtime(tensors)
 
-        t2 = perf_counter()
-        detections = self.processor.export_postprocess(
-            raw_detections, im0, threshold=threshold, class_names=self.model_info.classes
-        )
         t3 = perf_counter()
-        latency = {
-            "inference": round(t2 - t1, 3),
-            "preprocess": round(t1 - t0, 3),
-            "postprocess": round(t3 - t2, 3),
-        }
-        res = detections[0]  #!TODO  check for batching
-        res.latency = latency
-
-        logger.debug(
-            f"Found {len(res)} detections. Inference time: {(t2 - t1) * 1000:.0f}ms, preprocess: {(t1 - t0) * 1000:.0f}ms, postprocess: {(t3 - t2) * 1000:.0f}ms"
+        detections = self.processor.export_postprocess(
+            raw_detections, im, threshold=threshold, class_names=self.model_info.classes
         )
+        t4 = perf_counter()
+        if annotate:
+            skeleton = self.model_info.config.get("skeleton", None)
+            detections[0].image = annotate_frame(
+                im,
+                detections[0],
+                task=self.model_info.task,
+                classes=self.model_info.classes,
+                keypoints_skeleton=skeleton,
+            )
+        t5 = perf_counter()
+
+        res = detections[0]  #!TODO  check for batching
+        res.latency = InferLatency(
+            imload=round(t1 - t0, 3),
+            preprocess=round(t2 - t1, 3),
+            inference=round(t3 - t2, 3),
+            postprocess=round(t4 - t3, 3),
+            annotate=round(t5 - t4, 3) if annotate else None,
+        )
+
+        res.infer_print()
         return res
 
     def benchmark(self, iterations: int = 50, size: Optional[Union[int, Tuple[int, int]]] = None) -> LatencyMetrics:

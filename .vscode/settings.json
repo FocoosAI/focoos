@@ -9,4 +9,20 @@
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff"
     },
+    "cursorpyright.analysis.autoImportCompletions": true,
+    "cursorpyright.analysis.typeCheckingMode": "basic",
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000,
+    "editor.formatOnSave": true,
+    "[jupyter-notebook]": {
+        "files.autoSave": "off",
+        "editor.formatOnSave": false
+    },
+    "jupyter.interactiveWindow.textEditor.executeSelection": true,
+    "notebook.output.textLineLimit": 30,
+    "jupyter.askForKernelRestart": false,
+    "jupyter.alwaysTrustNotebooks": true,
+    "files.exclude": {
+        "**/.ipynb_checkpoints": true
+    }
 }

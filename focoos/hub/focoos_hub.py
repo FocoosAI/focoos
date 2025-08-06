@@ -18,7 +18,6 @@ from dataclasses import asdict
 from typing import Optional
 
 from focoos.config import FOCOOS_CONFIG
-from focoos.hub.api_client import ApiClient
 from focoos.hub.remote_dataset import RemoteDataset
 from focoos.hub.remote_model import RemoteModel
 from focoos.ports import (
@@ -30,6 +29,7 @@ from focoos.ports import (
     RemoteModelInfo,
     User,
 )
+from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
 
 logger = get_logger("HUB")

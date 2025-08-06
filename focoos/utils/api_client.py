@@ -6,10 +6,11 @@ import requests
 from tqdm import tqdm
 
 from focoos.config import FOCOOS_CONFIG
+from focoos.ports import CACHE_DIR
 from focoos.utils.logger import get_logger
 from focoos.utils.system import get_focoos_version
 
-logger = get_logger("HUB")
+logger = get_logger("ApiClient")
 
 
 class ApiClient:
@@ -192,7 +193,13 @@ class ApiClient:
         self._check_api_key()
         return self.post(path, data={"path": file_path, "file_size_bytes": file_size})
 
-    def download_ext_file(self, uri: str, file_dir: str, file_name: Optional[str] = None, skip_if_exists: bool = False):
+    def download_ext_file(
+        self,
+        uri: str,
+        file_dir: str = CACHE_DIR,
+        file_name: Optional[str] = None,
+        skip_if_exists: bool = False,
+    ):
         """
         Download a file from a URI to a local directory.
 
@@ -206,6 +213,7 @@ class ApiClient:
         Raises:
             ValueError: If the download fails or filename cannot be determined
         """
+
         if os.path.exists(file_dir) and not os.path.isdir(file_dir):
             raise ValueError(f"Path is not a directory: {file_dir}")
         if not os.path.exists(file_dir):
@@ -213,15 +221,14 @@ class ApiClient:
             os.makedirs(file_dir)
         parsed_url = urlparse(uri)
         file_name = file_name or os.path.basename(parsed_url.path)
+        file_path = os.path.join(file_dir, file_name)
+        if skip_if_exists and os.path.exists(file_path):
+            # logger.debug(f"📥 File already exists: {file_path}")
+            return file_path
         res = self.external_get(uri, stream=True)
         if res.status_code != 200:
             logger.error(f"Failed to download file {file_name}: {res.status_code} {res.text}")
             raise ValueError(f"Failed to download file {file_name}: {res.status_code} {res.text}")
-
-        file_path = os.path.join(file_dir, file_name)
-        if skip_if_exists and os.path.exists(file_path):
-            logger.debug(f"📥 File already exists: {file_path}")
-            return file_path
         total_size = int(res.headers.get("content-length", 0))
         with (
             open(file_path, "wb") as f,
@@ -236,5 +243,5 @@ class ApiClient:
             for chunk in res.iter_content(chunk_size=8192):
                 f.write(chunk)
                 bar.update(len(chunk))
-        logger.debug(f"📥 File downloaded: {file_path} Size: {total_size / (1024**2):.2f} MB")
+        logger.info(f"📥 File downloaded: {file_path} Size: {total_size / (1024**2):.2f} MB")
         return file_path

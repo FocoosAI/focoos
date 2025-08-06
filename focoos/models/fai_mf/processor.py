@@ -26,8 +26,9 @@ class MaskFormerProcessor(Processor):
     def __init__(
         self,
         config: MaskFormerConfig,
+        image_size: Optional[int] = None,
     ):
-        super().__init__(config)
+        super().__init__(config, image_size)
         processing_functions = {
             "semantic": self.semantic_inference,
             "instance": self.instance_inference,
@@ -59,7 +60,6 @@ class MaskFormerProcessor(Processor):
         ],
         device: torch.device,
         dtype: torch.dtype = torch.float32,
-        image_size: Optional[int] = None,
     ) -> tuple[torch.Tensor, list[MaskFormerTargets]]:
         targets = []
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DatasetEntry):
@@ -91,7 +91,7 @@ class MaskFormerProcessor(Processor):
         else:
             if self.training:
                 raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
-            images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
+            images_torch = self.get_torch_batch(inputs, device=device, dtype=dtype)  # type: ignore
             # since we can process input of different sizes, we are not using image_size input
 
         return images_torch, targets
