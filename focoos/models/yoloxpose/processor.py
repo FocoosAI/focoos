@@ -85,11 +85,13 @@ class YOLOXPoseProcessor(Processor):
             if self.training:
                 raise ValueError("During training, inputs should be a list of DatasetEntry")
             # Type cast is safe here since we know inputs is not list[DatasetEntry]
-            images_torch = self.get_tensors(inputs).to(device, dtype=dtype, non_blocking=True)  # type: ignore
-            if image_size is not None:
-                images_torch = torch.nn.functional.interpolate(
-                    images_torch, size=(image_size, image_size), mode="bilinear", align_corners=False
-                )
+            target_size = (self.image_size, self.image_size) if self.image_size is not None else None
+            images_torch = self.get_torch_batch(
+                inputs,  # type: ignore
+                target_size=target_size,
+                device=device,
+                dtype=dtype,
+            )
         return images_torch, targets
 
     def postprocess(

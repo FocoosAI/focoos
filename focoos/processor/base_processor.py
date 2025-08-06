@@ -218,28 +218,37 @@ class Processor(ABC):
             raise ValueError(f"Unsupported input type: {type(inputs)}")
         return image_sizes
 
-    def get_tensors(
+    def get_torch_batch(
         self,
         inputs: Union[torch.Tensor, np.ndarray, Image.Image, list[Image.Image], list[np.ndarray], list[torch.Tensor]],
+        target_size: Optional[tuple[int, int]] = None,
+        device: Optional[torch.device] = None,
+        dtype: Optional[torch.dtype] = None,
     ) -> torch.Tensor:
-        """Convert various input formats to a batched PyTorch tensor.
+        """Convert various input formats to a batched PyTorch tensor with optional resizing.
 
         This utility method standardizes different input types (PIL Images, numpy arrays,
         PyTorch tensors) into a single batched tensor with consistent format (BCHW).
+        Optionally resizes all images to a target size for memory efficiency.
 
         Args:
             inputs: Input data containing one or more images in various formats.
+            target_size: Optional (height, width) to resize all images to. If provided,
+                        images are resized individually before batching for memory efficiency.
+            device: Optional target device for tensor placement.
+            dtype: Optional target data type for tensors.
 
         Returns:
             torch.Tensor: Batched tensor with shape (B, C, H, W) where:
                 - B is batch size
                 - C is number of channels (typically 3 for RGB)
-                - H is height
-                - W is width
+                - H is height (target_size[0] if resizing)
+                - W is width (target_size[1] if resizing)
 
         Note:
-            This method may break with different image sizes as it uses torch.cat
-            which requires consistent dimensions across inputs.
+            When target_size is None, this method may break with different image sizes
+            as it uses torch.cat which requires consistent dimensions across inputs.
+            When target_size is provided, all images are resized for consistent batching.
         """
         if isinstance(inputs, (Image.Image, np.ndarray, torch.Tensor)):
             inputs_list = [inputs]
@@ -249,11 +258,18 @@ class Processor(ABC):
         # Process each input based on its type
         processed_inputs = []
         for inp in inputs_list:
-            # todo check for tensor of 4 dimesions.
+            # Convert PIL to numpy array if needed
             if isinstance(inp, Image.Image):
                 inp = np.array(inp)
+
+            # Convert numpy to tensor efficiently
             if isinstance(inp, np.ndarray):
-                inp = torch.from_numpy(inp)
+                # Use torch.from_numpy for zero-copy when possible
+                if inp.flags.c_contiguous:
+                    inp = torch.from_numpy(inp)
+                else:
+                    # Make contiguous first, then convert
+                    inp = torch.from_numpy(np.ascontiguousarray(inp))
 
             # Ensure input has correct shape and type
             if inp.dim() == 3:  # Add batch dimension if missing
@@ -261,11 +277,18 @@ class Processor(ABC):
             if inp.shape[1] != 3 and inp.shape[-1] == 3:  # Convert HWC to CHW if needed
                 inp = inp.permute(0, 3, 1, 2)
 
+            # Apply device and dtype conversion before resizing if specified
+            if device is not None:
+                inp = inp.to(device, non_blocking=True)
+            if dtype is not None:
+                inp = inp.to(dtype)
+
+            # Resize individual images if target_size is specified (more memory efficient)
+            if target_size is not None:
+                inp = torch.nn.functional.interpolate(inp, size=target_size, mode="bilinear", align_corners=False)
+
             processed_inputs.append(inp)
 
-        # Stack all inputs into a single batch tensor
-        # use pixel mean to get dtype -> If fp16, pixel_mean is fp16, so inputs will be fp16
-        # TODO: this will break with different image sizes
-        images_torch = torch.cat(processed_inputs, dim=0)
+        images_torch = torch.stack([t.squeeze(0) for t in processed_inputs], dim=0)
 
         return images_torch

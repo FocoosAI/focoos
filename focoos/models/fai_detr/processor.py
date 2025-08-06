@@ -102,11 +102,15 @@ class DETRProcessor(Processor):
         else:
             if self.training:
                 raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
-            images_torch = self.get_tensors(inputs).to(device, non_blocking=True, dtype=dtype)  # type: ignore
-            if self.image_size is not None:
-                images_torch = torch.nn.functional.interpolate(
-                    images_torch, size=(self.image_size, self.image_size), mode="bilinear", align_corners=False
-                )
+
+            # Use optimized get_tensors with optional resizing for better memory efficiency
+            target_size = (self.image_size, self.image_size) if self.image_size is not None else None
+            images_torch = self.get_torch_batch(
+                inputs,  # type: ignore
+                target_size=target_size,
+                device=device,
+                dtype=dtype,
+            )
         return images_torch, targets
 
     def eval_postprocess(
