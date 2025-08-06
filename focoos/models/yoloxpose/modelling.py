@@ -654,14 +654,28 @@ class YoloNeck(nn.Module):
         self.cv_out = ConvNormLayerDarknet(ch_in=feat_dim, ch_out=out_dim, kernel_size=1, stride=1)
 
     def forward_features(self, features):
-        p3, p4, p5 = (features[f] for f in self.in_features)
+        # P5 1/32 -> SPPF (convMaxPool) -> UPScale ----------------------------------------------------->Concat -> C2F (3 conv) -> Output 1/32
+        #                                      |                                                        ^
+        #                                      |                                               Conv(stride=2) 1/16 -> 1/32
+        #                                      v                                                        |
+        # P4 1/16                         ->Concat -> C2F (3 conv) ->    UPScale -------->Concat -> C2F (3 conv)----->Output 1/16
+        #                                                                    |            |
+        #                                                                    |     Conv(stride=2) 1/8 -> 1/16
+        #                                                                    v            |
+        # P3 1/8                                                        ->Concat -> C2F (3 conv)--->Output 1/8 (256)
 
+        p3, p4, p5 = (features[f] for f in self.in_features)
+        # p3:1/8, p4:1/16, p5:1/32
         # output1
-        h9 = self.sppf(p5)
-        h11 = torch.cat([torch.nn.functional.interpolate(h9, p4.shape[-2:]), p4], 1)
-        h12 = self.c2f12(h11)
-        h14 = torch.cat([torch.nn.functional.interpolate(h12, p3.shape[-2:]), p3], 1)
-        o3 = self.c2f15(h14)
+        h9 = self.sppf(p5)  # conv + maxpool (K=5) + maxpool(k=9) + maxpool(k=13), concat, conv
+        h11 = torch.cat(
+            [torch.nn.functional.interpolate(h9, p4.shape[-2:]), p4], 1
+        )  # h9 upscale x2 (1/32 -> 1/16), concat con layer 1/16
+        h12 = self.c2f12(h11)  # c2f (3 conv) su (1/32 upscaled concat 1/16)
+        h14 = torch.cat(
+            [torch.nn.functional.interpolate(h12, p3.shape[-2:]), p3], 1
+        )  # h12 upscale x2 (1/16 -> 1/8), concat con layer 1/8
+        o3 = self.c2f15(h14)  # c2f (3 conv) su (1/16 upscaled concat 1/8)
 
         h16 = self.cv1(o3)
         h17 = torch.cat([h12, h16], 1)
