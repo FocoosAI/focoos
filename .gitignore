@@ -98,3 +98,6 @@ site/
 notebooks/test.ipynb
 gradio/output/
 tutorials/experiments
+experiments/
+notebooks/
+wandb/
