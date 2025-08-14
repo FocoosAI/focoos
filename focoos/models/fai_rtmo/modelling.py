@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import copy
 import types
-from collections import OrderedDict
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -12,19 +12,18 @@ from torchvision.ops import nms
 
 from focoos.models.focoos_model import BaseModelNN
 from focoos.models.rtmo.config import RTMOConfig
-from focoos.models.rtmo.decoder import HybridEncoder
-from focoos.models.rtmo.loss import (
+from focoos.models.rtmo.ports import RTMOModelOutput
+from focoos.models.rtmo.utils import ChannelWiseScale, ScaleNorm
+from focoos.models.yoloxpose.modelling import (
     KeypointCriterion,
     MlvlPointGenerator,
     PoseOKS,
     SimOTAAssigner,
+    YoloNeck,
 )
-from focoos.models.rtmo.ports import KeypointOutput, KeypointTargets, RTMOModelOutput
-from focoos.models.rtmo.transformer import SinePositionalEncoding
-from focoos.models.rtmo.utils import (
-    ChannelWiseScale,
+from focoos.models.yoloxpose.ports import KeypointOutput, KeypointTargets
+from focoos.models.yoloxpose.utils import (
     Scale,
-    ScaleNorm,
     bbox_xyxy2cs,
     bias_init_with_prob,
     decode_bbox,
@@ -34,10 +33,203 @@ from focoos.models.rtmo.utils import (
     reduce_mean,
 )
 from focoos.nn.backbone.build import load_backbone
-from focoos.nn.layers.misc import DropPath
+from focoos.nn.layers.base import get_activation_fn
+from focoos.nn.layers.conv import Conv2d, get_norm
 from focoos.utils.env import TORCH_VERSION
 
 EPS = 1e-8
+
+
+class SinePositionalEncoding(nn.Module):
+    """Sine Positional Encoding Module. This module implements sine positional
+    encoding, which is commonly used in transformer-based models to add
+    positional information to the input sequences. It uses sine and cosine
+    functions to create positional embeddings for each element in the input
+    sequence.
+
+    Args:
+        out_channels (int): The number of features in the input sequence.
+        temperature (int): A temperature parameter used to scale
+            the positional encodings. Defaults to 10000.
+        spatial_dim (int): The number of spatial dimension of input
+            feature. 1 represents sequence data and 2 represents grid data.
+            Defaults to 1.
+        learnable (bool): Whether to optimize the frequency base. Defaults
+            to False.
+        eval_size (int, tuple[int], optional): The fixed spatial size of
+            input features. Defaults to None.
+    """
+
+    def __init__(
+        self,
+        out_channels: int,
+        spatial_dim: int = 1,
+        temperature: float = 1e5,
+        learnable: bool = False,
+        eval_size: Optional[Union[int, Sequence[int]]] = None,
+    ) -> None:
+        super().__init__()
+
+        assert out_channels % 2 == 0
+        assert temperature > 0
+
+        self.spatial_dim = spatial_dim
+        self.out_channels = out_channels
+        self.temperature = temperature
+        self.eval_size = eval_size
+        self.learnable = learnable
+
+        pos_dim = out_channels // 2
+        dim_t = torch.arange(pos_dim, dtype=torch.float32) / pos_dim
+        dim_t = self.temperature ** (dim_t)
+
+        if not learnable:
+            self.register_buffer("dim_t", dim_t)
+        else:
+            self.dim_t = nn.Parameter(dim_t.detach())
+
+        # set parameters
+        if eval_size:
+            if hasattr(self, f"pos_enc_{eval_size}"):
+                delattr(self, f"pos_enc_{eval_size}")
+            pos_enc = self.generate_pos_encoding(size=eval_size)
+            self.register_buffer(f"pos_enc_{eval_size}", pos_enc)
+
+    def forward(self, *args, **kwargs):
+        return self.generate_pos_encoding(*args, **kwargs)
+
+    def generate_pos_encoding(
+        self, size: Optional[Union[int, Sequence[int]]] = None, position: Optional[torch.Tensor] = None
+    ):
+        """Generate positional encoding for input features.
+
+        Args:
+            size (int or tuple[int]): Size of the input features. Required
+                if position is None.
+            position (Tensor, optional): Position tensor. Required if size
+                is None.
+        """
+
+        assert (size is not None) ^ (position is not None)
+
+        if (not (self.learnable and self.training)) and size is not None and hasattr(self, f"pos_enc_{size}"):
+            return getattr(self, f"pos_enc_{size}")
+
+        if self.spatial_dim == 1:
+            if size is not None:
+                if isinstance(size, (tuple, list)):
+                    size = size[0]
+                position = torch.arange(size, dtype=torch.float32, device=self.dim_t.device)
+
+            dim_t = self.dim_t.reshape(*((1,) * position.ndim), -1) if position is not None else None
+            freq = position.unsqueeze(-1) / dim_t if dim_t is not None and position is not None else None
+            pos_enc = torch.cat((freq.cos(), freq.sin()), dim=-1) if freq is not None else None
+
+        elif self.spatial_dim == 2:
+            if size is not None:
+                if isinstance(size, (tuple, list)):
+                    h, w = size[:2]
+                elif isinstance(size, (int, float)):
+                    h, w = int(size), int(size)
+                else:
+                    raise ValueError(f"got invalid type {type(size)} for size")
+                grid_h, grid_w = torch.meshgrid(
+                    torch.arange(int(h), dtype=torch.float32, device=self.dim_t.device),
+                    torch.arange(int(w), dtype=torch.float32, device=self.dim_t.device),
+                )
+                grid_h, grid_w = grid_h.flatten(), grid_w.flatten()
+            else:
+                assert position.size(-1) == 2 if position is not None else None
+                grid_h, grid_w = torch.unbind(position, dim=-1)
+
+            dim_t = self.dim_t.reshape(*((1,) * grid_h.ndim), -1)
+            freq_h = grid_h.unsqueeze(-1) / dim_t
+            freq_w = grid_w.unsqueeze(-1) / dim_t
+            pos_enc_h = torch.cat((freq_h.cos(), freq_h.sin()), dim=-1)
+            pos_enc_w = torch.cat((freq_w.cos(), freq_w.sin()), dim=-1)
+            pos_enc = torch.stack((pos_enc_h, pos_enc_w), dim=-1)
+
+        return pos_enc
+
+    @staticmethod
+    def apply_additional_pos_enc(feature: torch.Tensor, pos_enc: torch.Tensor, spatial_dim: int = 1):
+        """Apply additional positional encoding to input features.
+
+        Args:
+            feature (Tensor): Input feature tensor.
+            pos_enc (Tensor): Positional encoding tensor.
+            spatial_dim (int): Spatial dimension of input features.
+        """
+
+        assert spatial_dim in (1, 2), f"the argument spatial_dim must be either 1 or 2, but got {spatial_dim}"
+        if spatial_dim == 2:
+            pos_enc = pos_enc.flatten(-2)
+        for _ in range(feature.ndim - pos_enc.ndim):
+            pos_enc = pos_enc.unsqueeze(0)
+        return feature + pos_enc
+
+    @staticmethod
+    def apply_rotary_pos_enc(feature: torch.Tensor, pos_enc: torch.Tensor, spatial_dim: int = 1):
+        """Apply rotary positional encoding to input features.
+
+        Args:
+            feature (Tensor): Input feature tensor.
+            pos_enc (Tensor): Positional encoding tensor.
+            spatial_dim (int): Spatial dimension of input features.
+        """
+
+        assert spatial_dim in (1, 2), f"the argument spatial_dim must be either 1 or 2, but got {spatial_dim}"
+
+        for _ in range(feature.ndim - pos_enc.ndim + spatial_dim - 1):
+            pos_enc = pos_enc.unsqueeze(0)
+
+        x1, x2 = torch.chunk(feature, 2, dim=-1)
+        if spatial_dim == 1:
+            cos, sin = torch.chunk(pos_enc, 2, dim=-1)
+            feature = torch.cat((x1 * cos - x2 * sin, x2 * cos + x1 * sin), dim=-1)
+        elif spatial_dim == 2:
+            pos_enc_h, pos_enc_w = torch.unbind(pos_enc, dim=-1)
+            cos_h, sin_h = torch.chunk(pos_enc_h, 2, dim=-1)
+            cos_w, sin_w = torch.chunk(pos_enc_w, 2, dim=-1)
+            feature = torch.cat((x1 * cos_h - x2 * sin_h, x1 * cos_w + x2 * sin_w), dim=-1)
+
+        return feature
+
+
+def drop_path(x: torch.Tensor, drop_prob: float = 0.0, training: bool = False) -> torch.Tensor:
+    """Drop paths (Stochastic Depth) per sample (when applied in main path of
+    residual blocks).
+
+    We follow the implementation
+    https://github.com/rwightman/pytorch-image-models/blob/a2727c1bf78ba0d7b5727f5f95e37fb7f8866b1f/timm/models/layers/drop.py  # noqa: E501
+    """
+    if drop_prob == 0.0 or not training:
+        return x
+    keep_prob = 1 - drop_prob
+    # handle tensors with different dimensions, not just 4D tensors.
+    shape = (x.shape[0],) + (1,) * (x.ndim - 1)
+    random_tensor = keep_prob + torch.rand(shape, dtype=x.dtype, device=x.device)
+    output = x.div(keep_prob) * random_tensor.floor()
+    return output
+
+
+class DropPath(nn.Module):
+    """Drop paths (Stochastic Depth) per sample  (when applied in main path of
+    residual blocks).
+
+    We follow the implementation
+    https://github.com/rwightman/pytorch-image-models/blob/a2727c1bf78ba0d7b5727f5f95e37fb7f8866b1f/timm/models/layers/drop.py  # noqa: E501
+
+    Args:
+        drop_prob (float): Probability of the path to be zeroed. Default: 0.1
+    """
+
+    def __init__(self, drop_prob: float = 0.1):
+        super().__init__()
+        self.drop_prob = drop_prob
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return drop_path(x, self.drop_prob, self.training)
 
 
 class GAUEncoder(nn.Module):
@@ -82,7 +274,7 @@ class GAUEncoder(nn.Module):
         drop_path=0.0,
         act_fn="SiLU",
         bias=False,
-        pos_enc: str = "add",
+        pos_enc: str = "none",
         spatial_dim: int = 1,
     ):
         super(GAUEncoder, self).__init__()
@@ -189,6 +381,10 @@ class GAUEncoder(nn.Module):
             return out
 
 
+def _get_clones(module, N):
+    return nn.ModuleList([copy.deepcopy(module) for i in range(N)])
+
+
 class RTMOHeadModule(nn.Module):
     """RTMO head module for one-stage human pose estimation.
 
@@ -226,18 +422,25 @@ class RTMOHeadModule(nn.Module):
         in_channels: int,
         num_classes: int = 1,
         widen_factor: float = 1.0,
-        cls_feat_channels: int = 256,
+        feat_channels: int = 256,
         stacked_convs: int = 2,
         num_groups: int = 8,
         channels_per_group: int = 36,
         pose_vec_channels: int = -1,
-        featmap_strides: Sequence[int] = [16, 32],
+        featmap_strides: Sequence[int] = [8, 16, 32],
+        conv_bias: Union[bool, str] = "auto",
+        norm: Optional[str] = None,
+        activation: Optional[Callable[[Tensor], Tensor]] = None,
     ):
         super().__init__()
         self.num_classes = num_classes
-        self.cls_feat_channels = int(cls_feat_channels * widen_factor)
+        self.cls_feat_channels = int(feat_channels * widen_factor)
         self.stacked_convs = stacked_convs
+        assert conv_bias == "auto" or isinstance(conv_bias, bool)
+        self.conv_bias = conv_bias
 
+        self.norm = norm
+        self.activation = activation
         self.featmap_strides = featmap_strides
 
         self.in_channels = int(in_channels * widen_factor)
@@ -257,20 +460,19 @@ class RTMOHeadModule(nn.Module):
     def _init_cls_branch(self):
         """Initialize classification branch for all level feature maps."""
         self.conv_cls = nn.ModuleList()
-
         for _ in self.featmap_strides:
             stacked_convs = []
             for i in range(self.stacked_convs):
                 chn = self.in_channels if i == 0 else self.cls_feat_channels
                 stacked_convs.append(
-                    nn.Sequential(
-                        OrderedDict(
-                            [
-                                ("conv", nn.Conv2d(chn, self.cls_feat_channels, 3, padding=1, bias=False)),
-                                ("bn", nn.BatchNorm2d(self.cls_feat_channels, eps=0.001, momentum=0.03)),
-                                ("activate", nn.SiLU()),
-                            ]
-                        )
+                    Conv2d(
+                        in_channels=chn,
+                        out_channels=self.cls_feat_channels,
+                        kernel_size=3,
+                        stride=1,
+                        padding=1,
+                        norm=get_norm(self.norm, self.cls_feat_channels),
+                        activation=self.activation,
                     )
                 )
             self.conv_cls.append(nn.Sequential(*stacked_convs))
@@ -291,17 +493,15 @@ class RTMOHeadModule(nn.Module):
                 chn = self.in_channels if i == 0 else out_chn
                 groups = 1 if i == 0 else self.num_groups
                 stacked_convs.append(
-                    nn.Sequential(
-                        OrderedDict(
-                            [
-                                (
-                                    "conv",
-                                    nn.Conv2d(chn, out_chn, 3, padding=1, groups=groups, bias=False),
-                                ),
-                                ("bn", nn.BatchNorm2d(out_chn, eps=0.001, momentum=0.03)),
-                                ("activate", nn.SiLU()),
-                            ]
-                        )
+                    Conv2d(
+                        in_channels=chn,
+                        out_channels=out_chn,
+                        kernel_size=3,
+                        stride=1,
+                        padding=1,
+                        groups=groups,
+                        norm=get_norm(self.norm, out_chn),
+                        activation=self.activation,
                     )
                 )
             self.conv_pose.append(nn.Sequential(*stacked_convs))
@@ -333,7 +533,7 @@ class RTMOHeadModule(nn.Module):
                 nn.init.constant_(m.bias, 0)
         bias_init = bias_init_with_prob(0.01)
         for conv_cls in self.out_cls:
-            conv_cls.bias.data.fill_(bias_init)  # type: ignore
+            conv_cls.bias.data.fill_(bias_init)
 
     def forward(self, x: Tuple[Tensor]) -> Tuple[List[Tensor], List[Tensor], List[Tensor], List[Tensor], List[Tensor]]:
         """Forward features from the upstream network.
@@ -399,9 +599,9 @@ class DCC(nn.Module):
         feat_channels: int,
         num_bins: Tuple[int, int],
         spe_channels: int = 128,
-        spe_temperature: int = 300,
+        spe_temperature: float = 300.0,
         gau_cfg: Optional[dict] = dict(
-            s=128, expansion_factor=2, dropout_rate=0.0, drop_path=0.0, act_fn="SiLU", pos_enc="add"
+            s=128, expansion_factor=2, dropout_rate=0.0, drop_path=0.0, act_fn="SiLU", use_rel_bias=False, pos_enc="add"
         ),
     ):
         super().__init__()
@@ -821,21 +1021,26 @@ class RTMOHead(nn.Module):
         num_classes: int = 1,
         in_channels: int = -1,
         widen_factor: float = 0.5,
-        featmap_strides: Sequence[int] = [16, 32],
-        featmap_strides_pointgenerator: List[int] = [16, 32],
+        stacked_convs: int = 2,
+        featmap_strides: Sequence[int] = [32, 16, 8],
+        featmap_strides_pointgenerator: List[Tuple[int, int]] = [(32, 32), (16, 16), (8, 8)],
         centralize_points_pointgenerator: bool = True,
         use_aux_loss: bool = False,
         use_dcc: bool = True,
         nms_topk: int = 100000,
         nms_thr: float = 1,
         score_thr: float = 0.01,
+        norm: Optional[str] = "BN",
+        activation: Optional[Callable[[Tensor], Tensor]] = F.relu,
+        # YOLOXHead related params
+        widen_factor_yolo: float = 1.0,
+        feat_channels: int = 256,
         # RTMOHead related params
-        cls_feat_channels: int = 256,
         pose_vec_channels: int = 256,
+        widen_factor_rtmo: float = 1.0,
         proxy_target_cc: bool = False,
         bbox_padding: float = 1.25,
         overlaps_power: float = 1.0,
-        stacked_convs: int = 2,  #
         ## DCC related params
         feat_channels_dcc: int = 128,
         num_bins: Tuple[int, int] = (192, 256),
@@ -852,7 +1057,7 @@ class RTMOHead(nn.Module):
         self.stacked_convs = stacked_convs
         self.featmap_strides = featmap_strides
         self.featmap_strides_pointgenerator = featmap_strides_pointgenerator
-        self.criterion = KeypointCriterion(num_keypoints=num_keypoints)
+        self.criterion = KeypointCriterion()
         self.use_aux_loss = use_aux_loss
         self.overlaps_power = overlaps_power
         self.bbox_padding = bbox_padding
@@ -867,12 +1072,15 @@ class RTMOHead(nn.Module):
             in_channels=in_channels,
             pose_vec_channels=pose_vec_channels,
             num_classes=num_classes,
-            widen_factor=widen_factor,
-            cls_feat_channels=cls_feat_channels,
+            widen_factor=widen_factor_rtmo,
+            feat_channels=feat_channels,
             stacked_convs=stacked_convs,
             num_groups=8,
             channels_per_group=36,
             featmap_strides=featmap_strides,
+            conv_bias="auto",
+            norm=norm,
+            activation=activation,
         )
 
         self.proxy_target_cc = proxy_target_cc
@@ -881,9 +1089,7 @@ class RTMOHead(nn.Module):
             strides=featmap_strides_pointgenerator, centralize_points=centralize_points_pointgenerator
         )
         self.assigner = SimOTAAssigner(
-            dynamic_k_indicator="oks",
-            oks_calculator=PoseOKS(num_keypoints=num_keypoints),
-            use_keypoints_for_center=True,
+            dynamic_k_indicator="oks", oks_calculator=PoseOKS(), use_keypoints_for_center=True
         )
         if use_dcc:
             self.dcc = DCC(
@@ -895,12 +1101,12 @@ class RTMOHead(nn.Module):
                 gau_cfg=gau_cfg,
             )
 
-    def forward(self, features: Tuple[Tensor], targets: Optional[list[KeypointTargets]] = None):
+    def forward(self, features, targets: Optional[list[KeypointTargets]] = None):
         assert isinstance(features, (tuple, list))
-
+        spatial_features, multi_scale_features = features
         if self.training and targets is not None:
-            return None, self.loss(feats=features, targets=targets)
-        outputs = self.predict(features)
+            return None, self.loss(feats=multi_scale_features, targets=targets)
+        outputs = self.predict(multi_scale_features)
         return outputs, None
 
     def losses(self, predictions, targets):
@@ -1361,8 +1567,7 @@ class RTMOHead(nn.Module):
                 - pose_vecs (List[Tensor]): Pose feature vectors for each level
         """
         assert isinstance(feats, (tuple, list)), "feats must be a tuple or list"
-        head_scores = self.head_module(feats)
-        cls_scores, bbox_preds, _, kpt_vis, pose_vecs = head_scores
+        cls_scores, bbox_preds, _, kpt_vis, pose_vecs = self.head_module(feats)
 
         featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
 
@@ -1492,34 +1697,33 @@ class RTMO(BaseModelNN):
         self.config = config
 
         self.backbone = load_backbone(self.config.backbone_config)
-
-        self.neck = HybridEncoder(
-            shape_specs=self.backbone.output_shape(),
-            transformer_embed_dims=self.config.transformer_embed_dims,
-            transformer_num_heads=self.config.transformer_num_heads,
-            transformer_feedforward_channels=self.config.transformer_feedforward_channels,
-            transformer_dropout=self.config.transformer_dropout,
-            transformer_encoder_layers=self.config.transformer_encoder_layers,
-            csp_layers=self.config.csp_layers,
-            hidden_dim=self.config.hidden_dim,
-            pe_temperature=self.config.pe_temperature,
-            widen_factor=self.config.widen_factor,
-            spe_learnable=self.config.spe_learnable,
-            output_indices=self.config.output_indices,
+        input_shape_specs = list(self.backbone.output_shape().values())
+        self.pixel_decoder = YoloNeck(
+            input_shape_specs=input_shape_specs,
+            feat_dim=self.config.neck_feat_dim,
+            out_dim=self.config.neck_out_dim,
+            c2f_depth=self.config.c2f_depth,
         )
 
         self.head = RTMOHead(
             num_keypoints=self.config.num_keypoints,
             num_classes=self.config.num_classes,
             in_channels=self.config.in_channels,
-            widen_factor=self.config.widen_factor,
-            cls_feat_channels=self.config.cls_feat_channels,
+            feat_channels=self.config.feat_channels,
             stacked_convs=self.config.stacked_convs,
             featmap_strides=self.config.featmap_strides,
-            featmap_strides_pointgenerator=self.config.featmap_strides_pointgenerator,
-            centralize_points_pointgenerator=self.config.centralize_points_pointgenerator,
+            norm=self.config.norm,
+            activation=get_activation_fn(self.config.activation),
             use_aux_loss=self.config.use_aux_loss,
             overlaps_power=self.config.overlaps_power,
+            score_thr=self.config.score_thr,
+            nms_topk=self.config.nms_topk,
+            nms_thr=self.config.nms_thr,
+            featmap_strides_pointgenerator=self.config.featmap_strides_pointgenerator,
+            centralize_points_pointgenerator=self.config.centralize_points_pointgenerator,
+            widen_factor=0.5,
+            widen_factor_yolo=0.5,
+            widen_factor_rtmo=0.5,
             # DCC related params
             feat_channels_dcc=self.config.feat_channels_dcc,
             num_bins=self.config.num_bins,
@@ -1529,12 +1733,7 @@ class RTMO(BaseModelNN):
                 s=self.config.gau_s,
                 expansion_factor=self.config.gau_expansion_factor,
                 dropout_rate=self.config.gau_dropout_rate,
-                pos_enc="add",
-                act_fn="SiLU",
             ),
-            score_thr=self.config.score_thr,
-            nms_topk=self.config.nms_topk,
-            nms_thr=self.config.nms_thr,
         )
 
         self.register_buffer("pixel_mean", torch.Tensor(self.config.pixel_mean).view(-1, 1, 1), False)
@@ -1550,9 +1749,9 @@ class RTMO(BaseModelNN):
 
     def forward(self, images: torch.Tensor, targets: list[KeypointTargets] = []) -> RTMOModelOutput:
         images = (images - self.pixel_mean) / self.pixel_std  # type: ignore
-        features = self.backbone(images)
-        features = self.neck(features)
 
+        features = self.backbone(images)
+        features = self.pixel_decoder(features)
         outputs, losses = self.head(features, targets)
         if self.training:
             assert targets is not None and len(targets) > 0, "targets should not be None or empty - training mode"

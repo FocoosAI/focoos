@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, Literal, Tuple
 
 from focoos.nn.backbone.base import BackboneConfig
-from focoos.nn.backbone.darknet import C2fDarkNetConfig
+from focoos.nn.backbone.csp import CSPConfig
 from focoos.ports import ModelConfig
 
 NormType = Literal["BN"]
@@ -10,29 +10,34 @@ NormType = Literal["BN"]
 
 @dataclass
 class RTMOConfig(ModelConfig):
-    backbone_config: BackboneConfig = field(default_factory=lambda: C2fDarkNetConfig(size="m", use_pretrained=True))
+    backbone_config: BackboneConfig = field(default_factory=lambda: CSPConfig(size="small", use_pretrained=True))
     num_classes: int
+
+    # encoder config
+    transformer_embed_dims: int = 256
+    transformer_num_heads: int = 8
+    transformer_feedforward_channels: int = 1024
+    transformer_dropout: float = 0.0
+    transformer_encoder_layers: int = 1
+    csp_layers: int = 1
+    hidden_dim: int = 256
+    pe_temperature: int = 10000
+    widen_factor: float = 0.5
+    spe_learnable: bool = False
+    output_indices: List[int] = field(default_factory=lambda: [1, 2])
 
     num_keypoints: int = 17
     in_channels: int = 256
     pose_vec_channels: int = 256
-    feat_channels: int = 256
+    cls_feat_channels: int = 256
     stacked_convs: int = 2
-    activation: str = "relu"
-    featmap_strides: List[int] = field(default_factory=lambda: [32, 16, 8])
-    featmap_strides_pointgenerator: List[Tuple[int, int]] = field(default_factory=lambda: [(32, 32), (16, 16), (8, 8)])
+    featmap_strides: List[int] = field(default_factory=lambda: [16, 8])
+    featmap_strides_pointgenerator: List[int] = field(default_factory=lambda: [16, 8])
     centralize_points_pointgenerator: bool = False
-    bbox_padding: float = 1.25
-    norm: NormType = "BN"
     use_aux_loss: bool = False
-    overlaps_power: float = 1.0
-    pixel_mean: List[float] = field(default_factory=lambda: [123.675, 116.28, 103.53])
-    pixel_std: List[float] = field(default_factory=lambda: [58.395, 57.12, 57.375])
-    # yolo_neck
-    neck_feat_dim: int = 256
-    neck_out_dim: int = 256
-    # TODO: In Anyma, depth (c2f_depth here) is a list [2, 4, 4, 2], but only the first element is used (see Anyma issue #160).
-    c2f_depth: int = 2
+    overlaps_power: float = 0.5
+    pixel_mean: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
+    pixel_std: List[float] = field(default_factory=lambda: [1.0, 1.0, 1.0])
     # DCC related params
     feat_channels_dcc: int = 128
     num_bins: Tuple[int, int] = (192, 256)

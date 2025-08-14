@@ -10,8 +10,24 @@
         "num_classes": 1,
         "backbone_config": {
             "use_pretrained": false,
-            "model_type": "csp",
-            "size": "small"
+            "backbone_url": null,
+            "model_type": "stdc",
+            "in_chans": 3,
+            "base": 64,
+            "layers": [
+                4,
+                5,
+                3
+            ],
+            "out_features": [
+                "res2",
+                "res3",
+                "res4",
+                "res5"
+            ],
+            "block_num": 4,
+            "block_type": "cat",
+            "use_conv_last": false
         },
         "num_keypoints": 17,
         "in_channels": 256,

@@ -10,35 +10,52 @@
         "num_classes": 1,
         "backbone_config": {
             "use_pretrained": false,
-            "model_type": "csp",
-            "size": "small"
+            "model_type": "c2f_darknet",
+            "size": "s"
         },
         "num_keypoints": 17,
         "in_channels": 256,
         "pose_vec_channels": 256,
-        "cls_feat_channels": 256,
+        "feat_channels": 256,
         "stacked_convs": 2,
+        "activation": "relu",
         "featmap_strides": [
+            32,
             16,
-            32
+            8
         ],
         "featmap_strides_pointgenerator": [
-            16,
-            32
+            [
+                32,
+                32
+            ],
+            [
+                16,
+                16
+            ],
+            [
+                8,
+                8
+            ]
         ],
         "centralize_points_pointgenerator": false,
+        "bbox_padding": 1.25,
+        "norm": "BN",
         "use_aux_loss": false,
-        "overlaps_power": 0.5,
+        "overlaps_power": 1.0,
         "pixel_mean": [
-            0.0,
-            0.0,
-            0.0
+            123.675,
+            116.28,
+            103.53
         ],
         "pixel_std": [
-            1.0,
-            1.0,
-            1.0
+            58.395,
+            57.12,
+            57.375
         ],
+        "neck_feat_dim": 256,
+        "neck_out_dim": 256,
+        "c2f_depth": 2,
         "feat_channels_dcc": 128,
         "num_bins": [
             192,
@@ -146,7 +163,7 @@
     "status": "TRAINING_COMPLETED",
     "description": "RTMO Small model (COCO)",
     "train_args": null,
-    "weights_uri": null,
+    "weights_uri": "https://public.focoos.ai/pretrained_models/rtmo-s-coco/model_final.pth",
     "val_dataset": "person_keypoints_val2017",
     "val_metrics": {
         "keypoints/AP": 60.220,

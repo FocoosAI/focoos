@@ -41,7 +41,7 @@ class RTMOProcessor(Processor):
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DatasetEntry):
             # Batch transfer images to device for better performance
             images = [x.image.to(device, non_blocking=True) for x in inputs]  # type: ignore
-            images = ImageList.from_tensors(tensors=images, pad_value=114, size_divisibility=32)
+            images = ImageList.from_tensors(tensors=images)
             images_torch = images.tensor
 
             if self.training:

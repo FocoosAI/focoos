@@ -108,6 +108,7 @@ CATALOG = [
         val_split=CatalogSplit(
             image_root="coco/val2017",
             json_file="coco/annotations/person_keypoints_val2017.json",
+            filter_empty=False,
         ),
     ),
     CatalogDataset(

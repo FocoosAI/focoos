@@ -254,6 +254,7 @@ class BackboneManager:
         "mit": "mit.MIT",
         "convnextv2": "convnextv2.ConvNeXtV2",
         "c2f_darknet": "darknet.C2fDarkNet",
+        "csp": "csp.CSPDarknet",
     }
 
     @classmethod
@@ -409,6 +410,7 @@ class ConfigBackboneManager:
         "mit": "mit.MITConfig",
         "convnextv2": "convnextv2.ConvNeXtV2Config",
         "c2f_darknet": "darknet.C2fDarkNetConfig",
+        "csp": "csp.CSPConfig",
     }
 
     @classmethod
