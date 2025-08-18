@@ -5,8 +5,7 @@ import torch
 from PIL import Image
 
 from focoos.models.rtmo.config import RTMOConfig
-from focoos.models.rtmo.ports import RTMOModelOutput
-from focoos.models.yoloxpose.ports import KeypointTargets
+from focoos.models.rtmo.ports import KeypointTargets, RTMOModelOutput
 from focoos.ports import DatasetEntry, DynamicAxes, FocoosDet, FocoosDetections
 from focoos.processor.base_processor import Processor
 from focoos.structures import Boxes, ImageList, Instances, Keypoints

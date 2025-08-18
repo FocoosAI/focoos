@@ -10,7 +10,7 @@
         "num_classes": 1,
         "backbone_config": {
             "use_pretrained": false,
-            "model_type": "csp",
+            "model_type": "csp_darknet",
             "size": "small"
         },
         "num_keypoints": 17,
