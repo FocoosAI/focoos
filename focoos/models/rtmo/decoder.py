@@ -8,7 +8,7 @@ from torch import Tensor
 
 from focoos.models.rtmo.transformer import DetrTransformerEncoder, SinePositionalEncoding
 from focoos.nn.backbone.base import ShapeSpec
-from focoos.nn.backbone.csp import ConvModule
+from focoos.nn.backbone.csp_darknet import ConvModule
 
 
 class ChannelMapper(nn.Module):

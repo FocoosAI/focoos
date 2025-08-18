@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, Literal, Tuple
 
 from focoos.nn.backbone.base import BackboneConfig
-from focoos.nn.backbone.csp import CSPConfig
+from focoos.nn.backbone.csp_darknet import CSPConfig
 from focoos.ports import ModelConfig
 
 NormType = Literal["BN"]

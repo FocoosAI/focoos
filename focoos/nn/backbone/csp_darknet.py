@@ -276,7 +276,7 @@ class SPPBottleneck(nn.Module):
 @dataclass
 class CSPConfig(BackboneConfig):
     size: Literal["small", "medium", "large"] = "small"
-    model_type: str = "csp"
+    model_type: str = "csp_darknet"
 
 
 CONFIGS = {
@@ -287,7 +287,7 @@ CONFIGS = {
             [128, 256, 3, True, False],
             [256, 512, 1, False, True],
         ],
-        "url": "csp_darknet_small.pth",
+        "url": "https://public.focoos.ai/pretrained_models/backbones/csp_darknet_small.pth",
     },
     "medium": {
         "arch_setting": [
@@ -296,7 +296,7 @@ CONFIGS = {
             [192, 384, 6, True, False],
             [384, 768, 2, False, True],
         ],
-        "url": "csp_darknet_medium.pth",
+        "url": "https://public.focoos.ai/pretrained_models/backbones/csp_darknet_medium.pth",
     },
     "large": {
         "arch_setting": [
@@ -305,7 +305,7 @@ CONFIGS = {
             [256, 512, 9, True, False],
             [512, 1024, 3, False, True],
         ],
-        "url": "",
+        "url": "https://public.focoos.ai/pretrained_models/backbones/csp_darknet_large.pth",
     },
 }
 
