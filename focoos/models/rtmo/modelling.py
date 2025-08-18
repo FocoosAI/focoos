@@ -1,4 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+#
+# Reimplemented from MMPose: https://github.com/open-mmlab/mmpose
+
 import types
 from collections import OrderedDict
 from typing import Dict, List, Optional, Sequence, Tuple

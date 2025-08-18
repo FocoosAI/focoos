@@ -146,7 +146,7 @@
     "status": "TRAINING_COMPLETED",
     "description": "RTMO Small model (COCO)",
     "train_args": null,
-    "weights_uri": null,
+    "weights_uri": "rtmo_small.pth",
     "val_dataset": "person_keypoints_val2017",
     "val_metrics": {
         "keypoints/AP": 60.220,

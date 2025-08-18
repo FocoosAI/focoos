@@ -263,8 +263,12 @@ class FocoosTrainer:
         eval_result = self._do_eval(model)
 
         if comm.get_rank() == 0:
-            key, value = TASK_METRICS[self.task.value].split("/")
-            raw_metrics = _add_prefix(eval_result[key], key)
+            try:
+                key, value = TASK_METRICS[self.task.value].split("/")
+                raw_metrics = _add_prefix(eval_result[key], key)
+            except KeyError:
+                logger.warning(f"Task metrics not found for {self.task.value}")
+                return eval_result
             if (
                 self.model_info.val_metrics is None
                 or raw_metrics[TASK_METRICS[self.task.value]]

@@ -237,8 +237,8 @@ classification_val_augs = DatasetAugmentations(
 
 keypoints_train_augs = DatasetAugmentations(
     resolution=640,
-    crop=False,
-    scale_ratio=0.0,
+    crop=True,
+    scale_ratio=0.5,
     color_augmentation=1.0,
     horizontal_flip=0.0,
     aspect_ratio=0.0,

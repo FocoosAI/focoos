@@ -1,3 +1,7 @@
+# Copyright (c) MMPose authors.
+#
+# Reimplemented from MMPose: https://github.com/open-mmlab/mmpose/blob/main/mmpose/models/backbones/csp_darknet.py.
+
 from dataclasses import dataclass
 from typing import Literal
 

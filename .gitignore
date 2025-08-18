@@ -98,3 +98,4 @@ gradio/output/
 tutorials/experiments
 experiments
 wandb/
+*.pth

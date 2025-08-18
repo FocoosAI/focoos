@@ -46,11 +46,11 @@ def parse_args():
     )
     parser.add_argument("--model_name", type=str, default="fai-mf-s-coco-ins", help="Model name")
     parser.add_argument("--resolution", type=int, default=1024, help="Input resolution")
-    parser.add_argument("--batch_size", type=int, default=16, help="Batch size for validation")
     parser.add_argument("--output_dir", type=str, default="./experiments", help="Output directory")
     parser.add_argument("--run_name", type=str, default=None, help="Run name (defaults to model name if None)")
-    parser.add_argument("--workers", type=int, default=16, help="Number of workers")
+    parser.add_argument("--workers", type=int, default=2, help="Number of workers")
     parser.add_argument("--advanced_aug", action="store_true", help="Use advanced augmentations")
+    parser.add_argument("--num_gpus", type=int, default=1, help="Number of GPUs")
     return parser.parse_args()
 
 
@@ -82,8 +82,8 @@ def main():
         run_name=run_name,
         output_dir=args.output_dir,
         amp_enabled=True,
-        batch_size=args.batch_size,
         workers=args.workers,
+        num_gpus=args.num_gpus,
     )
 
     # Start validation
