@@ -1505,6 +1505,7 @@ class RTMO(BaseModelNN):
             transformer_encoder_layers=self.config.transformer_encoder_layers,
             csp_layers=self.config.csp_layers,
             hidden_dim=self.config.hidden_dim,
+            output_dim=self.config.output_dim,
             pe_temperature=self.config.pe_temperature,
             widen_factor=self.config.widen_factor,
             spe_learnable=self.config.spe_learnable,
@@ -1521,7 +1522,7 @@ class RTMO(BaseModelNN):
             featmap_strides=self.config.featmap_strides,
             featmap_strides_pointgenerator=self.config.featmap_strides_pointgenerator,
             centralize_points_pointgenerator=self.config.centralize_points_pointgenerator,
-            use_aux_loss=self.config.use_aux_loss,
+            pose_vec_channels=self.config.pose_vec_channels,
             overlaps_power=self.config.overlaps_power,
             # DCC related params
             feat_channels_dcc=self.config.feat_channels_dcc,

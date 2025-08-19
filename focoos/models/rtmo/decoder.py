@@ -243,6 +243,7 @@ class HybridEncoder(nn.Module):
         transformer_encoder_layers: int = 1,
         csp_layers: int = 1,
         hidden_dim: int = 256,
+        output_dim: int = 256,
         use_encoder_idx: List[int] = [2],
         pe_temperature: int = 10000,
         widen_factor: float = 1.0,
@@ -303,7 +304,7 @@ class HybridEncoder(nn.Module):
         self.downsample_convs = nn.ModuleList(downsample_convs)
         self.pan_blocks = nn.ModuleList(pan_blocks)
 
-        self.projector = ChannelMapper([hidden_dim, hidden_dim], hidden_dim, kernel_size=1, num_outs=2)
+        self.projector = ChannelMapper([hidden_dim, hidden_dim], output_dim, kernel_size=1, num_outs=2)
 
     def forward(self, inputs: dict[str, Tensor]) -> Tuple[Tensor]:
         """Forward function."""

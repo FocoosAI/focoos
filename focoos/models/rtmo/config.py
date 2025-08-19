@@ -21,6 +21,7 @@ class RTMOConfig(ModelConfig):
     transformer_encoder_layers: int = 1
     csp_layers: int = 1
     hidden_dim: int = 256
+    output_dim: int = 256
     pe_temperature: int = 10000
     widen_factor: float = 0.5
     spe_learnable: bool = False
@@ -34,7 +35,7 @@ class RTMOConfig(ModelConfig):
     featmap_strides: List[int] = field(default_factory=lambda: [16, 8])
     featmap_strides_pointgenerator: List[int] = field(default_factory=lambda: [16, 8])
     centralize_points_pointgenerator: bool = False
-    use_aux_loss: bool = False
+
     overlaps_power: float = 0.5
     pixel_mean: List[float] = field(default_factory=lambda: [0.0, 0.0, 0.0])
     pixel_std: List[float] = field(default_factory=lambda: [1.0, 1.0, 1.0])
@@ -48,7 +49,7 @@ class RTMOConfig(ModelConfig):
 
     # processing config
     nms_topk: int = 1000
-    nms_thr: float = 0.7
-    score_thr: float = 0.01
+    nms_thr: float = 0.65
+    score_thr: float = 0.1
     skeleton: list[tuple[int, int]] = field(default_factory=lambda: [])
     keypoints: list[str] = field(default_factory=lambda: [])

@@ -1,5 +1,5 @@
 {
-    "name": "rtmo-s-coco",
+    "name": "rtmo-l-coco",
     "model_family": "rtmo",
     "classes": [
         "person"
@@ -12,18 +12,18 @@
             "use_pretrained": false,
             "backbone_url": null,
             "model_type": "csp_darknet",
-            "size": "small"
+            "size": "large"
         },
         "transformer_embed_dims": 256,
         "transformer_num_heads": 8,
         "transformer_feedforward_channels": 1024,
         "transformer_dropout": 0.0,
         "transformer_encoder_layers": 1,
-        "csp_layers": 1,
+        "csp_layers": 3,
         "hidden_dim": 256,
-        "output_dim": 256,
+        "output_dim": 512,
         "pe_temperature": 10000,
-        "widen_factor": 0.5,
+        "widen_factor": 1.0,
         "spe_learnable": false,
         "output_indices": [
             1,
@@ -31,7 +31,7 @@
         ],
         "num_keypoints": 17,
         "in_channels": 256,
-        "pose_vec_channels": 256,
+        "pose_vec_channels": 512,
         "cls_feat_channels": 256,
         "stacked_convs": 2,
         "featmap_strides": [
@@ -64,8 +64,8 @@
         "gau_expansion_factor": 2,
         "gau_dropout_rate": 0.0,
         "nms_topk": 1000,
-        "nms_thr": 0.65,
-        "score_thr": 0.1,
+        "nms_thr": 0.7,
+        "score_thr": 0.01,
         "skeleton": [
             [
                 16,
@@ -157,19 +157,19 @@
         ]
     },
     "ref": null,
-    "focoos_model": "rtmo-s-coco",
+    "focoos_model": "rtmo-l-coco",
     "status": "TRAINING_COMPLETED",
-    "description": "RTMO Small model (COCO)",
+    "description": "RTMO Large model (COCO)",
     "train_args": null,
-    "weights_uri": "https://public.focoos.ai/pretrained_models/rtmo-s-coco/model_final.pth",
+    "weights_uri": "https://public.focoos.ai/pretrained_models/rtmo-l-coco/model_final.pth",
     "val_dataset": "coco_2017_person_keypoints",
     "val_metrics": {
-        "keypoints/AP": 67.88696523318507,
-        "keypoints/AP50": 87.69834474935652,
-        "keypoints/AP75": 74.7439595995692,
-        "keypoints/APs": 64.06397292912844,
-        "keypoints/APm": 74.11331374523232,
-        "keypoints/APl": 71.83879093198993
+        "keypoints/AP": 72.1620679088726,
+        "keypoints/AP50": 89.84567538658665,
+        "keypoints/AP75": 78.97533225712652,
+        "keypoints/APs": 67.76164270482616,
+        "keypoints/APm": 79.1032749116188,
+        "keypoints/APl": 76.69080604534005
     },
     "focoos_version": "0.18.0",
     "latency": [],
