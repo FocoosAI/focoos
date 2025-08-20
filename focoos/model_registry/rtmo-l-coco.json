@@ -64,7 +64,7 @@
         "gau_expansion_factor": 2,
         "gau_dropout_rate": 0.0,
         "nms_topk": 1000,
-        "nms_thr": 0.7,
+        "nms_thr": 0.65,
         "score_thr": 0.01,
         "skeleton": [
             [

@@ -195,8 +195,15 @@ class GAUEncoder(nn.Module):
 class RTMOHeadModule(nn.Module):
     """RTMO head module for one-stage human pose estimation.
 
-    This module predicts classification scores, bounding boxes, keypoint
-    offsets and visibilities from multi-level feature maps.
+    This module implements the core prediction heads for RTMO, performing
+    joint object detection and pose estimation from multi-level feature maps.
+    It consists of two main branches that share the same input features:
+
+    1. Classification Branch: Predicts object confidence scores
+    2. Pose Branch: Predicts bounding boxes, keypoint offsets, and visibility
+
+    The module uses a shared feature extraction approach where input features
+    are split into two halves, with each half processed by a dedicated branch.
 
     Args:
         num_keypoints (int): Number of keypoints defined for one instance.
@@ -209,18 +216,14 @@ class RTMOHeadModule(nn.Module):
             and objectness prediction branch. Defaults to 256.
         stacked_convs (int): Number of stacked convolution layers in each branch.
             Defaults to 2.
-        num_groups (int): Group number of group convolution layers in keypoint
-            regression branch. Defaults to 8.
-        channels_per_group (int): Number of channels for each group of group
-            convolution layers in keypoint regression branch. Defaults to 36.
-        featmap_strides (Sequence[int]): Downsample factor of each feature
-            map. Defaults to [8, 16, 32].
-        conv_bias (bool or str): If specified as `auto`, it will be decided
-            by the norm_cfg. Bias of conv will be set as True if `norm_cfg`
-            is None, otherwise False. Defaults to "auto".
-        norm (str, optional): Type of normalization layer. Defaults to None.
-        activation (Callable[[Tensor], Tensor], optional): Activation function.
-            Defaults to None.
+        num_groups (int): Number of groups for group convolutions in pose branch.
+            Defaults to 8.
+        channels_per_group (int): Number of channels per group in pose branch.
+            Defaults to 36.
+        pose_vec_channels (int): Number of output channels for pose vectors.
+            If -1, uses the full pose branch output. Defaults to -1.
+        featmap_strides (Sequence[int]): Strides of input feature maps.
+            Defaults to [16, 32].
     """
 
     def __init__(
@@ -325,7 +328,6 @@ class RTMOHeadModule(nn.Module):
 
     def init_weights(self):
         """Initialize weights of the head."""
-        # Initialize weights for all layers
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.normal_(m.weight, mean=0, std=0.01)
@@ -366,8 +368,7 @@ class RTMOHeadModule(nn.Module):
             cls_scores.append(self.out_cls[i](cls_feat))
             bbox_preds.append(self.out_bbox[i](reg_feat))
             if self.training:
-                # `kpt_offsets` generates the proxy poses for positive
-                # sample selection during training
+                # `kpt_offsets` generates the proxy poses for positive sample selection during training
                 kpt_offsets.append(self.out_kpt_reg[i](reg_feat))
             kpt_vis.append(self.out_kpt_vis[i](reg_feat))
 
@@ -380,19 +381,33 @@ class RTMOHeadModule(nn.Module):
 
 
 class DCC(nn.Module):
-    """Dynamic Coordinate Classifier for One-stage Pose Estimation.
+    """Dynamic Coordinate Classifier (DCC) for precise keypoint localization.
+
+    DCC is a novel approach that treats keypoint coordinate prediction as a
+    classification problem rather than regression. Instead of predicting
+    continuous coordinate offsets, DCC predicts discrete bins for x and y
+    coordinates, enabling more precise localization through:
+
+    1. Dynamic Bin Allocation: Bins are dynamically adjusted based on
+       bounding box scale and center
+    2. Sinusoidal Positional Encoding: Provides rich spatial information
+       to the coordinate bins
+    3. Gated Attention Unit (GAU): Enhances keypoint feature interactions
+    4. Learnable Sigma: Adaptive uncertainty estimation for each keypoint
 
     Args:
-        in_channels (int): Number of input feature map channels.
-        num_keypoints (int): Number of keypoints for pose estimation.
-        feat_channels (int): Number of feature channels.
-        num_bins (Tuple[int, int]): Tuple representing the number of bins in
-            x and y directions.
-        spe_channels (int): Number of channels for Sine Positional Encoding.
+        in_channels (int): Number of input feature channels from pose vectors.
+        num_keypoints (int): Number of keypoints to predict per person.
+        feat_channels (int): Number of feature channels for keypoint processing.
+        num_bins (Tuple[int, int]): Number of bins for x and y coordinates.
+            Defaults to (192, 256).
+        spe_channels (int): Number of channels for sinusoidal positional encoding.
             Defaults to 128.
-        spe_temperature (float): Temperature for Sine Positional Encoding.
-            Defaults to 300.0.
+        spe_temperature (float): Temperature parameter for positional encoding.
+            Defaults to 300.
         gau_cfg (dict, optional): Configuration for Gated Attention Unit.
+            Defaults to dict(s=128, expansion_factor=2, dropout_rate=0.0,
+            drop_path=0.0, act_fn="SiLU", pos_enc="add").
     """
 
     def __init__(
@@ -741,8 +756,8 @@ class DCC(nn.Module):
         calculating 1-D heatmaps, and decoding these heatmaps to produce final
         pose predictions.
         """
-        x_bins_ = self.x_bins.view(1, 1, -1)
-        y_bins_ = self.y_bins.view(1, 1, -1)
+        x_bins_ = self.x_bins.view(1, 1, -1)  # type: ignore
+        y_bins_ = self.y_bins.view(1, 1, -1)  # type: ignore
         dim_t = self.spe.dim_t.view(1, 1, 1, -1)
 
         @torch.no_grad()
@@ -771,8 +786,8 @@ class DCC(nn.Module):
             spe_x = torch.cat((freq_x.cos(), freq_x.sin()), dim=-1)
             spe_y = torch.cat((freq_y.cos(), freq_y.sin()), dim=-1)
 
-            x_bins_enc = self.x_fc(spe_x).transpose(-1, -2).contiguous()
-            y_bins_enc = self.y_fc(spe_y).transpose(-1, -2).contiguous()
+            x_bins_enc = self.x_fc(spe_x.float()).transpose(-1, -2).contiguous()
+            y_bins_enc = self.y_fc(spe_y.float()).transpose(-1, -2).contiguous()
 
             # step 3: calculate 1-D heatmaps
             x_hms = torch.matmul(kpt_feats, x_bins_enc)
@@ -780,8 +795,10 @@ class DCC(nn.Module):
             x_hms, y_hms = self._apply_softmax(x_hms, y_hms)
 
             # step 4: decode 1-D heatmaps through integral
-            x = (x_hms * x_bins.unsqueeze(-2)).sum(dim=-1) + grids[..., 0:1]
-            y = (y_hms * y_bins.unsqueeze(-2)).sum(dim=-1) + grids[..., 1:2]
+            x1 = (x_hms * x_bins.unsqueeze(-2)).sum(dim=-1)
+            y1 = (y_hms * y_bins.unsqueeze(-2)).sum(dim=-1)
+            x = x1 + grids[..., 0:1]
+            y = y1 + grids[..., 1:2]
 
             keypoints = torch.stack((x, y), dim=-1)
 
@@ -793,29 +810,57 @@ class DCC(nn.Module):
 
 
 class RTMOHead(nn.Module):
-    """One-stage coordinate classification head introduced in RTMO (2023). This
-    head incorporates dynamic coordinate classification and YOLO structure for
-    precise keypoint localization.
+    """One-stage coordinate classification head for RTMO pose estimation.
+
+    This head module performs joint object detection and pose estimation in a
+    single forward pass. It combines traditional YOLO-style detection with
+    novel dynamic coordinate classification (DCC) for precise keypoint
+    localization. The head consists of multiple branches:
+
+    1. Classification Branch: Predicts object confidence scores
+    2. Bounding Box Branch: Predicts bounding box coordinates
+    3. Keypoint Regression Branch: Predicts keypoint offsets and visibility
+    4. Dynamic Coordinate Classifier (DCC): Predicts precise keypoint
+       coordinates using discrete bin classification
 
     Args:
-        num_keypoints (int): Number of keypoints to detect.
-        head_module_cfg (ConfigType): Configuration for the head module.
-        featmap_strides (Sequence[int]): Strides of feature maps.
+        num_keypoints (int): Number of keypoints to detect per person.
+        num_classes (int): Number of object classes (typically 1 for person).
+            Defaults to 1.
+        in_channels (int): Number of input feature channels. Defaults to -1.
+        widen_factor (float): Width multiplier for network channels.
+            Defaults to 0.5.
+        featmap_strides (Sequence[int]): Strides of feature maps from backbone.
             Defaults to [16, 32].
-        num_classes (int): Number of object classes, defaults to 1.
-        use_aux_loss (bool): Indicates whether to use auxiliary loss,
-            defaults to False.
-        proxy_target_cc (bool): Indicates whether to use keypoints predicted
-            by coordinate classification as the targets for proxy regression
-            branch. Defaults to False.
-        assigner (ConfigType): Configuration for positive sample assigning
-            module.
-        prior_generator (ConfigType): Configuration for prior generation.
-        bbox_padding (float): Padding for bounding boxes, defaults to 1.25.
-        overlaps_power (float): Power factor adopted by overlaps before they
-            are assigned as targets in classification loss. Defaults to 1.0.
-        dcc_cfg (Optional[ConfigType]): Configuration for dynamic coordinate
-            classification module.
+        featmap_strides_pointgenerator (List[int]): Strides for point generator.
+            Defaults to [16, 32].
+        centralize_points_pointgenerator (bool): Whether to centralize points
+            in point generator. Defaults to True.
+        nms_topk (int): Maximum number of detections before NMS.
+            Defaults to 100000.
+        nms_thr (float): NMS IoU threshold. Defaults to 1.
+        score_thr (float): Confidence score threshold for filtering.
+            Defaults to 0.01.
+        cls_feat_channels (int): Number of channels in classification branch.
+            Defaults to 256.
+        pose_vec_channels (int): Number of channels for pose feature vectors.
+            Defaults to 256.
+        proxy_target_cc (bool): Whether to use coordinate classification
+            predictions as regression targets. Defaults to False.
+        bbox_padding (float): Padding factor for bounding boxes.
+            Defaults to 1.25.
+        overlaps_power (float): Power factor for overlap scores in loss.
+            Defaults to 1.0.
+        stacked_convs (int): Number of stacked convolutions in each branch.
+            Defaults to 2.
+        feat_channels_dcc (int): Number of feature channels in DCC module.
+            Defaults to 128.
+        num_bins (Tuple[int, int]): Number of bins for x and y coordinates
+            in DCC. Defaults to (192, 256).
+        spe_channels (int): Number of channels for sinusoidal positional
+            encoding in DCC. Defaults to 128.
+        gau_cfg (dict): Configuration for Gated Attention Unit in DCC.
+            Defaults to dict(s=128, expansion_factor=2, dropout_rate=0.0).
     """
 
     def __init__(
@@ -827,8 +872,6 @@ class RTMOHead(nn.Module):
         featmap_strides: Sequence[int] = [16, 32],
         featmap_strides_pointgenerator: List[int] = [16, 32],
         centralize_points_pointgenerator: bool = True,
-        use_aux_loss: bool = False,
-        use_dcc: bool = True,
         nms_topk: int = 100000,
         nms_thr: float = 1,
         score_thr: float = 0.01,
@@ -856,7 +899,6 @@ class RTMOHead(nn.Module):
         self.featmap_strides = featmap_strides
         self.featmap_strides_pointgenerator = featmap_strides_pointgenerator
         self.criterion = KeypointCriterion(num_keypoints=num_keypoints)
-        self.use_aux_loss = use_aux_loss
         self.overlaps_power = overlaps_power
         self.bbox_padding = bbox_padding
         self.nms_topk = nms_topk
@@ -886,17 +928,16 @@ class RTMOHead(nn.Module):
         self.assigner = SimOTAAssigner(
             dynamic_k_indicator="oks",
             oks_calculator=PoseOKS(num_keypoints=num_keypoints),
-            use_keypoints_for_center=True,
+            use_keypoints_for_center=True if widen_factor == 0.5 else False,
         )
-        if use_dcc:
-            self.dcc = DCC(
-                num_keypoints=num_keypoints,
-                in_channels=in_channels_dcc,
-                feat_channels=feat_channels_dcc,
-                num_bins=num_bins,
-                spe_channels=spe_channels,
-                gau_cfg=gau_cfg,
-            )
+        self.dcc = DCC(
+            num_keypoints=num_keypoints,
+            in_channels=in_channels_dcc,
+            feat_channels=feat_channels_dcc,
+            num_bins=num_bins,
+            spe_channels=spe_channels,
+            gau_cfg=gau_cfg,
+        )
 
     def forward(self, features: Tuple[Tensor], targets: Optional[list[KeypointTargets]] = None):
         assert isinstance(features, (tuple, list))
@@ -936,7 +977,7 @@ class RTMOHead(nn.Module):
         ) = targets
 
         num_pos = torch.tensor(sum(num_fg_imgs), dtype=torch.float, device=flatten_cls_scores.device)
-        num_total_samples = max(reduce_mean(num_pos), 1.0)
+        num_total_samples = max(reduce_mean(num_pos), 1.0)  # type: ignore
 
         # 3. calculate loss
         extra_info = dict(num_samples=num_total_samples)
@@ -948,13 +989,6 @@ class RTMOHead(nn.Module):
             bbox_preds = flatten_bbox_decoded.view(-1, 4)[pos_masks]
             losses["loss_bbox"] = self.criterion.get_loss("boxes", bbox_preds, bbox_targets) / num_total_samples
 
-            if self.use_aux_loss:
-                if hasattr(self, "loss_bbox_aux"):
-                    bbox_preds_raw = flatten_bbox_preds.view(-1, 4)[pos_masks]
-                    losses["loss_bbox_aux"] = (
-                        self.criterion.get_loss("bbox_aux", bbox_preds_raw, bbox_aux_targets) / num_total_samples
-                    )
-
             # 3.2 keypoint visibility loss
             kpt_vis_preds = flatten_kpt_vis.view(-1, self.num_keypoints)[pos_masks]
             losses["loss_vis"] = self.criterion.get_loss(
@@ -964,9 +998,7 @@ class RTMOHead(nn.Module):
             # 3.3 keypoint loss
             kpt_reg_preds = flatten_kpt_decoded.view(-1, self.num_keypoints, 2)[pos_masks]
 
-            if (
-                hasattr(self.criterion, "loss_mle") and self.criterion.loss_mle.loss_weight > 0
-            ):  # TODO: remove when criterion implemented
+            if hasattr(self.criterion, "loss_mle") and self.criterion.loss_mle.loss_weight > 0:
                 pose_vecs = flatten_pose_vecs.view(-1, flatten_pose_vecs.size(-1))[pos_masks]
                 bbox_cs = torch.cat(bbox_xyxy2cs(bbox_preds, self.bbox_padding), dim=1)
                 # 'cc' refers to 'cordinate classification'
@@ -974,11 +1006,10 @@ class RTMOHead(nn.Module):
                 target_hms = self.dcc.generate_target_heatmap(kpt_targets, bbox_cs, sigmas, pos_areas)
                 losses["loss_mle"] = self.criterion.get_loss(
                     "mle", pred_hms, target_hms, target_weight=vis_targets
-                ).mean()  # mean() added to have single returned value
+                ).mean()
 
             if self.proxy_target_cc:
-                # form the regression target using the coordinate
-                # classification predictions
+                # form the regression target using the coordinate classification predictions
                 with torch.no_grad():
                     diff_cc = torch.norm(kpt_cc_preds - kpt_targets, dim=-1)
                     diff_reg = torch.norm(kpt_reg_preds - kpt_targets, dim=-1)
@@ -999,7 +1030,7 @@ class RTMOHead(nn.Module):
             # update the target for classification loss
             # the target for the positive grids are set to the oks calculated
             # using predictions and assigned ground truth instances
-            extra_info["overlaps"] = cls_targets.mean(dim=None)
+            extra_info["overlaps"] = cls_targets.mean(dim=None)  # type: ignore
             cls_targets = cls_targets.pow(self.overlaps_power).detach()
             obj_targets[pos_masks] = cls_targets.to(obj_targets)
 
@@ -1008,7 +1039,6 @@ class RTMOHead(nn.Module):
             self.criterion.get_loss("classification_varifocal", cls_preds_all, obj_targets, target_weight=obj_weights)
             / num_total_samples
         )
-        # losses.update(extra_info)
 
         return losses
 
@@ -1151,17 +1181,7 @@ class RTMOHead(nn.Module):
         ) = targets
 
         # post-processing for targets
-        if self.use_aux_loss:
-            bbox_cxcy = (bbox_targets[:, :2] + bbox_targets[:, 2:]) / 2.0
-            bbox_wh = bbox_targets[:, 2:] - bbox_targets[:, :2]
-            bbox_aux_targets = torch.cat(
-                [(bbox_cxcy - pos_priors[:, :2]) / pos_priors[:, 2:], torch.log(bbox_wh / pos_priors[:, 2:] + 1e-8)],
-                dim=-1,
-            )
-
-            kpt_aux_targets = (kpt_targets - pos_priors[:, None, :2]) / pos_priors[:, None, 2:]
-        else:
-            bbox_aux_targets, kpt_aux_targets = None, None
+        bbox_aux_targets, kpt_aux_targets = None, None
 
         return (
             foreground_masks,
@@ -1229,9 +1249,7 @@ class RTMOHead(nn.Module):
                     samples.
                 - num_pos_per_img (int): Number of positive samples.
         """
-        # TODO: change the shape of objectness to [num_priors]
         num_priors = priors.size(0)
-        # TODO: avoid using mmpose data structures
         gt_instances = KeypointTargets(
             boxes=data_sample.boxes,
             scores=None,
@@ -1242,7 +1260,6 @@ class RTMOHead(nn.Module):
             areas=data_sample.areas,
             keypoints_visible_weights=data_sample.get("keypoints_visible_weights", None),
         )
-        gt_fields = data_sample.get("gt_fields", dict())
         num_gts = len(gt_instances)
 
         # No target
@@ -1314,20 +1331,7 @@ class RTMOHead(nn.Module):
         # obj target
         obj_target = torch.zeros_like(objectness)
         obj_target[pos_inds] = 1
-        # TODO: check if this is needed
-        invalid_mask = gt_fields.get("heatmap_mask", None)
-        if invalid_mask is not None and (invalid_mask != 0.0).any():
-            # ignore the tokens that predict the unlabled instances
-            pred_vis = (kpt_vis.unsqueeze(-1) > 0.3).float()
-            mean_kpts = (decoded_kpts * pred_vis).sum(dim=1) / pred_vis.sum(dim=1).clamp(min=1e-8)
-            mean_kpts = mean_kpts.reshape(1, -1, 1, 2)
-            wh = invalid_mask.shape[-1]
-            grids = mean_kpts / (wh - 1) * 2 - 1
-            mask = invalid_mask.unsqueeze(0).float()
-            weight = F.grid_sample(mask, grids, mode="bilinear", padding_mode="zeros")
-            obj_weight = 1.0 - weight.reshape(num_priors, 1)
-        else:
-            obj_weight = obj_target.new_ones(obj_target.shape)
+        obj_weight = obj_target.new_ones(obj_target.shape)
 
         # misc
         foreground_mask = torch.zeros_like(objectness.squeeze()).to(torch.bool)
@@ -1414,15 +1418,23 @@ class RTMOHead(nn.Module):
             # NMS
             nms_topk = self.nms_topk
             scores, labels = scores.max(1, keepdim=True)
-            scores, _, keep_idxs_score, results = filter_scores_and_topk(
-                scores, score_thr, nms_topk, results=dict(labels=labels[:, 0])
-            )
-            labels = results["labels"]
-
-            bboxes = bboxes[keep_idxs_score]
-            kpt_vis = kpt_vis[keep_idxs_score]
-            grids = flatten_priors[keep_idxs_score]
-            stride = flatten_stride[keep_idxs_score]
+            if not torch.onnx.is_in_onnx_export():
+                scores, _, keep_idxs_score, results = filter_scores_and_topk(
+                    scores, score_thr, nms_topk, results=dict(labels=labels[:, 0])
+                )
+                labels = results["labels"]  # type: ignore
+                bboxes = bboxes[keep_idxs_score]
+                kpt_vis = kpt_vis[keep_idxs_score]
+                grids = flatten_priors[keep_idxs_score]
+                stride = flatten_stride[keep_idxs_score]
+            else:
+                # When ONNX exporting, we don't filter the scores and labels
+                scores = scores.squeeze(dim=1)
+                labels = labels[:, 0]
+                bboxes = bboxes
+                kpt_vis = kpt_vis
+                grids = flatten_priors
+                stride = flatten_stride
 
             if bboxes.numel() > 0 and self.nms:
                 nms_thr = self.nms_thr
@@ -1434,7 +1446,12 @@ class RTMOHead(nn.Module):
                     kpt_vis = kpt_vis[keep_idxs_nms]
                     scores = scores[keep_idxs_nms]
 
-                pose_vecs = pose_vecs[keep_idxs_score][keep_idxs_nms] if pose_vecs is not None else None
+                if not torch.onnx.is_in_onnx_export():
+                    pose_vecs = pose_vecs[keep_idxs_score][keep_idxs_nms] if pose_vecs is not None else None
+                else:
+                    # When ONNX exporting, we don't filter the pose_vecs by keep_idxs_score
+                    pose_vecs = pose_vecs[keep_idxs_nms] if pose_vecs is not None else None
+
                 bbox_cs = torch.cat(bbox_xyxy2cs(bboxes, self.bbox_padding), dim=1)
                 grids = grids[keep_idxs_nms]
                 keypoints = self.dcc.forward_test(pose_vecs, bbox_cs, grids)
@@ -1461,13 +1478,13 @@ class RTMOHead(nn.Module):
             keypoints_visible=torch.cat(all_keypoints_visible, dim=0),
         )
 
-    def switch_to_export(self, test_cfg: Optional[Dict], device: str = "cuda"):
+    def switch_to_export(self, test_cfg: Dict, device: str = "cuda"):
         """Precompute and save the grid coordinates and strides."""
 
         self.export = True
 
         # grid generator
-        input_size = test_cfg.get("input_size", (640, 640)) if test_cfg is not None else (640, 640)
+        input_size = test_cfg.get("input_size", (640, 640))
         featmaps = []
         for s in self.featmap_strides:
             featmaps.append(torch.rand(1, 1, input_size[0] // s, input_size[1] // s))
@@ -1487,6 +1504,67 @@ class RTMOHead(nn.Module):
 
 
 class RTMO(BaseModelNN):
+    """Real-Time Multi-Person Pose Estimation (RTMO) model.
+
+    RTMO is a one-stage, real-time human pose estimation model that combines
+    the efficiency of YOLO-style object detection with precise keypoint
+    localization through dynamic coordinate classification (DCC). The model
+    consists of three main components:
+
+    1. Backbone: Extracts multi-scale features from input images
+    2. Neck (HybridEncoder): Enhances features using transformer and CSP layers
+    3. Head (RTMOHead): Performs joint detection and pose estimation
+
+    The model uses a novel coordinate classification approach where keypoint
+    coordinates are predicted as discrete bins rather than continuous offsets,
+    enabling more precise localization while maintaining real-time performance.
+
+    Args:
+        config (RTMOConfig): Configuration object containing all model parameters
+            including backbone, neck, and head configurations.
+
+    Architecture:
+        - Backbone: Configurable backbone network for feature extraction
+        - HybridEncoder: Combines transformer and CSP layers for feature enhancement
+        - RTMOHead: One-stage head with:
+            - Classification branch for object detection
+            - Regression branch for bounding box prediction
+            - Keypoint regression branch for pose estimation
+            - Dynamic Coordinate Classifier (DCC) for precise keypoint localization
+
+    Key Features:
+        - Real-time inference with high accuracy
+        - Dynamic coordinate classification for precise keypoint localization
+        - Gated Attention Unit (GAU) for enhanced feature processing
+        - Multi-scale feature fusion
+        - End-to-end training without intermediate supervision
+
+    Example:
+        ```python
+        from focoos.models.rtmo.config import RTMOConfig
+        from focoos.models.rtmo.modelling import RTMO
+
+        # Create configuration
+        config = RTMOConfig(
+            num_keypoints=17,  # COCO keypoints
+            backbone_config=backbone_cfg,
+            # ... other config parameters
+        )
+
+        # Initialize model
+        model = RTMO(config)
+
+        # Forward pass
+        images = torch.randn(1, 3, 640, 640)
+        outputs = model(images)
+
+        # Access predictions
+        keypoints = outputs.keypoints  # Shape: (batch, num_instances, num_keypoints, 2)
+        scores = outputs.scores  # Shape: (batch, num_instances)
+        boxes = outputs.boxes  # Shape: (batch, num_instances, 4)
+        ```
+    """
+
     def __init__(self, config: RTMOConfig):
         assert len(config.featmap_strides) == len(config.featmap_strides_pointgenerator), (
             "featmap_strides and featmap_strides_pointgenerator must have the same length"
@@ -1517,12 +1595,12 @@ class RTMO(BaseModelNN):
             num_classes=self.config.num_classes,
             in_channels=self.config.in_channels,
             widen_factor=self.config.widen_factor,
+            pose_vec_channels=self.config.pose_vec_channels,
             cls_feat_channels=self.config.cls_feat_channels,
             stacked_convs=self.config.stacked_convs,
             featmap_strides=self.config.featmap_strides,
             featmap_strides_pointgenerator=self.config.featmap_strides_pointgenerator,
             centralize_points_pointgenerator=self.config.centralize_points_pointgenerator,
-            pose_vec_channels=self.config.pose_vec_channels,
             overlaps_power=self.config.overlaps_power,
             # DCC related params
             feat_channels_dcc=self.config.feat_channels_dcc,
@@ -1582,12 +1660,7 @@ class RTMO(BaseModelNN):
             loss=None,
         )
 
-    def switch_to_export(self, test_cfg: Optional[Dict] = None, device: str = "cuda"):
-        # Get input size from config if test_cfg is not provided
-        if test_cfg is None:
-            input_size = (self.config.im_size, self.config.im_size)
-            test_cfg = {"input_size": input_size}
-
-        self.head.switch_to_export(test_cfg=test_cfg)
-        if hasattr(self.head, "dcc") and self.head.dcc is not None:
-            self.head.dcc.switch_to_export()
+    def switch_to_export(self, test_cfg: Dict, device: str = "cuda"):
+        self.neck.switch_to_export(test_cfg=test_cfg, device=device)
+        self.head.switch_to_export(test_cfg=test_cfg, device=device)
+        self.head.dcc.switch_to_export()

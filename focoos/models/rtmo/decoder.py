@@ -254,6 +254,7 @@ class HybridEncoder(nn.Module):
         self.input_channels = ["res3", "res4", "res5"]
         self.in_channels = [shape_specs[inc].channels for inc in self.input_channels]
         self.hidden_dim = hidden_dim
+        self.output_dim = output_dim
         self.use_encoder_idx = use_encoder_idx
         self.num_encoder_layers = transformer_encoder_layers
         self.pe_temperature = pe_temperature
@@ -336,7 +337,7 @@ class HybridEncoder(nn.Module):
             inner_outs[0] = feat_high
 
             upsample_feat = F.interpolate(feat_high, size=feat_low.shape[2:], mode="nearest")
-            inner_out = self.fpn_blocks[len(self.in_channels) - 1 - idx](torch.cat([upsample_feat, feat_low], axis=1))  # type: ignore
+            inner_out = self.fpn_blocks[len(self.in_channels) - 1 - idx](torch.cat([upsample_feat, feat_low], dim=1))
             inner_outs.insert(0, inner_out)
 
         # bottom-up pan
@@ -346,7 +347,7 @@ class HybridEncoder(nn.Module):
             feat_high = inner_outs[idx + 1]
             downsample_feat = self.downsample_convs[idx](feat_low)  # Conv
             out = self.pan_blocks[idx](  # CSPRepLayer
-                torch.cat([downsample_feat, feat_high], axis=1)
+                torch.cat([downsample_feat, feat_high], dim=1)
             )  # type: ignore
             outs.append(out)
 
@@ -357,3 +358,20 @@ class HybridEncoder(nn.Module):
             outs = self.projector(outs)
 
         return tuple(outs)
+
+    def switch_to_export(self, test_cfg: Dict, device: str = "cuda"):
+        """Switch to deploy mode."""
+
+        if getattr(self, "deploy", False):
+            return
+
+        if self.num_encoder_layers > 0:
+            for i, enc_ind in enumerate(self.use_encoder_idx):
+                h, w = test_cfg["input_size"]
+                h = int(h / 2 ** (3 + enc_ind))
+                w = int(w / 2 ** (3 + enc_ind))
+                pos_enc = self.sincos_pos_enc(size=(h, w))
+                pos_enc = pos_enc.transpose(-1, -2).reshape(1, h * w, -1)
+                self.register_buffer(f"pos_enc_{i}", pos_enc)
+
+        self.deploy = True

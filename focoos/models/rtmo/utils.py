@@ -35,7 +35,7 @@ def bias_init_with_prob(prior_prob: Union[float, int]) -> float:
 
 def filter_scores_and_topk(
     scores: Tensor, score_thr: float, topk: int, results: Optional[Union[dict, list, torch.Tensor]] = None
-):
+) -> Tuple[Tensor, Tensor, Tensor, Optional[Union[dict, list, torch.Tensor]]]:
     """Filter results using score threshold and topk candidates.
 
     Args:
