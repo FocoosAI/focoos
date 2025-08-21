@@ -47,10 +47,11 @@ With the Focoos SDK, you can take advantage of a collection of foundational mode
 
 | Model Name | Architecture | Domain (Classes) | Dataset | Metric | FPS Nvidia-T4 |
 |------------|--------------|------------------|----------|---------|--------------|
-| [rtmo-s-coco](rtmo.md) | [RTMO](https://github.com/open-mmlab/mmpose/tree/main/projects/rtmo) ([STDC-2](https://github.com/MichaelFan01/STDC-Seg)) | Persons (1) | [COCO](https://cocodataset.org/#home) | keypoints/AP: 59.9<br>keypoints/AP50: 83.3 | <ins>TODO<ins> |
+| [rtmo-s-coco](rtmo.md) | [RTMO](https://github.com/open-mmlab/mmpose/tree/main/projects/rtmo) ([CSP-Darknet](https://github.com/open-mmlab/mmpose/blob/main/mmpose/models/backbones/csp_darknet.py)) | Persons (1) | [COCO](https://cocodataset.org/#home) | keypoints/AP: 67.94<br>keypoints/AP50: 87.86 | 104 |
+| [rtmo-m-coco](rtmo.md) | [RTMO](https://github.com/open-mmlab/mmpose/tree/main/projects/rtmo) ([CSP-Darknet](https://github.com/open-mmlab/mmpose/blob/main/mmpose/models/backbones/csp_darknet.py)) | Persons (1) | [COCO](https://cocodataset.org/#home) | keypoints/AP: 70.94<br>keypoints/AP50: 89.47 | 89 |
+| [rtmo-l-coco](rtmo.md) | [RTMO](https://github.com/open-mmlab/mmpose/tree/main/projects/rtmo) ([CSP-Darknet](https://github.com/open-mmlab/mmpose/blob/main/mmpose/models/backbones/csp_darknet.py)) | Persons (1) | [COCO](https://cocodataset.org/#home) | keypoints/AP: 72.14<br>keypoints/AP50: 89.85 |  63 |
 
 
 <small> AP = Average Precision averaged by class </small> <br>
 <small> AP50 = Average Precision at IoU threshold 0.50 averaged by class </small> <br>
-<ins>TODO<ins>
 <small> FPS = Frames per second computed using TensorRT with resolution 640x640 </small> <br>

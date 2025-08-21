@@ -17,16 +17,18 @@ The RTMO architecture consists of three main components:
 
 ### Neck
 - **Purpose**: To fuse and refine the features from the backbone.
-- **Design**: A **YOLO neck** processes the last three feature maps from the backbone (with downsampling rates of 8, 16 and 32) to generate enhanced features for the head.
+- **Design**: A **HybridEncoder** combines transformer encoder layers with CSP-based feature fusion, processing the last three feature maps from the backbone (with downsampling rates of 8, 16 and 32) to generate enhanced features for the head. The HybridEncoder consists of:
+  - **Transformer Encoder**: Uses DETR-style transformer layers with sinusoidal positional encoding
+  - **CSP (Cross Stage Partial) layers**: For efficient feature processing and fusion
+  - **FPN (Feature Pyramid Network)**: Top-down and bottom-up feature fusion for multi-scale feature enhancement
 
 ### Head
 - **Purpose**: To predict the final outputs for each grid cell on the feature map.
 - **Components**:
-  - **Prediction Layers**: Dual convolution blocks generate a classification score and a high-dimensional pose feature for each grid cell.
-  - **Pose & BBox Prediction**: The pose feature is used to directly regress bounding boxes and keypoint visibility scores.
-  - **Dynamic Coordinate Classifier (DCC)**: This is the core component for keypoint localization. It takes the pose feature and translates it into K pairs of 1-D heatmaps (one for the horizontal axis, one for the vertical). It consists of:
-    - **Dynamic Bin Allocation**: Bins are not static across the whole image but are dynamically allocated within a region scaled to each instance's predicted bounding box. This optimizes bin utilization and accuracy.
-    - **Dynamic Bin Encoding**: The coordinate of each dynamic bin is encoded using sine positional encodings to form a unique representation, allowing the model to calculate a precise probability for each keypoint at each bin location.
+  - **RTMOHeadModule**: Dual-branch architecture that processes shared input features:
+    - **Classification Branch**: Processes half of input features through stacked convolutions to generate classification scores
+    - **Pose Branch**: Processes the other half through group convolutions to generate pose features, bounding boxes, keypoint offsets, and visibility scores
+  - **Dynamic Coordinate Classifier (DCC)**: This is the core component for keypoint localization. It takes the pose feature and translates it into K pairs of 1-D heatmaps (one for the horizontal axis, one for the vertical).
 
 ## Configuration Parameters
 
@@ -35,28 +37,31 @@ The RTMO architecture consists of three main components:
 - `num_keypoints` (int): Number of keypoints to predict (default=17 for person body).
 
 ### Backbone Configuration
-- `backbone_config` (BackboneConfig): Backbone network configuration (default: `DarkNetConfig`)
+- `backbone_config` (BackboneConfig): Backbone network configuration (default: `CSPConfig`)
 
 ### Neck
-- `neck_feat_dim` (int, default=256): Input feature dimension for the neck.
-- `neck_out_dim` (int, default=256): Output feature dimension from the neck.
-- `c2f_depth` (int, default=2): Depth of the C2f blocks within the neck. <ins>TODO if YOLO neck is changed<ins>
+- `transformer_embed_dims` (int, default=256): Embedding dimension for transformer layers
+- `transformer_num_heads` (int, default=8): Number of attention heads in transformer
+- `transformer_feedforward_channels` (int, default=1024): Feedforward network dimension in transformer
+- `transformer_dropout` (float, default=0.0): Dropout rate in transformer layers
+- `transformer_encoder_layers` (int, default=1): Number of transformer encoder layers
 
 ### Head
 - `in_channels` (int, default=256): Number of input channels to the head from the neck.
-- `feat_channels` (int, default=256): Number of channels in the intermediate convolutional layers of the head.
 - `pose_vec_channels` (int, default=256): Dimension of the output pose feature vector for each grid, which is later fed into the DCC.
+- `cls_feat_channels` (int, default=256): Number of channels in the classification branch
 - `stacked_convs` (int, default=2): Number of stacked convolution layers in the classification and regression branches of the head.
-- `activation` (str, default="relu"): The activation function to use in the head's layers.
-- `norm` (NormType, default="BN"): The normalization layer type to use (e.g., "BN" for BatchNorm).
+- `featmap_strides` (List[int], default=[16, 8]): Strides of feature maps from backbone
+- `featmap_strides_pointgenerator` (List[int], default=[16, 8]): Strides for point generator
+- `centralize_points_pointgenerator` (bool, default=False): Whether to centralize points in point generator
 
-<ins>TODO: maybe to remove stuff below<ins>
 #### Dynamic Coordinate Classifier (DCC)
 - `feat_channels_dcc` (int, default=128): The feature dimension used within the DCC for keypoint feature representation.
 - `num_bins` (Tuple[int, int], default=(192, 256)): The number of bins for the horizontal (x) and vertical (y) heatmaps, respectively.
 - `spe_channels` (int, default=128): The channel dimension for the Sine Positional Encoding (SPE) used to encode bin coordinates.
-#### GAU
-- `gau_s` (int, default=128): The dimension `s` in the Gated Attention Unit (GAU).
+
+#### GAU (Gated Attention Unit)
+- `gau_s` (int, default=128): The self-attention feature dimension.
 - `gau_expansion_factor` (int, default=2): The expansion factor for the hidden dimension in the GAU.
 - `gau_dropout_rate` (float, default=0.0): Dropout rate applied within the GAU.
 
@@ -105,11 +110,14 @@ For each detected object:
 
 ## Available Models
 
-Currently, you can find 1 model on the Focoos Hub for multi-person Pose Estimation.
+The following RTMO models are available on the Focoos Hub for multi-person pose estimation:
 
-| Model Name | Architecture | Dataset | Metric | FPS Nvidia-T4 |
-|------------|--------------|----------|---------|--------------|
-| rtmo-s-coco | RTMO (STDC-2) | COCO | AP: 59.9<br>AP50: 83.3 | - |
+| Model Name      | Architecture                                                                 | Domain (Classes) | Dataset | Metric                                 | FPS Nvidia-T4 |
+|-----------------|------------------------------------------------------------------------------|------------------|---------|----------------------------------------|---------------|
+| rtmo-s-coco     | RTMO (CSP-Darknet) | Persons (1)      | COCO    | keypoints/AP: 67.94<br>keypoints/AP50: 87.86 | 104           |
+| rtmo-m-coco     | RTMO (CSP-Darknet) | Persons (1)      | COCO    | keypoints/AP: 70.94<br>keypoints/AP50: 89.47 | 89            |
+| rtmo-l-coco     | RTMO (CSP-Darknet) | Persons (1)      | COCO    | keypoints/AP: 72.14<br>keypoints/AP50: 89.85 | 63            |
+
 
 
 ## Example Usage
@@ -117,6 +125,8 @@ Currently, you can find 1 model on the Focoos Hub for multi-person Pose Estimati
 ### Quick Start with Pre-trained Model
 
 ```python
+from PIL import Image
+
 from focoos.model_manager import ModelManager
 
 # Load a pre-trained RTMO model
@@ -126,17 +136,20 @@ model = ModelManager.get("rtmo-s-coco")
 image = Image.open("path/to/image.jpg")
 result = model.infer(image)
 
+# Process results
+for detection in result.detections:
+    print(f"Class: {detection.label}, Confidence: {detection.conf:.3f}")
 ```
 
 ### Custom Model Configuration
 ```python
 from focoos.models.rtmo.config import RTMOConfig
 from focoos.models.rtmo.modelling import RTMO
-from focoos.nn.backbone.stdc import STDCConfig
+from focoos.nn.backbone.csp_darknet import CSPConfig
 
 # Configure the backbone
-backbone_config = STDCConfig(
-    model_type="stdc",
+backbone_config = CSPConfig(
+    size="small",
     use_pretrained=True,
 )
 
