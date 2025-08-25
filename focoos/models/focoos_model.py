@@ -341,7 +341,11 @@ class FocoosModel:
         return self.model_info.task
 
     def infer(
-        self, image: Union[bytes, str, Path, np.ndarray, Image.Image], threshold: float = 0.5, annotate: bool = False
+        self,
+        image: Union[bytes, str, Path, np.ndarray, Image.Image],
+        threshold: float = 0.5,
+        annotate: bool = False,
+        keypoints_threshold: float = 0.5,
     ) -> FocoosDetections:
         """
         Perform inference on an input image and optionally annotate the results.
@@ -353,7 +357,7 @@ class FocoosModel:
             image: The input image to run inference on. Accepts a file path, bytes, PIL Image, or numpy array.
             threshold: Minimum confidence score for a detection to be included in the results. Default is 0.5.
             annotate: If True, annotate the image with detection results and include it in the output.
-
+            keypoints_threshold: Minimum confidence score for a keypoint to be included in the results. Default is 0.5.
         Returns:
             FocoosDetections: An object containing the detection results, optional annotated image, and latency metrics.
 
@@ -371,7 +375,12 @@ class FocoosModel:
             t2 = perf_counter()
             skeleton = self.model_info.config.get("skeleton", None)
             focoos_det.image = annotate_frame(
-                im, focoos_det, task=self.model_info.task, classes=self.model_info.classes, keypoints_skeleton=skeleton
+                im,
+                focoos_det,
+                task=self.model_info.task,
+                classes=self.model_info.classes,
+                keypoints_skeleton=skeleton,
+                keypoints_threshold=keypoints_threshold,
             )
             t3 = perf_counter()
             if focoos_det.latency is not None:

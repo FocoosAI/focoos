@@ -236,9 +236,16 @@ def fai_detections_to_sv(inference_output: FocoosDetections, im0_shape: tuple) -
     )
 
 
-def fai_keypoints_to_sv(inference_output: FocoosDetections, im0_shape: tuple) -> sv.KeyPoints:
+def fai_keypoints_to_sv(
+    inference_output: FocoosDetections, im0_shape: tuple, keypoints_threshold: float = 0.5
+) -> sv.KeyPoints:
     detections = inference_output.detections
     keypoints_data = np.array([d.keypoints for d in detections if d.keypoints is not None], dtype=np.float32)
+
+    # Filter out keypoints with confidence below threshold
+    confidence_values = keypoints_data[:, :, 2].copy()
+    filter_mask = confidence_values < keypoints_threshold
+    keypoints_data[filter_mask] = [0, 0, 0]
 
     # Extract xy coordinates (first two columns) and confidence (third column)
     keypoints_xy = keypoints_data[:, :, :2]  # Shape: (num_detections, num_keypoints, 2)
@@ -403,6 +410,7 @@ def annotate_frame(
     task: Task,
     classes: Optional[list[str]] = None,
     keypoints_skeleton: Optional[list[tuple[int, int]]] = None,
+    keypoints_threshold: float = 0.5,
 ) -> np.ndarray:
     if isinstance(im, Image.Image):
         im = np.array(im)
@@ -412,7 +420,7 @@ def annotate_frame(
     has_mask = detections.detections[0].mask is not None
     has_keypoints = detections.detections[0].keypoints is not None
     if has_keypoints:
-        sv_keypoints = fai_keypoints_to_sv(detections, im.shape[:2])
+        sv_keypoints = fai_keypoints_to_sv(detections, im.shape[:2], keypoints_threshold=keypoints_threshold)
     sv_detections = fai_detections_to_sv(detections, im.shape[:2])
     if sv_detections.xyxy.shape[0] == 0:
         return im  # Return original RGB image

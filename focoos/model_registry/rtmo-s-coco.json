@@ -172,7 +172,38 @@
         "keypoints/APl": 71.83879093198993
     },
     "focoos_version": "0.18.0",
-    "latency": [],
+    "latency": [
+        {
+            "fps": 102,
+            "engine": "onnx.TensorrtExecutionProvider",
+            "min": 9.518,
+            "max": 10.01,
+            "mean": 9.74,
+            "std": 0.111,
+            "im_size": 640,
+            "device": "Tesla T4"
+        },
+        {
+            "fps": 79,
+            "engine": "torchscript",
+            "min": 11.656,
+            "max": 13.089,
+            "mean": 12.502,
+            "std": 0.236,
+            "im_size": 640,
+            "device": "Tesla T4"
+        },
+        {
+            "fps": 44,
+            "engine": "onnx.CUDAExecutionProvider",
+            "min": 22.27,
+            "max": 23.965,
+            "mean": 22.622,
+            "std": 0.381,
+            "im_size": 640,
+            "device": "Tesla T4"
+        }
+    ],
     "training_info": null,
     "updated_at": null
 }

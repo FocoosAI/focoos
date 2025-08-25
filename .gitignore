@@ -97,5 +97,7 @@ notebooks/
 gradio/output/
 tutorials/experiments
 experiments
+experiments_debug
 wandb/
 *.pth
+.vscode
