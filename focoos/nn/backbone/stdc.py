@@ -230,15 +230,15 @@ class STDC(BaseBackbone):
             self.load_state_dict(state)
             logger.info("Load STDC state_dict")
 
-        self._out_features = config.out_features
+        self.out_features = config.out_features
 
-        self._out_feature_strides = {
+        self.out_feature_strides = {
             "res2": 4,
             "res3": 8,
             "res4": 16,
             "res5": 32,
         }
-        self._out_feature_channels = {
+        self.out_feature_channels = {
             "res2": base,
             "res3": base * 4,
             "res4": base * 8,

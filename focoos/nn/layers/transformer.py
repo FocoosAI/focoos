@@ -7,7 +7,7 @@ from torch import Tensor
 
 from focoos.utils.logger import get_logger
 
-from .base import _get_activation_fn
+from .base import get_activation_fn
 from .misc import DropPath
 from .norm import LayerNorm
 
@@ -303,7 +303,7 @@ class FFNLayer(nn.Module):
 
             self.norm = nn.LayerNorm(d_model)
 
-            self.activation = _get_activation_fn(activation) if activation is not None else nn.ReLU()
+            self.activation = get_activation_fn(activation, default_activation=nn.ReLU())
 
             self._reset_parameters()
         elif self.ffn_type == "convnext":
@@ -321,7 +321,7 @@ class FFNLayer(nn.Module):
             self.norm = LayerNorm(d_model, eps=1e-6)
             # pointwise/1x1 convs, implemented with linear layers
             self.pwconv1 = nn.Linear(d_model, dim_feedforward)
-            self.act = _get_activation_fn(activation) if activation is not None else nn.GELU()
+            self.act = get_activation_fn(activation, default_activation=nn.GELU())
             self.pwconv2 = nn.Linear(dim_feedforward, d_model)
             self.gamma = (
                 nn.Parameter(layer_scale_init_value * torch.ones(d_model), requires_grad=True)
@@ -574,7 +574,7 @@ class TransformerEncoderLayer(nn.Module):
         self.norm2 = nn.LayerNorm(d_model)
         self.dropout1 = nn.Dropout(dropout)
         self.dropout2 = nn.Dropout(dropout)
-        self.activation = _get_activation_fn(activation)
+        self.activation = get_activation_fn(activation)
 
     @staticmethod
     def with_pos_embed(tensor, pos_embed):
@@ -626,7 +626,7 @@ class TransformerDecoderLayer(nn.Module):
         self.dropout2 = nn.Dropout(dropout)
         self.dropout3 = nn.Dropout(dropout)
 
-        self.activation = _get_activation_fn(activation)
+        self.activation = get_activation_fn(activation)
         self.normalize_before = normalize_before
 
     def with_pos_embed(self, tensor, pos: Optional[Tensor]):

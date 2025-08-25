@@ -23,6 +23,9 @@ class TestModelRegistry:
             "bisenetformer-m-ade",
             "bisenetformer-l-ade",
             "bisenetformer-s-ade",
+            "rtmo-s-coco",
+            "rtmo-m-coco",
+            "rtmo-l-coco",
         ]
 
         models = ModelRegistry.list_models()
@@ -125,7 +128,9 @@ class TestModelRegistry:
 
     def test_pretrained_models_dictionary_structure(self):
         """Check that the _pretrained_models dictionary has the correct structure"""
-        pretrained_models = ModelRegistry._pretrained_models
+        # Reset cache to ensure fresh load
+        ModelRegistry._pretrained_models = None
+        pretrained_models = ModelRegistry._load_models_cfgs()
 
         assert isinstance(pretrained_models, dict)
         assert len(pretrained_models) > 0
@@ -156,14 +161,6 @@ class TestModelRegistry:
         """Parametrized test to check the existence of various models"""
         assert ModelRegistry.exists(model_name) == expected_exists
 
-    def test_registry_path_configuration(self):
-        """Check that REGISTRY_PATH is correctly configured"""
-        from focoos.model_registry.model_registry import REGISTRY_PATH
-
-        assert isinstance(REGISTRY_PATH, str)
-        assert len(REGISTRY_PATH) > 0
-        assert "model_registry" in REGISTRY_PATH
-
     @patch("focoos.utils.logger.get_logger")
     def test_logger_warning_on_model_not_found(self, mock_get_logger: MagicMock):
         """Check that a warning is logged when a model is not found"""
@@ -171,3 +168,86 @@ class TestModelRegistry:
 
         with pytest.raises(ValueError):
             ModelRegistry.get_model_info(nonexistent_model)
+
+    # NEW TESTS FOR REFACTORED FUNCTIONALITY
+
+    def test_load_models_caching_behavior(self):
+        """Check that _load_models implements caching correctly"""
+        # Reset cache
+        ModelRegistry._pretrained_models = None
+
+        # First call should load from filesystem
+        models1 = ModelRegistry._load_models_cfgs()
+        assert models1 is not None
+        assert len(models1) > 0
+
+        # Second call should return cached result
+        models2 = ModelRegistry._load_models_cfgs()
+        assert models2 is models1  # Same object reference (cached)
+
+        # Verify cache is set
+        assert ModelRegistry._pretrained_models is models1
+
+    @patch("pathlib.Path.iterdir")
+    def test_load_models_handles_filesystem_error(self, mock_iterdir: MagicMock):
+        """Check that _load_models handles filesystem errors gracefully"""
+        # Setup
+        mock_iterdir.side_effect = OSError("Directory not found")
+
+        # Reset cache
+        ModelRegistry._pretrained_models = None
+
+        # Test
+        models = ModelRegistry._load_models_cfgs()
+
+        # Verification
+        assert models == {}
+        assert ModelRegistry._pretrained_models == {}
+
+    def test_load_models_filters_only_json_files(self):
+        """Check that _load_models only processes JSON files"""
+        # Reset cache to ensure fresh load
+        ModelRegistry._pretrained_models = None
+
+        models = ModelRegistry._load_models_cfgs()
+
+        # Verify all paths end with .json
+        for model_path in models.values():
+            assert model_path.endswith(".json")
+
+        # Verify model names don't have .json extension
+        for model_name in models.keys():
+            assert not model_name.endswith(".json")
+
+    def test_lazy_loading_behavior(self):
+        """Check that models are loaded only when needed (lazy loading)"""
+        # Reset cache
+        ModelRegistry._pretrained_models = None
+
+        # Initially cache should be None
+        assert ModelRegistry._pretrained_models is None
+
+        # Call list_models (should trigger loading)
+        models = ModelRegistry.list_models()
+
+        # Now cache should be populated
+        assert ModelRegistry._pretrained_models is not None
+        assert len(models) == len(ModelRegistry._pretrained_models)
+
+    def test_exists_logs_debug_message_for_nonexistent_model(self):
+        """Check that exists logs debug message for non-existent models"""
+        with patch("focoos.model_registry.model_registry.logger") as mock_logger:
+            result = ModelRegistry.exists("nonexistent-model")
+
+            assert result is False
+            mock_logger.debug.assert_called_once_with("Model 'nonexistent-model' not found in registry")
+
+    def test_registry_path_is_correct(self):
+        """Check that _registry_path points to the correct directory"""
+        expected_path = ModelRegistry._registry_path
+        assert expected_path.exists()
+        assert expected_path.is_dir()
+
+        # Should contain JSON files
+        json_files = list(expected_path.glob("*.json"))
+        assert len(json_files) > 0

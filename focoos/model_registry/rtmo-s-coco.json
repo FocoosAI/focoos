@@ -1,0 +1,209 @@
+{
+    "name": "rtmo-s-coco",
+    "model_family": "rtmo",
+    "classes": [
+        "person"
+    ],
+    "im_size": 640,
+    "task": "keypoint",
+    "config": {
+        "num_classes": 1,
+        "backbone_config": {
+            "use_pretrained": false,
+            "backbone_url": null,
+            "model_type": "csp_darknet",
+            "size": "small"
+        },
+        "transformer_embed_dims": 256,
+        "transformer_num_heads": 8,
+        "transformer_feedforward_channels": 1024,
+        "transformer_dropout": 0.0,
+        "transformer_encoder_layers": 1,
+        "csp_layers": 1,
+        "hidden_dim": 256,
+        "output_dim": 256,
+        "pe_temperature": 10000,
+        "widen_factor": 0.5,
+        "spe_learnable": false,
+        "output_indices": [
+            1,
+            2
+        ],
+        "num_keypoints": 17,
+        "in_channels": 256,
+        "pose_vec_channels": 256,
+        "cls_feat_channels": 256,
+        "stacked_convs": 2,
+        "featmap_strides": [
+            16,
+            32
+        ],
+        "featmap_strides_pointgenerator": [
+            16,
+            32
+        ],
+        "centralize_points_pointgenerator": false,
+        "overlaps_power": 0.5,
+        "pixel_mean": [
+            0.0,
+            0.0,
+            0.0
+        ],
+        "pixel_std": [
+            1.0,
+            1.0,
+            1.0
+        ],
+        "feat_channels_dcc": 128,
+        "num_bins": [
+            192,
+            256
+        ],
+        "spe_channels": 128,
+        "gau_s": 128,
+        "gau_expansion_factor": 2,
+        "gau_dropout_rate": 0.0,
+        "nms_topk": 1000,
+        "nms_thr": 0.65,
+        "score_thr": 0.01,
+        "skeleton": [
+            [
+                16,
+                14
+            ],
+            [
+                14,
+                12
+            ],
+            [
+                17,
+                15
+            ],
+            [
+                15,
+                13
+            ],
+            [
+                12,
+                13
+            ],
+            [
+                6,
+                12
+            ],
+            [
+                7,
+                13
+            ],
+            [
+                6,
+                7
+            ],
+            [
+                6,
+                8
+            ],
+            [
+                7,
+                9
+            ],
+            [
+                8,
+                10
+            ],
+            [
+                9,
+                11
+            ],
+            [
+                2,
+                3
+            ],
+            [
+                1,
+                2
+            ],
+            [
+                1,
+                3
+            ],
+            [
+                2,
+                4
+            ],
+            [
+                3,
+                5
+            ]
+        ],
+        "keypoints": [
+            "nose",
+            "left_eye",
+            "right_eye",
+            "left_ear",
+            "right_ear",
+            "left_shoulder",
+            "right_shoulder",
+            "left_elbow",
+            "right_elbow",
+            "left_wrist",
+            "right_wrist",
+            "left_hip",
+            "right_hip",
+            "left_knee",
+            "right_knee",
+            "left_ankle",
+            "right_ankle"
+        ]
+    },
+    "ref": null,
+    "focoos_model": "rtmo-s-coco",
+    "status": "TRAINING_COMPLETED",
+    "description": "RTMO Small model (COCO)",
+    "train_args": null,
+    "weights_uri": "https://public.focoos.ai/pretrained_models/rtmo-s-coco/model_final.pth",
+    "val_dataset": "coco_2017_person_keypoints",
+    "val_metrics": {
+        "keypoints/AP": 67.88696523318507,
+        "keypoints/AP50": 87.69834474935652,
+        "keypoints/AP75": 74.7439595995692,
+        "keypoints/APs": 64.06397292912844,
+        "keypoints/APm": 74.11331374523232,
+        "keypoints/APl": 71.83879093198993
+    },
+    "focoos_version": "0.18.0",
+    "latency": [
+        {
+            "fps": 102,
+            "engine": "onnx.TensorrtExecutionProvider",
+            "min": 9.518,
+            "max": 10.01,
+            "mean": 9.74,
+            "std": 0.111,
+            "im_size": 640,
+            "device": "Tesla T4"
+        },
+        {
+            "fps": 79,
+            "engine": "torchscript",
+            "min": 11.656,
+            "max": 13.089,
+            "mean": 12.502,
+            "std": 0.236,
+            "im_size": 640,
+            "device": "Tesla T4"
+        },
+        {
+            "fps": 44,
+            "engine": "onnx.CUDAExecutionProvider",
+            "min": 22.27,
+            "max": 23.965,
+            "mean": 22.622,
+            "std": 0.381,
+            "im_size": 640,
+            "device": "Tesla T4"
+        }
+    ],
+    "training_info": null,
+    "updated_at": null
+}

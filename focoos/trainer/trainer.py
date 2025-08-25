@@ -28,15 +28,13 @@ from focoos.trainer.evaluation.evaluator import inference_on_dataset
 from focoos.trainer.evaluation.get_eval import get_evaluator
 from focoos.trainer.evaluation.utils import print_csv_format
 from focoos.trainer.events import EventStorage, get_event_storage
-from focoos.trainer.hooks import (
-    CommonMetricPrinter,
-    EarlyStopException,
-    EarlyStoppingHook,
-    JSONWriter,
-    SyncToHubHook,
-    VisualizationHook,
-    hook,
-)
+from focoos.trainer.hooks import hook
+from focoos.trainer.hooks.early_stop import EarlyStopException, EarlyStoppingHook
+from focoos.trainer.hooks.metrics_json_writer import JSONWriter
+from focoos.trainer.hooks.metrics_printer import CommonMetricPrinter
+from focoos.trainer.hooks.sync_to_hub import SyncToHubHook
+from focoos.trainer.hooks.tensorboard_writer import TensorboardXWriter
+from focoos.trainer.hooks.visualization import VisualizationHook
 from focoos.trainer.solver import ema
 from focoos.trainer.solver.build import build_lr_scheduler, build_optimizer
 from focoos.utils.distributed.dist import comm, create_ddp_model
@@ -51,6 +49,7 @@ TASK_METRICS = {
     Task.SEMSEG.value: "sem_seg/mIoU",
     Task.INSTANCE_SEGMENTATION.value: "segm/AP",
     Task.CLASSIFICATION.value: "classification/Accuracy",
+    Task.KEYPOINT.value: "keypoints/AP",
     # Task.PANOPTIC_SEGMENTATION.value: "panoptic_seg/PQ",
 }
 
@@ -187,7 +186,8 @@ class FocoosTrainer:
                 start_iter = 0
 
             output_lines = [
-                f"🚀 Starting training from iteration {start_iter}",
+                f"🚀 Starting training from iteration {start_iter}/{self.args.max_iters} ",
+                f"📁 output_dir: {self.output_dir}",
                 "========== 🔧 Main Hyperparameters 🔧 ==========",
                 f" - max_iter: {self.args.max_iters}",
                 f" - batch_size: {self.args.batch_size}",
@@ -197,6 +197,7 @@ class FocoosTrainer:
                 f" - scheduler: {self.args.scheduler}",
                 f" - weight_decay: {self.args.weight_decay}",
                 f" - ema_enabled: {self.args.ema_enabled}",
+                f" - amp_enabled: {self.args.amp_enabled}",
                 "================================================",
             ]
             logger.info("\n".join(output_lines))
@@ -227,6 +228,7 @@ class FocoosTrainer:
         model_info: ModelInfo,
         data_val: MapDataset,
         restore_best: bool = False,
+        save_json: bool = True,
     ):
         """Run model evaluation on test set.
 
@@ -238,12 +240,12 @@ class FocoosTrainer:
         """
         self.args = args
         self.output_dir = os.path.join(self.args.output_dir, f"{self.args.run_name.strip()}_eval")
-        if comm.is_main_process():
+        if comm.is_main_process() and save_json:
             os.makedirs(self.output_dir, exist_ok=True)
         original_weights_uri = model_info.weights_uri
         self._setup_model_and_data(model, processor, model_info, None, data_val)
         self.model_info.weights_uri = original_weights_uri
-        if comm.is_main_process():
+        if comm.is_main_process() and save_json:
             self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
         model = create_ddp_model(self.model)  # type: ignore
 
@@ -261,8 +263,12 @@ class FocoosTrainer:
         eval_result = self._do_eval(model)
 
         if comm.get_rank() == 0:
-            key, value = TASK_METRICS[self.task.value].split("/")
-            raw_metrics = _add_prefix(eval_result[key], key)
+            try:
+                key, value = TASK_METRICS[self.task.value].split("/")
+                raw_metrics = _add_prefix(eval_result[key], key)
+            except KeyError:
+                logger.warning(f"Task metrics not found for {self.task.value}")
+                return eval_result
             if (
                 self.model_info.val_metrics is None
                 or raw_metrics[TASK_METRICS[self.task.value]]
@@ -271,8 +277,9 @@ class FocoosTrainer:
                 self.model_info.val_metrics = raw_metrics
                 self.model_info.dump_json(os.path.join(self.output_dir, "model_info.json"))
                 _metrics = [raw_metrics]
-                with open(os.path.join(self.output_dir, "metrics.json"), "w") as f:
-                    f.write(json.dumps(_metrics))
+                if save_json:
+                    with open(os.path.join(self.output_dir, "metrics.json"), "w") as f:
+                        f.write(json.dumps(_metrics))
 
         return eval_result
 
@@ -280,6 +287,10 @@ class FocoosTrainer:
         if comm.is_main_process() and self.args.sync_to_hub:
             hub = hub or FocoosHUB()
             self.remote_model = hub.new_model(self.model_info)
+            if self.remote_model is None:
+                logger.warning("Model not created in hub. Continuing without sync to the hub.")
+                self.args.sync_to_hub = False
+                return
 
             self.model_info.ref = self.remote_model.ref
             logger.info(f"Model {self.model_info.name} created in hub with ref {self.model_info.ref}")
@@ -399,7 +410,7 @@ class FocoosTrainer:
                 logger.warning(f"Error parsing metrics.json: {e}")
                 pass
 
-            self._update_training_info_and_dump(ModelStatus.TRAINING_COMPLETED, self.args.max_iters)
+            self._update_training_info_and_dump(ModelStatus.TRAINING_COMPLETED, str(self.args.max_iters))
 
     def _do_eval(self, model):
         """Internal method to evaluate model.
@@ -488,7 +499,7 @@ class FocoosTrainer:
                             JSONWriter(
                                 os.path.join(self.ckpt_dir, "metrics.json"),
                             ),
-                            # TensorboardXWriter(self.output_dir),
+                            TensorboardXWriter(self.output_dir),
                         ],
                         period=args.log_period,
                     )
@@ -606,6 +617,7 @@ class TrainerLoop:
         self.start_iter = 0
         self.max_iter = 0
         self.storage = None
+        self.skip_optimizer_step = False  # Flag to skip optimizer step
 
         # Set model to training mode
         model.train()
@@ -724,7 +736,8 @@ class TrainerLoop:
                 else:
                     losses = sum(loss_dict.values())
         else:
-            loss_dict = self.model(data).loss
+            images, targets = self.processor.preprocess(data, dtype=self.precision, device=self.model.device)
+            loss_dict = self.model(images, targets).loss
             if isinstance(loss_dict, torch.Tensor):
                 losses = loss_dict
                 loss_dict = {"total_loss": loss_dict}
@@ -795,9 +808,8 @@ class TrainerLoop:
         if (iter + 1) % self.gather_metric_period == 0:
             try:
                 self.write_metrics(loss_dict, data_time, iter, prefix)
-            except Exception:
-                logger.exception("Exception in writing metrics: ")
-                raise
+            except Exception as e:
+                logger.warning(f"🚨 skipping write metrics due to exception: {e}")
 
     @staticmethod
     def write_metrics(
@@ -941,8 +953,16 @@ def run_eval(
     image_model: BaseModelNN,
     processor: Processor,
     model_info: ModelInfo,
+    save_json: bool = True,
 ):
     trainer = FocoosTrainer()
-    trainer.eval(args=train_args, model=image_model, processor=processor, model_info=model_info, data_val=data_val)
+    trainer.eval(
+        args=train_args,
+        model=image_model,
+        processor=processor,
+        model_info=model_info,
+        data_val=data_val,
+        save_json=save_json,
+    )
 
     return image_model, model_info

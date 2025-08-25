@@ -28,6 +28,7 @@ The Focoos Hub is a cloud-based model repository where you can store, share, and
 **Requirements**: Valid API key for private models, internet connection for initial download.
 
 ```python
+from focoos import FocoosHub, ModelManager
 # Loading from hub using hub:// protocol
 # The model is automatically downloaded and cached locally
 hub = FocoosHUB(api_key="your_api_key")
@@ -51,6 +52,7 @@ The Model Registry contains curated, pretrained models that are immediately avai
 **Requirements**: No internet connection needed, models are bundled with the library.
 
 ```python
+from focoos import ModelRegistry, ModelManager
 # Loading pretrained models from registry
 # Object detection model trained on COCO dataset
 model = ModelManager.get("fai-detr-l-coco")
@@ -59,7 +61,6 @@ model = ModelManager.get("fai-detr-l-coco")
 model = ModelManager.get("fai-mf-l-ade")
 
 # Check available models first
-from focoos import ModelRegistry
 available_models = ModelRegistry.list_models()
 print("Available models:", available_models)
 
@@ -133,7 +134,7 @@ model_info = ModelInfo(
 model = ModelManager.get("custom_detector", model_info=model_info)
 ```
 
-### Predict
+### Inference
 
 Performs end-to-end inference on input images with automatic preprocessing and postprocessing. The model accepts input images in various formats including:
 
@@ -151,7 +152,9 @@ The input images are automatically preprocessed to the correct size and format r
 This provides a simple, unified interface for running inference regardless of the underlying model architecture or task.
 
 **Parameters:**
-- `inputs`: Input images in various supported formats (`PIL.Image.Image`, `numpy.ndarray`, `torch.Tensor`)
+- `image`: Input image in various supported formats (`PIL.Image.Image`, `numpy.ndarray`, `torch.Tensor`, local or remote path)
+- `threshold`: detections threshold
+- `annotate`: if you want to annotate detections on provided image
 - `**kwargs`: Additional arguments passed to postprocessing
 
 **Returns:** [`FocoosDetections`](/focoos/api/ports/#focoos.ports.FocoosDetections) containing detection/segmentation results
@@ -161,15 +164,17 @@ This provides a simple, unified interface for running inference regardless of th
 from PIL import Image
 
 # Load an image
-image = Image.open("example.jpg")
+im_path = "example.jpg"
 
 # Run inference
-detections = model(image)
+detections = model.infer(im_path,threshold=0.5,annotate=True)
 
 # Access results
 for detection in detections.detections:
     print(f"Class: {detection.label}, Confidence: {detection.conf}")
     print(f"Bounding box: {detection.bbox}")
+
+Image.fromarray(detections.image)
 ```
 
 ### Training
@@ -259,7 +264,7 @@ infer_model = model.export(
 results = infer_model(input_image)
 ```
 
-### Predict
+### Inference
 
 Performs end-to-end inference on input images with automatic preprocessing and postprocessing on the selected runtime. The model accepts input images in various formats including:
 
@@ -277,7 +282,9 @@ The input images are automatically preprocessed to the correct size and format r
 This provides a simple, unified interface for running inference regardless of the underlying model architecture or task.
 
 **Parameters:**
-- `inputs`: Input images in various supported formats (`PIL.Image.Image`, `numpy.ndarray`, `torch.Tensor`)
+- `image`: Input image in various supported formats (`PIL.Image.Image`, `numpy.ndarray`, `torch.Tensor`, local or remote path)
+- `threshold`: detections threshold
+- `annotate`: if you want to annotate detections on provided image
 - `**kwargs`: Additional arguments passed to postprocessing
 
 **Returns:** [`FocoosDetections`](/focoos/api/ports/#focoos.ports.FocoosDetections) containing detection/segmentation results
@@ -287,14 +294,14 @@ This provides a simple, unified interface for running inference regardless of th
 from PIL import Image
 
 # Load an image
-image = Image.open("example.jpg")
+image_path = "example.jpg"
 
 # Run inference
 infer_model = model.export(
     runtime_type=RuntimeType.TORCHSCRIPT_32,
     out_dir="./exported_models"
 )
-detections = infer_model(image)
+detections = infer_model.infer(image_path,threshold=0.5, annotate = True)
 
 # Access results
 for detection in detections.detections:

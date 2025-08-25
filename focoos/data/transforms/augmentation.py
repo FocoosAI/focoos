@@ -565,6 +565,58 @@ class ResizeShortestEdge(Augmentation):
         return (newh, neww)
 
 
+class ResizeLongestEdge(Augmentation):
+    """
+    Resize the image while keeping the aspect ratio by resizing the longest edge to a specific size.
+    """
+
+    def __init__(
+        self,
+        long_edge_length: Union[int, Tuple[int, int]],
+        sample_style: str = "choice",
+        interp: int = Image.BILINEAR,
+    ):
+        """
+        Args:
+            long_edge_length (int or list[int]): If ``sample_style=="range"``,
+                a [min, max] interval from which to sample the longest edge length.
+                If ``sample_style=="choice"``, a list of longest edge lengths to sample from.
+            sample_style (str): either "range" or "choice".
+            interp: PIL interpolation method.
+        """
+        super().__init__()
+        assert sample_style in ["range", "choice"], sample_style
+
+        self.is_range = sample_style == "range"
+        if isinstance(long_edge_length, int):
+            long_edge_length = (long_edge_length, long_edge_length)
+        if self.is_range:
+            assert len(long_edge_length) == 2, (
+                f"long_edge_length must be two values using 'range' sample style. Got {long_edge_length}!"
+            )
+        self.long_edge_length = long_edge_length
+        self.interp = interp
+
+    def get_transform(self, image):
+        h, w = image.shape[:2]
+        if self.is_range:
+            size = np.random.randint(self.long_edge_length[0], self.long_edge_length[1] + 1)
+        else:
+            size = np.random.choice(self.long_edge_length)
+        if size == 0:
+            return NoOpTransform()
+
+        scale = size * 1.0 / max(h, w)
+        newh, neww = int(h * scale + 0.5), int(w * scale + 0.5)
+        return ResizeTransform(h, w, newh, neww, self.interp)
+
+    def __repr__(self):
+        return f"ResizeLongestEdge(long_edge_length={self.long_edge_length}, sample_style={'range' if self.is_range else 'choice'}, interp={self.interp})"
+
+    def __str__(self):
+        return self.__repr__()
+
+
 class ResizeScale(Augmentation):
     """
     Takes target size as input and randomly scales the given target size between `min_scale`

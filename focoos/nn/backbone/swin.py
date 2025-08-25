@@ -684,14 +684,14 @@ class Swin(BaseBackbone):
             logger.info(f"Loaded pretrained weights from {backbone_url}")
 
         # Set output features
-        self._out_features = ["res2", "res3", "res4", "res5"]
-        self._out_feature_strides = {
+        self.out_features = ["res2", "res3", "res4", "res5"]
+        self.out_feature_strides = {
             "res2": 4,
             "res3": 8,
             "res4": 16,
             "res5": 32,
         }
-        self._out_feature_channels = {
+        self.out_feature_channels = {
             "res2": self.num_features[0],
             "res3": self.num_features[1],
             "res4": self.num_features[2],
@@ -760,15 +760,15 @@ class Swin(BaseBackbone):
                 out = x_out.view(-1, H, W, self.num_features[i]).permute(0, 3, 1, 2).contiguous()
                 outputs[f"res{i + 2}"] = out
 
-        return {name: outputs[name] for name in self._out_features if name in outputs}
+        return {name: outputs[name] for name in self.out_features if name in outputs}
 
     def output_shape(self):
         return {
             name: ShapeSpec(
-                channels=self._out_feature_channels[name],
-                stride=self._out_feature_strides[name],
+                channels=self.out_feature_channels[name],
+                stride=self.out_feature_strides[name],
             )
-            for name in self._out_features
+            for name in self.out_features
         }
 
     @property

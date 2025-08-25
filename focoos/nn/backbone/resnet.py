@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from focoos.nn.layers.base import _get_activation_fn as get_activation
+from focoos.nn.layers.base import get_activation_fn as get_activation
 from focoos.nn.layers.conv import ConvNormLayer
 from focoos.nn.layers.norm import FrozenBatchNorm2d
 from focoos.utils.logger import get_logger
@@ -231,9 +231,9 @@ class ResNet(BaseBackbone):
             self.load_state_dict(state)
             logger.info(f"Load ResNet{depth} state_dict")
 
-        self._out_features = ["res2", "res3", "res4", "res5"]
-        self._out_feature_strides = {self._out_features[j]: self.out_strides[j] for j in range(4)}
-        self._out_feature_channels = {self._out_features[j]: self.out_channels[j] for j in range(4)}
+        self.out_features = ["res2", "res3", "res4", "res5"]
+        self.out_feature_strides = {self.out_features[j]: self.out_strides[j] for j in range(4)}
+        self.out_feature_channels = {self.out_features[j]: self.out_channels[j] for j in range(4)}
 
     def _freeze_parameters(self, m: nn.Module):
         for p in m.parameters():

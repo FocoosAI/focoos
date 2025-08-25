@@ -7,9 +7,20 @@ import numpy as np
 import PIL.Image as Image
 import supervision as sv
 from scipy.ndimage import zoom
+from torchvision.io import ImageReadMode
+from torchvision.io.image import read_image
 from typing_extensions import Buffer
 
-from focoos.ports import FocoosDet, FocoosDetections, Task
+from focoos.ports import CACHE_DIR, FocoosDet, FocoosDetections, Task
+from focoos.utils.api_client import ApiClient
+
+api_client = ApiClient()
+focoos_color_palette = sv.ColorPalette.from_hex(["#015fe6", "#3faebd", "#63dba6", "#a151ff", "#df923a"])
+label_annotator = sv.LabelAnnotator(color=focoos_color_palette, text_padding=10, border_radius=10, smart_position=False)
+box_annotator = sv.BoxAnnotator(color=focoos_color_palette)
+mask_annotator = sv.MaskAnnotator(color=focoos_color_palette)
+edge_annotator = sv.EdgeAnnotator(color=sv.Color.GREEN)
+vertex_annotator = sv.VertexAnnotator(color=sv.Color.YELLOW)
 
 
 def index_to_class(class_ids: list[int], classes: list[str]) -> list[str]:
@@ -24,7 +35,7 @@ def class_to_index(classes: list[str], class_names: list[str]) -> list[int]:
 def image_loader(im: Union[bytes, str, Path, np.ndarray, Image.Image]) -> np.ndarray:
     """
     Loads an image from various input types and converts it into a NumPy array
-    suitable for processing with OpenCV.
+    in RGB format suitable for processing.
 
     Args:
         im (Union[bytes, str, Path, np.ndarray, Image.Image]): The input image,
@@ -32,36 +43,36 @@ def image_loader(im: Union[bytes, str, Path, np.ndarray, Image.Image]) -> np.nda
             - bytes: Image data in raw byte format.
             - str: File path to the image.
             - Path: File path (Path object) to the image.
-            - np.ndarray: Image in NumPy array format.
+            - np.ndarray: Image in NumPy array format (assumed to be in RGB).
             - Image.Image: Image in PIL (Pillow) format.
             - URL: URL of the image (e.g. http:// or https://).
 
     Returns:
-        np.ndarray: The loaded image as a NumPy array, in BGR format, suitable for OpenCV processing.
+        np.ndarray: The loaded image as a NumPy array in RGB format.
 
     Raises:
         ValueError: If the input type is not one of the accepted types.
     """
     if isinstance(im, str) and im.startswith(("http://", "https://")):
-        import requests
-
-        response = requests.get(im)
-        response.raise_for_status()
-        im = response.content
+        file_path = api_client.download_ext_file(im, CACHE_DIR, skip_if_exists=True)
+        im = file_path
 
     if isinstance(im, np.ndarray):
-        cv_image = im
+        return im
     elif isinstance(im, str) or isinstance(im, Path):
-        cv_image = cv2.imread(str(im))
+        return read_image(str(im), mode=ImageReadMode.RGB).permute(1, 2, 0).numpy()
     elif isinstance(im, Image.Image):
-        cv_image = cv2.cvtColor(np.array(im), cv2.COLOR_RGB2BGR)
+        cv_image = np.array(im)
     elif isinstance(im, Buffer):
         byte_array = np.frombuffer(im, dtype=np.uint8)
         cv_image = cv2.imdecode(byte_array, cv2.IMREAD_COLOR)
+        if cv_image is None:
+            raise ValueError("Could not decode image from buffer")
 
     return cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
 
 
+#!TODO DEPRECATED
 def image_preprocess(
     im: Union[bytes, str, Path, np.ndarray, Image.Image],
     dtype=np.float32,
@@ -80,18 +91,25 @@ def image_preprocess(
 
     Returns:
         Tuple[np.ndarray, np.ndarray]: A tuple containing two elements:
-            - The preprocessed image in the form of a NumPy array with shape (1, C, H, W) (CHW format).
-            - The original loaded image in its raw form (height x width x channels).
+            - The preprocessed image in the form of a NumPy array with shape (1, C, H, W) (CHW format) in RGB.
+            - The original loaded image in RGB format (height x width x channels).
 
     Example:
         im1, im0 = image_preprocess("image.jpg", resize=256)
     """
+    # Load image in RGB format
     im0 = image_loader(im)
-    _im1 = im0
-    if resize:
-        _im1 = cv2.resize(im0, (resize, resize))
 
-    im1 = np.ascontiguousarray(_im1.transpose(2, 0, 1)[np.newaxis, :]).astype(dtype)  # HWC->1CHW
+    # Optimize: avoid unnecessary copy when no resize needed
+    if resize is not None and (im0.shape[0] != resize or im0.shape[1] != resize):
+        processed_im = cv2.resize(im0, (resize, resize), interpolation=cv2.INTER_LINEAR)
+    else:
+        processed_im = im0
+
+    # Optimize: combine transpose, expand dims, and astype in one operation
+    # HWC -> CHW -> 1CHW with efficient memory layout
+    im1 = np.ascontiguousarray(processed_im.transpose(2, 0, 1)[np.newaxis, :], dtype=dtype)
+
     return im1, im0
 
 
@@ -136,6 +154,7 @@ def scale_detections(detections: sv.Detections, in_shape: tuple, out_shape: tupl
 def base64mask_to_mask(base64mask: str) -> np.ndarray:
     """
     Convert a base64-encoded mask to a binary mask using OpenCV.
+    Optimized for better performance.
 
     Args:
         base64mask (str): Base64-encoded string representing the mask.
@@ -143,38 +162,101 @@ def base64mask_to_mask(base64mask: str) -> np.ndarray:
     Returns:
         np.ndarray: Decoded binary mask as a NumPy array.
     """
-    # Decode the base64 string to bytes and convert to a NumPy array in one step
-    np_arr = np.frombuffer(base64.b64decode(base64mask), np.uint8)
-    # Decode the NumPy array to an image using OpenCV and convert to a binary mask in one step
-    binary_mask = cv2.imdecode(np_arr, cv2.IMREAD_GRAYSCALE) > 0
-    return binary_mask.astype(bool)
+    # Optimization: decode and conversion in a single step
+    try:
+        # Decode base64 directly to bytes buffer
+        img_bytes = base64.b64decode(base64mask)
+        # Decode directly as uint8 array
+        np_arr = np.frombuffer(img_bytes, dtype=np.uint8)
+        # Decode and binarize in a single operation
+        binary_mask = cv2.imdecode(np_arr, cv2.IMREAD_GRAYSCALE)
+        return binary_mask > 0  # Convert directly to bool
+    except Exception:
+        # Fallback in case of error
+        np_arr = np.frombuffer(base64.b64decode(base64mask), np.uint8)
+        binary_mask = cv2.imdecode(np_arr, cv2.IMREAD_GRAYSCALE) > 0
+        return binary_mask.astype(bool)
 
 
 def fai_detections_to_sv(inference_output: FocoosDetections, im0_shape: tuple) -> sv.Detections:
-    xyxy = np.array([d.bbox if d.bbox is not None else np.empty(4) for d in inference_output.detections])
-    class_id = np.array([d.cls_id for d in inference_output.detections])
-    confidence = np.array([d.conf for d in inference_output.detections])
-    if xyxy.shape[0] == 0:
-        xyxy = np.zeros((0, 4))
+    # Early return if no detections
+    if not inference_output.detections:
+        return sv.Detections(
+            xyxy=np.zeros((0, 4)),
+            class_id=np.array([]),
+            confidence=np.array([]),
+            mask=None,
+        )
 
-    _masks = []
-    if len(inference_output.detections) > 0 and inference_output.detections[0].mask:
-        _masks = [np.zeros(im0_shape, dtype=bool) for _ in inference_output.detections]
-        for i, det in enumerate(inference_output.detections):
+    # Optimize array extraction using more efficient list comprehensions
+    detections = inference_output.detections
+    xyxy = np.array([d.bbox for d in detections if d.bbox is not None], dtype=np.float32)
+    class_id = np.array([d.cls_id for d in detections], dtype=np.int32)
+    confidence = np.array([d.conf for d in detections], dtype=np.float32)
+
+    # If no valid bboxes, create empty array
+    if xyxy.shape[0] == 0:
+        xyxy = np.zeros((0, 4), dtype=np.float32)
+
+    masks = None
+    # Optimize mask handling - check only if necessary
+    if detections and detections[0].mask:
+        # Pre-allocate only if needed and use more efficient dtype
+        _masks = []
+        for i, det in enumerate(detections):
             if det.mask:
                 mask = base64mask_to_mask(det.mask)
+                full_mask = np.zeros(im0_shape, dtype=bool)
+
                 if det.bbox is not None and not np.array_equal(det.bbox, [0, 0, 0, 0]):
                     x1, y1, x2, y2 = map(int, det.bbox)
-                    y2, x2 = min(y2, _masks[i].shape[0]), min(x2, _masks[i].shape[1])  # type: ignore
-                    _masks[i][y1:y2, x1:x2] = mask[: y2 - y1, : x2 - x1]
+                    # Optimized bound checking
+                    y2, x2 = min(y2, im0_shape[0]), min(x2, im0_shape[1])
+                    y1, x1 = max(0, y1), max(0, x1)
+
+                    mask_h, mask_w = y2 - y1, x2 - x1
+                    if mask_h > 0 and mask_w > 0:
+                        full_mask[y1:y2, x1:x2] = mask[:mask_h, :mask_w]
                 else:
-                    _masks[i] = mask
-    masks = np.array(_masks).astype(bool) if len(_masks) > 0 else None
+                    # Ensure mask has correct dimensions
+                    if mask.shape == im0_shape:
+                        full_mask = mask
+
+                _masks.append(full_mask)
+            else:
+                _masks.append(np.zeros(im0_shape, dtype=bool))
+
+        masks = np.array(_masks, dtype=bool) if _masks else None
+
     return sv.Detections(
         xyxy=xyxy,
         class_id=class_id,
         confidence=confidence,
         mask=masks,
+    )
+
+
+def fai_keypoints_to_sv(
+    inference_output: FocoosDetections, im0_shape: tuple, keypoints_threshold: float = 0.5
+) -> sv.KeyPoints:
+    detections = inference_output.detections
+    keypoints_data = np.array([d.keypoints for d in detections if d.keypoints is not None], dtype=np.float32)
+
+    # Filter out keypoints with confidence below threshold
+    confidence_values = keypoints_data[:, :, 2].copy()
+    filter_mask = confidence_values < keypoints_threshold
+    keypoints_data[filter_mask] = [0, 0, 0]
+
+    # Extract xy coordinates (first two columns) and confidence (third column)
+    keypoints_xy = keypoints_data[:, :, :2]  # Shape: (num_detections, num_keypoints, 2)
+    keypoints_confidence = keypoints_data[:, :, 2]  # Shape: (num_detections, num_keypoints)
+
+    class_id = np.array([d.cls_id for d in detections], dtype=int)
+
+    return sv.KeyPoints(
+        xy=keypoints_xy,
+        class_id=class_id,
+        confidence=keypoints_confidence,
     )
 
 
@@ -207,7 +289,7 @@ def binary_mask_to_base64(binary_mask: np.ndarray) -> str:
         raise ValueError("Failed to encode image")
 
     # Encode the image to base64
-    return base64.b64encode(encoded_image).decode("utf-8")
+    return base64.b64encode(encoded_image.tobytes()).decode("utf-8")
 
 
 def sv_to_fai_detections(detections: sv.Detections, classes: Optional[list[str]] = None) -> List[FocoosDet]:
@@ -287,143 +369,35 @@ def masks_to_xyxy(masks: np.ndarray) -> np.ndarray:
     return xyxy
 
 
-def get_postprocess_fn(task: Task):
-    if task == Task.INSTANCE_SEGMENTATION:
-        return instance_postprocess
-    elif task == Task.SEMSEG:
-        return semseg_postprocess
-    else:
-        return det_postprocess
-
-
-def det_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float) -> sv.Detections:
-    """
-    Postprocesses the output of an object detection model and filters detections
-    based on a confidence threshold.
-
-    Args:
-        out (List[np.ndarray]): The output of the detection model.
-        im0_shape (Tuple[int, int]): The original shape of the input image (height, width).
-        conf_threshold (float): The confidence threshold for filtering detections.
-
-    Returns:
-        sv.Detections: A sv.Detections object containing the filtered bounding boxes, class ids, and confidences.
-    """
-    cls_ids, boxes, confs = out
-    boxes[:, :, 0::2] *= im0_shape[1]
-    boxes[:, :, 1::2] *= im0_shape[0]
-    high_conf_indices = (confs > conf_threshold).nonzero()
-
-    return sv.Detections(
-        xyxy=boxes[high_conf_indices].astype(int),
-        class_id=cls_ids[high_conf_indices].astype(int),
-        confidence=confs[high_conf_indices].astype(float),
-    )
-
-
-def semseg_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float) -> sv.Detections:
-    """
-    Postprocesses the output of a semantic segmentation model and filters based
-    on a confidence threshold, removing empty masks.
-
-    Args:
-        out (List[np.ndarray]): The output of the semantic segmentation model.
-        conf_threshold (float): The confidence threshold for filtering detections.
-
-    Returns:
-        sv.Detections: A sv.Detections object containing the non-empty masks, class ids, and confidences.
-    """
-    cls_ids, mask, confs = out[0][0], out[1][0], out[2][0]
-    masks = np.equal(mask, np.arange(len(cls_ids))[:, None, None])
-    high_conf_indices = confs > conf_threshold
-    masks = masks[high_conf_indices]
-    cls_ids = cls_ids[high_conf_indices]
-    confs = confs[high_conf_indices]
-
-    if len(masks.shape) != 3:
-        return sv.Detections(
-            mask=None,
-            xyxy=np.zeros((0, 4)),
-            class_id=None,
-            confidence=None,
-        )
-    # Filter out empty masks
-    non_empty_mask_indices = np.any(masks, axis=(1, 2))
-    masks = masks[non_empty_mask_indices]
-    cls_ids = cls_ids[non_empty_mask_indices]
-    confs = confs[non_empty_mask_indices]
-    xyxy = masks_to_xyxy(masks)
-    return sv.Detections(
-        mask=masks,
-        # xyxy is required from supervision
-        xyxy=xyxy,
-        class_id=cls_ids,
-        confidence=confs,
-    )
-
-
-def instance_postprocess(out: List[np.ndarray], im0_shape: Tuple[int, int], conf_threshold: float) -> sv.Detections:
-    """
-    Postprocesses the output of an instance segmentation model and filters detections
-    based on a confidence threshold.
-    """
-    cls_ids, mask, confs = out[0][0], out[1][0], out[2][0]
-    high_conf_indices = np.where(confs > conf_threshold)[0]
-    masks = mask[high_conf_indices].astype(bool)
-    cls_ids = cls_ids[high_conf_indices].astype(int)
-    confs = confs[high_conf_indices].astype(float)
-    if len(masks.shape) != 3:
-        return sv.Detections(
-            mask=None,
-            xyxy=np.zeros((0, 4)),
-            class_id=None,
-            confidence=None,
-        )
-
-    # Filter out empty masks
-    non_empty_mask_indices = np.any(masks, axis=(1, 2))
-    masks = masks[non_empty_mask_indices]
-    cls_ids = cls_ids[non_empty_mask_indices]
-    confs = confs[non_empty_mask_indices]
-    xyxy = masks_to_xyxy(masks)
-
-    return sv.Detections(
-        mask=masks,
-        # xyxy is required from supervision
-        xyxy=xyxy,
-        class_id=cls_ids,
-        confidence=confs,
-    )
-
-
+#!TODO DEPRECATED
 def annotate_image(
     im: Union[np.ndarray, Image.Image], detections: FocoosDetections, task: Task, classes: Optional[list[str]] = None
 ) -> Image.Image:
     if isinstance(im, Image.Image):
         im = np.array(im)
-    label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
-    box_annotator = sv.BoxAnnotator()
-    mask_annotator = sv.MaskAnnotator()
 
     sv_detections = fai_detections_to_sv(detections, im.shape[:2])
-    if len(sv_detections.xyxy) == 0:
-        print("No detections found, skipping annotation")
+    # Optimized early return - check if there are detections
+    if sv_detections.xyxy.shape[0] == 0:
         return Image.fromarray(im)
 
+    # Use image directly without unnecessary copies
+    annotated_im = im
+
     if task == Task.DETECTION:
-        annotated_im = box_annotator.annotate(scene=im.copy(), detections=sv_detections)
+        annotated_im = box_annotator.annotate(scene=annotated_im, detections=sv_detections)
 
     elif task in [
         Task.SEMSEG,
         Task.INSTANCE_SEGMENTATION,
     ]:
-        annotated_im = mask_annotator.annotate(scene=im.copy(), detections=sv_detections)
+        annotated_im = mask_annotator.annotate(scene=annotated_im, detections=sv_detections)
 
-    # Fixme: get the classes from the detections
-    if classes is not None:
+    # Optimize label creation
+    if classes is not None and sv_detections.class_id is not None and sv_detections.confidence is not None:
         labels = [
-            f"{classes[int(class_id)] if classes is not None else str(class_id)}: {confid * 100:.0f}%"
-            for class_id, confid in zip(sv_detections.class_id, sv_detections.confidence)  # type: ignore
+            f"{classes[int(class_id)]}: {confid * 100:.0f}%"
+            for class_id, confid in zip(sv_detections.class_id, sv_detections.confidence)
         ]
         annotated_im = label_annotator.annotate(scene=annotated_im, detections=sv_detections, labels=labels)
 
@@ -431,34 +405,43 @@ def annotate_image(
 
 
 def annotate_frame(
-    im: np.ndarray, detections: FocoosDetections, task: Task, classes: Optional[list[str]] = None
+    im: np.ndarray,
+    detections: FocoosDetections,
+    task: Task,
+    classes: Optional[list[str]] = None,
+    keypoints_skeleton: Optional[list[tuple[int, int]]] = None,
+    keypoints_threshold: float = 0.5,
 ) -> np.ndarray:
     if isinstance(im, Image.Image):
         im = np.array(im)
-    label_annotator = sv.LabelAnnotator(text_padding=10, border_radius=10)
-    box_annotator = sv.BoxAnnotator()
-    mask_annotator = sv.MaskAnnotator()
-
-    sv_detections = fai_detections_to_sv(detections, im.shape[:2])
-    if len(sv_detections.xyxy) == 0:
-        print("No detections found, skipping annotation")
+    if len(detections.detections) == 0:
         return im
+    has_bbox = detections.detections[0].bbox is not None
+    has_mask = detections.detections[0].mask is not None
+    has_keypoints = detections.detections[0].keypoints is not None
+    if has_keypoints:
+        sv_keypoints = fai_keypoints_to_sv(detections, im.shape[:2], keypoints_threshold=keypoints_threshold)
+    sv_detections = fai_detections_to_sv(detections, im.shape[:2])
+    if sv_detections.xyxy.shape[0] == 0:
+        return im  # Return original RGB image
 
-    if task == Task.DETECTION:
-        annotated_im = box_annotator.annotate(scene=im.copy(), detections=sv_detections)
+    annotated_im = im
 
-    elif task in [
-        Task.SEMSEG,
-        Task.INSTANCE_SEGMENTATION,
-    ]:
-        annotated_im = mask_annotator.annotate(scene=im.copy(), detections=sv_detections)
+    if has_bbox and task != Task.SEMSEG:
+        annotated_im = box_annotator.annotate(scene=annotated_im, detections=sv_detections)
 
-    # Fixme: get the classes from the detections
-    if classes is not None:
+    if has_mask:
+        annotated_im = mask_annotator.annotate(scene=annotated_im, detections=sv_detections)
+    if has_keypoints:
+        edge_annotator.edges = keypoints_skeleton
+
+        annotated_im = edge_annotator.annotate(scene=annotated_im, key_points=sv_keypoints)
+        annotated_im = vertex_annotator.annotate(scene=annotated_im, key_points=sv_keypoints)
+    # Optimize label creation
+    if classes is not None and sv_detections.class_id is not None and sv_detections.confidence is not None:
         labels = [
-            f"{classes[int(class_id)] if classes is not None else str(class_id)}: {confid * 100:.0f}%"
-            for class_id, confid in zip(sv_detections.class_id, sv_detections.confidence)  # type: ignore
+            f"{classes[int(class_id)]}: {confid * 100:.0f}%"
+            for class_id, confid in zip(sv_detections.class_id, sv_detections.confidence)
         ]
         annotated_im = label_annotator.annotate(scene=annotated_im, detections=sv_detections, labels=labels)
-
     return annotated_im

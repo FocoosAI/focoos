@@ -58,8 +58,8 @@ def detector_postprocess(
 
 
 class DETRProcessor(Processor):
-    def __init__(self, config: DETRConfig):
-        super().__init__(config)
+    def __init__(self, config: DETRConfig, image_size: Optional[int] = None):
+        super().__init__(config, image_size)
         self.top_k = config.top_k
         self.threshold = config.threshold
         self.resolution = config.resolution
@@ -77,7 +77,6 @@ class DETRProcessor(Processor):
         ],
         device: torch.device,
         dtype: torch.dtype = torch.float32,
-        image_size: Optional[int] = None,
     ) -> tuple[torch.Tensor, list[DETRTargets]]:
         targets = []
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], DatasetEntry):
@@ -103,11 +102,15 @@ class DETRProcessor(Processor):
         else:
             if self.training:
                 raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
-            images_torch = self.get_tensors(inputs).to(device, dtype=dtype)  # type: ignore
-            if image_size is not None:
-                images_torch = torch.nn.functional.interpolate(
-                    images_torch, size=(image_size, image_size), mode="bilinear", align_corners=False
-                )
+
+            # Use optimized get_tensors with optional resizing for better memory efficiency
+            target_size = (self.image_size, self.image_size) if self.image_size is not None else None
+            images_torch = self.get_torch_batch(
+                inputs,  # type: ignore
+                target_size=target_size,
+                device=device,
+                dtype=dtype,
+            )
         return images_torch, targets
 
     def eval_postprocess(
@@ -219,7 +222,7 @@ class DETRProcessor(Processor):
         ],
         class_names: list[str] = [],
         top_k: Optional[int] = None,
-        threshold: Optional[float] = None,
+        threshold: float = 0.5,
     ) -> list[FocoosDetections]:
         boxes = output[0]
         logits = output[1]
@@ -229,7 +232,6 @@ class DETRProcessor(Processor):
             logits = torch.from_numpy(logits)
         model_output = DETRModelOutput(boxes=boxes, logits=logits, loss=None)
         top_k = 300 if top_k is None else top_k
-        threshold = 0.5 if threshold is None else threshold
         return self.postprocess(model_output, inputs, class_names, top_k, threshold)
 
     def get_dynamic_axes(self) -> DynamicAxes:

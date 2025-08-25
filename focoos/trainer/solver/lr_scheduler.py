@@ -5,6 +5,8 @@ from typing import List
 import torch
 from torch.optim.lr_scheduler import LRScheduler
 
+from focoos.utils.logger import get_logger
+
 # NOTE: PyTorch's LR scheduler interface uses names that assume the LR changes
 # only on epoch boundaries. We typically use iteration based schedules instead.
 # As a result, "epoch" (e.g., as in self.last_epoch) should be understood to mean
@@ -115,6 +117,11 @@ class WarmupCosineLR(BaseLRScheduler):
         self.warmup_factor = warmup_factor
         self.warmup_iters = warmup_iters
         self.warmup_method = warmup_method
+
+        logger = get_logger("COSINE_SCHEDULER")
+        logger.info(
+            f"WarmupCosineLR: warmup_factor={warmup_factor}, warmup_iters={warmup_iters}, warmup_method={warmup_method}"
+        )
         super().__init__(optimizer, max_iters, last_epoch)
 
     def get_lr(self) -> List[float]:
@@ -154,6 +161,9 @@ def _get_warmup_factor_at_iter(method: str, iter: int, warmup_iters: int, warmup
         return warmup_factor
     elif method == "linear":
         alpha = iter / warmup_iters
+        return warmup_factor * (1 - alpha) + alpha
+    elif method == "quadratic":
+        alpha = (iter / warmup_iters) ** 2
         return warmup_factor * (1 - alpha) + alpha
     else:
         raise ValueError("Unknown warmup method: {}".format(method))

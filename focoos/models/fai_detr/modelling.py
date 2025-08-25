@@ -301,6 +301,16 @@ class Encoder(nn.Module):
         assert len(feats) == len(self.in_channels)
         proj_feats = [self.input_proj[i](feat) for i, feat in enumerate(feats)]
 
+        # Res5 1/8 -> (SPPF) -> Conv -> UPScale -----------------------------------------> Concat -> CSRep -> Output 1/32
+        #                                 v                                                   ^
+        #                                 |                                            Down+Conv 1/16 -> 1/32
+        #                                 v                                                   |
+        # Res4 1/16                   ->Concat -> CSRep -> Conv ->    UPScale |-->Concat -> CSRep ----->Output 1/16
+        #                                                                |         |
+        #                                                                |     Down+Conv 1/8 -> 1/16
+        #                                                                v         |
+        # Res3 1/32                                                  ->Concat -> C2Rep --->Output 1/8   (128)
+
         # encoder
         if self.num_encoder_layers > 0:
             for i, enc_ind in enumerate(self.use_encoder_idx):
