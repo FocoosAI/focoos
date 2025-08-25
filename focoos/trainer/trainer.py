@@ -287,6 +287,10 @@ class FocoosTrainer:
         if comm.is_main_process() and self.args.sync_to_hub:
             hub = hub or FocoosHUB()
             self.remote_model = hub.new_model(self.model_info)
+            if self.remote_model is None:
+                logger.warning("Model not created in hub. Continuing without sync to the hub.")
+                self.args.sync_to_hub = False
+                return
 
             self.model_info.ref = self.remote_model.ref
             logger.info(f"Model {self.model_info.name} created in hub with ref {self.model_info.ref}")

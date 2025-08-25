@@ -24,15 +24,20 @@ from focoos.ports import (
     MODELS_DIR,
     ArtifactName,
     DatasetPreview,
+    ModelFamily,
     ModelInfo,
     ModelPreview,
     RemoteModelInfo,
+    Task,
     User,
 )
 from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
 
 logger = get_logger("HUB")
+
+
+SUPPORTED_MODEL_FAMILIES = [ModelFamily.BISENETFORMER, ModelFamily.DETR, ModelFamily.MASKFORMER]
 
 
 class FocoosHUB:
@@ -328,7 +333,7 @@ class FocoosHUB:
         """
         return RemoteDataset(ref, self.api_client)
 
-    def new_model(self, model_info: ModelInfo) -> RemoteModel:
+    def new_model(self, model_info: ModelInfo) -> Optional[RemoteModel]:
         """
         Creates a new model in the Focoos platform.
 
@@ -351,6 +356,16 @@ class FocoosHUB:
             model = focoos.new_model(name="my-model", focoos_model="fai-model-ref", description="my-model-description")
             ```
         """
+        if model_info.task == Task.KEYPOINT:
+            logger.warning(
+                "Unfortunatelly keypoint models are not supported in the hub yet. Use them only locally temporarily."
+            )
+            return None
+        if model_info.model_family not in SUPPORTED_MODEL_FAMILIES:
+            logger.warning(
+                f"Unfortunatelly model family {model_info.model_family} is not supported in the hub yet. Use one of {SUPPORTED_MODEL_FAMILIES}."
+            )
+            return None
 
         res = self.api_client.post(
             "models/local-model",
