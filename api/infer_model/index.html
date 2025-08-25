@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
     
     
       
@@ -242,7 +242,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../hub/overview/" class="md-tabs__link">
+        <a href="../../hub/" class="md-tabs__link">
           
   
   
@@ -262,7 +262,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../models/models/" class="md-tabs__link">
+        <a href="../../models/" class="md-tabs__link">
           
   
   
@@ -580,7 +580,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../hub/overview/" class="md-nav__link">
+      <a href="../../hub/" class="md-nav__link">
         
   
   
@@ -697,7 +697,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/models/" class="md-nav__link">
+      <a href="../../models/" class="md-nav__link">
         
   
   
@@ -772,6 +772,29 @@
   
   <span class="md-ellipsis">
     bisenetformer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/rtmo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    rtmo
     
   </span>
   
@@ -1667,9 +1690,7 @@ and TorchScript for model execution.</p>
 
               <details class="quote">
                 <summary>Source code in <code>focoos/infer/infer_model.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 51</span>
-<span class="normal"> 52</span>
-<span class="normal"> 53</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 53</span>
 <span class="normal"> 54</span>
 <span class="normal"> 55</span>
 <span class="normal"> 56</span>
@@ -1894,7 +1915,20 @@ and TorchScript for model execution.</p>
 <span class="normal">275</span>
 <span class="normal">276</span>
 <span class="normal">277</span>
-<span class="normal">278</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">InferModel</span><span class="p">:</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">InferModel</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
@@ -1953,7 +1987,9 @@ and TorchScript for model execution.</p>
             <span class="kn">from</span><span class="w"> </span><span class="nn">focoos.model_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigManager</span>
 
             <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigManager</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">model_family</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">processor</span> <span class="o">=</span> <span class="n">ProcessorManager</span><span class="o">.</span><span class="n">get_processor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">model_family</span><span class="p">,</span> <span class="n">model_config</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">processor</span> <span class="o">=</span> <span class="n">ProcessorManager</span><span class="o">.</span><span class="n">get_processor</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">model_family</span><span class="p">,</span> <span class="n">model_config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">im_size</span>
+            <span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error creating model config: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">raise</span> <span class="n">e</span>
@@ -1981,65 +2017,74 @@ and TorchScript for model execution.</p>
         <span class="k">return</span> <span class="n">ModelInfo</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">model_info_path</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span> <span class="n">threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">annotate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FocoosDetections</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">threshold</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">annotate</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">infer</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">image</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span>
-        <span class="n">threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">annotate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FocoosDetections</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Run inference on an input image and optionally annotate the results.</span>
+<span class="sd">        Perform inference on an input image and optionally return an annotated result.</span>
+
+<span class="sd">        This method processes the input image, runs it through the model, and returns the detections.</span>
+<span class="sd">        Optionally, it can also annotate the image with the detection results.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            image (Union[bytes, str, Path, np.ndarray, Image.Image]): The input image to infer on.</span>
-<span class="sd">                This can be a byte array, file path, or a PIL Image object, or a NumPy array representing the image.</span>
-<span class="sd">            threshold (float, optional): The confidence threshold for detections. Defaults to 0.5.</span>
-<span class="sd">                Detections with confidence scores below this threshold will be discarded.</span>
+<span class="sd">            image: The input image to run inference on. Accepts a file path, bytes, PIL Image, or numpy array.</span>
+<span class="sd">            threshold: Minimum confidence score for a detection to be included in the results. Default is 0.5.</span>
+<span class="sd">            annotate: If True, annotate the image with detection results and include it in the output.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            FocoosDetections: The detections from the inference, represented as a custom object (`FocoosDetections`).</span>
+<span class="sd">            FocoosDetections: An object containing the detection results, optional annotated image, and latency metrics.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If the model is not deployed locally (i.e., `self.runtime` is `None`).</span>
+<span class="sd">            AssertionError: If the model runtime is not initialized.</span>
 
-<span class="sd">        Example:</span>
-<span class="sd">            ```python</span>
-<span class="sd">            from focoos import Focoos, LocalModel</span>
-
-<span class="sd">            focoos = Focoos()</span>
-<span class="sd">            model = focoos.get_local_model(model_ref=&quot;&lt;model_ref&gt;&quot;)</span>
-<span class="sd">            detections = model.infer(image, threshold=0.5)</span>
-<span class="sd">            ```</span>
+<span class="sd">        Usage:</span>
+<span class="sd">            This method is intended for users who want to obtain detection results from a local model,</span>
+<span class="sd">            with optional annotation for visualization or further processing.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Model is not deployed (locally)&quot;</span>
 
         <span class="n">t0</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-        <span class="n">im1</span><span class="p">,</span> <span class="n">im0</span> <span class="o">=</span> <span class="n">image_preprocess</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
-        <span class="n">tensors</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">im1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">im_size</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Input image size: </span><span class="si">{</span><span class="n">im0</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="n">image_loader</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
         <span class="n">t1</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+        <span class="n">tensors</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">im</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+        <span class="c1"># logger.debug(f&quot;Input image size: {im.shape}&quot;)</span>
+        <span class="n">t2</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
 
         <span class="n">raw_detections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="p">(</span><span class="n">tensors</span><span class="p">)</span>
 
-        <span class="n">t2</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-        <span class="n">detections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">export_postprocess</span><span class="p">(</span>
-            <span class="n">raw_detections</span><span class="p">,</span> <span class="n">im0</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">class_names</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">classes</span>
-        <span class="p">)</span>
         <span class="n">t3</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-        <span class="n">latency</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;inference&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">t2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-            <span class="s2">&quot;preprocess&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">t1</span> <span class="o">-</span> <span class="n">t0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-            <span class="s2">&quot;postprocess&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">t3</span> <span class="o">-</span> <span class="n">t2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="p">}</span>
-        <span class="n">res</span> <span class="o">=</span> <span class="n">detections</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1">#!TODO  check for batching</span>
-        <span class="n">res</span><span class="o">.</span><span class="n">latency</span> <span class="o">=</span> <span class="n">latency</span>
-
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="si">}</span><span class="s2"> detections. Inference time: </span><span class="si">{</span><span class="p">(</span><span class="n">t2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t1</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">ms, preprocess: </span><span class="si">{</span><span class="p">(</span><span class="n">t1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">ms, postprocess: </span><span class="si">{</span><span class="p">(</span><span class="n">t3</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t2</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">ms&quot;</span>
+        <span class="n">detections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">export_postprocess</span><span class="p">(</span>
+            <span class="n">raw_detections</span><span class="p">,</span> <span class="n">im</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">class_names</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">classes</span>
         <span class="p">)</span>
+        <span class="n">t4</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">annotate</span><span class="p">:</span>
+            <span class="n">skeleton</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;skeleton&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">detections</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">annotate_frame</span><span class="p">(</span>
+                <span class="n">im</span><span class="p">,</span>
+                <span class="n">detections</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">task</span><span class="p">,</span>
+                <span class="n">classes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">classes</span><span class="p">,</span>
+                <span class="n">keypoints_skeleton</span><span class="o">=</span><span class="n">skeleton</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">t5</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="n">detections</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1">#!TODO  check for batching</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">latency</span> <span class="o">=</span> <span class="n">InferLatency</span><span class="p">(</span>
+            <span class="n">imload</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">t1</span> <span class="o">-</span> <span class="n">t0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="n">preprocess</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">t2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="n">inference</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">t3</span> <span class="o">-</span> <span class="n">t2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="n">postprocess</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">t4</span> <span class="o">-</span> <span class="n">t3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="n">annotate</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">t5</span> <span class="o">-</span> <span class="n">t4</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">if</span> <span class="n">annotate</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">res</span><span class="o">.</span><span class="n">infer_print</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">res</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
@@ -2332,9 +2377,7 @@ utilities are also prepared for visualizing model outputs.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/infer_model.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 52</span>
-<span class="normal"> 53</span>
-<span class="normal"> 54</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 54</span>
 <span class="normal"> 55</span>
 <span class="normal"> 56</span>
 <span class="normal"> 57</span>
@@ -2406,7 +2449,11 @@ utilities are also prepared for visualizing model outputs.</p>
 <span class="normal">123</span>
 <span class="normal">124</span>
 <span class="normal">125</span>
-<span class="normal">126</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">model_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">runtime_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RuntimeType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -2464,7 +2511,9 @@ utilities are also prepared for visualizing model outputs.</p>
         <span class="kn">from</span><span class="w"> </span><span class="nn">focoos.model_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigManager</span>
 
         <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigManager</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">model_family</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">processor</span> <span class="o">=</span> <span class="n">ProcessorManager</span><span class="o">.</span><span class="n">get_processor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">model_family</span><span class="p">,</span> <span class="n">model_config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">processor</span> <span class="o">=</span> <span class="n">ProcessorManager</span><span class="o">.</span><span class="n">get_processor</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">model_family</span><span class="p">,</span> <span class="n">model_config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">im_size</span>
+        <span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error creating model config: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">raise</span> <span class="n">e</span>
@@ -2503,15 +2552,15 @@ utilities are also prepared for visualizing model outputs.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/infer_model.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
-<span class="normal">206</span>
-<span class="normal">207</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Benchmark the model&#39;s inference performance over multiple iterations.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -2645,20 +2694,7 @@ utilities are also prepared for visualizing model outputs.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/infer_model.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">209</span>
-<span class="normal">210</span>
-<span class="normal">211</span>
-<span class="normal">212</span>
-<span class="normal">213</span>
-<span class="normal">214</span>
-<span class="normal">215</span>
-<span class="normal">216</span>
-<span class="normal">217</span>
-<span class="normal">218</span>
-<span class="normal">219</span>
-<span class="normal">220</span>
-<span class="normal">221</span>
-<span class="normal">222</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">222</span>
 <span class="normal">223</span>
 <span class="normal">224</span>
 <span class="normal">225</span>
@@ -2714,7 +2750,20 @@ utilities are also prepared for visualizing model outputs.</p>
 <span class="normal">275</span>
 <span class="normal">276</span>
 <span class="normal">277</span>
-<span class="normal">278</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">end2end_benchmark</span><span class="p">(</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">end2end_benchmark</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -2794,14 +2843,16 @@ utilities are also prepared for visualizing model outputs.</p>
 
 
 <h3 id="focoos.infer.infer_model.InferModel.infer" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">infer</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">infer</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">annotate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
 <a href="#focoos.infer.infer_model.InferModel.infer" class="headerlink" title="Permanent link">#</a></h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Run inference on an input image and optionally annotate the results.</p>
+        <p>Perform inference on an input image and optionally return an annotated result.</p>
+<p>This method processes the input image, runs it through the model, and returns the detections.
+Optionally, it can also annotate the image with the detection results.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2824,8 +2875,7 @@ utilities are also prepared for visualizing model outputs.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The input image to infer on.
-This can be a byte array, file path, or a PIL Image object, or a NumPy array representing the image.</p>
+                <p>The input image to run inference on. Accepts a file path, bytes, PIL Image, or numpy array.</p>
               </div>
             </td>
             <td>
@@ -2841,12 +2891,27 @@ This can be a byte array, file path, or a PIL Image object, or a NumPy array rep
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The confidence threshold for detections. Defaults to 0.5.
-Detections with confidence scores below this threshold will be discarded.</p>
+                <p>Minimum confidence score for a detection to be included in the results. Default is 0.5.</p>
               </div>
             </td>
             <td>
-                  <code>None</code>
+                  <code>0.5</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>annotate</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If True, annotate the image with detection results and include it in the output.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
             </td>
           </tr>
       </tbody>
@@ -2864,11 +2929,16 @@ Detections with confidence scores below this threshold will be discarded.</p>
       <tbody>
           <tr class="doc-section-item">
 <td><code>FocoosDetections</code></td>            <td>
-                  <code><a class="autorefs autorefs-internal" title="FocoosDetections (focoos.ports.FocoosDetections)" href="../ports/#focoos.ports.FocoosDetections">FocoosDetections</a></code>
+                  <code><a class="autorefs autorefs-internal" title="FocoosDetections
+
+
+  
+      dataclass
+   (focoos.ports.FocoosDetections)" href="../ports/#focoos.ports.FocoosDetections">FocoosDetections</a></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The detections from the inference, represented as a custom object (<code>FocoosDetections</code>).</p>
+                <p>An object containing the detection results, optional annotated image, and latency metrics.</p>
               </div>
             </td>
           </tr>
@@ -2887,11 +2957,11 @@ Detections with confidence scores below this threshold will be discarded.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code><span title="AssertionError">AssertionError</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If the model is not deployed locally (i.e., <code>self.runtime</code> is <code>None</code>).</p>
+                <p>If the model runtime is not initialized.</p>
               </div>
             </td>
           </tr>
@@ -2899,27 +2969,15 @@ Detections with confidence scores below this threshold will be discarded.</p>
     </table>
 
 
-<details class="example" open>
-  <summary>Example</summary>
-  <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">Focoos</span><span class="p">,</span> <span class="n">LocalModel</span>
-
-<span class="n">focoos</span> <span class="o">=</span> <span class="n">Focoos</span><span class="p">()</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">focoos</span><span class="o">.</span><span class="n">get_local_model</span><span class="p">(</span><span class="n">model_ref</span><span class="o">=</span><span class="s2">&quot;&lt;model_ref&gt;&quot;</span><span class="p">)</span>
-<span class="n">detections</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
+<details class="usage" open>
+  <summary>Usage</summary>
+  <p>This method is intended for users who want to obtain detection results from a local model,
+with optional annotation for visualization or further processing.</p>
 </details>
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/infer_model.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">142</span>
-<span class="normal">143</span>
-<span class="normal">144</span>
-<span class="normal">145</span>
-<span class="normal">146</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">146</span>
 <span class="normal">147</span>
 <span class="normal">148</span>
 <span class="normal">149</span>
@@ -2970,61 +3028,83 @@ Detections with confidence scores below this threshold will be discarded.</p>
 <span class="normal">194</span>
 <span class="normal">195</span>
 <span class="normal">196</span>
-<span class="normal">197</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">infer</span><span class="p">(</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">infer</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">image</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span>
-    <span class="n">threshold</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">annotate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FocoosDetections</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Run inference on an input image and optionally annotate the results.</span>
+<span class="sd">    Perform inference on an input image and optionally return an annotated result.</span>
+
+<span class="sd">    This method processes the input image, runs it through the model, and returns the detections.</span>
+<span class="sd">    Optionally, it can also annotate the image with the detection results.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        image (Union[bytes, str, Path, np.ndarray, Image.Image]): The input image to infer on.</span>
-<span class="sd">            This can be a byte array, file path, or a PIL Image object, or a NumPy array representing the image.</span>
-<span class="sd">        threshold (float, optional): The confidence threshold for detections. Defaults to 0.5.</span>
-<span class="sd">            Detections with confidence scores below this threshold will be discarded.</span>
+<span class="sd">        image: The input image to run inference on. Accepts a file path, bytes, PIL Image, or numpy array.</span>
+<span class="sd">        threshold: Minimum confidence score for a detection to be included in the results. Default is 0.5.</span>
+<span class="sd">        annotate: If True, annotate the image with detection results and include it in the output.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        FocoosDetections: The detections from the inference, represented as a custom object (`FocoosDetections`).</span>
+<span class="sd">        FocoosDetections: An object containing the detection results, optional annotated image, and latency metrics.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If the model is not deployed locally (i.e., `self.runtime` is `None`).</span>
+<span class="sd">        AssertionError: If the model runtime is not initialized.</span>
 
-<span class="sd">    Example:</span>
-<span class="sd">        ```python</span>
-<span class="sd">        from focoos import Focoos, LocalModel</span>
-
-<span class="sd">        focoos = Focoos()</span>
-<span class="sd">        model = focoos.get_local_model(model_ref=&quot;&lt;model_ref&gt;&quot;)</span>
-<span class="sd">        detections = model.infer(image, threshold=0.5)</span>
-<span class="sd">        ```</span>
+<span class="sd">    Usage:</span>
+<span class="sd">        This method is intended for users who want to obtain detection results from a local model,</span>
+<span class="sd">        with optional annotation for visualization or further processing.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Model is not deployed (locally)&quot;</span>
 
     <span class="n">t0</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-    <span class="n">im1</span><span class="p">,</span> <span class="n">im0</span> <span class="o">=</span> <span class="n">image_preprocess</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
-    <span class="n">tensors</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">im1</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">im_size</span><span class="p">)</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Input image size: </span><span class="si">{</span><span class="n">im0</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">image_loader</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
     <span class="n">t1</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+    <span class="n">tensors</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">im</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+    <span class="c1"># logger.debug(f&quot;Input image size: {im.shape}&quot;)</span>
+    <span class="n">t2</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
 
     <span class="n">raw_detections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="p">(</span><span class="n">tensors</span><span class="p">)</span>
 
-    <span class="n">t2</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-    <span class="n">detections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">export_postprocess</span><span class="p">(</span>
-        <span class="n">raw_detections</span><span class="p">,</span> <span class="n">im0</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">class_names</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">classes</span>
-    <span class="p">)</span>
     <span class="n">t3</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-    <span class="n">latency</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;inference&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">t2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="s2">&quot;preprocess&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">t1</span> <span class="o">-</span> <span class="n">t0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="s2">&quot;postprocess&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">t3</span> <span class="o">-</span> <span class="n">t2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
-    <span class="p">}</span>
-    <span class="n">res</span> <span class="o">=</span> <span class="n">detections</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1">#!TODO  check for batching</span>
-    <span class="n">res</span><span class="o">.</span><span class="n">latency</span> <span class="o">=</span> <span class="n">latency</span>
-
-    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="si">}</span><span class="s2"> detections. Inference time: </span><span class="si">{</span><span class="p">(</span><span class="n">t2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t1</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">ms, preprocess: </span><span class="si">{</span><span class="p">(</span><span class="n">t1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">ms, postprocess: </span><span class="si">{</span><span class="p">(</span><span class="n">t3</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t2</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">ms&quot;</span>
+    <span class="n">detections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">export_postprocess</span><span class="p">(</span>
+        <span class="n">raw_detections</span><span class="p">,</span> <span class="n">im</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span> <span class="n">class_names</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">classes</span>
     <span class="p">)</span>
+    <span class="n">t4</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">annotate</span><span class="p">:</span>
+        <span class="n">skeleton</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;skeleton&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">detections</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">annotate_frame</span><span class="p">(</span>
+            <span class="n">im</span><span class="p">,</span>
+            <span class="n">detections</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">task</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">task</span><span class="p">,</span>
+            <span class="n">classes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">classes</span><span class="p">,</span>
+            <span class="n">keypoints_skeleton</span><span class="o">=</span><span class="n">skeleton</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="n">t5</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
+
+    <span class="n">res</span> <span class="o">=</span> <span class="n">detections</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1">#!TODO  check for batching</span>
+    <span class="n">res</span><span class="o">.</span><span class="n">latency</span> <span class="o">=</span> <span class="n">InferLatency</span><span class="p">(</span>
+        <span class="n">imload</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">t1</span> <span class="o">-</span> <span class="n">t0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">preprocess</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">t2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">inference</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">t3</span> <span class="o">-</span> <span class="n">t2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">postprocess</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">t4</span> <span class="o">-</span> <span class="n">t3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">annotate</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">t5</span> <span class="o">-</span> <span class="n">t4</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">if</span> <span class="n">annotate</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">res</span><span class="o">.</span><span class="n">infer_print</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">res</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -3090,7 +3170,8 @@ Detections with confidence scores below this threshold will be discarded.</p>
   
 </div>
       
-        <div class="md-social">
+        
+<div class="md-social">
   
     
     
@@ -3128,10 +3209,10 @@ Detections with confidence scores below this threshold will be discarded.</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.50899def.min.js"></script>
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
       
     
   </body>

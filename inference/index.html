@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
     
     
       
@@ -244,7 +244,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../hub/overview/" class="md-tabs__link">
+        <a href="../hub/" class="md-tabs__link">
           
   
   
@@ -264,7 +264,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../models/models/" class="md-tabs__link">
+        <a href="../models/" class="md-tabs__link">
           
   
   
@@ -696,7 +696,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../hub/overview/" class="md-nav__link">
+      <a href="../hub/" class="md-nav__link">
         
   
   
@@ -813,7 +813,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../models/models/" class="md-nav__link">
+      <a href="../models/" class="md-nav__link">
         
   
   
@@ -888,6 +888,29 @@
   
   <span class="md-ellipsis">
     bisenetformer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/rtmo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    rtmo
     
   </span>
   
@@ -1606,7 +1629,7 @@ However, you can also list them using the Hub functionalities.</p>
 <span class="normal">2</span>
 <span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
 <span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;&lt;PATH-TO-IMAGE&gt;&quot;</span><span class="p">)</span>
-<span class="n">detections</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+<span class="n">detections</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
 <p><code>detections</code> is a <a href="/focoos/api/ports/#focoos.ports.FocoosDetections">FocoosDetections</a> object, containing a list of <a href="/focoos/api/ports/#focoos.ports.FocoosDet">FocoosDet</a> objects and optionally a dict of information about the latency of the inference. The <code>FocoosDet</code> object contains the following attributes:</p>
 <ul>
@@ -1615,13 +1638,14 @@ However, you can also list them using the Hub functionalities.</p>
 <li><code>cls_id</code>: Class ID (0-indexed).</li>
 <li><code>label</code>: Label (name of the class).</li>
 <li><code>mask</code>: Mask (base64 encoded string having origin in the top left corner of bbox and the same width and height of the bbox).</li>
+<li><code>keypoints</code>: keypoints detected</li>
 </ul>
-<p>If you want to visualize the result on the image, there's a utily for you.</p>
+<p>If you want to visualize the result on the image,just set annotate=true</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotate_image</span>
-
-<span class="n">annotate_image</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">detections</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">classes</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;predictions.png&quot;</span><span class="p">)</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+<span class="n">detections</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">image</span><span class="p">,</span><span class="n">annotate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">detections</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
 <h2 id="2-pytorch-inference">2. 🔥 PyTorch Inference<a class="headerlink" href="#2-pytorch-inference" title="Permanent link">#</a></h2>
 <p>This section demonstrates how to perform local inference using a plain Pytorch model.
@@ -1678,9 +1702,9 @@ We will load a model and then run inference on a sample image.</p>
 <span class="normal">4</span>
 <span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotate_image</span>
 
-<span class="n">detections</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+<span class="n">detections</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">image</span><span class="p">,</span><span class="n">annotate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="n">annotate_image</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">detections</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">classes</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;predictions.png&quot;</span><span class="p">)</span>
+<span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">detections</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
 <p><code>detections</code> is a <a href="/focoos/api/ports/#focoos.ports.FocoosDetections">FocoosDetections</a> object.</p>
 <p>How fast is this model locally? We can compute it's speed by using the benchmark utility.</p>
@@ -1701,17 +1725,17 @@ We will load a model and then run inference on a sample image.</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">optimized_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">runtime_type</span><span class="o">=</span><span class="n">runtime</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
 <p>Let's visualize the output. As you will see, there are not differences from the model in pure torch.</p>
-<p><div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotate_image</span>
 
-<span class="n">detections</span> <span class="o">=</span> <span class="n">optimized_model</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
-<span class="n">annotate_image</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">detections</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">task</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">classes</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;prediction.png&quot;</span><span class="p">)</span>
+<span class="n">detections</span> <span class="o">=</span> <span class="n">optimized_model</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">annotate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+<span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">detections</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-<code>detections</code> is a <a href="/focoos/api/ports/#focoos.ports.FocoosDetections">FocoosDetections</a> object.</p>
+<p><code>detections</code> is a <a href="/focoos/api/ports/#focoos.ports.FocoosDetections">FocoosDetections</a> object.</p>
 <p>But, let's see its latency, that should be substantially lower than the pure pytorch model.
-<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">optimized_model</span><span class="o">.</span><span class="n">benchmark</span><span class="p">(</span><span class="n">iterations</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="n">optimized_model</span><span class="o">.</span><span class="n">benchmark</span><span class="p">(</span><span class="n">iterations</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div></p>
 <p>You can use different runtimes that may fit better your device, such as TensorRT. See the list of available Runtimes at <a href="/focoos/api/ports/#focoos.ports.RuntimeType"><code>RuntimeTypes</code></a>. Please note that you need to install the relative packages for onnx and tensorRT for using them.</p>
 <h3 id="onnx-with-tensorrt">ONNX with TensorRT<a class="headerlink" href="#onnx-with-tensorrt" title="Permanent link">#</a></h3>
@@ -1775,7 +1799,8 @@ We will load a model and then run inference on a sample image.</p>
   
 </div>
       
-        <div class="md-social">
+        
+<div class="md-social">
   
     
     
@@ -1813,10 +1838,10 @@ We will load a model and then run inference on a sample image.</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.50899def.min.js"></script>
+      <script src="../assets/javascripts/bundle.92b07e13.min.js"></script>
       
     
   </body>

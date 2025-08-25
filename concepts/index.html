@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
     
     
       
@@ -244,7 +244,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../hub/overview/" class="md-tabs__link">
+        <a href="../hub/" class="md-tabs__link">
           
   
   
@@ -264,7 +264,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../models/models/" class="md-tabs__link">
+        <a href="../models/" class="md-tabs__link">
           
   
   
@@ -565,9 +565,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#predict" class="md-nav__link">
+  <a href="#inference" class="md-nav__link">
     <span class="md-ellipsis">
-      Predict
+      Inference
     </span>
   </a>
   
@@ -625,9 +625,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#predict_1" class="md-nav__link">
+  <a href="#inference_1" class="md-nav__link">
     <span class="md-ellipsis">
-      Predict
+      Inference
     </span>
   </a>
   
@@ -771,7 +771,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../hub/overview/" class="md-nav__link">
+      <a href="../hub/" class="md-nav__link">
         
   
   
@@ -888,7 +888,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../models/models/" class="md-nav__link">
+      <a href="../models/" class="md-nav__link">
         
   
   
@@ -963,6 +963,29 @@
   
   <span class="md-ellipsis">
     bisenetformer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/rtmo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    rtmo
     
   </span>
   
@@ -1617,9 +1640,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#predict" class="md-nav__link">
+  <a href="#inference" class="md-nav__link">
     <span class="md-ellipsis">
-      Predict
+      Inference
     </span>
   </a>
   
@@ -1677,9 +1700,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#predict_1" class="md-nav__link">
+  <a href="#inference_1" class="md-nav__link">
     <span class="md-ellipsis">
-      Predict
+      Inference
     </span>
   </a>
   
@@ -1739,7 +1762,9 @@
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
-<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Loading from hub using hub:// protocol</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">FocoosHub</span><span class="p">,</span> <span class="n">ModelManager</span>
+<span class="c1"># Loading from hub using hub:// protocol</span>
 <span class="c1"># The model is automatically downloaded and cached locally</span>
 <span class="n">hub</span> <span class="o">=</span> <span class="n">FocoosHUB</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;your_api_key&quot;</span><span class="p">)</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">ModelManager</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hub://model_reference&quot;</span><span class="p">,</span> <span class="n">hub</span><span class="o">=</span><span class="n">hub</span><span class="p">)</span>
@@ -1770,7 +1795,8 @@
 <span class="normal">12</span>
 <span class="normal">13</span>
 <span class="normal">14</span>
-<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Loading pretrained models from registry</span>
+<span class="normal">15</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelRegistry</span><span class="p">,</span> <span class="n">ModelManager</span>
+<span class="c1"># Loading pretrained models from registry</span>
 <span class="c1"># Object detection model trained on COCO dataset</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">ModelManager</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fai-detr-l-coco&quot;</span><span class="p">)</span>
 
@@ -1778,7 +1804,6 @@
 <span class="n">model</span> <span class="o">=</span> <span class="n">ModelManager</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;fai-mf-l-ade&quot;</span><span class="p">)</span>
 
 <span class="c1"># Check available models first</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelRegistry</span>
 <span class="n">available_models</span> <span class="o">=</span> <span class="n">ModelRegistry</span><span class="o">.</span><span class="n">list_models</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Available models:&quot;</span><span class="p">,</span> <span class="n">available_models</span><span class="p">)</span>
 
@@ -1874,7 +1899,7 @@
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">ModelManager</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;custom_detector&quot;</span><span class="p">,</span> <span class="n">model_info</span><span class="o">=</span><span class="n">model_info</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
-<h3 id="predict">Predict<a class="headerlink" href="#predict" title="Permanent link">#</a></h3>
+<h3 id="inference">Inference<a class="headerlink" href="#inference" title="Permanent link">#</a></h3>
 <p>Performs end-to-end inference on input images with automatic preprocessing and postprocessing. The model accepts input images in various formats including:</p>
 <ul>
 <li>PIL Image objects (<code>PIL.Image.Image</code>)</li>
@@ -1890,7 +1915,9 @@
 </ul>
 <p>This provides a simple, unified interface for running inference regardless of the underlying model architecture or task.</p>
 <p><strong>Parameters:</strong>
-- <code>inputs</code>: Input images in various supported formats (<code>PIL.Image.Image</code>, <code>numpy.ndarray</code>, <code>torch.Tensor</code>)
+- <code>image</code>: Input image in various supported formats (<code>PIL.Image.Image</code>, <code>numpy.ndarray</code>, <code>torch.Tensor</code>, local or remote path)
+- <code>threshold</code>: detections threshold
+- <code>annotate</code>: if you want to annotate detections on provided image
 - <code>**kwargs</code>: Additional arguments passed to postprocessing</p>
 <p><strong>Returns:</strong> <a href="/focoos/api/ports/#focoos.ports.FocoosDetections"><code>FocoosDetections</code></a> containing detection/segmentation results</p>
 <p><strong>Example:</strong>
@@ -1905,18 +1932,22 @@
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
-<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
 
 <span class="c1"># Load an image</span>
-<span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;example.jpg&quot;</span><span class="p">)</span>
+<span class="n">im_path</span> <span class="o">=</span> <span class="s2">&quot;example.jpg&quot;</span>
 
 <span class="c1"># Run inference</span>
-<span class="n">detections</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+<span class="n">detections</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">im_path</span><span class="p">,</span><span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span><span class="n">annotate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="c1"># Access results</span>
 <span class="k">for</span> <span class="n">detection</span> <span class="ow">in</span> <span class="n">detections</span><span class="o">.</span><span class="n">detections</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Class: </span><span class="si">{</span><span class="n">detection</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">, Confidence: </span><span class="si">{</span><span class="n">detection</span><span class="o">.</span><span class="n">conf</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bounding box: </span><span class="si">{</span><span class="n">detection</span><span class="o">.</span><span class="n">bbox</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">detections</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div></p>
 <h3 id="training">Training<a class="headerlink" href="#training" title="Permanent link">#</a></h3>
 <p>Trains the model on provided datasets. The training function accepts:</p>
@@ -2019,7 +2050,7 @@
 <span class="c1"># Use the exported model for inference</span>
 <span class="n">results</span> <span class="o">=</span> <span class="n">infer_model</span><span class="p">(</span><span class="n">input_image</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div></p>
-<h3 id="predict_1">Predict<a class="headerlink" href="#predict_1" title="Permanent link">#</a></h3>
+<h3 id="inference_1">Inference<a class="headerlink" href="#inference_1" title="Permanent link">#</a></h3>
 <p>Performs end-to-end inference on input images with automatic preprocessing and postprocessing on the selected runtime. The model accepts input images in various formats including:</p>
 <ul>
 <li>PIL Image objects (<code>PIL.Image.Image</code>)</li>
@@ -2035,7 +2066,9 @@
 </ul>
 <p>This provides a simple, unified interface for running inference regardless of the underlying model architecture or task.</p>
 <p><strong>Parameters:</strong>
-- <code>inputs</code>: Input images in various supported formats (<code>PIL.Image.Image</code>, <code>numpy.ndarray</code>, <code>torch.Tensor</code>)
+- <code>image</code>: Input image in various supported formats (<code>PIL.Image.Image</code>, <code>numpy.ndarray</code>, <code>torch.Tensor</code>, local or remote path)
+- <code>threshold</code>: detections threshold
+- <code>annotate</code>: if you want to annotate detections on provided image
 - <code>**kwargs</code>: Additional arguments passed to postprocessing</p>
 <p><strong>Returns:</strong> <a href="/focoos/api/ports/#focoos.ports.FocoosDetections"><code>FocoosDetections</code></a> containing detection/segmentation results</p>
 <p><strong>Example:</strong>
@@ -2057,14 +2090,14 @@
 <span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
 
 <span class="c1"># Load an image</span>
-<span class="n">image</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;example.jpg&quot;</span><span class="p">)</span>
+<span class="n">image_path</span> <span class="o">=</span> <span class="s2">&quot;example.jpg&quot;</span>
 
 <span class="c1"># Run inference</span>
 <span class="n">infer_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">export</span><span class="p">(</span>
     <span class="n">runtime_type</span><span class="o">=</span><span class="n">RuntimeType</span><span class="o">.</span><span class="n">TORCHSCRIPT_32</span><span class="p">,</span>
     <span class="n">out_dir</span><span class="o">=</span><span class="s2">&quot;./exported_models&quot;</span>
 <span class="p">)</span>
-<span class="n">detections</span> <span class="o">=</span> <span class="n">infer_model</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+<span class="n">detections</span> <span class="o">=</span> <span class="n">infer_model</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">image_path</span><span class="p">,</span><span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">annotate</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
 
 <span class="c1"># Access results</span>
 <span class="k">for</span> <span class="n">detection</span> <span class="ow">in</span> <span class="n">detections</span><span class="o">.</span><span class="n">detections</span><span class="p">:</span>
@@ -2113,7 +2146,8 @@
   
 </div>
       
-        <div class="md-social">
+        
+<div class="md-social">
   
     
     
@@ -2151,10 +2185,10 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.50899def.min.js"></script>
+      <script src="../assets/javascripts/bundle.92b07e13.min.js"></script>
       
     
   </body>

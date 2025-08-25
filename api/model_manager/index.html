@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
     
     
       
@@ -242,7 +242,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../hub/overview/" class="md-tabs__link">
+        <a href="../../hub/" class="md-tabs__link">
           
   
   
@@ -262,7 +262,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../models/models/" class="md-tabs__link">
+        <a href="../../models/" class="md-tabs__link">
           
   
   
@@ -580,7 +580,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../hub/overview/" class="md-nav__link">
+      <a href="../../hub/" class="md-nav__link">
         
   
   
@@ -697,7 +697,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/models/" class="md-nav__link">
+      <a href="../../models/" class="md-nav__link">
         
   
   
@@ -772,6 +772,29 @@
   
   <span class="md-ellipsis">
     bisenetformer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/rtmo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    rtmo
     
   </span>
   
@@ -1752,8 +1775,7 @@ and handles the dynamic loading of the appropriate classes.</p>
 
               <details class="quote">
                 <summary>Source code in <code>focoos/model_manager.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">236</span>
-<span class="normal">237</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">237</span>
 <span class="normal">238</span>
 <span class="normal">239</span>
 <span class="normal">240</span>
@@ -1817,7 +1839,9 @@ and handles the dynamic loading of the appropriate classes.</p>
 <span class="normal">298</span>
 <span class="normal">299</span>
 <span class="normal">300</span>
-<span class="normal">301</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BackboneManager</span><span class="p">:</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BackboneManager</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Automatic backbone manager with lazy loading.</span>
 
@@ -1836,6 +1860,7 @@ and handles the dynamic loading of the appropriate classes.</p>
         <span class="s2">&quot;mobilenet_v2&quot;</span><span class="p">:</span> <span class="s2">&quot;mobilenet_v2.MobileNetV2&quot;</span><span class="p">,</span>
         <span class="s2">&quot;mit&quot;</span><span class="p">:</span> <span class="s2">&quot;mit.MIT&quot;</span><span class="p">,</span>
         <span class="s2">&quot;convnextv2&quot;</span><span class="p">:</span> <span class="s2">&quot;convnextv2.ConvNeXtV2&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;csp_darknet&quot;</span><span class="p">:</span> <span class="s2">&quot;csp_darknet.CSPDarknet&quot;</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="nd">@classmethod</span>
@@ -1997,9 +2022,7 @@ dynamically loading the appropriate backbone class based on the model_type.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/model_manager.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">257</span>
-<span class="normal">258</span>
-<span class="normal">259</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">259</span>
 <span class="normal">260</span>
 <span class="normal">261</span>
 <span class="normal">262</span>
@@ -2017,7 +2040,9 @@ dynamically loading the appropriate backbone class based on the model_type.</p>
 <span class="normal">274</span>
 <span class="normal">275</span>
 <span class="normal">276</span>
-<span class="normal">277</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">BackboneConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseBackbone</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Load a backbone from a configuration.</span>
@@ -2152,9 +2177,7 @@ corresponding to the specified model type.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/model_manager.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">279</span>
-<span class="normal">280</span>
-<span class="normal">281</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">281</span>
 <span class="normal">282</span>
 <span class="normal">283</span>
 <span class="normal">284</span>
@@ -2174,7 +2197,9 @@ corresponding to the specified model type.</p>
 <span class="normal">298</span>
 <span class="normal">299</span>
 <span class="normal">300</span>
-<span class="normal">301</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_model_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get the model class based on the model type.</span>
@@ -2240,9 +2265,7 @@ backbone configurations within model configurations.</p>
 
               <details class="quote">
                 <summary>Source code in <code>focoos/model_manager.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">390</span>
-<span class="normal">391</span>
-<span class="normal">392</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">392</span>
 <span class="normal">393</span>
 <span class="normal">394</span>
 <span class="normal">395</span>
@@ -2307,7 +2330,10 @@ backbone configurations within model configurations.</p>
 <span class="normal">454</span>
 <span class="normal">455</span>
 <span class="normal">456</span>
-<span class="normal">457</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ConfigBackboneManager</span><span class="p">:</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ConfigBackboneManager</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Automatic backbone configuration manager with lazy loading.</span>
 
@@ -2326,6 +2352,7 @@ backbone configurations within model configurations.</p>
         <span class="s2">&quot;mobilenet_v2&quot;</span><span class="p">:</span> <span class="s2">&quot;mobilenet_v2.MobileNetV2Config&quot;</span><span class="p">,</span>
         <span class="s2">&quot;mit&quot;</span><span class="p">:</span> <span class="s2">&quot;mit.MITConfig&quot;</span><span class="p">,</span>
         <span class="s2">&quot;convnextv2&quot;</span><span class="p">:</span> <span class="s2">&quot;convnextv2.ConvNeXtV2Config&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;csp_darknet&quot;</span><span class="p">:</span> <span class="s2">&quot;csp_darknet.CSPConfig&quot;</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="nd">@classmethod</span>
@@ -2489,10 +2516,7 @@ model_type specified in the configuration dictionary.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/model_manager.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">435</span>
-<span class="normal">436</span>
-<span class="normal">437</span>
-<span class="normal">438</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">438</span>
 <span class="normal">439</span>
 <span class="normal">440</span>
 <span class="normal">441</span>
@@ -2511,7 +2535,10 @@ model_type specified in the configuration dictionary.</p>
 <span class="normal">454</span>
 <span class="normal">455</span>
 <span class="normal">456</span>
-<span class="normal">457</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BackboneConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create a backbone configuration from a dictionary.</span>
@@ -2648,10 +2675,7 @@ corresponding to the specified model type.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/model_manager.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">411</span>
-<span class="normal">412</span>
-<span class="normal">413</span>
-<span class="normal">414</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">414</span>
 <span class="normal">415</span>
 <span class="normal">416</span>
 <span class="normal">417</span>
@@ -2670,7 +2694,10 @@ corresponding to the specified model type.</p>
 <span class="normal">430</span>
 <span class="normal">431</span>
 <span class="normal">432</span>
-<span class="normal">433</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_model_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get the configuration class based on the model type.</span>
@@ -2736,9 +2763,7 @@ importing of model family modules as needed.</p>
 
               <details class="quote">
                 <summary>Source code in <code>focoos/model_manager.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">304</span>
-<span class="normal">305</span>
-<span class="normal">306</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">306</span>
 <span class="normal">307</span>
 <span class="normal">308</span>
 <span class="normal">309</span>
@@ -2819,7 +2844,9 @@ importing of model family modules as needed.</p>
 <span class="normal">384</span>
 <span class="normal">385</span>
 <span class="normal">386</span>
-<span class="normal">387</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ConfigManager</span><span class="p">:</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ConfigManager</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Automatic model configuration management.</span>
 
@@ -3049,9 +3076,7 @@ like backbone_config and validates the parameters.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/model_manager.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">333</span>
-<span class="normal">334</span>
-<span class="normal">335</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">335</span>
 <span class="normal">336</span>
 <span class="normal">337</span>
 <span class="normal">338</span>
@@ -3103,7 +3128,9 @@ like backbone_config and validates the parameters.</p>
 <span class="normal">384</span>
 <span class="normal">385</span>
 <span class="normal">386</span>
-<span class="normal">387</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_family</span><span class="p">:</span> <span class="n">ModelFamily</span><span class="p">,</span> <span class="n">config_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create a configuration from a dictionary.</span>
@@ -3234,9 +3261,7 @@ classes.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/model_manager.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">318</span>
-<span class="normal">319</span>
-<span class="normal">320</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">320</span>
 <span class="normal">321</span>
 <span class="normal">322</span>
 <span class="normal">323</span>
@@ -3247,7 +3272,9 @@ classes.</p>
 <span class="normal">328</span>
 <span class="normal">329</span>
 <span class="normal">330</span>
-<span class="normal">331</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">register_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_family</span><span class="p">:</span> <span class="n">ModelFamily</span><span class="p">,</span> <span class="n">model_config_loader</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Type</span><span class="p">[</span><span class="n">ModelConfig</span><span class="p">]]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Register a loader for a specific model configuration.</span>
@@ -3318,8 +3345,7 @@ Models are loaded lazily when requested and can be accessed through the <code>ge
 
               <details class="quote">
                 <summary>Source code in <code>focoos/model_manager.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 16</span>
-<span class="normal"> 17</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 17</span>
 <span class="normal"> 18</span>
 <span class="normal"> 19</span>
 <span class="normal"> 20</span>
@@ -3535,7 +3561,8 @@ Models are loaded lazily when requested and can be accessed through the <code>ge
 <span class="normal">230</span>
 <span class="normal">231</span>
 <span class="normal">232</span>
-<span class="normal">233</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ModelManager</span><span class="p">:</span>
+<span class="normal">233</span>
+<span class="normal">234</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ModelManager</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Automatic model manager with lazy loading.</span>
 
 <span class="sd">    The ModelManager provides a unified interface for loading models from various sources:</span>
@@ -3563,7 +3590,7 @@ Models are loaded lazily when requested and can be accessed through the <code>ge
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
         <span class="n">model_info</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModelInfo</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModelConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">hub</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FocoosHUB</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -3598,16 +3625,16 @@ Models are loaded lazily when requested and can be accessed through the <code>ge
             <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_model_info</span><span class="p">(</span><span class="n">model_info</span><span class="o">=</span><span class="n">model_info</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="c1"># If name starts with &quot;hub://&quot;, load from Focoos Hub</span>
-        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;hub://&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;hub://&quot;</span><span class="p">):</span>
             <span class="n">model_info</span><span class="p">,</span> <span class="n">hub_config</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_hub</span><span class="p">(</span><span class="n">hub_uri</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">hub</span><span class="o">=</span><span class="n">hub</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="n">cache</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">config</span> <span class="o">=</span> <span class="n">hub_config</span>  <span class="c1"># Use hub config if no config is provided</span>
         <span class="c1"># If model exists in ModelRegistry, load as pretrained model</span>
-        <span class="k">elif</span> <span class="n">ModelRegistry</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ModelRegistry</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
             <span class="n">model_info</span> <span class="o">=</span> <span class="n">ModelRegistry</span><span class="o">.</span><span class="n">get_model_info</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="c1"># Otherwise, attempt to load from a local directory</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">model_info</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_local_dir</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">model_info</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_local_dir</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
         <span class="c1"># Load model from the resolved ModelInfo</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_model_info</span><span class="p">(</span><span class="n">model_info</span><span class="o">=</span><span class="n">model_info</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -3807,7 +3834,7 @@ Models are loaded lazily when requested and can be accessed through the <code>ge
                 <code>name</code>
             </td>
             <td>
-                  <code><span title="str">str</span></code>
+                  <code><span title="typing.Union">Union</span>[<span title="str">str</span>, <span title="pathlib.Path">Path</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -3954,8 +3981,7 @@ Models are loaded lazily when requested and can be accessed through the <code>ge
 
             <details class="quote">
               <summary>Source code in <code>focoos/model_manager.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">41</span>
-<span class="normal">42</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">42</span>
 <span class="normal">43</span>
 <span class="normal">44</span>
 <span class="normal">45</span>
@@ -4003,10 +4029,11 @@ Models are loaded lazily when requested and can be accessed through the <code>ge
 <span class="normal">87</span>
 <span class="normal">88</span>
 <span class="normal">89</span>
-<span class="normal">90</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">90</span>
+<span class="normal">91</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span>
     <span class="bp">cls</span><span class="p">,</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">model_info</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModelInfo</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModelConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">hub</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">FocoosHUB</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -4041,16 +4068,16 @@ Models are loaded lazily when requested and can be accessed through the <code>ge
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_model_info</span><span class="p">(</span><span class="n">model_info</span><span class="o">=</span><span class="n">model_info</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="c1"># If name starts with &quot;hub://&quot;, load from Focoos Hub</span>
-    <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;hub://&quot;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;hub://&quot;</span><span class="p">):</span>
         <span class="n">model_info</span><span class="p">,</span> <span class="n">hub_config</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_hub</span><span class="p">(</span><span class="n">hub_uri</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">hub</span><span class="o">=</span><span class="n">hub</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="n">cache</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">config</span> <span class="o">=</span> <span class="n">hub_config</span>  <span class="c1"># Use hub config if no config is provided</span>
     <span class="c1"># If model exists in ModelRegistry, load as pretrained model</span>
-    <span class="k">elif</span> <span class="n">ModelRegistry</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ModelRegistry</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
         <span class="n">model_info</span> <span class="o">=</span> <span class="n">ModelRegistry</span><span class="o">.</span><span class="n">get_model_info</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
     <span class="c1"># Otherwise, attempt to load from a local directory</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">model_info</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_local_dir</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">model_info</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_local_dir</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
     <span class="c1"># Load model from the resolved ModelInfo</span>
     <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_from_model_info</span><span class="p">(</span><span class="n">model_info</span><span class="o">=</span><span class="n">model_info</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -4128,8 +4155,7 @@ the model class when called. This enables lazy loading of model classes.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/model_manager.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 92</span>
-<span class="normal"> 93</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 93</span>
 <span class="normal"> 94</span>
 <span class="normal"> 95</span>
 <span class="normal"> 96</span>
@@ -4140,7 +4166,8 @@ the model class when called. This enables lazy loading of model classes.</p>
 <span class="normal">101</span>
 <span class="normal">102</span>
 <span class="normal">103</span>
-<span class="normal">104</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">104</span>
+<span class="normal">105</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">register_model</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_family</span><span class="p">:</span> <span class="n">ModelFamily</span><span class="p">,</span> <span class="n">model_loader</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseModelNN</span><span class="p">]]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Register a loader for a specific model family.</span>
@@ -4217,7 +4244,8 @@ the model class when called. This enables lazy loading of model classes.</p>
   
 </div>
       
-        <div class="md-social">
+        
+<div class="md-social">
   
     
     
@@ -4255,10 +4283,10 @@ the model class when called. This enables lazy loading of model classes.</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.50899def.min.js"></script>
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
       
     
   </body>

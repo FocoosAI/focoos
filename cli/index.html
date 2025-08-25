@@ -14,11 +14,11 @@
         <link rel="prev" href="../training/">
       
       
-        <link rel="next" href="../hub/overview/">
+        <link rel="next" href="../hub/">
       
       
       <link rel="icon" href="../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
     
     
       
@@ -244,7 +244,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../hub/overview/" class="md-tabs__link">
+        <a href="../hub/" class="md-tabs__link">
           
   
   
@@ -264,7 +264,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../models/models/" class="md-tabs__link">
+        <a href="../models/" class="md-tabs__link">
           
   
   
@@ -705,6 +705,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#interactive-web-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      🖥️ Interactive Web Interface
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -942,7 +951,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../hub/overview/" class="md-nav__link">
+      <a href="../hub/" class="md-nav__link">
         
   
   
@@ -1059,7 +1068,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../models/models/" class="md-nav__link">
+      <a href="../models/" class="md-nav__link">
         
   
   
@@ -1134,6 +1143,29 @@
   
   <span class="md-ellipsis">
     bisenetformer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/rtmo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    rtmo
     
   </span>
   
@@ -1859,6 +1891,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#interactive-web-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      🖥️ Interactive Web Interface
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2081,7 +2122,10 @@
 <span class="normal">11</span>
 <span class="normal">12</span>
 <span class="normal">13</span>
-<span class="normal">14</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Check installation</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Check installation</span>
 focoos<span class="w"> </span>version
 
 <span class="c1"># Run system checks</span>
@@ -2095,13 +2139,16 @@ focoos<span class="w"> </span>predict<span class="w"> </span>--model<span class=
 
 <span class="c1"># Export model</span>
 focoos<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--model<span class="w"> </span>fai-detr-m-coco<span class="w"> </span>--format<span class="w"> </span>onnx
+
+<span class="c1"># Launch gradio interface</span>
+focoos<span class="w"> </span>gradio
 </code></pre></div></td></tr></table></div>
 <h2 id="usage">📚 Usage<a class="headerlink" href="#usage" title="Permanent link">#</a></h2>
 <p>The Focoos CLI uses a clean, modern command syntax:</p>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>focoos<span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </code></pre></div></td></tr></table></div>
 <p>Where:
-- <strong>COMMAND</strong>: Main operations like <code>train</code>, <code>val</code>, <code>predict</code>, <code>export</code>, <code>benchmark</code>, <code>hub</code>
+- <strong>COMMAND</strong>: Main operations like <code>train</code>, <code>val</code>, <code>predict</code>, <code>export</code>, <code>benchmark</code>, <code>gradio</code>, <code>hub</code>
 - <strong>OPTIONS</strong>: Command-specific flags and parameters with intelligent defaults</p>
 <h2 id="available-commands">🛠️ Available Commands<a class="headerlink" href="#available-commands" title="Permanent link">#</a></h2>
 <h3 id="core-commands">Core Commands<a class="headerlink" href="#core-commands" title="Permanent link">#</a></h3>
@@ -2138,6 +2185,11 @@ focoos<span class="w"> </span><span class="nb">export</span><span class="w"> </s
 <td><strong><code>benchmark</code></strong></td>
 <td>Benchmark model performance</td>
 <td><code>focoos benchmark --model fai-detr-m-coco --iterations 100</code></td>
+</tr>
+<tr>
+<td><strong><code>gradio</code></strong></td>
+<td>Launch interactive web interface</td>
+<td><code>focoos gradio</code></td>
 </tr>
 </tbody>
 </table>
@@ -2419,6 +2471,20 @@ focoos<span class="w"> </span>hub<span class="w"> </span>datasets
 <span class="c1"># List both private and shared datasets</span>
 focoos<span class="w"> </span>hub<span class="w"> </span>datasets<span class="w"> </span>--include-shared
 </code></pre></div></td></tr></table></div>
+<h3 id="interactive-web-interface">🖥️ Interactive Web Interface<a class="headerlink" href="#interactive-web-interface" title="Permanent link">#</a></h3>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Launch Gradio web interface</span>
+focoos<span class="w"> </span>gradio
+</code></pre></div></td></tr></table></div>
+<p>The Gradio interface provides an interactive web-based experience for running inference with Focoos models:</p>
+<ul>
+<li><strong>Image Inference</strong>: Upload images and run detection/segmentation with real-time results</li>
+<li><strong>Video Inference</strong>: Process video files with object detection and tracking</li>
+<li><strong>Model Selection</strong>: Choose from available pretrained models</li>
+<li><strong>Confidence Tuning</strong>: Adjust detection thresholds interactively</li>
+<li><strong>Visual Results</strong>: View annotated outputs with bounding boxes and masks</li>
+</ul>
+<p>The interface will automatically open in your default web browser, typically at <code>http://localhost:7860</code>.</p>
 <h2 id="configuration-options">⚙️ Configuration Options<a class="headerlink" href="#configuration-options" title="Permanent link">#</a></h2>
 <h3 id="common-parameters">Common Parameters<a class="headerlink" href="#common-parameters" title="Permanent link">#</a></h3>
 <table>
@@ -2858,7 +2924,8 @@ focoos<span class="w"> </span>settings
   
 </div>
       
-        <div class="md-social">
+        
+<div class="md-social">
   
     
     
@@ -2896,10 +2963,10 @@ focoos<span class="w"> </span>settings
     
     
       
-      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.50899def.min.js"></script>
+      <script src="../assets/javascripts/bundle.92b07e13.min.js"></script>
       
     
   </body>

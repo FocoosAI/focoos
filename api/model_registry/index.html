@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
     
     
       
@@ -242,7 +242,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../hub/overview/" class="md-tabs__link">
+        <a href="../../hub/" class="md-tabs__link">
           
   
   
@@ -262,7 +262,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../models/models/" class="md-tabs__link">
+        <a href="../../models/" class="md-tabs__link">
           
   
   
@@ -580,7 +580,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../hub/overview/" class="md-nav__link">
+      <a href="../../hub/" class="md-nav__link">
         
   
   
@@ -697,7 +697,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/models/" class="md-nav__link">
+      <a href="../../models/" class="md-nav__link">
         
   
   
@@ -772,6 +772,29 @@
   
   <span class="md-ellipsis">
     bisenetformer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/rtmo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    rtmo
     
   </span>
   
@@ -1573,6 +1596,17 @@ It provides methods to access model information, list available models, and chec
       </thead>
       <tbody>
           <tr class="doc-section-item">
+            <td><code><span title="focoos.model_registry.model_registry.ModelRegistry._registry_path">_registry_path</span></code></td>
+            <td>
+                  <code><span title="pathlib.Path">Path</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Path to the directory containing model JSON files.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
             <td><code><span title="focoos.model_registry.model_registry.ModelRegistry._pretrained_models">_pretrained_models</span></code></td>
             <td>
                   <code><span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="str">str</span>]</code>
@@ -1594,7 +1628,8 @@ It provides methods to access model information, list available models, and chec
 
               <details class="quote">
                 <summary>Source code in <code>focoos/model_registry/model_registry.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">12</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">11</span>
+<span class="normal">12</span>
 <span class="normal">13</span>
 <span class="normal">14</span>
 <span class="normal">15</span>
@@ -1660,29 +1695,63 @@ It provides methods to access model information, list available models, and chec
 <span class="normal">75</span>
 <span class="normal">76</span>
 <span class="normal">77</span>
-<span class="normal">78</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ModelRegistry</span><span class="p">:</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span>
+<span class="normal">93</span>
+<span class="normal">94</span>
+<span class="normal">95</span>
+<span class="normal">96</span>
+<span class="normal">97</span>
+<span class="normal">98</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ModelRegistry</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Central registry of pretrained models.</span>
 
 <span class="sd">    This class serves as a centralized registry for all pretrained models in the Focoos system.</span>
 <span class="sd">    It provides methods to access model information, list available models, and check model existence.</span>
 
 <span class="sd">    Attributes:</span>
+<span class="sd">        _registry_path (Path): Path to the directory containing model JSON files.</span>
 <span class="sd">        _pretrained_models (Dict[str, str]): Dictionary mapping model names to their JSON file paths.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_pretrained_models</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;fai-detr-l-obj365&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">REGISTRY_PATH</span><span class="p">,</span> <span class="s2">&quot;fai-detr-l-obj365.json&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;fai-detr-l-coco&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">REGISTRY_PATH</span><span class="p">,</span> <span class="s2">&quot;fai-detr-l-coco.json&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;fai-detr-m-coco&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">REGISTRY_PATH</span><span class="p">,</span> <span class="s2">&quot;fai-detr-m-coco.json&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;fai-mf-l-ade&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">REGISTRY_PATH</span><span class="p">,</span> <span class="s2">&quot;fai-mf-l-ade.json&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;fai-mf-m-ade&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">REGISTRY_PATH</span><span class="p">,</span> <span class="s2">&quot;fai-mf-m-ade.json&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;fai-mf-l-coco-ins&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">REGISTRY_PATH</span><span class="p">,</span> <span class="s2">&quot;fai-mf-l-coco-ins.json&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;fai-mf-m-coco-ins&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">REGISTRY_PATH</span><span class="p">,</span> <span class="s2">&quot;fai-mf-m-coco-ins.json&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;fai-mf-s-coco-ins&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">REGISTRY_PATH</span><span class="p">,</span> <span class="s2">&quot;fai-mf-s-coco-ins.json&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;bisenetformer-m-ade&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">REGISTRY_PATH</span><span class="p">,</span> <span class="s2">&quot;bisenetformer-m-ade.json&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;bisenetformer-l-ade&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">REGISTRY_PATH</span><span class="p">,</span> <span class="s2">&quot;bisenetformer-l-ade.json&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;bisenetformer-s-ade&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">REGISTRY_PATH</span><span class="p">,</span> <span class="s2">&quot;bisenetformer-s-ade.json&quot;</span><span class="p">),</span>
-    <span class="p">}</span>
+    <span class="n">_registry_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span>
+    <span class="n">_pretrained_models</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_models_cfgs</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load model configurations from JSON files.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict[str, str]: Dictionary mapping model names to their JSON file paths.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_pretrained_models</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_pretrained_models</span>
+
+        <span class="n">models</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">json_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_registry_path</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">suffix</span> <span class="o">==</span> <span class="s2">&quot;.json&quot;</span><span class="p">]</span>
+
+            <span class="k">for</span> <span class="n">json_file</span> <span class="ow">in</span> <span class="n">json_files</span><span class="p">:</span>
+                <span class="n">model_name</span> <span class="o">=</span> <span class="n">json_file</span><span class="o">.</span><span class="n">stem</span>  <span class="c1"># Remove .json extension</span>
+                <span class="n">models</span><span class="p">[</span><span class="n">model_name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">json_file</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to load model configurations: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">models</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_pretrained_models</span> <span class="o">=</span> <span class="n">models</span>
+        <span class="k">return</span> <span class="n">models</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_model_info</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelInfo</span><span class="p">:</span>
@@ -1699,21 +1768,24 @@ It provides methods to access model information, list available models, and chec
 <span class="sd">            ValueError: If the model is not found in the registry and the provided</span>
 <span class="sd">                path does not exist.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">model_name</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_pretrained_models</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">ModelInfo</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_pretrained_models</span><span class="p">[</span><span class="n">model_name</span><span class="p">])</span>
+        <span class="n">models</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_load_models_cfgs</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">model_name</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ModelInfo</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">models</span><span class="p">[</span><span class="n">model_name</span><span class="p">])</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">model_name</span><span class="p">):</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚠️ Model </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚠️ Model </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ModelInfo</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">list_models</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_models</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;List all available pretrained models.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            list[str]: A list of all available pretrained model names.</span>
+<span class="sd">            List[str]: A list of all available pretrained model names.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_pretrained_models</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">models</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_load_models_cfgs</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">exists</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -1726,7 +1798,11 @@ It provides methods to access model information, list available models, and chec
 <span class="sd">            bool: True if the model exists in the pretrained models registry,</span>
 <span class="sd">                False otherwise.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">model_name</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_pretrained_models</span>
+        <span class="n">models</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_load_models_cfgs</span><span class="p">()</span>
+        <span class="n">exists</span> <span class="o">=</span> <span class="n">model_name</span> <span class="ow">in</span> <span class="n">models</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">exists</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model &#39;</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&#39; not found in registry&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">exists</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -1817,18 +1893,22 @@ False otherwise.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/model_registry/model_registry.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span>
-<span class="normal">73</span>
-<span class="normal">74</span>
-<span class="normal">75</span>
-<span class="normal">76</span>
-<span class="normal">77</span>
-<span class="normal">78</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span>
+<span class="normal">93</span>
+<span class="normal">94</span>
+<span class="normal">95</span>
+<span class="normal">96</span>
+<span class="normal">97</span>
+<span class="normal">98</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">exists</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if a model exists in the registry.</span>
 
@@ -1839,7 +1919,11 @@ False otherwise.</p>
 <span class="sd">        bool: True if the model exists in the pretrained models registry,</span>
 <span class="sd">            False otherwise.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">model_name</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_pretrained_models</span>
+    <span class="n">models</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_load_models_cfgs</span><span class="p">()</span>
+    <span class="n">exists</span> <span class="o">=</span> <span class="n">model_name</span> <span class="ow">in</span> <span class="n">models</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">exists</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model &#39;</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&#39; not found in registry&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">exists</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -1950,27 +2034,29 @@ path does not exist.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/model_registry/model_registry.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">36</span>
-<span class="normal">37</span>
-<span class="normal">38</span>
-<span class="normal">39</span>
-<span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">49</span>
 <span class="normal">50</span>
 <span class="normal">51</span>
 <span class="normal">52</span>
 <span class="normal">53</span>
 <span class="normal">54</span>
 <span class="normal">55</span>
-<span class="normal">56</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_model_info</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelInfo</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the model information for a given model name.</span>
 
@@ -1985,8 +2071,10 @@ path does not exist.</p>
 <span class="sd">        ValueError: If the model is not found in the registry and the provided</span>
 <span class="sd">            path does not exist.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">model_name</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_pretrained_models</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">ModelInfo</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_pretrained_models</span><span class="p">[</span><span class="n">model_name</span><span class="p">])</span>
+    <span class="n">models</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_load_models_cfgs</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">model_name</span> <span class="ow">in</span> <span class="n">models</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ModelInfo</span><span class="o">.</span><span class="n">from_json</span><span class="p">(</span><span class="n">models</span><span class="p">[</span><span class="n">model_name</span><span class="p">])</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">model_name</span><span class="p">):</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚠️ Model </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚠️ Model </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
@@ -2026,11 +2114,11 @@ path does not exist.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="list">list</span>[<span title="str">str</span>]</code>
+                  <code><span title="typing.List">List</span>[<span title="str">str</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>list[str]: A list of all available pretrained model names.</p>
+                <p>List[str]: A list of all available pretrained model names.</p>
               </div>
             </td>
           </tr>
@@ -2040,21 +2128,23 @@ path does not exist.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/model_registry/model_registry.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">58</span>
-<span class="normal">59</span>
-<span class="normal">60</span>
-<span class="normal">61</span>
-<span class="normal">62</span>
-<span class="normal">63</span>
-<span class="normal">64</span>
-<span class="normal">65</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">list_models</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">list_models</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;List all available pretrained models.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        list[str]: A list of all available pretrained model names.</span>
+<span class="sd">        List[str]: A list of all available pretrained model names.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_pretrained_models</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">models</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_load_models_cfgs</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2119,7 +2209,8 @@ path does not exist.</p>
   
 </div>
       
-        <div class="md-social">
+        
+<div class="md-social">
   
     
     
@@ -2157,10 +2248,10 @@ path does not exist.</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.50899def.min.js"></script>
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
       
     
   </body>

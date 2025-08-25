@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.16">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
     
     
       
@@ -240,7 +240,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../hub/overview/" class="md-tabs__link">
+        <a href="../../hub/" class="md-tabs__link">
           
   
   
@@ -260,7 +260,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../models/models/" class="md-tabs__link">
+        <a href="../../models/" class="md-tabs__link">
           
   
   
@@ -578,7 +578,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../hub/overview/" class="md-nav__link">
+      <a href="../../hub/" class="md-nav__link">
         
   
   
@@ -695,7 +695,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/models/" class="md-nav__link">
+      <a href="../../models/" class="md-nav__link">
         
   
   
@@ -770,6 +770,29 @@
   
   <span class="md-ellipsis">
     bisenetformer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/rtmo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    rtmo
     
   </span>
   
@@ -1391,6 +1414,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#focoos.cli.cli.gradio" class="md-nav__link">
+    <span class="md-ellipsis">
+      gradio
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#focoos.cli.cli.predict" class="md-nav__link">
     <span class="md-ellipsis">
       predict
@@ -1560,6 +1592,15 @@
   <a href="#focoos.cli.cli.export" class="md-nav__link">
     <span class="md-ellipsis">
       export
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#focoos.cli.cli.gradio" class="md-nav__link">
+    <span class="md-ellipsis">
+      gradio
     </span>
   </a>
   
@@ -3061,6 +3102,39 @@ deployment scenarios and may offer better performance in PyTorch environments.</
 <div class="doc doc-object doc-function">
 
 
+<h2 id="focoos.cli.cli.gradio" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">gradio</span><span class="p">()</span></code>
+
+<a href="#focoos.cli.cli.gradio" class="headerlink" title="Permanent link">#</a></h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Launch the Focoos Gradio app.</p>
+
+
+            <details class="quote">
+              <summary>Source code in <code>focoos/cli/cli.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1136</span>
+<span class="normal">1137</span>
+<span class="normal">1138</span>
+<span class="normal">1139</span>
+<span class="normal">1140</span>
+<span class="normal">1141</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="s2">&quot;gradio&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gradio</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Launch the Focoos Gradio app.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">focoos.cli.gradio_app</span><span class="w"> </span><span class="kn">import</span> <span class="n">launch_gradio</span>
+
+    <span class="n">launch_gradio</span><span class="p">(</span><span class="n">share</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h2 id="focoos.cli.cli.predict" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">predict</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s1">&#39;fai-detr-l-obj365&#39;</span><span class="p">,</span> <span class="n">runtime</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">im_size</span><span class="o">=</span><span class="mi">640</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="n">PREDICTIONS_DIR</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">save_json</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">save_masks</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
@@ -3491,7 +3565,7 @@ always printed to the console regardless of save options.</p>
 <span class="normal">873</span>
 <span class="normal">874</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="s2">&quot;predict&quot;</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span>
-    <span class="n">source</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span><span class="n">help</span><span class="o">=</span><span class="s2">&quot;Image/video path or URL (required)&quot;</span><span class="p">)],</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span><span class="n">help</span><span class="o">=</span><span class="s2">&quot;Image path or URL (required)&quot;</span><span class="p">)],</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span><span class="n">help</span><span class="o">=</span><span class="s2">&quot;Model name or path (required)&quot;</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">&quot;fai-detr-l-obj365&quot;</span><span class="p">,</span>
     <span class="n">runtime</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="n">Optional</span><span class="p">[</span><span class="n">RuntimeType</span><span class="p">],</span> <span class="n">typer</span><span class="o">.</span><span class="n">Option</span><span class="p">(</span><span class="n">help</span><span class="o">=</span><span class="s2">&quot;Runtime type (If not provided, torch will be used)&quot;</span><span class="p">)</span>
@@ -7600,7 +7674,8 @@ focoos<span class="w"> </span>hub<span class="w"> </span>dataset<span class="w">
   
 </div>
       
-        <div class="md-social">
+        
+<div class="md-social">
   
     
     
@@ -7638,10 +7713,10 @@ focoos<span class="w"> </span>hub<span class="w"> </span>dataset<span class="w">
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.50899def.min.js"></script>
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
       
     
   </body>
