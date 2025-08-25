@@ -20,5 +20,11 @@ COPY pyproject.toml ./pyproject.toml
 RUN uv pip install --system -e .[onnx]
 
 
-FROM focoos-gpu AS focoos-tensorrt
-RUN uv pip install --system -e .[tensorrt]
+FROM ghcr.io/focoosai/deeplearning:cu12-cudnn9-py312-uv-tensorrt AS focoos-tensorrt
+LABEL authors="focoos.ai"
+
+WORKDIR /app
+
+COPY focoos ./focoos
+COPY pyproject.toml ./pyproject.toml
+RUN uv pip install --system -e .[onnx,tensorrt]
