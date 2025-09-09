@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.19">
     
     
       
@@ -2970,7 +2970,10 @@ weight loading, preprocessing, and postprocessing.</p>
 <span class="normal">715</span>
 <span class="normal">716</span>
 <span class="normal">717</span>
-<span class="normal">718</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FocoosModel</span><span class="p">:</span>
+<span class="normal">718</span>
+<span class="normal">719</span>
+<span class="normal">720</span>
+<span class="normal">721</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FocoosModel</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Main model class for Focoos computer vision models.</span>
 
 <span class="sd">    This class provides a high-level interface for training, testing, exporting,</span>
@@ -3277,7 +3280,7 @@ weight loading, preprocessing, and postprocessing.</p>
         <span class="n">runtime_type</span><span class="p">:</span> <span class="n">RuntimeType</span> <span class="o">=</span> <span class="n">RuntimeType</span><span class="o">.</span><span class="n">TORCHSCRIPT_32</span><span class="p">,</span>
         <span class="n">onnx_opset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">17</span><span class="p">,</span>
         <span class="n">out_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">device</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="s2">&quot;cpu&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
         <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">image_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InferModel</span><span class="p">:</span>
@@ -3300,9 +3303,12 @@ weight loading, preprocessing, and postprocessing.</p>
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If unsupported PyTorch version or export format.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">device</span> <span class="o">==</span> <span class="s2">&quot;cuda&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
-            <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;CUDA is not available. Using CPU for export.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">device</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="n">get_device_type</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔧 Export Device: </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">out_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">out_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">MODELS_DIR</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">ref</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
@@ -3928,10 +3934,7 @@ model forward pass, and postprocessing to return detections.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/models/focoos_model.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">520</span>
-<span class="normal">521</span>
-<span class="normal">522</span>
-<span class="normal">523</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">523</span>
 <span class="normal">524</span>
 <span class="normal">525</span>
 <span class="normal">526</span>
@@ -3974,7 +3977,10 @@ model forward pass, and postprocessing to return detections.</p>
 <span class="normal">563</span>
 <span class="normal">564</span>
 <span class="normal">565</span>
-<span class="normal">566</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+<span class="normal">566</span>
+<span class="normal">567</span>
+<span class="normal">568</span>
+<span class="normal">569</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
         <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
@@ -4375,10 +4381,7 @@ preprocessing and postprocessing overhead.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/models/focoos_model.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">639</span>
-<span class="normal">640</span>
-<span class="normal">641</span>
-<span class="normal">642</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">642</span>
 <span class="normal">643</span>
 <span class="normal">644</span>
 <span class="normal">645</span>
@@ -4402,7 +4405,10 @@ preprocessing and postprocessing overhead.</p>
 <span class="normal">663</span>
 <span class="normal">664</span>
 <span class="normal">665</span>
-<span class="normal">666</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span>
+<span class="normal">666</span>
+<span class="normal">667</span>
+<span class="normal">668</span>
+<span class="normal">669</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
     <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -4544,10 +4550,7 @@ model forward pass, and postprocessing steps.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/models/focoos_model.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">668</span>
-<span class="normal">669</span>
-<span class="normal">670</span>
-<span class="normal">671</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">671</span>
 <span class="normal">672</span>
 <span class="normal">673</span>
 <span class="normal">674</span>
@@ -4594,7 +4597,10 @@ model forward pass, and postprocessing steps.</p>
 <span class="normal">715</span>
 <span class="normal">716</span>
 <span class="normal">717</span>
-<span class="normal">718</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">end2end_benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
+<span class="normal">718</span>
+<span class="normal">719</span>
+<span class="normal">720</span>
+<span class="normal">721</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">end2end_benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Benchmark the complete end-to-end inference pipeline.</span>
 
 <span class="sd">    This method measures the full inference latency including preprocessing,</span>
@@ -4851,7 +4857,7 @@ supporting both single-GPU and multi-GPU testing.</p>
 
 
 <h3 id="focoos.models.focoos_model.FocoosModel.export" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">export</span><span class="p">(</span><span class="n">runtime_type</span><span class="o">=</span><span class="n">RuntimeType</span><span class="o">.</span><span class="n">TORCHSCRIPT_32</span><span class="p">,</span> <span class="n">onnx_opset</span><span class="o">=</span><span class="mi">17</span><span class="p">,</span> <span class="n">out_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s1">&#39;cuda&#39;</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">export</span><span class="p">(</span><span class="n">runtime_type</span><span class="o">=</span><span class="n">RuntimeType</span><span class="o">.</span><span class="n">TORCHSCRIPT_32</span><span class="p">,</span> <span class="n">onnx_opset</span><span class="o">=</span><span class="mi">17</span><span class="p">,</span> <span class="n">out_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#focoos.models.focoos_model.FocoosModel.export" class="headerlink" title="Permanent link">#</a></h3>
 
@@ -4927,7 +4933,7 @@ for deployment and inference optimization.</p>
                 <code>device</code>
             </td>
             <td>
-                  <code><span title="typing.Literal">Literal</span>[&#39;cuda&#39;, &#39;cpu&#39;]</code>
+                  <code><span title="typing.Literal">Literal</span>[&#39;cuda&#39;, &#39;cpu&#39;, &#39;auto&#39;]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -4935,7 +4941,7 @@ for deployment and inference optimization.</p>
               </div>
             </td>
             <td>
-                  <code>&#39;cuda&#39;</code>
+                  <code>&#39;auto&#39;</code>
             </td>
           </tr>
           <tr class="doc-section-item">
@@ -5149,12 +5155,15 @@ for deployment and inference optimization.</p>
 <span class="normal">515</span>
 <span class="normal">516</span>
 <span class="normal">517</span>
-<span class="normal">518</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">export</span><span class="p">(</span>
+<span class="normal">518</span>
+<span class="normal">519</span>
+<span class="normal">520</span>
+<span class="normal">521</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">export</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">runtime_type</span><span class="p">:</span> <span class="n">RuntimeType</span> <span class="o">=</span> <span class="n">RuntimeType</span><span class="o">.</span><span class="n">TORCHSCRIPT_32</span><span class="p">,</span>
     <span class="n">onnx_opset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">17</span><span class="p">,</span>
     <span class="n">out_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">device</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="s2">&quot;cpu&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span><span class="p">,</span>
+    <span class="n">device</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
     <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">image_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InferModel</span><span class="p">:</span>
@@ -5177,9 +5186,12 @@ for deployment and inference optimization.</p>
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: If unsupported PyTorch version or export format.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">device</span> <span class="o">==</span> <span class="s2">&quot;cuda&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
-        <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;CUDA is not available. Using CPU for export.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">device</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">get_device_type</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔧 Export Device: </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">out_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">out_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">MODELS_DIR</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">ref</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 

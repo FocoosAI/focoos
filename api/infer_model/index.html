@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.19">
     
     
       
@@ -1928,11 +1928,19 @@ and TorchScript for model execution.</p>
 <span class="normal">288</span>
 <span class="normal">289</span>
 <span class="normal">290</span>
-<span class="normal">291</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">InferModel</span><span class="p">:</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">InferModel</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
         <span class="n">runtime_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RuntimeType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize a LocalModel instance.</span>
@@ -1968,7 +1976,12 @@ and TorchScript for model execution.</p>
         <span class="c1"># Determine runtime type and model format</span>
         <span class="n">runtime_type</span> <span class="o">=</span> <span class="n">runtime_type</span> <span class="ow">or</span> <span class="n">FOCOOS_CONFIG</span><span class="o">.</span><span class="n">runtime_type</span>
         <span class="n">extension</span> <span class="o">=</span> <span class="n">ModelExtension</span><span class="o">.</span><span class="n">from_runtime_type</span><span class="p">(</span><span class="n">runtime_type</span><span class="p">)</span>
-
+        <span class="k">if</span> <span class="n">device</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">get_device_type</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">runtime_type</span> <span class="o">==</span> <span class="n">RuntimeType</span><span class="o">.</span><span class="n">ONNX_CPU</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
         <span class="c1"># Set model directory and path</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_dir</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;model.</span><span class="si">{</span><span class="n">extension</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -1989,7 +2002,7 @@ and TorchScript for model execution.</p>
             <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigManager</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">model_family</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">processor</span> <span class="o">=</span> <span class="n">ProcessorManager</span><span class="o">.</span><span class="n">get_processor</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">model_family</span><span class="p">,</span> <span class="n">model_config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">im_size</span>
-            <span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error creating model config: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">raise</span> <span class="n">e</span>
@@ -2001,10 +2014,11 @@ and TorchScript for model execution.</p>
 
         <span class="c1"># Load runtime for inference</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="p">:</span> <span class="n">BaseRuntime</span> <span class="o">=</span> <span class="n">load_runtime</span><span class="p">(</span>
-            <span class="n">runtime_type</span><span class="p">,</span>
-            <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_path</span><span class="p">),</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">,</span>
-            <span class="n">FOCOOS_CONFIG</span><span class="o">.</span><span class="n">warmup_iter</span><span class="p">,</span>
+            <span class="n">runtime_type</span><span class="o">=</span><span class="n">runtime_type</span><span class="p">,</span>
+            <span class="n">model_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_path</span><span class="p">),</span>
+            <span class="n">model_info</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">,</span>
+            <span class="n">warmup_iter</span><span class="o">=</span><span class="n">FOCOOS_CONFIG</span><span class="o">.</span><span class="n">warmup_iter</span><span class="p">,</span>
+            <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_read_model_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelInfo</span><span class="p">:</span>
@@ -2053,7 +2067,7 @@ and TorchScript for model execution.</p>
         <span class="n">t0</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
         <span class="n">im</span> <span class="o">=</span> <span class="n">image_loader</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
         <span class="n">t1</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-        <span class="n">tensors</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">im</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+        <span class="n">tensors</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">im</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
         <span class="c1"># logger.debug(f&quot;Input image size: {im.shape}&quot;)</span>
         <span class="n">t2</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
 
@@ -2186,7 +2200,7 @@ and TorchScript for model execution.</p>
 
 
 <h3 id="focoos.infer.infer_model.InferModel.__init__" class="doc doc-heading">
-            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="n">runtime_type</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="n">runtime_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span></code>
 
 <a href="#focoos.infer.infer_model.InferModel.__init__" class="headerlink" title="Permanent link">#</a></h3>
 
@@ -2453,10 +2467,18 @@ utilities are also prepared for visualizing model outputs.</p>
 <span class="normal">127</span>
 <span class="normal">128</span>
 <span class="normal">129</span>
-<span class="normal">130</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">model_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
     <span class="n">runtime_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">RuntimeType</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">device</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize a LocalModel instance.</span>
@@ -2492,7 +2514,12 @@ utilities are also prepared for visualizing model outputs.</p>
     <span class="c1"># Determine runtime type and model format</span>
     <span class="n">runtime_type</span> <span class="o">=</span> <span class="n">runtime_type</span> <span class="ow">or</span> <span class="n">FOCOOS_CONFIG</span><span class="o">.</span><span class="n">runtime_type</span>
     <span class="n">extension</span> <span class="o">=</span> <span class="n">ModelExtension</span><span class="o">.</span><span class="n">from_runtime_type</span><span class="p">(</span><span class="n">runtime_type</span><span class="p">)</span>
-
+    <span class="k">if</span> <span class="n">device</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">get_device_type</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">runtime_type</span> <span class="o">==</span> <span class="n">RuntimeType</span><span class="o">.</span><span class="n">ONNX_CPU</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
     <span class="c1"># Set model directory and path</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">model_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_dir</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">model_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">model_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;model.</span><span class="si">{</span><span class="n">extension</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -2513,7 +2540,7 @@ utilities are also prepared for visualizing model outputs.</p>
         <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigManager</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">model_family</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">processor</span> <span class="o">=</span> <span class="n">ProcessorManager</span><span class="o">.</span><span class="n">get_processor</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">model_family</span><span class="p">,</span> <span class="n">model_config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">im_size</span>
-        <span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error creating model config: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">raise</span> <span class="n">e</span>
@@ -2525,10 +2552,11 @@ utilities are also prepared for visualizing model outputs.</p>
 
     <span class="c1"># Load runtime for inference</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="p">:</span> <span class="n">BaseRuntime</span> <span class="o">=</span> <span class="n">load_runtime</span><span class="p">(</span>
-        <span class="n">runtime_type</span><span class="p">,</span>
-        <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_path</span><span class="p">),</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">,</span>
-        <span class="n">FOCOOS_CONFIG</span><span class="o">.</span><span class="n">warmup_iter</span><span class="p">,</span>
+        <span class="n">runtime_type</span><span class="o">=</span><span class="n">runtime_type</span><span class="p">,</span>
+        <span class="n">model_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_path</span><span class="p">),</span>
+        <span class="n">model_info</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="p">,</span>
+        <span class="n">warmup_iter</span><span class="o">=</span><span class="n">FOCOOS_CONFIG</span><span class="o">.</span><span class="n">warmup_iter</span><span class="p">,</span>
+        <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -2552,15 +2580,15 @@ utilities are also prepared for visualizing model outputs.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/infer_model.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">212</span>
-<span class="normal">213</span>
-<span class="normal">214</span>
-<span class="normal">215</span>
-<span class="normal">216</span>
-<span class="normal">217</span>
-<span class="normal">218</span>
-<span class="normal">219</span>
-<span class="normal">220</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Benchmark the model&#39;s inference performance over multiple iterations.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -2694,14 +2722,7 @@ utilities are also prepared for visualizing model outputs.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/infer_model.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">222</span>
-<span class="normal">223</span>
-<span class="normal">224</span>
-<span class="normal">225</span>
-<span class="normal">226</span>
-<span class="normal">227</span>
-<span class="normal">228</span>
-<span class="normal">229</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">229</span>
 <span class="normal">230</span>
 <span class="normal">231</span>
 <span class="normal">232</span>
@@ -2763,7 +2784,14 @@ utilities are also prepared for visualizing model outputs.</p>
 <span class="normal">288</span>
 <span class="normal">289</span>
 <span class="normal">290</span>
-<span class="normal">291</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">end2end_benchmark</span><span class="p">(</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">end2end_benchmark</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -2977,14 +3005,7 @@ with optional annotation for visualization or further processing.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/infer_model.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">146</span>
-<span class="normal">147</span>
-<span class="normal">148</span>
-<span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span>
-<span class="normal">153</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">153</span>
 <span class="normal">154</span>
 <span class="normal">155</span>
 <span class="normal">156</span>
@@ -3041,7 +3062,14 @@ with optional annotation for visualization or further processing.</p>
 <span class="normal">207</span>
 <span class="normal">208</span>
 <span class="normal">209</span>
-<span class="normal">210</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">infer</span><span class="p">(</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">infer</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">image</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span>
     <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
@@ -3073,7 +3101,7 @@ with optional annotation for visualization or further processing.</p>
     <span class="n">t0</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
     <span class="n">im</span> <span class="o">=</span> <span class="n">image_loader</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
     <span class="n">t1</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
-    <span class="n">tensors</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">im</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+    <span class="n">tensors</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">im</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
     <span class="c1"># logger.debug(f&quot;Input image size: {im.shape}&quot;)</span>
     <span class="n">t2</span> <span class="o">=</span> <span class="n">perf_counter</span><span class="p">()</span>
 

@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.svg">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.19">
     
     
       
@@ -2352,7 +2352,7 @@ It provides methods for model initialization, inference, and performance benchma
 
 
 <h2 id="focoos.infer.runtimes.load_runtime.load_runtime" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">load_runtime</span><span class="p">(</span><span class="n">runtime_type</span><span class="p">,</span> <span class="n">model_path</span><span class="p">,</span> <span class="n">model_info</span><span class="p">,</span> <span class="n">warmup_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">load_runtime</span><span class="p">(</span><span class="n">runtime_type</span><span class="p">,</span> <span class="n">model_path</span><span class="p">,</span> <span class="n">model_info</span><span class="p">,</span> <span class="n">warmup_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span></code>
 
 <a href="#focoos.infer.runtimes.load_runtime.load_runtime" class="headerlink" title="Permanent link">#</a></h2>
 
@@ -2496,9 +2496,7 @@ Supports both ONNX and TorchScript runtimes with various execution providers.</p
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/runtimes/load_runtime.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">25</span>
 <span class="normal">26</span>
 <span class="normal">27</span>
 <span class="normal">28</span>
@@ -2550,11 +2548,15 @@ Supports both ONNX and TorchScript runtimes with various execution providers.</p
 <span class="normal">74</span>
 <span class="normal">75</span>
 <span class="normal">76</span>
-<span class="normal">77</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_runtime</span><span class="p">(</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_runtime</span><span class="p">(</span>
     <span class="n">runtime_type</span><span class="p">:</span> <span class="n">RuntimeType</span><span class="p">,</span>
     <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">model_info</span><span class="p">:</span> <span class="n">ModelInfo</span><span class="p">,</span>
     <span class="n">warmup_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="n">device</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseRuntime</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates and returns a runtime instance based on the specified runtime type.</span>
@@ -2587,7 +2589,7 @@ Supports both ONNX and TorchScript runtimes with various execution providers.</p
         <span class="kn">from</span><span class="w"> </span><span class="nn">focoos.infer.runtimes.torchscript</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchscriptRuntime</span>
 
         <span class="n">opts</span> <span class="o">=</span> <span class="n">TorchscriptRuntimeOpts</span><span class="p">(</span><span class="n">warmup_iter</span><span class="o">=</span><span class="n">warmup_iter</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">TorchscriptRuntime</span><span class="p">(</span><span class="n">model_path</span><span class="o">=</span><span class="n">model_path</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="n">opts</span><span class="p">,</span> <span class="n">model_info</span><span class="o">=</span><span class="n">model_info</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">TorchscriptRuntime</span><span class="p">(</span><span class="n">model_path</span><span class="o">=</span><span class="n">model_path</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="n">opts</span><span class="p">,</span> <span class="n">model_info</span><span class="o">=</span><span class="n">model_info</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">ORT_AVAILABLE</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
@@ -3667,7 +3669,11 @@ device placement, warmup, inference, and performance benchmarking.</p>
 <span class="normal">115</span>
 <span class="normal">116</span>
 <span class="normal">117</span>
-<span class="normal">118</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TorchscriptRuntime</span><span class="p">(</span><span class="n">BaseRuntime</span><span class="p">):</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TorchscriptRuntime</span><span class="p">(</span><span class="n">BaseRuntime</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    TorchScript Runtime wrapper for model inference.</span>
 
@@ -3687,8 +3693,12 @@ device placement, warmup, inference, and performance benchmarking.</p>
         <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">opts</span><span class="p">:</span> <span class="n">TorchscriptRuntimeOpts</span><span class="p">,</span>
         <span class="n">model_info</span><span class="p">:</span> <span class="n">ModelInfo</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="s2">&quot;auto&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">device</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="n">get_device_type</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔧 Device: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">opts</span> <span class="o">=</span> <span class="n">opts</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span> <span class="o">=</span> <span class="n">model_info</span>
@@ -3704,7 +3714,7 @@ device placement, warmup, inference, and performance benchmarking.</p>
             <span class="p">)</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Warming up model </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
             <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-                <span class="n">np_image</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+                <span class="n">np_image</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">warmup_iter</span><span class="p">):</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">np_image</span><span class="p">)</span>
 
@@ -3856,11 +3866,7 @@ device placement, warmup, inference, and performance benchmarking.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/runtimes/torchscript.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span>
-<span class="normal">60</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">60</span>
 <span class="normal">61</span>
 <span class="normal">62</span>
 <span class="normal">63</span>
@@ -3868,7 +3874,11 @@ device placement, warmup, inference, and performance benchmarking.</p>
 <span class="normal">65</span>
 <span class="normal">66</span>
 <span class="normal">67</span>
-<span class="normal">68</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">im</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">im</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run inference on the input image.</span>
 
@@ -3964,11 +3974,7 @@ performance metrics like FPS, mean latency, and other statistics.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/runtimes/torchscript.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 70</span>
-<span class="normal"> 71</span>
-<span class="normal"> 72</span>
-<span class="normal"> 73</span>
-<span class="normal"> 74</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 74</span>
 <span class="normal"> 75</span>
 <span class="normal"> 76</span>
 <span class="normal"> 77</span>
@@ -4012,7 +4018,11 @@ performance metrics like FPS, mean latency, and other statistics.</p>
 <span class="normal">115</span>
 <span class="normal">116</span>
 <span class="normal">117</span>
-<span class="normal">118</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Benchmark the model performance.</span>
 
