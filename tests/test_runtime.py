@@ -147,11 +147,19 @@ def test_load_runtime(mocker: MockerFixture, tmp_path, runtime_type, expected_op
 
     # assertions
     assert runtime is not None
-    mock_runtime_class.assert_called_once_with(
-        model_path,
-        expected_opts,
-        mock_model_metadata,
-    )
+    if runtime_type == RuntimeType.TORCHSCRIPT_32:
+        mock_runtime_class.assert_called_once_with(
+            model_path=model_path,
+            opts=expected_opts,
+            model_info=mock_model_metadata,
+            device="auto",
+        )
+    else:
+        mock_runtime_class.assert_called_once_with(
+            model_path,
+            expected_opts,
+            mock_model_metadata,
+        )
 
 
 def test_load_unavailable_runtime(mocker: MockerFixture):

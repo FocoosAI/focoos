@@ -27,7 +27,7 @@ def load_runtime(
     model_path: str,
     model_info: ModelInfo,
     warmup_iter: int = 50,
-    device: Literal["cuda", "cpu"] = "cuda",
+    device: Literal["cuda", "cpu", "auto"] = "auto",
 ) -> BaseRuntime:
     """
     Creates and returns a runtime instance based on the specified runtime type.
