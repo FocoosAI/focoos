@@ -251,7 +251,7 @@ The interface will automatically open in your default web browser, typically at 
 | `--source`     | Input source (predict only) | **Required**   | `image.jpg`                        |
 | `--im-size`    | Input image size            | 640            | Any positive integer               |
 | `--batch-size` | Batch size                  | 16             | Powers of 2 recommended            |
-| `--device`     | Compute device              | `cuda`         | `cuda`, `cpu`, `mps`               |
+| `--device`     | Compute device              | `cuda`         | `cuda`, `cpu`               |
 | `--workers`    | Data loading workers        | 4              | 0-16 recommended                   |
 | `--output-dir` | Output directory            | Auto-generated | Any valid path                     |
 
