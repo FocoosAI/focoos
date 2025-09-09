@@ -22,7 +22,7 @@ Methods:
 import os
 from pathlib import Path
 from time import perf_counter
-from typing import Optional, Tuple, Union
+from typing import Literal, Optional, Tuple, Union
 
 import numpy as np
 import supervision as sv
@@ -41,7 +41,7 @@ from focoos.ports import (
 )
 from focoos.processor.processor_manager import ProcessorManager
 from focoos.utils.logger import get_logger
-from focoos.utils.system import get_cpu_name, get_device_name
+from focoos.utils.system import get_cpu_name, get_device_name, get_device_type
 from focoos.utils.vision import (
     annotate_frame,
     image_loader,
@@ -55,6 +55,7 @@ class InferModel:
         self,
         model_dir: Union[str, Path],
         runtime_type: Optional[RuntimeType] = None,
+        device: Literal["cuda", "cpu", "auto"] = "auto",
     ):
         """
         Initialize a LocalModel instance.
@@ -90,7 +91,12 @@ class InferModel:
         # Determine runtime type and model format
         runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
         extension = ModelExtension.from_runtime_type(runtime_type)
-
+        if device == "auto":
+            self.device = get_device_type()
+        elif runtime_type == RuntimeType.ONNX_CPU:
+            self.device = "cpu"
+        else:
+            self.device = device
         # Set model directory and path
         self.model_dir: Union[str, Path] = model_dir
         self.model_path = os.path.join(model_dir, f"model.{extension.value}")
@@ -111,7 +117,7 @@ class InferModel:
             model_config = ConfigManager.from_dict(self.model_info.model_family, self.model_info.config)
             self.processor = ProcessorManager.get_processor(
                 self.model_info.model_family, model_config, self.model_info.im_size
-            )
+            ).eval()
         except Exception as e:
             logger.error(f"Error creating model config: {e}")
             raise e
@@ -123,10 +129,11 @@ class InferModel:
 
         # Load runtime for inference
         self.runtime: BaseRuntime = load_runtime(
-            runtime_type,
-            str(self.model_path),
-            self.model_info,
-            FOCOOS_CONFIG.warmup_iter,
+            runtime_type=runtime_type,
+            model_path=str(self.model_path),
+            model_info=self.model_info,
+            warmup_iter=FOCOOS_CONFIG.warmup_iter,
+            device=self.device,
         )
 
     def _read_model_info(self) -> ModelInfo:
@@ -175,7 +182,7 @@ class InferModel:
         t0 = perf_counter()
         im = image_loader(image)
         t1 = perf_counter()
-        tensors, _ = self.processor.preprocess(inputs=im, device="cuda")
+        tensors, _ = self.processor.preprocess(inputs=im, device=self.device)
         # logger.debug(f"Input image size: {im.shape}")
         t2 = perf_counter()
 

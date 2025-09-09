@@ -7,7 +7,9 @@ import tarfile
 import time
 import zipfile
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Literal, Optional, Union
+
+import torch
 
 from focoos.ports import GPUInfo
 from focoos.utils.distributed import comm
@@ -413,3 +415,10 @@ def get_device_name() -> str:
     else:
         cpu_name = get_cpu_name()
         return cpu_name if cpu_name is not None else "CPU"
+
+
+def get_device_type() -> Literal["cuda", "cpu"]:
+    if torch.cuda.is_available():
+        return "cuda"
+    else:
+        return "cpu"

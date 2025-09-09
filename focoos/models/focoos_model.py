@@ -32,7 +32,7 @@ from focoos.utils.api_client import ApiClient
 from focoos.utils.distributed.dist import launch
 from focoos.utils.env import TORCH_VERSION
 from focoos.utils.logger import get_logger
-from focoos.utils.system import get_cpu_name, get_device_name, get_focoos_version, get_system_info
+from focoos.utils.system import get_cpu_name, get_device_name, get_device_type, get_focoos_version, get_system_info
 from focoos.utils.vision import annotate_frame, image_loader
 
 logger = get_logger("FocoosModel")
@@ -393,7 +393,7 @@ class FocoosModel:
         runtime_type: RuntimeType = RuntimeType.TORCHSCRIPT_32,
         onnx_opset: int = 17,
         out_dir: Optional[str] = None,
-        device: Literal["cuda", "cpu"] = "cuda",
+        device: Literal["cuda", "cpu", "auto"] = "auto",
         overwrite: bool = True,
         image_size: Optional[Union[int, Tuple[int, int]]] = None,
     ) -> InferModel:
@@ -416,9 +416,12 @@ class FocoosModel:
         Raises:
             ValueError: If unsupported PyTorch version or export format.
         """
-        if device == "cuda" and not torch.cuda.is_available():
-            device = "cpu"
-            logger.warning("CUDA is not available. Using CPU for export.")
+        if device == "auto":
+            device = get_device_type()  # type: ignore
+        else:
+            device = device
+
+        logger.info(f"🔧 Export Device: {device}")
         if out_dir is None:
             out_dir = os.path.join(MODELS_DIR, self.model_info.ref or self.model_info.name)
 

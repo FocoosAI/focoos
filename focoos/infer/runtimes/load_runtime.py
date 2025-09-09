@@ -1,3 +1,5 @@
+from typing import Literal
+
 from focoos.infer.runtimes.base import BaseRuntime
 from focoos.ports import ModelInfo, OnnxRuntimeOpts, RuntimeType, TorchscriptRuntimeOpts
 from focoos.utils.logger import get_logger
@@ -25,6 +27,7 @@ def load_runtime(
     model_path: str,
     model_info: ModelInfo,
     warmup_iter: int = 50,
+    device: Literal["cuda", "cpu"] = "cuda",
 ) -> BaseRuntime:
     """
     Creates and returns a runtime instance based on the specified runtime type.
@@ -57,7 +60,7 @@ def load_runtime(
         from focoos.infer.runtimes.torchscript import TorchscriptRuntime
 
         opts = TorchscriptRuntimeOpts(warmup_iter=warmup_iter)
-        return TorchscriptRuntime(model_path=model_path, opts=opts, model_info=model_info)
+        return TorchscriptRuntime(model_path=model_path, opts=opts, model_info=model_info, device=device)
     else:
         if not ORT_AVAILABLE:
             logger.error(

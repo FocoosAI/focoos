@@ -1,5 +1,5 @@
 from time import perf_counter
-from typing import Tuple, Union
+from typing import Literal, Tuple, Union
 
 import numpy as np
 import torch
@@ -7,7 +7,7 @@ import torch
 from focoos.infer.runtimes.base import BaseRuntime
 from focoos.ports import LatencyMetrics, ModelInfo, Task, TorchscriptRuntimeOpts
 from focoos.utils.logger import get_logger
-from focoos.utils.system import get_cpu_name, get_device_name
+from focoos.utils.system import get_cpu_name, get_device_name, get_device_type
 
 logger = get_logger("TorchscriptRuntime")
 
@@ -32,8 +32,12 @@ class TorchscriptRuntime(BaseRuntime):
         model_path: str,
         opts: TorchscriptRuntimeOpts,
         model_info: ModelInfo,
+        device: Literal["cuda", "cpu", "auto"] = "auto",
     ):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if device == "auto":
+            self.device = torch.device(get_device_type())
+        else:
+            self.device = torch.device(device)
         logger.info(f"🔧 Device: {self.device}")
         self.opts = opts
         self.model_info = model_info
@@ -49,7 +53,7 @@ class TorchscriptRuntime(BaseRuntime):
             )
             logger.info(f"⏱️ Warming up model {self.model_info.name} on {self.device}, size: {size}x{size}..")
             with torch.no_grad():
-                np_image = torch.rand(1, 3, size, size, device=self.device)
+                np_image = torch.rand(1, 3, size, size).to(self.device)
                 for _ in range(self.opts.warmup_iter):
                     self.model(np_image)
 
