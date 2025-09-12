@@ -30,7 +30,6 @@ from focoos.ports import (
 from focoos.processor.processor_manager import ProcessorManager
 from focoos.utils.api_client import ApiClient
 from focoos.utils.distributed.dist import launch
-from focoos.utils.env import TORCH_VERSION
 from focoos.utils.logger import get_logger
 from focoos.utils.system import get_cpu_name, get_device_name, get_device_type, get_focoos_version, get_system_info
 from focoos.utils.vision import annotate_frame, image_loader
@@ -391,9 +390,10 @@ class FocoosModel:
     def export(
         self,
         runtime_type: RuntimeType = RuntimeType.TORCHSCRIPT_32,
-        onnx_opset: int = 17,
+        onnx_opset: int = 18,
         out_dir: Optional[str] = None,
         device: Literal["cuda", "cpu", "auto"] = "auto",
+        simplify_onnx: bool = True,
         overwrite: bool = True,
         image_size: Optional[Union[int, Tuple[int, int]]] = None,
     ) -> InferModel:
@@ -406,7 +406,8 @@ class FocoosModel:
             runtime_type: Target runtime format for export.
             onnx_opset: ONNX opset version to use for ONNX export.
             out_dir: Output directory for exported model. If None, uses default location.
-            device: Device to use for export ("cuda" or "cpu").
+            device: Device to use for export ("cuda", "cpu", "auto").
+            simplify_onnx: Whether to simplify the ONNX model. Default is True.
             overwrite: Whether to overwrite existing exported model files.
             image_size: Custom image size for export. Can be int (square) or tuple (height, width). If None, uses model's default size.
 
@@ -417,7 +418,10 @@ class FocoosModel:
             ValueError: If unsupported PyTorch version or export format.
         """
         if device == "auto":
-            device = get_device_type()  # type: ignore
+            if runtime_type == RuntimeType.ONNX_CPU:
+                device = "cpu"
+            else:
+                device = get_device_type()  # type: ignore
         else:
             device = device
 
@@ -460,50 +464,39 @@ class FocoosModel:
             return InferModel(model_dir=out_dir, runtime_type=runtime_type)
 
         if format == "onnx":
+            import onnx
+            import onnxslim
+
             with torch.no_grad():
                 logger.info("🚀 Exporting ONNX model..")
-                if TORCH_VERSION >= (2, 5):
-                    exp_program = torch.onnx.export(
-                        exportable_model,
-                        (data,),
-                        f=_out_file,
-                        opset_version=onnx_opset,
-                        verbose=False,
-                        verify=True,
-                        dynamo=False,
-                        external_data=False,  # model weights external to model
-                        input_names=dynamic_axes.input_names,
-                        output_names=dynamic_axes.output_names,
-                        dynamic_axes=dynamic_axes.dynamic_axes,
-                        do_constant_folding=True,
-                        export_params=True,
-                        # dynamic_shapes={
-                        #    "x": {
-                        #        0: torch.export.Dim("batch", min=1, max=64),
-                        #        #2: torch.export.Dim("height", min=18, max=4096),
-                        #        #3: torch.export.Dim("width", min=18, max=4096),
-                        #    }
-                        # },
-                    )
-                elif TORCH_VERSION >= (2, 0):
-                    torch.onnx.export(
-                        exportable_model,
-                        (data,),
-                        f=_out_file,
-                        opset_version=onnx_opset,
-                        verbose=False,
-                        input_names=dynamic_axes.input_names,
-                        output_names=dynamic_axes.output_names,
-                        dynamic_axes=dynamic_axes.dynamic_axes,
-                        do_constant_folding=True,
-                        export_params=True,
-                    )
-                else:
-                    raise ValueError(f"Unsupported Torch version: {TORCH_VERSION}. Install torch 2.x")
-                # if exp_program is not None:
-                #    exp_program.optimize()
-                #    exp_program.save(_out_file)
-                logger.info(f"✅ Exported {format} model to {_out_file}")
+                torch.onnx.export(
+                    exportable_model,
+                    (data,),
+                    f=_out_file,
+                    opset_version=onnx_opset,
+                    verbose=False,
+                    verify=True,
+                    dynamo=False,
+                    external_data=False,  # model weights external to model
+                    input_names=dynamic_axes.input_names,
+                    output_names=dynamic_axes.output_names,
+                    dynamic_axes=dynamic_axes.dynamic_axes,
+                    do_constant_folding=True,
+                    export_params=True,
+                    # dynamic_shapes={
+                    #    "x": {
+                    #        0: torch.export.Dim("batch", min=1, max=64),
+                    #        #2: torch.export.Dim("height", min=18, max=4096),
+                    #        #3: torch.export.Dim("width", min=18, max=4096),
+                    #    }
+                    # },
+                )
+                if simplify_onnx:
+                    logger.info("🔧 Simplifying ONNX model..")
+                    onnx_model = onnx.load(_out_file)
+                    onnx_model = onnxslim.slim(onnx_model, verbose=False, model_check=False)
+                    onnx.save(onnx_model, _out_file)
+                logger.info(f"✅ Exported {format}  model to {_out_file}")
 
         elif format == "torchscript":
             with torch.no_grad():
