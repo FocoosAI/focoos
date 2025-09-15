@@ -26,4 +26,3 @@ class ClassificationConfig(ModelConfig):
     focal_alpha: float = 0.75
     focal_gamma: float = 2.0
     label_smoothing: float = 0.0
-    multi_label: bool = False

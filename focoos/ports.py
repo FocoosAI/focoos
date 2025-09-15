@@ -83,6 +83,8 @@ class DatasetLayout(str, Enum):
     Values:
         - ROBOFLOW_COCO: (Detection,Instance Segmentation)
         - ROBOFLOW_SEG: (Semantic Segmentation)
+        - CATALOG: (Any)
+        - CLS_FOLDER: (Classification)
     Example:
         ```python
         - ROBOFLOW_COCO: (Detection,Instance Segmentation) Roboflow COCO format:
@@ -105,6 +107,22 @@ class DatasetLayout(str, Enum):
                     - _classes.csv (comma separated csv)
                     - img_3_mask.png
                     - img_4_mask.png
+        - CLS_FOLDER: (Classification)
+            root/
+                train/
+                    - class_1/
+                        - img_1.jpg
+                        - img_2.jpg
+                    - class_2/
+                        - img_3.jpg
+                        - img_4.jpg
+                valid/
+                    - class_1/
+                        - img_14.jpg
+                        - img_12.jpg
+                    - class_2/
+                        - img_5.jpg
+                        - img_6.jpg
         ```
     """
 

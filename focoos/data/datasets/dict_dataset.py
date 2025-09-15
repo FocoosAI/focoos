@@ -236,6 +236,8 @@ class DictDataset(Dataset):
         import pycocotools.mask as mask_util
         from pycocotools.coco import COCO
 
+        logger = get_logger(__name__)
+
         from focoos.structures import BoxMode
 
         json_file = os.path.join(ds_dir, "_annotations.coco.json")
@@ -269,6 +271,7 @@ class DictDataset(Dataset):
         ann_keys = ["iscrowd", "bbox", "keypoints", "category_id", "area"]
 
         num_instances_without_valid_segmentation = 0
+        filtered = 0
 
         for img_dict, anno_dict_list in imgs_anns:
             record = {}
@@ -322,7 +325,13 @@ class DictDataset(Dataset):
 
                 objs.append(obj)
             record["annotations"] = objs
+            if len(objs) == 0:
+                filtered += 1
+                continue
             dataset_dicts.append(DetectronDict(**record))
+
+        if filtered > 0:
+            logger.info(f"Filtered out {filtered} images with no annotations")
 
         metadata = DatasetMetadata(
             num_classes=len(thing_classes),

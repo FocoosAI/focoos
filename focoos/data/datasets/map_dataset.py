@@ -66,7 +66,11 @@ class MapDataset(data.Dataset):
             cur_idx = self._rng.sample(sorted(self._fallback_candidates), k=1)[0]
 
             if retry_count >= 3:
-                self.logger.warning("Failed to apply `_map_func` for idx: {}, retry count: {}".format(idx, retry_count))
+                self.logger.info(
+                    "Failed to apply augmentation for idx: {}, retry count - no annotations in the image: {}".format(
+                        idx, retry_count
+                    )
+                )
 
     @property
     def name(self):

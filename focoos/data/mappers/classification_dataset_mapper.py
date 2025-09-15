@@ -20,7 +20,7 @@ class ClassificationDatasetDict(DatasetEntry):
     Extends the base DatasetEntry with fields needed for classification.
     """
 
-    label: Optional[int] = None
+    label: Optional[list[int]] = None
 
 
 class ClassificationDatasetMapper(DatasetMapper):
@@ -71,10 +71,10 @@ class ClassificationDatasetMapper(DatasetMapper):
         self.check_image_size(dataset_dict, image)
 
         # Extract class label from annotations
-        label = None
+        label = []
         if "annotations" in dataset_dict and len(dataset_dict["annotations"]) > 0:
             # For classification, we take the first annotation's category_id as the label
-            label = dataset_dict["annotations"][0].get("category_id", None)
+            label = [ann.get("category_id", None) for ann in dataset_dict["annotations"]]
 
         # Apply augmentations
         aug_input = A.AugInput(image)

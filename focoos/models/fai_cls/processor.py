@@ -24,7 +24,9 @@ class ClassificationProcessor(Processor):
         """
         super().__init__(config, image_size)
         self.config = config
-        self.multi_label = config.multi_label
+        self.pixel_mean = torch.Tensor(config.pixel_mean).view(-1, 1, 1)
+        self.pixel_std = torch.Tensor(config.pixel_std).view(-1, 1, 1)
+        self.num_classes = config.num_classes
 
     def preprocess(
         self,
@@ -60,21 +62,28 @@ class ClassificationProcessor(Processor):
                 tensors=images,
             )
             images_torch = images.tensor
-            targets = [
-                ClassificationTargets(labels=torch.tensor(x.label, dtype=torch.int64, device=device))
-                for x in class_data_dict  # type: ignore
-            ]
+
+            labels = torch.zeros(len(class_data_dict), self.num_classes, dtype=torch.int, device=device)
+            for i, x in enumerate(class_data_dict):
+                if x.label is not None:
+                    labels[i, x.label] = 1
+            targets = [ClassificationTargets(labels=labels[i]) for i in range(len(class_data_dict))]
+
             return images_torch, targets
 
         if self.training:
             raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
         target_size = (self.image_size, self.image_size) if self.image_size is not None else None
+        if target_size is not None:
+            print("Resizing to", target_size)
         images_torch = self.get_torch_batch(
             inputs,  # type: ignore
             target_size=target_size,
             device=device,
             dtype=dtype,
         )
+        # self.pixel_mean, self.pixel_std = self.pixel_mean.to(device), self.pixel_std.to(device)
+        # images_torch = (images_torch - self.pixel_mean) / self.pixel_std  # type: ignore
         return images_torch, targets
 
     def eval_postprocess(self, outputs: ClassificationModelOutput, inputs: list[DatasetEntry]) -> List[Dict]:
@@ -84,10 +93,8 @@ class ClassificationProcessor(Processor):
             outputs: Model output
             inputs: Batch input metadata
         """
-        if self.multi_label:
-            probs = F.sigmoid(outputs.logits)
-        else:
-            probs = F.softmax(outputs.logits, dim=1)
+        probs = F.sigmoid(outputs.logits)
+
         results = []
         for probs_i in probs:
             results.append({"logits": probs_i})
@@ -114,24 +121,30 @@ class ClassificationProcessor(Processor):
             inputs: Batch input metadata
 
         Returns:
-            List of processed results with class probabilities and predicted class
+            List of processed results with class probabilities and predicted classes
         """
         logits = outputs.logits.detach().cpu()
-        probs = F.softmax(logits, dim=1)
+
+        probs = F.sigmoid(logits)
+        threshold = threshold or 0.5
 
         results = []
         for i, probs_i in enumerate(probs):
-            top_prob, top_class = torch.max(probs_i, dim=0)
-
-            result = FocoosDetections(
-                detections=[
+            # For multi-label, return all classes above threshold
+            predicted_classes = (probs_i > threshold).nonzero(as_tuple=True)[0]
+            detections = []
+            for cls_id in predicted_classes:
+                detections.append(
                     FocoosDet(
-                        conf=top_prob.item(),
-                        cls_id=int(top_class.item()),
-                        label=class_names[int(top_class.item())] if class_names else None,
+                        conf=probs_i[cls_id].item(),
+                        cls_id=int(cls_id.item()),
+                        label=class_names[int(cls_id.item())]
+                        if class_names and int(cls_id.item()) < len(class_names)
+                        else None,
                     )
-                ]
-            )
+                )
+
+            result = FocoosDetections(detections=detections)
             results.append(result)
 
         return results

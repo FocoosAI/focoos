@@ -397,6 +397,7 @@ class FocoosModel:
         dynamic_axes: bool = True,
         overwrite: bool = True,
         image_size: Optional[Union[int, Tuple[int, int]]] = None,
+        use_dynamic_axes: bool = True,
     ) -> InferModel:
         """Export the model to different runtime formats.
 
@@ -456,6 +457,8 @@ class FocoosModel:
         _out_file = os.path.join(out_dir, export_model_name)
 
         dynamic_axes = self.processor.get_dynamic_axes()
+        if not use_dynamic_axes:
+            dynamic_axes.dynamic_axes = None
 
         # Hack to warm up the model and record the spacial shapes if needed
         exportable_model(data)

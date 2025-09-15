@@ -2,7 +2,6 @@ from typing import Dict, List
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from focoos.data.mappers.classification_dataset_mapper import ClassificationDatasetDict
 from focoos.models.fai_cls.config import ClassificationConfig
@@ -41,9 +40,9 @@ class ClassificationHead(nn.Module):
         elif num_layers == 1:
             self.classifier = nn.Sequential(
                 nn.AdaptiveAvgPool2d(1),
-                nn.Flatten(),
+                # nn.Flatten(),
                 nn.Dropout(dropout_rate),
-                nn.Linear(in_features, num_classes),
+                nn.Conv2d(in_features, num_classes, kernel_size=1),
             )
         else:
             raise ValueError(f"Invalid number of layers: {num_layers}")
@@ -64,7 +63,7 @@ class ClassificationHead(nn.Module):
         Returns:
             Classification logits [N, num_classes]
         """
-        return self.classifier(features)
+        return self.classifier(features).flatten(start_dim=1)
 
 
 class ClassificationLoss(nn.Module):
@@ -77,7 +76,6 @@ class ClassificationLoss(nn.Module):
         focal_alpha: float = 0.75,
         focal_gamma: float = 2.0,
         label_smoothing: float = 0.0,
-        multi_label: bool = False,
     ):
         """Initialize the loss module.
 
@@ -87,7 +85,6 @@ class ClassificationLoss(nn.Module):
             focal_alpha: Alpha parameter for focal loss
             focal_gamma: Gamma parameter for focal loss
             label_smoothing: Label smoothing parameter
-            multi_label: Whether to use multi-label loss
         """
         super().__init__()
         self.num_classes = num_classes
@@ -95,13 +92,10 @@ class ClassificationLoss(nn.Module):
         self.focal_alpha = focal_alpha
         self.focal_gamma = focal_gamma
         self.label_smoothing = label_smoothing
-        self.multi_label = multi_label
 
         # Use CrossEntropyLoss if not using focal loss
-        if not use_focal_loss and not multi_label:
-            self.ce_loss = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
-        elif not use_focal_loss and multi_label:
-            self.ce_loss = nn.BCEWithLogitsLoss()
+        if not use_focal_loss:
+            self.ce_loss = nn.BCEWithLogitsLoss(pos_weight=10 * torch.ones(self.num_classes))
 
     def forward(self, logits: torch.Tensor, targets: List[ClassificationTargets]) -> Dict[str, torch.Tensor]:
         """Compute the classification loss.
@@ -113,41 +107,30 @@ class ClassificationLoss(nn.Module):
         Returns:
             Dictionary with loss values
         """
-        labels = torch.stack([target.labels for target in targets]).to(logits.device)
+        target_one_hot = torch.stack([target.labels for target in targets]).to(dtype=logits.dtype, device=logits.device)
 
         if self.use_focal_loss:
             # Compute focal loss manually
-            pred_softmax = F.softmax(logits, dim=1) if not self.multi_label else torch.sigmoid(logits)
-            target_one_hot = F.one_hot(labels, num_classes=self.num_classes).float()
+            pred = torch.sigmoid(logits)
+            # target_one_hot = F.one_hot(labels, num_classes=self.num_classes).float()
 
             # Apply label smoothing if needed
             if self.label_smoothing > 0:
                 target_one_hot = target_one_hot * (1 - self.label_smoothing) + self.label_smoothing / self.num_classes
 
             # Compute focal loss
-            pred_softmax = torch.clamp(pred_softmax, min=1e-6, max=1.0)
-            if self.multi_label:
-                loss = (
-                    -self.focal_alpha
-                    * ((1 - pred_softmax) ** self.focal_gamma)
-                    * (target_one_hot * torch.log(pred_softmax) + (1 - target_one_hot) * torch.log(1 - pred_softmax))
-                )
-            else:
-                loss = (
-                    -self.focal_alpha
-                    * ((1 - pred_softmax) ** self.focal_gamma)
-                    * target_one_hot
-                    * torch.log(pred_softmax)
-                )
+            pred = torch.clamp(pred, min=1e-6, max=1.0)
+
+            loss = (
+                -self.focal_alpha
+                * ((1 - pred) ** self.focal_gamma)
+                * (target_one_hot * torch.log(pred) + (1 - target_one_hot) * torch.log(1 - pred))
+            )
             loss = loss.sum(dim=1).mean()
         else:
-            if self.multi_label:
-                target_one_hot = F.one_hot(labels, num_classes=self.num_classes).float()
-                # Use standard cross entropy loss
-                loss = self.ce_loss(logits, target_one_hot)
-            else:
-                # Use standard cross entropy loss
-                loss = self.ce_loss(logits, labels)
+            # target_one_hot = F.one_hot(labels, num_classes=self.num_classes).float()
+            # Use standard cross entropy loss
+            loss = self.ce_loss(logits, target_one_hot)
 
         return {"loss_cls": loss}
 
@@ -193,7 +176,6 @@ class FAIClassification(BaseModelNN):
             focal_alpha=config.focal_alpha,
             focal_gamma=config.focal_gamma,
             label_smoothing=config.label_smoothing,
-            multi_label=config.multi_label,
         )
 
     @property
@@ -217,8 +199,8 @@ class FAIClassification(BaseModelNN):
         Returns:
             Classification model output with logits and optional loss
         """
-
         images = (images - self.pixel_mean) / self.pixel_std  # type: ignore
+
         # Extract features from backbone
         features = self.backbone(images)
 
