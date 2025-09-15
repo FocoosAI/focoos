@@ -394,6 +394,7 @@ class FocoosModel:
         out_dir: Optional[str] = None,
         device: Literal["cuda", "cpu", "auto"] = "auto",
         simplify_onnx: bool = True,
+        dynamic_axes: bool = True,
         overwrite: bool = True,
         image_size: Optional[Union[int, Tuple[int, int]]] = None,
     ) -> InferModel:
@@ -480,7 +481,7 @@ class FocoosModel:
                     external_data=False,  # model weights external to model
                     input_names=dynamic_axes.input_names,
                     output_names=dynamic_axes.output_names,
-                    dynamic_axes=dynamic_axes.dynamic_axes,
+                    dynamic_axes=dynamic_axes.dynamic_axes if dynamic_axes else None,
                     do_constant_folding=True,
                     export_params=True,
                     # dynamic_shapes={
@@ -494,7 +495,7 @@ class FocoosModel:
                 if simplify_onnx:
                     logger.info("🔧 Simplifying ONNX model..")
                     onnx_model = onnx.load(_out_file)
-                    onnx_model = onnxslim.slim(onnx_model, verbose=False, model_check=False)
+                    onnx_model = onnxslim.slim(onnx_model, verbose=False, model_check=False, inspect=True)
                     onnx.save(onnx_model, _out_file)
                 logger.info(f"✅ Exported {format}  model to {_out_file}")
 

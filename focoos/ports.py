@@ -11,7 +11,6 @@ from typing import Any, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 from pydantic import BaseModel
-from torch import Tensor
 
 from focoos.structures import Instances
 
@@ -917,7 +916,7 @@ class ModelOutput(DictClass):
 
 @dataclass
 class DatasetEntry(DictClass):
-    image: Optional[Tensor] = None
+    image: Optional["torch.Tensor"] = None  # noqa: F821
     height: Optional[int] = None
     width: Optional[int] = None
     instances: Optional[Instances] = None

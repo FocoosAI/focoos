@@ -1,0 +1,67 @@
+{
+    "name": "fai-cls-stdc-large-catvsdog",
+    "model_family": "fai_cls",
+    "classes": [
+        "class_0",
+        "class_1"
+    ],
+    "im_size": 224,
+    "task": "classification",
+    "config": {
+        "num_classes": 2,
+        "backbone_config": {
+            "use_pretrained": true,
+            "backbone_url": "https://public.focoos.ai/pretrained_models/backbones/stdc_large.pth",
+            "model_type": "stdc",
+            "in_chans": 3,
+            "base": 64,
+            "layers": [
+                4,
+                5,
+                3
+            ],
+            "out_features": [
+                "res2",
+                "res3",
+                "res4",
+                "res5"
+            ],
+            "block_num": 4,
+            "block_type": "cat",
+            "size": "large",
+            "use_conv_last": false
+        },
+        "resolution": 224,
+        "pixel_mean": [
+            123.675,
+            116.28,
+            103.53
+        ],
+        "pixel_std": [
+            58.395,
+            57.12,
+            57.375
+        ],
+        "hidden_dim": 512,
+        "dropout_rate": 0.2,
+        "features": "res5",
+        "num_layers": 1,
+        "use_focal_loss": false,
+        "focal_alpha": 0.75,
+        "focal_gamma": 2.0,
+        "label_smoothing": 0.0,
+        "multi_label": false
+    },
+    "ref": null,
+    "focoos_model": null,
+    "status": null,
+    "description": "Simple stdc classification model",
+    "train_args": null,
+    "weights_uri": null,
+    "val_dataset": null,
+    "val_metrics": null,
+    "focoos_version": null,
+    "latency": null,
+    "training_info": null,
+    "updated_at": null
+}

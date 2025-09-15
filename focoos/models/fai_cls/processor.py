@@ -38,7 +38,7 @@ class ClassificationProcessor(Processor):
             List[ClassificationDatasetDict],
         ],
         device: torch.device,
-        dtype: torch.dtype,
+        dtype: torch.dtype = torch.float32,
     ) -> Tuple[torch.Tensor, List[ClassificationTargets]]:
         """Process input images for model inference.
 
