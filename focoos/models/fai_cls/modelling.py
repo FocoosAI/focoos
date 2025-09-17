@@ -16,7 +16,15 @@ logger = get_logger(__name__)
 class ClassificationHead(nn.Module):
     """Classification head for image classification models."""
 
-    def __init__(self, in_features: int, hidden_dim: int, num_classes: int, num_layers: int, dropout_rate: float = 0.0):
+    def __init__(
+        self,
+        in_features: int,
+        hidden_dim: int,
+        num_classes: int,
+        num_layers: int,
+        dropout_rate: float = 0.0,
+        dense_prediction: bool = False,
+    ):
         """Initialize the classification head.
 
         Args:
@@ -25,24 +33,27 @@ class ClassificationHead(nn.Module):
             num_classes: Number of output classes
             num_layers: Number of layers in the classifier
             dropout_rate: Dropout rate for regularization
+            dense_prediction: Whether to use dense prediction
         """
         super().__init__()
 
         if num_layers == 2:
             self.classifier = nn.Sequential(
-                nn.AdaptiveAvgPool2d(1),
-                nn.Flatten(),
-                nn.Linear(in_features, hidden_dim),
+                nn.AdaptiveAvgPool2d(1) if not dense_prediction else nn.Identity(),
+                # nn.Flatten(),
+                nn.Conv2d(in_features, hidden_dim, kernel_size=1),
                 nn.ReLU(inplace=True),
                 nn.Dropout(dropout_rate),
-                nn.Linear(hidden_dim, num_classes),
+                nn.Conv2d(hidden_dim, num_classes, kernel_size=1),
+                nn.AdaptiveMaxPool2d(1) if dense_prediction else nn.Identity(),
             )
         elif num_layers == 1:
             self.classifier = nn.Sequential(
-                nn.AdaptiveAvgPool2d(1),
+                nn.AdaptiveAvgPool2d(1) if not dense_prediction else nn.Identity(),
                 # nn.Flatten(),
                 nn.Dropout(dropout_rate),
                 nn.Conv2d(in_features, num_classes, kernel_size=1),
+                nn.AdaptiveMaxPool2d(1) if dense_prediction else nn.Identity(),
             )
         else:
             raise ValueError(f"Invalid number of layers: {num_layers}")
@@ -76,6 +87,7 @@ class ClassificationLoss(nn.Module):
         focal_alpha: float = 0.75,
         focal_gamma: float = 2.0,
         label_smoothing: float = 0.0,
+        pos_weight: float = 10.0,
     ):
         """Initialize the loss module.
 
@@ -92,10 +104,10 @@ class ClassificationLoss(nn.Module):
         self.focal_alpha = focal_alpha
         self.focal_gamma = focal_gamma
         self.label_smoothing = label_smoothing
-
+        self.pos_weight = pos_weight
         # Use CrossEntropyLoss if not using focal loss
         if not use_focal_loss:
-            self.ce_loss = nn.BCEWithLogitsLoss(pos_weight=10 * torch.ones(self.num_classes))
+            self.ce_loss = nn.BCEWithLogitsLoss(pos_weight=self.pos_weight * torch.ones(self.num_classes))
 
     def forward(self, logits: torch.Tensor, targets: List[ClassificationTargets]) -> Dict[str, torch.Tensor]:
         """Compute the classification loss.
@@ -167,6 +179,7 @@ class FAIClassification(BaseModelNN):
             hidden_dim=config.hidden_dim,
             num_classes=config.num_classes,
             dropout_rate=config.dropout_rate,
+            dense_prediction=config.dense_prediction,
         )
 
         # Create loss module
@@ -176,6 +189,7 @@ class FAIClassification(BaseModelNN):
             focal_alpha=config.focal_alpha,
             focal_gamma=config.focal_gamma,
             label_smoothing=config.label_smoothing,
+            pos_weight=config.pos_weight,
         )
 
     @property
