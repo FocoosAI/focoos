@@ -190,6 +190,7 @@ class FocoosTrainer:
                 f"📁 output_dir: {self.output_dir}",
                 "========== 🔧 Main Hyperparameters 🔧 ==========",
                 f" - max_iter: {self.args.max_iters}",
+                f" - eval_period: {self.args.eval_period}",
                 f" - batch_size: {self.args.batch_size}",
                 f" - learning_rate: {self.args.learning_rate}",
                 " - resolution: !TODO",

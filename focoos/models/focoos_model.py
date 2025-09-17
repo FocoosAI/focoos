@@ -394,10 +394,9 @@ class FocoosModel:
         out_dir: Optional[str] = None,
         device: Literal["cuda", "cpu", "auto"] = "auto",
         simplify_onnx: bool = True,
-        dynamic_axes: bool = True,
         overwrite: bool = True,
         image_size: Optional[Union[int, Tuple[int, int]]] = None,
-        use_dynamic_axes: bool = True,
+        dynamic_axes: bool = True,
     ) -> InferModel:
         """Export the model to different runtime formats.
 
@@ -456,9 +455,7 @@ class FocoosModel:
         export_model_name = ArtifactName.ONNX if format == ExportFormat.ONNX else ArtifactName.PT
         _out_file = os.path.join(out_dir, export_model_name)
 
-        dynamic_axes = self.processor.get_dynamic_axes()
-        if not use_dynamic_axes:
-            dynamic_axes.dynamic_axes = None
+        axes = self.processor.get_dynamic_axes()
 
         # Hack to warm up the model and record the spacial shapes if needed
         exportable_model(data)
@@ -482,9 +479,9 @@ class FocoosModel:
                     verify=True,
                     dynamo=False,
                     external_data=False,  # model weights external to model
-                    input_names=dynamic_axes.input_names,
-                    output_names=dynamic_axes.output_names,
-                    dynamic_axes=dynamic_axes.dynamic_axes if dynamic_axes else None,
+                    input_names=axes.input_names,
+                    output_names=axes.output_names,
+                    dynamic_axes=axes.dynamic_axes if dynamic_axes else None,
                     do_constant_folding=True,
                     export_params=True,
                     # dynamic_shapes={

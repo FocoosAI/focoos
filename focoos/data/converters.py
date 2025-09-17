@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 from focoos.data.datasets.dict_dataset import DictDataset
 from focoos.data.transforms.resize_short_length import resize_shortest_length
-from focoos.ports import DatasetMetadata, Task
+from focoos.ports import DatasetMetadata, DatasetSplitType, Task
 from focoos.utils.logger import get_logger
 from focoos.utils.system import list_files_with_extensions
 
@@ -450,10 +450,14 @@ def convert_datasetninja_to_mask_dataset(
         )
 
     task = Task.SEMSEG
-    train_dataset = DictDataset.from_segmentation(ds_dir=os.path.join(dataset_path, train_split_name), task=task)
+    train_dataset = DictDataset.from_segmentation(
+        ds_dir=os.path.join(dataset_path, train_split_name), task=task, split_type=DatasetSplitType.TRAIN
+    )
     logger.info(f"Train dataset: {train_dataset}")
 
-    val_dataset = DictDataset.from_segmentation(ds_dir=os.path.join(dataset_path, val_split_name), task=task)
+    val_dataset = DictDataset.from_segmentation(
+        ds_dir=os.path.join(dataset_path, val_split_name), task=task, split_type=DatasetSplitType.VAL
+    )
     logger.info(f"Val dataset: {val_dataset}")
 
     for split in [(train_dataset, "train"), (val_dataset, "val")]:

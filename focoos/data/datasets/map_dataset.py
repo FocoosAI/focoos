@@ -31,7 +31,7 @@ class MapDataset(data.Dataset):
         """
         self.dataset = dataset
         self.mapper = mapper  # wrap so that a lambda will work
-        self.logger = get_logger(__name__)
+        self.logger = get_logger("MapDataset")
 
         self._rng = random.Random(42)
         self._fallback_candidates = set(range(len(dataset)))
@@ -52,7 +52,7 @@ class MapDataset(data.Dataset):
             except Exception as e:
                 self.logger.warning(f"Error mapping item {cur_idx}: {e}")
                 data = None
-                if retry_count >= 10:
+                if retry_count >= 5:
                     raise e
 
             if data is not None and (data.instances is None or len(data.instances) > 0):
@@ -67,9 +67,7 @@ class MapDataset(data.Dataset):
 
             if retry_count >= 3:
                 self.logger.info(
-                    "Failed to apply augmentation for idx: {}, retry count - no annotations in the image: {}".format(
-                        idx, retry_count
-                    )
+                    f"Failed to apply augmentation for image idx: {idx}, no annotations in the image. retry count {retry_count}"
                 )
 
     @property

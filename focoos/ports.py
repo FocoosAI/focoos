@@ -1024,7 +1024,7 @@ class TrainerArgs:
     ddp_find_unused: bool = True
     checkpointer_period: int = 1000
     checkpointer_max_to_keep: int = 1
-    eval_period: int = 50
+    eval_period: int = 200
     log_period: int = 20
     samples: int = 9
     seed: int = 42

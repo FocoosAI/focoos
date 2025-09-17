@@ -1,7 +1,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # Modified by Bowen Cheng from https://github.com/facebookresearch/detr/blob/master/d2/detr/dataset_mapper.py
 import copy
-import logging
 from typing import Optional, Sequence, Union
 
 import numpy as np
@@ -65,9 +64,12 @@ class KeypointDatasetMapper(DatasetMapper):
         self.keypoint_hflip_indices = keypoint_hflip_indices
         self.recompute_boxes        = False
         # fmt: on
-        logger = logging.getLogger(__name__)
-        mode = "training" if is_train else "inference"
-        logger.info(f"[DatasetMapper] Augmentations used in {mode}: {augmentations}")
+        logger = get_logger("KeypointMapper")
+        mode = "train" if is_train else "val"
+        augs_str = "\n - ".join([str(aug) for aug in augmentations])
+        logger.info(
+            f"\n =========== 🎨 {mode} augmentations =========== \n - {augs_str} \n============================================"
+        )
 
     def _transform_annotations(self, dataset_dict, transforms, image_shape) -> dict:
         # USER: Modify this if you want to keep them for some reason.

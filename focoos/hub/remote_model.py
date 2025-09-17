@@ -137,8 +137,8 @@ class RemoteModel:
                 if os.path.isfile(file_path):
                     try:
                         self._upload_model_artifact(file_path)
-                    except Exception:
-                        logger.error(f"Failed to upload artifact: {artifact.value}")
+                    except Exception as e:
+                        logger.error(f"Failed to upload artifact: {artifact.value} path: {file_path} error -> {str(e)}")
                         pass
                 else:
                     logger.warning(f"Artifact {artifact.value} not found in {dir}")
@@ -154,11 +154,14 @@ class RemoteModel:
             raise ValueError(f"Unsupported file extension: {file_ext}")
         file_name = os.path.basename(path)
         file_size = os.path.getsize(path)
+        file_size *= 1.1  # 10% buffer
         file_size_mb = file_size / (1024 * 1024)
+
         logger.debug(f"🔗 Requesting upload url for {file_name} of size {file_size_mb:.2f} MB")
+
         presigned_url = self.api_client.post(
             f"models/{self.model_ref}/generate-upload-url",
-            data={"file_size_bytes": file_size, "file_name": file_name},
+            data={"file_size_bytes": int(file_size), "file_name": file_name},
         )
         if presigned_url.status_code != 200:
             raise ValueError(f"Failed to generate upload url: {presigned_url.status_code} {presigned_url.text}")

@@ -5,7 +5,7 @@ import random
 from copy import copy
 from dataclasses import asdict
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Tuple, Union
 
 import numpy as np
 from PIL import Image
@@ -26,28 +26,34 @@ def remove_none_from_dict(data):
     return {k: v for (k, v) in data if v is not None}
 
 
+logger = get_logger("DictDataset")
+
+
 class DictDataset(Dataset):
     def __init__(
         self,
         dicts: list[DetectronDict],
         task: Task,
         metadata: DatasetMetadata,
+        split_type: DatasetSplitType,
         serialize: bool = True,
     ):
         self.task: Task = task
         self.metadata: DatasetMetadata = metadata
+        self.split_type: DatasetSplitType = split_type
         # self.dicts: list[DetectronDict] = dicts
         # assemble detectron standard dict
-        self.logger = get_logger(__name__)
-        self.logger.info(
-            f"[Focoos-DictDataset] dataset {self.metadata.name} loaded. len: {self.metadata.count}, classes:{self.metadata.num_classes} ,{self.metadata.image_root}"
-        )
+
         for i, d in enumerate(dicts):
             d.image_id = i
 
         self.serialize = serialize
         self.dicts: Union[TorchSerializedDataset, list[DetectronDict]] = (
             TorchSerializedDataset(dicts) if serialize else dicts
+        )
+        serialize_size = len(self.dicts._lst) / 1024**2 if isinstance(self.dicts, TorchSerializedDataset) else "unknown"
+        logger.info(
+            f"\n ============= ✅ {self.split_type.value} dataset: {self.metadata.name} loaded ============= \n - images: {self.metadata.count} \n - classes: {self.metadata.num_classes} \n - dir: {self.metadata.image_root} \n - task: {self.metadata.task} \n - Coco json size: {serialize_size:.3f} MiB \n ============================================"
         )
 
     def __getitem__(self, index) -> dict:
@@ -133,14 +139,14 @@ class DictDataset(Dataset):
             json.dump(json_dict, f)
 
     @classmethod
-    def from_catalog(cls, ds_name: str, split: DatasetSplitType, root: str):
+    def from_catalog(cls, ds_name: str, split_type: DatasetSplitType, root: str):
         from focoos.data.catalog.catalog import get_dataset_split
 
         # importing catalog here is the only way to avoid circular input
-        return get_dataset_split(name=ds_name, split=split, datasets_root=root)
+        return get_dataset_split(name=ds_name, split=split_type, datasets_root=root)
 
     @classmethod
-    def from_folder(cls, root_dir: str, split: Optional[DatasetSplitType] = None):
+    def from_folder(cls, root_dir: str, split_type: DatasetSplitType):
         """
         Create a dataset from a folder structure where categories are subfolders
         and images belonging to each category are inside these subfolders.
@@ -153,11 +159,10 @@ class DictDataset(Dataset):
         Returns:
             ClassificationDataset: A dataset containing the images and their class labels
         """
-        logger = get_logger(__name__)
 
         # If split is provided, update the root directory to include the split
-        if split is not None:
-            root_dir = os.path.join(root_dir, split.value)
+        if split_type is not None:
+            root_dir = os.path.join(root_dir, split_type.value)
             if not os.path.exists(root_dir):
                 raise ValueError(f"Split directory {root_dir} does not exist")
 
@@ -218,10 +223,10 @@ class DictDataset(Dataset):
 
         logger.info(f"Created classification dataset with {len(dataset_dicts)} images and {len(category_dirs)} classes")
 
-        return cls(dicts=dataset_dicts, task=Task.CLASSIFICATION, metadata=metadata)
+        return cls(dicts=dataset_dicts, task=Task.CLASSIFICATION, metadata=metadata, split_type=split_type)
 
     @classmethod
-    def from_roboflow_coco(cls, ds_dir: str, task: Task):
+    def from_roboflow_coco(cls, ds_dir: str, task: Task, split_type: DatasetSplitType):
         """
         ds_dir is up to the split.
         root/
@@ -235,8 +240,6 @@ class DictDataset(Dataset):
         """
         import pycocotools.mask as mask_util
         from pycocotools.coco import COCO
-
-        logger = get_logger(__name__)
 
         from focoos.structures import BoxMode
 
@@ -331,7 +334,7 @@ class DictDataset(Dataset):
             dataset_dicts.append(DetectronDict(**record))
 
         if filtered > 0:
-            logger.info(f"Filtered out {filtered} images with no annotations")
+            logger.info(f"🗑️ Filtered out {filtered}/{len(imgs_anns)} images with no annotations")
 
         metadata = DatasetMetadata(
             num_classes=len(thing_classes),
@@ -346,10 +349,16 @@ class DictDataset(Dataset):
             keypoints_skeleton=keypoints_skeleton,
         )
 
-        return cls(dicts=dataset_dicts, task=task, metadata=metadata)
+        return cls(dicts=dataset_dicts, task=task, metadata=metadata, split_type=split_type)
 
     @classmethod
-    def from_segmentation(cls, ds_dir: str, task: Task, serialize: bool = True):
+    def from_segmentation(
+        cls,
+        ds_dir: str,
+        task: Task,
+        split_type: DatasetSplitType,
+        serialize: bool = True,
+    ):
         """
         ds_dir is up to the split.
         root/
@@ -387,7 +396,6 @@ class DictDataset(Dataset):
             ]
         }
         """
-        logger = get_logger(__name__)
 
         with open(os.path.join(ds_dir, "annotations.json")) as f:
             json_info = json.load(f)
@@ -428,10 +436,10 @@ class DictDataset(Dataset):
             ignore_label=255,
         )
 
-        return cls(dicts=dataset_dicts, task=Task.SEMSEG, metadata=metadata, serialize=serialize)
+        return cls(dicts=dataset_dicts, task=Task.SEMSEG, metadata=metadata, serialize=serialize, split_type=split_type)
 
     @classmethod
-    def from_roboflow_seg(cls, ds_dir: str, task: Task):
+    def from_roboflow_seg(cls, ds_dir: str, task: Task, split_type: DatasetSplitType):
         """
         root/
             test/
@@ -480,7 +488,7 @@ class DictDataset(Dataset):
             ignore_label=255,
         )
 
-        return cls(dicts=dicts, task=task, metadata=metadata)
+        return cls(dicts=dicts, task=task, metadata=metadata, split_type=split_type)
 
     def split(self, ratio: float, shuffle: bool = True, seed: int = 42) -> Tuple["DictDataset", "DictDataset"]:
         random.seed(seed)
@@ -507,14 +515,16 @@ class DictDataset(Dataset):
             stuff_classes=self.metadata.stuff_classes,
         )
 
-        return DictDataset(dicts=split1, task=self.metadata.task, metadata=meta1), DictDataset(
-            dicts=split2, task=self.metadata.task, metadata=meta2
-        )
+        return DictDataset(
+            dicts=split1, task=self.metadata.task, metadata=meta1, split_type=self.split_type
+        ), DictDataset(dicts=split2, task=self.metadata.task, metadata=meta2, split_type=self.split_type)
 
     def merge(self, other: "DictDataset") -> "DictDataset":
         assert self.metadata.task == other.metadata.task, "Tasks must match"
         assert not self.serialize and not other.serialize, "Serializations must be disabled"
-        return DictDataset(dicts=self.dicts + other.dicts, task=self.metadata.task, metadata=self.metadata)
+        return DictDataset(
+            dicts=self.dicts + other.dicts, task=self.metadata.task, metadata=self.metadata, split_type=self.split_type
+        )
 
     def __str__(self):
         return f"DictDataset(task={self.metadata.task}, num_classes={self.metadata.num_classes}, count={self.metadata.count})"

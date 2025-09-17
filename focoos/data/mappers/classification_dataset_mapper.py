@@ -52,9 +52,12 @@ class ClassificationDatasetMapper(DatasetMapper):
             augmentations=augmentations,  # type: ignore
             image_format=image_format,
         )
-        self.logger = get_logger(__name__)
-        mode = "training" if is_train else "inference"
-        self.logger.info(f"[ClassificationDatasetMapper] Augmentations used in {mode}: {augmentations}")
+        self.logger = get_logger("ClassificationDsMapper")
+        mode = "train" if is_train else "val"
+        augs_str = "\n - ".join([str(aug) for aug in augmentations])
+        self.logger.info(
+            f"\n =========== 🎨 {mode} augmentations =========== \n - {augs_str} \n============================================"
+        )
 
     def __call__(self, dataset_dict: dict) -> ClassificationDatasetDict:
         """
