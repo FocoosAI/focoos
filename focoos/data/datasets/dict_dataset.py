@@ -160,12 +160,6 @@ class DictDataset(Dataset):
             ClassificationDataset: A dataset containing the images and their class labels
         """
 
-        # If split is provided, update the root directory to include the split
-        if split_type is not None:
-            root_dir = os.path.join(root_dir, split_type.value)
-            if not os.path.exists(root_dir):
-                raise ValueError(f"Split directory {root_dir} does not exist")
-
         # Get all category directories
         category_dirs = [
             d for d in os.listdir(root_dir) if os.path.isdir(os.path.join(root_dir, d)) and not d.startswith(".")
