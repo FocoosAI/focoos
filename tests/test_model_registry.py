@@ -27,8 +27,7 @@ class TestModelRegistry:
             "rtmo-m-coco",
             "rtmo-l-coco",
             "fai-cls-n-coco",
-            "fai-cls-medium",
-            "fai-cls-large",
+            "fai-cls-m-coco",
             "fai-cls-s-coco",
         ]
 
