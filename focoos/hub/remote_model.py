@@ -42,7 +42,7 @@ from focoos.ports import (
 from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
 from focoos.utils.metrics import MetricsVisualizer, parse_metrics
-from focoos.utils.vision import annotate_frame, image_loader
+from focoos.utils.vision import annotate_image, image_loader
 
 logger = get_logger()
 
@@ -305,7 +305,7 @@ class RemoteModel:
             detections.infer_print()
             print(f"Request time: {(t1 - t0) * 1000:.0f}ms")
             if annotate:
-                detections.image = annotate_frame(image, detections, self.model_info.task, self.model_info.classes)
+                detections.image = annotate_image(image, detections, self.model_info.task, self.model_info.classes)
             return detections
         else:
             logger.error(f"Failed to infer: {res.status_code} {res.text}")

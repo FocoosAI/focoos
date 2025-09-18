@@ -32,7 +32,7 @@ from focoos.utils.api_client import ApiClient
 from focoos.utils.distributed.dist import launch
 from focoos.utils.logger import get_logger
 from focoos.utils.system import get_cpu_name, get_device_name, get_device_type, get_focoos_version, get_system_info
-from focoos.utils.vision import annotate_frame, image_loader
+from focoos.utils.vision import annotate_image, image_loader
 
 logger = get_logger("FocoosModel")
 
@@ -373,7 +373,7 @@ class FocoosModel:
         if annotate:
             t2 = perf_counter()
             skeleton = self.model_info.config.get("skeleton", None)
-            focoos_det.image = annotate_frame(
+            focoos_det.image = annotate_image(
                 im,
                 focoos_det,
                 task=self.model_info.task,

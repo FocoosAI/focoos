@@ -1,5 +1,5 @@
 {
-    "name": "fai-cls-small",
+    "name": "fai-cls-s-coco",
     "model_family": "fai_cls",
     "classes": [
         "person",
@@ -132,7 +132,7 @@
         "pos_weight": 2.0
     },
     "ref": null,
-    "focoos_model": null,
+    "focoos_model": "fai-cls-s-coco",
     "status": "TRAINING_COMPLETED",
     "description": "A classification model",
     "train_args": {
@@ -178,7 +178,7 @@
         "zero_grad_before_forward": false,
         "sync_to_hub": false
     },
-    "weights_uri": "https://public.focoos.ai/pretrained_models/fai-cls-small/model_final.pth",
+    "weights_uri": "https://public.focoos.ai/pretrained_models/fai-cls-s-coco/model_final.pth",
     "val_dataset": "coco_2017_det",
     "val_metrics": {
         "classification/F1": 61.9222,
@@ -426,7 +426,7 @@
         "classification/Recall-zebra": 95.2941,
         "iteration": 10000
     },
-    "focoos_version": "0.18.1",
+    "focoos_version": "0.19.1",
     "latency": [],
     "training_info": null,
     "updated_at": null

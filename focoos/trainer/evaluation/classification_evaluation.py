@@ -10,7 +10,7 @@ from focoos.trainer.evaluation.evaluator import DatasetEvaluator
 from focoos.utils.distributed.comm import all_gather, is_main_process, synchronize
 from focoos.utils.logger import get_logger
 
-logger = get_logger(__name__)
+logger = get_logger("ClassificationEvaluator")
 
 
 class ClassificationEvaluator(DatasetEvaluator):

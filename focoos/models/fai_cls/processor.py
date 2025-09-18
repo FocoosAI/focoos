@@ -74,8 +74,8 @@ class ClassificationProcessor(Processor):
         if self.training:
             raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
         target_size = (self.image_size, self.image_size) if self.image_size is not None else None
-        if target_size is not None:
-            print("Resizing to", target_size)
+        # if target_size is not None:
+        # print("Resizing to", target_size)
         images_torch = self.get_torch_batch(
             inputs,  # type: ignore
             target_size=target_size,

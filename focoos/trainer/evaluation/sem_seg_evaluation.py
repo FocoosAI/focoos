@@ -22,7 +22,7 @@ except ImportError:
     _CV2_IMPORTED = False
 
 
-logger = get_logger(__name__)
+logger = get_logger("SemSegEvaluator")
 
 
 def load_image_into_numpy_array(

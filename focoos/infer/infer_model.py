@@ -43,7 +43,7 @@ from focoos.processor.processor_manager import ProcessorManager
 from focoos.utils.logger import get_logger
 from focoos.utils.system import get_cpu_name, get_device_name, get_device_type
 from focoos.utils.vision import (
-    annotate_frame,
+    annotate_image,
     image_loader,
 )
 
@@ -195,7 +195,7 @@ class InferModel:
         t4 = perf_counter()
         if annotate:
             skeleton = self.model_info.config.get("skeleton", None)
-            detections[0].image = annotate_frame(
+            detections[0].image = annotate_image(
                 im,
                 detections[0],
                 task=self.model_info.task,
