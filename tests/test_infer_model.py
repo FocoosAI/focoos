@@ -60,7 +60,7 @@ def mock_local_model_onnx(mocker: MockerFixture, mock_model_dir):
     mocker.patch("focoos.infer.infer_model.ProcessorManager.get_processor")
     mocker.patch("focoos.model_manager.ConfigManager.from_dict")
 
-    model = InferModel(model_dir=mock_model_dir, runtime_type=RuntimeType.ONNX_CPU)
+    model = InferModel(model_path=mock_model_dir, runtime_type=RuntimeType.ONNX_CPU)
     return model
 
 
@@ -75,19 +75,19 @@ def mock_local_model_torch(mocker: MockerFixture, mock_model_dir):
     mocker.patch("focoos.infer.infer_model.ProcessorManager.get_processor")
     mocker.patch("focoos.model_manager.ConfigManager.from_dict")
 
-    model = InferModel(model_dir=mock_model_dir, runtime_type=RuntimeType.TORCHSCRIPT_32)
+    model = InferModel(model_path=mock_model_dir, runtime_type=RuntimeType.TORCHSCRIPT_32)
     return model
 
 
 def test_initialization_fail_no_model_dir():
     with pytest.raises(FileNotFoundError):
-        InferModel(model_dir="fakedir", runtime_type=RuntimeType.ONNX_CPU)
+        InferModel(model_path="fakedir", runtime_type=RuntimeType.ONNX_CPU)
 
 
 def test_init_file_not_found(mocker: MockerFixture):
     mocker.patch("focoos.infer.infer_model.os.path.exists", return_value=False)
     with pytest.raises(FileNotFoundError):
-        InferModel(model_dir="fakedir", runtime_type=RuntimeType.ONNX_CPU)
+        InferModel(model_path="fakedir", runtime_type=RuntimeType.ONNX_CPU)
 
 
 def test_initialization_onnx(mock_local_model_onnx: InferModel, mock_model_dir, mock_model_info):
@@ -258,7 +258,7 @@ def test_read_model_info_file_not_found(mocker: MockerFixture, tmp_path):
     mocker.patch("focoos.infer.infer_model.os.path.exists", side_effect=mock_exists)
 
     with pytest.raises(FileNotFoundError, match="Model info file not found"):
-        InferModel(model_dir=model_dir, runtime_type=RuntimeType.ONNX_CPU)
+        InferModel(model_path=model_dir, runtime_type=RuntimeType.ONNX_CPU)
 
 
 def test_benchmark_with_default_size(mock_local_model_onnx: InferModel):

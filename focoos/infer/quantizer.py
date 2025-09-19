@@ -23,8 +23,8 @@ from focoos.utils.logger import get_logger
 
 @dataclass
 class QuantizationCfg:
-    calibration_images: Optional[str] = None
-    benchmark: bool = False
+    calibration_images_folder: str
+    benchmark: bool = True
     data_reader_limit: int = 1
     w_SNR: Optional[float] = None
     a_SNR: Optional[float] = None
@@ -48,6 +48,8 @@ class DataReader(CalibrationDataReader):
         if model_path:
             session = onnxruntime.InferenceSession(model_path, None)
             (_, _, height, width) = session.get_inputs()[0].shape
+            if not isinstance(height, int) or not isinstance(width, int):
+                raise ValueError("Input shape are dynamic, please export the model without dynamic axes")
             print(f"Input shape: {height}, {width}")
             self.input_name = session.get_inputs()[0].name
         else:
@@ -97,13 +99,15 @@ class DataReader(CalibrationDataReader):
 
 
 class OnnxQuantizer:
-    def __init__(self, cfg: QuantizationCfg, input_model_path: Optional[str] = None):
+    def __init__(self, cfg: QuantizationCfg, input_model_path: str):
         self.cfg = cfg
         self.logger = get_logger(name="quantizer")
+        assert input_model_path.endswith(".onnx"), "Input model must be an ONNX model"
 
-        self.logger.info(f"Setting up data reader with calibration images: {cfg.calibration_images}")
+        self.logger.info(f"Setting up data reader with calibration images: {cfg.calibration_images_folder}")
+        self.input_model_path = input_model_path
         self.dr = DataReader(
-            calibration_image_folder=cfg.calibration_images,
+            calibration_image_folder=cfg.calibration_images_folder,
             limit=cfg.data_reader_limit,
             size=self.cfg.size,
             model_path=input_model_path if input_model_path else None,
@@ -116,10 +120,15 @@ class OnnxQuantizer:
             self._print = print
         # TBI: pass also the other quantization options using a struct or as init arguments
 
-    def quantize(self, input_model_path: str, output_model_path: str):
+    def quantize(
+        self,
+    ):
         benchmark = self.cfg.benchmark
         w_SNR = self.cfg.w_SNR
         a_SNR = self.cfg.a_SNR
+
+        # Generate output path by replacing the .onnx extension with _quant.onnx
+        output_model_path = self.input_model_path[:-5] + "_int8.onnx"
 
         #!fixme that's bad python, anyway, let's do it
         self.log_file = output_model_path[:-5] + ".log"
@@ -145,8 +154,8 @@ class OnnxQuantizer:
             self.logger = logging.getLogger()
 
         # preprocess onnx model
-        quant_pre_process(input_model_path, output_model_path, auto_merge=True)
-        self.logger.info(f"Quantizing model from {input_model_path} to {output_model_path}")
+        quant_pre_process(self.input_model_path, output_model_path, auto_merge=True)
+        self.logger.info(f"🔧 Quantizing model from {self.input_model_path} to {output_model_path}")
         quantize_static(
             output_model_path,
             output_model_path,
@@ -165,7 +174,7 @@ class OnnxQuantizer:
         if benchmark:
             imgsize = self.cfg.size
             self._print("benchmarking fp32 model...")
-            self.benchmark(input_model_path, imgsize)
+            self.benchmark(self.input_model_path, imgsize)
 
             self._print("benchmarking int8 model...")
             self.benchmark(output_model_path, imgsize)
@@ -173,7 +182,7 @@ class OnnxQuantizer:
         if w_SNR is not None:
             self._print("Computing weight error...")
             w_SNR_thres = w_SNR
-            matching = self._match_weights(input_model_path, output_model_path)
+            matching = self._match_weights(self.input_model_path, output_model_path)
             dict_matching = dict(matching)
             for x in matching:
                 try:
@@ -194,7 +203,7 @@ class OnnxQuantizer:
             self._print("Computing activation error...")
             a_SNR_thres = a_SNR
 
-            activations_float, activations_quant = self._compute_activations(input_model_path, output_model_path)
+            activations_float, activations_quant = self._compute_activations(self.input_model_path, output_model_path)
             matching = self._match_activations(activations_float, activations_quant)
             error = {}
             for k in sorted(matching):

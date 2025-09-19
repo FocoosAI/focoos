@@ -20,6 +20,7 @@ Methods:
 """
 
 import os
+import pathlib
 from pathlib import Path
 from time import perf_counter
 from typing import Literal, Optional, Tuple, Union
@@ -53,7 +54,7 @@ logger = get_logger("InferModel")
 class InferModel:
     def __init__(
         self,
-        model_dir: Union[str, Path],
+        model_path: Union[str, Path],
         runtime_type: Optional[RuntimeType] = None,
         device: Literal["cuda", "cpu", "auto"] = "auto",
     ):
@@ -90,7 +91,12 @@ class InferModel:
 
         # Determine runtime type and model format
         runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
-        extension = ModelExtension.from_runtime_type(runtime_type)
+        runtime_extension = ModelExtension.from_runtime_type(runtime_type)
+        model_extension = pathlib.Path(model_path).suffix
+        if not model_extension == f".{runtime_extension.value}":
+            raise ValueError(
+                f"Model extension .{model_extension} mismatch with runtime type: {runtime_type} that expects .{runtime_extension.value}"
+            )
         if device == "auto":
             self.device = get_device_type()
         elif runtime_type == RuntimeType.ONNX_CPU:
@@ -98,8 +104,9 @@ class InferModel:
         else:
             self.device = device
         # Set model directory and path
-        self.model_dir: Union[str, Path] = model_dir
-        self.model_path = os.path.join(model_dir, f"model.{extension.value}")
+        self.model_path = model_path
+        self.model_dir: Union[str, Path] = os.path.dirname(str(model_path))
+        # self.model_path = os.path.join(model_path, f"model.{extension.value}")
         logger.debug(f"Runtime type: {runtime_type}, Loading model from {self.model_path}..")
 
         # Check if model path exists

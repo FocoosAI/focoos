@@ -72,13 +72,13 @@ onnx = [
     "onnxruntime-gpu==1.22.0",
     "onnx>=1.18.0",
     "onnxslim~=0.1.68",
-    "onnxscript~=0.3.1",
+    "onnxscript~=0.5.1",
 ]
 onnx-cpu = [
     "onnxruntime==1.22.0",
     "onnx>=1.18.0",
     "onnxslim~=0.1.68",
-    "onnxscript~=0.3.1",
+    "onnxscript~=0.5.1",
 ]
 dev = [
     "pytest",

@@ -462,7 +462,7 @@ class FocoosModel:
 
         if not overwrite and os.path.exists(_out_file):
             logger.info(f"Model file {_out_file} already exists. Set overwrite to True to overwrite.")
-            return InferModel(model_dir=out_dir, runtime_type=runtime_type)
+            return InferModel(model_path=out_dir, runtime_type=runtime_type)
 
         if format == "onnx":
             import onnx
@@ -512,7 +512,7 @@ class FocoosModel:
 
         # Fixme: this may override the model_info with the one from the exportable model
         self.model_info.dump_json(os.path.join(out_dir, ArtifactName.INFO))
-        return InferModel(model_dir=out_dir, runtime_type=runtime_type)
+        return InferModel(model_path=_out_file, runtime_type=runtime_type)
 
     def __call__(
         self,
