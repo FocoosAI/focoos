@@ -1,8 +1,8 @@
-import logging
 import math
 import os
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal, Optional, Tuple, Union
 
 import numpy as np
@@ -23,14 +23,28 @@ from focoos.utils.logger import get_logger
 
 @dataclass
 class QuantizationCfg:
+    """
+    Configuration for model quantization.
+
+    Attributes:
+        calibration_images_folder (str): Path to the folder containing calibration images.
+        benchmark (bool): Whether to run benchmarking after quantization. Default is True.
+        data_reader_limit (int): Maximum number of images to use for calibration. Default is 100.
+        w_SNR (Optional[float]): Signal-to-noise ratio threshold for weights. If None, no threshold is applied.
+        a_SNR (Optional[float]): Signal-to-noise ratio threshold for activations. If None, no threshold is applied.
+        size (int): Target size for input images (height and width). Default is 512.
+        format (Literal["QDQ", "QO"]): Quantization format, either "QDQ" or "QO". Default is "QDQ".
+        per_channel (bool): Whether to use per-channel quantization. Default is True.
+    """
+
     calibration_images_folder: str
     benchmark: bool = True
-    data_reader_limit: int = 1
+    data_reader_limit: int = 100
     w_SNR: Optional[float] = None
     a_SNR: Optional[float] = None
-    file_log: bool = False
     size: int = 512
     format: Literal["QDQ", "QO"] = "QDQ"
+    per_channel: bool = True
 
 
 class DataReader(CalibrationDataReader):
@@ -99,97 +113,104 @@ class DataReader(CalibrationDataReader):
 
 
 class OnnxQuantizer:
-    def __init__(self, cfg: QuantizationCfg, input_model_path: str):
-        self.cfg = cfg
-        self.logger = get_logger(name="quantizer")
-        assert input_model_path.endswith(".onnx"), "Input model must be an ONNX model"
+    """
+    Handles ONNX model quantization, benchmarking, and error analysis.
 
+    This class provides a high-level interface for quantizing ONNX models using calibration images,
+    benchmarking both the original and quantized models, and computing signal-to-noise ratios (SNR)
+    for weights and activations to assess quantization quality.
+
+    Args:
+        cfg (QuantizationCfg): Configuration object containing quantization parameters, calibration image folder,
+            quantization format, benchmarking and error thresholds, and other options.
+        input_model_path (Union[str, Path]): Path to the input ONNX model to be quantized.
+
+    Attributes:
+        cfg (QuantizationCfg): Quantization configuration.
+        logger (logging.Logger): Logger for quantization process.
+        input_model_path (Union[str, Path]): Path to the input ONNX model.
+        data_reader (DataReader): Data reader for calibration images.
+
+    Methods:
+        quantize(): Quantizes the ONNX model, benchmarks it if requested, and computes SNR for weights and activations
+            if thresholds are provided. Returns the path to the quantized model.
+        benchmark(model_path, size=640, runs=20): Benchmarks the inference time of a given ONNX model.
+        singal_noise_ratio(x, y): Computes the signal-to-noise ratio between two tensors.
+    """
+
+    def __init__(self, cfg: QuantizationCfg, input_model_path: Union[str, Path]):
+        assert str(input_model_path).endswith(".onnx"), "Input model must be an ONNX model"
+        self.cfg = cfg
+        self.logger = get_logger(name="OnnxQuantizer")
         self.logger.info(f"Setting up data reader with calibration images: {cfg.calibration_images_folder}")
         self.input_model_path = input_model_path
-        self.dr = DataReader(
+        self.data_reader = DataReader(
             calibration_image_folder=cfg.calibration_images_folder,
             limit=cfg.data_reader_limit,
             size=self.cfg.size,
-            model_path=input_model_path if input_model_path else None,
+            model_path=str(input_model_path) if input_model_path else None,
         )
-
-        self.file_log = cfg.file_log
-        if self.file_log:
-            self._print = self._file_print
-        else:
-            self._print = print
         # TBI: pass also the other quantization options using a struct or as init arguments
 
     def quantize(
         self,
-    ):
+    ) -> Path:
+        """
+        Quantizes the ONNX model using the provided configuration and calibration images.
+
+        This method performs the following steps:
+        - Preprocesses the ONNX model for quantization.
+        - Runs static quantization using the specified quantization format and types.
+        - Optionally benchmarks both the original and quantized models.
+        - Optionally computes and logs SNR for weights and activations if thresholds are set.
+
+        Returns:
+            Path: Path to the quantized ONNX model.
+        """
         benchmark = self.cfg.benchmark
         w_SNR = self.cfg.w_SNR
         a_SNR = self.cfg.a_SNR
 
         # Generate output path by replacing the .onnx extension with _quant.onnx
-        output_model_path = self.input_model_path[:-5] + "_int8.onnx"
-
-        #!fixme that's bad python, anyway, let's do it
-        self.log_file = output_model_path[:-5] + ".log"
-        if self.file_log:
-            # Get the root logger
-            root_logger = logging.getLogger()
-
-            # Remove all handlers if they exist (to reset logging)
-            if root_logger.hasHandlers():
-                root_logger.handlers.clear()
-
-            log_path = self.log_file
-
-            # Configure logging
-            logging.basicConfig(
-                level=logging.INFO,
-                format="%(asctime)s %(levelname)s %(message)s",
-                handlers=[
-                    logging.FileHandler(log_path, mode="w"),
-                    # logging.StreamHandler()  # Optional: to also log to console
-                ],
-            )
-            self.logger = logging.getLogger()
+        output_model_path = str(self.input_model_path)[:-5] + "_int8.onnx"
 
         # preprocess onnx model
         quant_pre_process(self.input_model_path, output_model_path, auto_merge=True)
         self.logger.info(f"🔧 Quantizing model from {self.input_model_path} to {output_model_path}")
+        activation_quant_type = QuantType.QInt8 if self.cfg.format == "QDQ" else QuantType.QUInt8
+        weight_quant_type = QuantType.QInt8
         quantize_static(
             output_model_path,
             output_model_path,
-            self.dr,
+            self.data_reader,
             quant_format=QuantFormat.QDQ if self.cfg.format == "QDQ" else QuantFormat.QOperator,
-            per_channel=True,
-            weight_type=QuantType.QInt8,
+            per_channel=self.cfg.per_channel,
+            weight_type=weight_quant_type,
+            activation_type=activation_quant_type,
             calibrate_method=CalibrationMethod.MinMax,
         )
 
-        if self.file_log:
-            logging.shutdown()
-
-        self._print("Calibrated and quantized model saved.")
+        self.logger.info("Calibrated and quantized model saved.")
 
         if benchmark:
             imgsize = self.cfg.size
-            self._print("benchmarking fp32 model...")
+            self.logger.info("benchmarking fp32 model...")
             self.benchmark(self.input_model_path, imgsize)
 
-            self._print("benchmarking int8 model...")
+            self.logger.info("benchmarking int8 model...")
             self.benchmark(output_model_path, imgsize)
 
         if w_SNR is not None:
-            self._print("Computing weight error...")
+            self.logger.info("Computing weight error...")
             w_SNR_thres = w_SNR
             matching = self._match_weights(self.input_model_path, output_model_path)
             dict_matching = dict(matching)
             for x in matching:
                 try:
                     if len(matching[x]["float"]) == 0:
-                        self._print(f"should never enter: {x}, {len(matching[x]['float'])}")
+                        self.logger.info(f"should never enter: {x}, {len(matching[x]['float'])}")
                 except KeyError:
-                    self._print(f"not a list: {x}, {matching[x]['float']}")
+                    self.logger.error(f"not a list: {x}, {matching[x]['float']}")
                     del dict_matching[x]
                     continue
 
@@ -197,10 +218,10 @@ class OnnxQuantizer:
             weight_error = debug.compute_weight_error(dict_matching)
             for k in weight_error:
                 if weight_error[k] < w_SNR_thres:
-                    self._print(f"{k}, {weight_error[k]}")
+                    self.logger.info(f"{k}, {weight_error[k]}")
 
         if a_SNR is not None:
-            self._print("Computing activation error...")
+            self.logger.info("Computing activation error...")
             a_SNR_thres = a_SNR
 
             activations_float, activations_quant = self._compute_activations(self.input_model_path, output_model_path)
@@ -216,19 +237,39 @@ class OnnxQuantizer:
                         matching[k]["float"], matching[k]["post_qdq"][0]
                     )  # np.abs(matching[k]['pre_qdq'][0] - matching[k]['float'][0]).max()
                 except KeyError:
-                    self._print(f"ERROR F, {k}, {matching[k]['float']}, {matching[k]['post_qdq'][0]}")
+                    self.logger.error(f"ERROR F, {k}, {matching[k]['float']}, {matching[k]['post_qdq'][0]}")
                 error[k] = float_diff
                 # if "backbone" not in k and "pixel_decoder" not in k and "predictor/Add" in k:
                 if error[k] < a_SNR_thres:
-                    self._print(f"{k}, {float_diff, matching[k]['post_qdq'][0].shape}")
+                    self.logger.info(f"{k}, {float_diff, matching[k]['post_qdq'][0].shape}")
 
-        return 1
+        return Path(output_model_path)
 
     def _match_weights(self, input_model_path, output_model_path):
+        """
+        Matches weights between the original and quantized models for error analysis.
+
+        Args:
+            input_model_path (str or Path): Path to the original model.
+            output_model_path (str or Path): Path to the quantized model.
+
+        Returns:
+            dict: Mapping of matched weights between models.
+        """
         return debug.create_weight_matching(input_model_path, output_model_path)
 
     def _compute_activations(self, input_model_path, output_model_path):
-        calibration_dataset_path = self.dr.calibration_image_folder
+        """
+        Collects activations from both the original and quantized models using calibration data.
+
+        Args:
+            input_model_path (str or Path): Path to the original model.
+            output_model_path (str or Path): Path to the quantized model.
+
+        Returns:
+            tuple: (activations_float, activations_quant) from both models.
+        """
+        calibration_dataset_path = self.data_reader.calibration_image_folder
         dr = DataReader(calibration_dataset_path, limit=1, model_path=input_model_path)
         debug.modify_model_output_intermediate_tensors(input_model_path, input_model_path + ".tmp")
         activations_float = debug.collect_activations(input_model_path + ".tmp", dr)
@@ -239,9 +280,29 @@ class OnnxQuantizer:
         return activations_float, activations_quant
 
     def _match_activations(self, af, aq):
+        """
+        Matches activations between the original and quantized models for error analysis.
+
+        Args:
+            af: Activations from the original model.
+            aq: Activations from the quantized model.
+
+        Returns:
+            dict: Mapping of matched activations between models.
+        """
         return debug.create_activation_matching(af, aq)
 
     def singal_noise_ratio(self, x, y):
+        """
+        Computes the signal-to-noise ratio (SNR) in decibels between two tensors.
+
+        Args:
+            x (np.ndarray): Reference tensor (signal).
+            y (np.ndarray): Comparison tensor (signal + noise).
+
+        Returns:
+            float: SNR value in decibels.
+        """
         left = np.array(x).flatten()
         right = np.array(y).flatten()
 
@@ -254,10 +315,21 @@ class OnnxQuantizer:
         try:
             return 20 * math.log10(res)
         except:
-            self._print(f"{res}")
+            self.logger.error(f"{res}")
             raise
 
     def benchmark(self, model_path, size=640, runs=20):
+        """
+        Benchmarks the inference time of an ONNX model.
+
+        Args:
+            model_path (str or Path): Path to the ONNX model to benchmark.
+            size (int): Input image size (assumes square images). Default is 640.
+            runs (int): Number of inference runs for averaging. Default is 20.
+
+        Logs:
+            Average inference time in milliseconds.
+        """
         session = onnxruntime.InferenceSession(model_path)
         input_name = session.get_inputs()[0].name
 
@@ -272,8 +344,4 @@ class OnnxQuantizer:
             total += end
             # self._print(f"{end:.2f}ms")
         total /= runs
-        self._print(f"Avg: {total:.2f}ms")
-
-    def _file_print(self, str):
-        with open(self.log_file, "a") as f:
-            f.write(str + "\n")
+        self.logger.info(f"Avg: {total:.2f}ms")

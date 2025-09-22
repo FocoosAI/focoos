@@ -90,9 +90,10 @@ class InferModel:
         """
 
         # Determine runtime type and model format
+        model_extension = pathlib.Path(model_path).suffix
         runtime_type = runtime_type or FOCOOS_CONFIG.runtime_type
         runtime_extension = ModelExtension.from_runtime_type(runtime_type)
-        model_extension = pathlib.Path(model_path).suffix
+
         if not model_extension == f".{runtime_extension.value}":
             raise ValueError(
                 f"Model extension .{model_extension} mismatch with runtime type: {runtime_type} that expects .{runtime_extension.value}"

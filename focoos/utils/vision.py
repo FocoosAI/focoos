@@ -447,8 +447,14 @@ def annotate_image(
     if len(detections.detections) == 0:
         return im
     if task == Task.CLASSIFICATION:
-        # Use draw_labels for classification task
-        labels = [f"{d.label}: {d.conf * 100:.0f}%" for d in detections.detections if d.conf is not None]
+        # Optimized sorting: filter and sort in single pass, avoid redundant None checks
+        valid_detections = [d for d in detections.detections if d.conf is not None and d.label is not None]
+        if valid_detections:
+            # Sort by confidence descending - use type assertion since we've filtered None values
+            valid_detections.sort(key=lambda d: d.conf or 0.0, reverse=True)
+            labels = [f"{d.label}: {(d.conf or 0.0) * 100:.0f}%" for d in valid_detections]
+        else:
+            labels = []
         return draw_classification_labels(im, labels)
 
     has_bbox = detections.detections[0].bbox is not None
