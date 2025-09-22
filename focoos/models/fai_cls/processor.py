@@ -54,6 +54,7 @@ class ClassificationProcessor(Processor):
         Returns:
             Tuple of processed tensors and batch inputs metadata
         """
+        self.pixel_mean, self.pixel_std = self.pixel_mean.to(device), self.pixel_std.to(device)
         targets = []
         if isinstance(inputs, list) and len(inputs) > 0 and isinstance(inputs[0], ClassificationDatasetDict):
             class_data_dict: List[ClassificationDatasetDict] = inputs  # type: ignore
@@ -62,6 +63,7 @@ class ClassificationProcessor(Processor):
                 tensors=images,
             )
             images_torch = images.tensor
+            images_torch = (images_torch - self.pixel_mean) / self.pixel_std
 
             labels = torch.zeros(len(class_data_dict), self.num_classes, dtype=torch.int, device=device)
             for i, x in enumerate(class_data_dict):
@@ -82,8 +84,7 @@ class ClassificationProcessor(Processor):
             device=device,
             dtype=dtype,
         )
-        # self.pixel_mean, self.pixel_std = self.pixel_mean.to(device), self.pixel_std.to(device)
-        # images_torch = (images_torch - self.pixel_mean) / self.pixel_std  # type: ignore
+        images_torch = (images_torch - self.pixel_mean) / self.pixel_std  # type: ignore
         return images_torch, targets
 
     def eval_postprocess(self, outputs: ClassificationModelOutput, inputs: list[DatasetEntry]) -> List[Dict]:

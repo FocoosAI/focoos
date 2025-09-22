@@ -213,7 +213,7 @@ class FAIClassification(BaseModelNN):
         Returns:
             Classification model output with logits and optional loss
         """
-        images = (images - self.pixel_mean) / self.pixel_std  # type: ignore
+        # type: ignore
 
         # Extract features from backbone
         features = self.backbone(images)
