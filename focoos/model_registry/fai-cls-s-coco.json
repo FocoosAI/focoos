@@ -381,8 +381,7 @@
         "classification/Recall-umbrella": 54.023,
         "classification/Recall-vase": 62.7737,
         "classification/Recall-wine glass": 32.7273,
-        "classification/Recall-zebra": 95.2941,
-        "iteration": 10000
+        "classification/Recall-zebra": 95.2941
     },
     "focoos_version": "0.19.1",
     "latency": [],

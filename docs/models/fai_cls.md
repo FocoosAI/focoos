@@ -117,14 +117,6 @@ The model supports multiple loss function configurations:
 - **Features**: Optional label smoothing for better generalization
 - **Activation**: Softmax for probability distribution
 
-### Focal Loss
-- **Use Case**: Imbalanced datasets with hard-to-classify examples
-- **Parameters**:
-
-    - Alpha (α): Controls importance of rare class
-    - Gamma (γ): Focuses learning on hard examples
-
-- **Benefits**: Improved performance on imbalanced datasets
 
 ### Binary Cross-Entropy Loss
 - **Use Case**: Multi-label classification tasks
