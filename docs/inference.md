@@ -1,4 +1,4 @@
-# How to Use a Computer Vision Model with Focoos
+# Inference with Focoos Models
 Focoos provides a powerful inference framework that makes it easy to deploy and use state-of-the-art computer vision models in production. Whether you're working on object detection, image classification, or other vision tasks, Focoos offers flexible deployment options that adapt to your specific needs.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/FocoosAI/focoos/blob/main/tutorials/inference.ipynb)

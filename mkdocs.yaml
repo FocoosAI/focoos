@@ -38,6 +38,7 @@ nav:
       - Concepts: concepts.md
       - Inference: inference.md
       - Training: training.md
+      - Quantization (beta): quantization.md
       - CLI: cli.md
   - HUB:
       - Overview: hub/index.md

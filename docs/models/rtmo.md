@@ -127,18 +127,21 @@ The following RTMO models are available on the Focoos Hub for multi-person pose 
 ```python
 from PIL import Image
 
-from focoos.model_manager import ModelManager
+from focoos import ModelManager, ASSETS_DIR
 
 # Load a pre-trained RTMO model
 model = ModelManager.get("rtmo-s-coco")
 
 # Run inference on an image
-image = Image.open("path/to/image.jpg")
-result = model.infer(image)
+image = ASSETS_DIR / "federer.jpg"
+result = model.infer(image,threshold=0.5, annotate=True)
 
 # Process results
 for detection in result.detections:
     print(f"Class: {detection.label}, Confidence: {detection.conf:.3f}")
+
+# Visualize image
+Image.fromarray(result.image)
 ```
 
 ### Custom Model Configuration

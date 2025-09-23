@@ -121,18 +121,21 @@ Currently, you can find 3 bisenetformer models on the Focoos Hub, all for the se
 ### Quick Start with Pre-trained Model
 
 ```python
-from focoos.model_manager import ModelManager
+from focoos import ASSETS_DIR, ModelManager
+from PIL import Image
 
 # Load a pre-trained BisenetFormer model
 model = ModelManager.get("bisenetformer-m-ade")
 
 # Run inference on an image
-image = Image.open("path/to/image.jpg")
-result = model(image)
+image = ASSETS_DIR / "ADE_val_00000034"
+result = model.infer(image, threshold=0.5, annotate=True)
 
 # Process results
 for detection in result.detections:
     print(f"Class: {detection.label}, Confidence: {detection.conf:.3f}")
+# Visualize image
+Image.fromarray(result.image)
 ```
 
 ### Custom Model Configuration
