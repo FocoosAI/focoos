@@ -98,6 +98,7 @@ class InferModel:
             raise ValueError(
                 f"Model extension .{model_extension} mismatch with runtime type: {runtime_type} that expects .{runtime_extension.value}"
             )
+        self.device: Literal["cuda", "cpu"]
         if device == "auto":
             self.device = get_device_type()
         elif runtime_type == RuntimeType.ONNX_CPU:

@@ -1,6 +1,5 @@
 import math
 import os
-import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional, Tuple, Union
@@ -18,6 +17,8 @@ from onnxruntime.quantization import (
 from onnxruntime.quantization.preprocess import quant_pre_process
 from PIL import Image
 
+from focoos.infer.infer_model import InferModel
+from focoos.ports import LatencyMetrics, RuntimeType
 from focoos.utils.logger import get_logger
 
 
@@ -28,8 +29,8 @@ class QuantizationCfg:
 
     Attributes:
         calibration_images_folder (str): Path to the folder containing calibration images.
-        benchmark (bool): Whether to run benchmarking after quantization. Default is True.
         data_reader_limit (int): Maximum number of images to use for calibration. Default is 100.
+        normalize_images (bool): Whether to normalize images during preprocessing. Default is True.
         w_SNR (Optional[float]): Signal-to-noise ratio threshold for weights. If None, no threshold is applied.
         a_SNR (Optional[float]): Signal-to-noise ratio threshold for activations. If None, no threshold is applied.
         size (int): Target size for input images (height and width). Default is 512.
@@ -38,8 +39,8 @@ class QuantizationCfg:
     """
 
     calibration_images_folder: str
-    benchmark: bool = True
     data_reader_limit: int = 100
+    normalize_images: bool = True
     w_SNR: Optional[float] = None
     a_SNR: Optional[float] = None
     size: int = 512
@@ -54,6 +55,7 @@ class DataReader(CalibrationDataReader):
         limit=1,
         size: Union[int, Tuple[int]] = 512,
         model_path: Optional[str] = None,
+        normalize_images: bool = True,
     ):
         self.enum_data = None
         self.calibration_image_folder = calibration_image_folder
@@ -71,7 +73,9 @@ class DataReader(CalibrationDataReader):
             self.input_name = "images"
 
         # Convert image to input data
-        self.nhwc_data_list = self._preprocess_images(calibration_image_folder, height, width, size_limit=limit)
+        self.nhwc_data_list = self._preprocess_images(
+            calibration_image_folder, height, width, size_limit=limit, normalize_images=normalize_images
+        )
 
         self.datasize = len(self.nhwc_data_list)
 
@@ -83,7 +87,9 @@ class DataReader(CalibrationDataReader):
     def rewind(self):
         self.enum_data = None
 
-    def _preprocess_images(self, images_folder: str, height: int, width: int, size_limit=100):
+    def _preprocess_images(
+        self, images_folder: str, height: int, width: int, size_limit=100, normalize_images: bool = True
+    ):
         """
         Loads a batch of images and preprocess them
         parameter images_folder: path to folder storing images
@@ -93,6 +99,8 @@ class DataReader(CalibrationDataReader):
         return: list of matrices characterizing multiple images
         """
         image_names = os.listdir(images_folder)
+        pixel_mean: np.ndarray = np.array([123.675, 116.28, 103.53]).astype(np.float32)
+        pixel_std: np.ndarray = np.array([58.395, 57.12, 57.375]).astype(np.float32)
         image_names = [img for img in image_names if any(img.lower().endswith(fmt) for fmt in ["jpg", "png", "jpeg"])]
         if size_limit > 0 and len(image_names) >= size_limit:
             batch_filenames = [image_names[i] for i in range(size_limit)]
@@ -105,6 +113,10 @@ class DataReader(CalibrationDataReader):
             pillow_img = Image.new("RGB", (width, height))
             pillow_img.paste(Image.open(image_filepath).resize((width, height)))
             input_data = np.float32(pillow_img)
+
+            if normalize_images:
+                input_data = input_data - pixel_mean
+                input_data = input_data / pixel_std
             nhwc_data = np.expand_dims(input_data, axis=0)
             nchw_data = nhwc_data.transpose(0, 3, 1, 2)  # ONNX Runtime standard
             unconcatenated_batch_data.append(nchw_data)
@@ -154,6 +166,7 @@ class OnnxQuantizer:
 
     def quantize(
         self,
+        benchmark: bool = True,
     ) -> Path:
         """
         Quantizes the ONNX model using the provided configuration and calibration images.
@@ -167,7 +180,6 @@ class OnnxQuantizer:
         Returns:
             Path: Path to the quantized ONNX model.
         """
-        benchmark = self.cfg.benchmark
         w_SNR = self.cfg.w_SNR
         a_SNR = self.cfg.a_SNR
 
@@ -175,7 +187,13 @@ class OnnxQuantizer:
         output_model_path = str(self.input_model_path)[:-5] + "_int8.onnx"
 
         # preprocess onnx model
-        quant_pre_process(self.input_model_path, output_model_path, auto_merge=True)
+        quant_pre_process(
+            input_model_path=self.input_model_path,
+            output_model_path=output_model_path,
+            auto_merge=True,
+            skip_symbolic_shape=False,
+            verbose=False,
+        )
         self.logger.info(f"🔧 Quantizing model from {self.input_model_path} to {output_model_path}")
         activation_quant_type = QuantType.QInt8 if self.cfg.format == "QDQ" else QuantType.QUInt8
         weight_quant_type = QuantType.QInt8
@@ -190,15 +208,15 @@ class OnnxQuantizer:
             calibrate_method=CalibrationMethod.MinMax,
         )
 
-        self.logger.info("Calibrated and quantized model saved.")
+        self.logger.info(f"✅ Quantized model saved successfully to {output_model_path}")
 
         if benchmark:
-            imgsize = self.cfg.size
-            self.logger.info("benchmarking fp32 model...")
-            self.benchmark(self.input_model_path, imgsize)
-
-            self.logger.info("benchmarking int8 model...")
-            self.benchmark(output_model_path, imgsize)
+            self.logger.info("================== BENCHMARKING FP32 MODEL ==================")
+            self.benchmark(self.input_model_path, device="cpu", iterations=100)
+            self.logger.info("================================================================")
+            self.logger.info("================== BENCHMARKING INT8 MODEL ==================")
+            self.benchmark(output_model_path, device="cpu", iterations=100)
+            self.logger.info("================================================================")
 
         if w_SNR is not None:
             self.logger.info("Computing weight error...")
@@ -318,30 +336,19 @@ class OnnxQuantizer:
             self.logger.error(f"{res}")
             raise
 
-    def benchmark(self, model_path, size=640, runs=20):
+    def benchmark(self, model_path, device: Literal["cuda", "cpu"] = "cpu", iterations: int = 100) -> LatencyMetrics:
         """
         Benchmarks the inference time of an ONNX model.
 
         Args:
             model_path (str or Path): Path to the ONNX model to benchmark.
-            size (int): Input image size (assumes square images). Default is 640.
-            runs (int): Number of inference runs for averaging. Default is 20.
+            device (Literal["cuda", "cpu"]): Device to run benchmarking on ("cuda" or "cpu"). Default is "cpu".
+            iterations (int): Number of inference runs for averaging. Default is 100.
 
         Logs:
             Average inference time in milliseconds.
         """
-        session = onnxruntime.InferenceSession(model_path)
-        input_name = session.get_inputs()[0].name
-
-        total = 0.0
-        input_data = np.zeros((1, 3, size, size), np.float32)
-        # Warming up
-        _ = session.run([], {input_name: input_data})
-        for i in range(runs):
-            start = time.perf_counter()
-            _ = session.run([], {input_name: input_data})
-            end = (time.perf_counter() - start) * 1000
-            total += end
-            # self._print(f"{end:.2f}ms")
-        total /= runs
-        self.logger.info(f"Avg: {total:.2f}ms")
+        runtime_type = RuntimeType.ONNX_CPU if device == "cpu" else RuntimeType.ONNX_CUDA32
+        infer_model = InferModel(model_path, runtime_type=runtime_type)
+        metrics = infer_model.benchmark(iterations=iterations)
+        return metrics

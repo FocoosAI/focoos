@@ -125,7 +125,6 @@ class ClassificationProcessor(Processor):
             List of processed results with class probabilities and predicted classes
         """
         logits = outputs.logits.detach().cpu()
-
         probs = F.sigmoid(logits)
         threshold = threshold or 0.5
 

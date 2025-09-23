@@ -729,14 +729,13 @@ onnx = [
     { name = "onnx" },
     { name = "onnxruntime-gpu" },
     { name = "onnxscript" },
-    { name = "onnxslim" },
     { name = "optimum", extra = ["onnxruntime"] },
 ]
 onnx-cpu = [
+    { name = "huggingface-hub" },
     { name = "onnx" },
     { name = "onnxruntime" },
     { name = "onnxscript" },
-    { name = "onnxslim" },
     { name = "optimum", extra = ["onnxruntime"] },
 ]
 tensorrt = [
@@ -750,6 +749,7 @@ requires-dist = [
     { name = "fvcore", specifier = "~=0.1.4" },
     { name = "gradio", specifier = "~=5.31.0" },
     { name = "huggingface-hub", marker = "extra == 'onnx'", specifier = ">=0.34.0" },
+    { name = "huggingface-hub", marker = "extra == 'onnx-cpu'", specifier = ">=0.34.0" },
     { name = "ipykernel", marker = "extra == 'dev'", specifier = "~=6.29.5" },
     { name = "ipython" },
     { name = "matplotlib", specifier = "~=3.10.1" },
@@ -764,8 +764,6 @@ requires-dist = [
     { name = "onnxruntime-gpu", marker = "extra == 'onnx'", specifier = "==1.22.0" },
     { name = "onnxscript", marker = "extra == 'onnx'", specifier = "~=0.5.1" },
     { name = "onnxscript", marker = "extra == 'onnx-cpu'", specifier = "~=0.5.1" },
-    { name = "onnxslim", marker = "extra == 'onnx'", specifier = "~=0.1.68" },
-    { name = "onnxslim", marker = "extra == 'onnx-cpu'", specifier = "~=0.1.68" },
     { name = "opencv-python", specifier = "~=4.11.0.86" },
     { name = "optimum", extras = ["onnxruntime"], marker = "extra == 'onnx'", specifier = "~=1.27.0" },
     { name = "optimum", extras = ["onnxruntime"], marker = "extra == 'onnx-cpu'", specifier = "~=1.27.0" },
@@ -2027,22 +2025,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/0a/cb/d4ec6edcdc516fc4cd236e79189d662967f23af2ff84b4f0b41ee6c3ff0a/onnxscript-0.5.1.tar.gz", hash = "sha256:71216486471e2acba7f85614c4bea7f1d4a80437d533680a24711c6542fa560e", size = 587998, upload-time = "2025-09-16T01:33:45.305Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f8/9d/275e4eab3f68df6585c8433fd6646008695c7fcbf6a613d5d227419107cd/onnxscript-0.5.1-py3-none-any.whl", hash = "sha256:1fefea7a18d5ed340500c76b90d4b75947b3cc40860f7c646dc50fe0d48d0b05", size = 684014, upload-time = "2025-09-16T01:33:47.497Z" },
-]
-
-[[package]]
-name = "onnxslim"
-version = "0.1.68"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "colorama" },
-    { name = "ml-dtypes" },
-    { name = "onnx" },
-    { name = "packaging" },
-    { name = "sympy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/f3/03/7eecb5b187b7b3e11d066f19211b1850a8b4e5cc79f5e3c78875a676a1c8/onnxslim-0.1.68.tar.gz", hash = "sha256:ff1ec2bf61ff10b75e33990b2046c446dec522ba7f0a12b2f984547ff43f9138", size = 141502, upload-time = "2025-09-10T01:12:13.876Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/84/08/11e0a2b5f68b41c3bca2074ea542e977715315e2e2272fb8eaa3e74ef67f/onnxslim-0.1.68-py3-none-any.whl", hash = "sha256:829f76ff1fd7a95e940ffcfda5d0be843392bbc5919f12a73ea0c0355bde3a9f", size = 164737, upload-time = "2025-09-10T01:12:12.492Z" },
 ]
 
 [[package]]
