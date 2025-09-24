@@ -8,24 +8,28 @@
       
       
       
-        <link rel="canonical" href="https://focoosai.github.io/focoos/development/contributing/">
+        <link rel="canonical" href="https://focoosai.github.io/focoos/quantization/">
       
       
+        <link rel="prev" href="../training/">
       
       
-      <link rel="icon" href="../../assets/favicon.svg">
+        <link rel="next" href="../cli/">
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.20">
     
     
       
-        <title>Contributing - Focoos AI SDK</title>
+        <title>Quantization (beta) - Focoos AI SDK</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.e53b48f4.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.e53b48f4.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -44,13 +48,13 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="../../assets/stylesheets/custom.css">
+      <link rel="stylesheet" href="../assets/stylesheets/custom.css">
     
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono&display=swap">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
   
@@ -85,6 +89,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#quantization-beta" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -101,9 +110,9 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="Focoos AI SDK" class="md-header__button md-logo" aria-label="Focoos AI SDK" data-md-component="logo">
+    <a href=".." title="Focoos AI SDK" class="md-header__button md-logo" aria-label="Focoos AI SDK" data-md-component="logo">
       
-  <img src="../../assets/logo.svg" alt="logo">
+  <img src="../assets/logo.svg" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -120,7 +129,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Contributing
+              Quantization (beta)
             
           </span>
         </div>
@@ -209,11 +218,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../.." class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href=".." class="md-tabs__link">
           
   
   
@@ -233,7 +244,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../hub/" class="md-tabs__link">
+        <a href="../hub/" class="md-tabs__link">
           
   
   
@@ -253,7 +264,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../models/" class="md-tabs__link">
+        <a href="../models/" class="md-tabs__link">
           
   
   
@@ -273,7 +284,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../api/model_manager/" class="md-tabs__link">
+        <a href="../api/model_manager/" class="md-tabs__link">
           
   
   
@@ -313,9 +324,9 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Focoos AI SDK" class="md-nav__button md-logo" aria-label="Focoos AI SDK" data-md-component="logo">
+    <a href=".." title="Focoos AI SDK" class="md-nav__button md-logo" aria-label="Focoos AI SDK" data-md-component="logo">
       
-  <img src="../../assets/logo.svg" alt="logo">
+  <img src="../assets/logo.svg" alt="logo">
 
     </a>
     Focoos AI SDK
@@ -339,24 +350,29 @@
       
   
   
+    
   
   
+  
     
     
     
     
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
         
           
-          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
             
   
   
@@ -369,7 +385,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_1">
             <span class="md-nav__icon md-icon"></span>
             Focoos AI
@@ -383,7 +399,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -406,7 +422,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../setup/" class="md-nav__link">
+      <a href="../setup/" class="md-nav__link">
         
   
   
@@ -429,7 +445,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../concepts/" class="md-nav__link">
+      <a href="../concepts/" class="md-nav__link">
         
   
   
@@ -452,7 +468,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../inference/" class="md-nav__link">
+      <a href="../inference/" class="md-nav__link">
         
   
   
@@ -475,7 +491,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../training/" class="md-nav__link">
+      <a href="../training/" class="md-nav__link">
         
   
   
@@ -495,10 +511,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../quantization/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Quantization (beta)
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -509,6 +547,35 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -521,7 +588,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cli/" class="md-nav__link">
+      <a href="../cli/" class="md-nav__link">
         
   
   
@@ -592,7 +659,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../hub/" class="md-nav__link">
+      <a href="../hub/" class="md-nav__link">
         
   
   
@@ -615,7 +682,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../hub/hub/" class="md-nav__link">
+      <a href="../hub/hub/" class="md-nav__link">
         
   
   
@@ -638,7 +705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../hub/remote_inference/" class="md-nav__link">
+      <a href="../hub/remote_inference/" class="md-nav__link">
         
   
   
@@ -709,7 +776,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/" class="md-nav__link">
+      <a href="../models/" class="md-nav__link">
         
   
   
@@ -732,7 +799,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/fai_detr/" class="md-nav__link">
+      <a href="../models/fai_detr/" class="md-nav__link">
         
   
   
@@ -755,7 +822,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/fai_mf/" class="md-nav__link">
+      <a href="../models/fai_mf/" class="md-nav__link">
         
   
   
@@ -778,7 +845,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/bisenetformer/" class="md-nav__link">
+      <a href="../models/bisenetformer/" class="md-nav__link">
         
   
   
@@ -801,7 +868,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/rtmo/" class="md-nav__link">
+      <a href="../models/rtmo/" class="md-nav__link">
         
   
   
@@ -824,7 +891,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/fai_cls/" class="md-nav__link">
+      <a href="../models/fai_cls/" class="md-nav__link">
         
   
   
@@ -895,7 +962,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/model_manager/" class="md-nav__link">
+      <a href="../api/model_manager/" class="md-nav__link">
         
   
   
@@ -959,7 +1026,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/focoos_model/" class="md-nav__link">
+      <a href="../api/focoos_model/" class="md-nav__link">
         
   
   
@@ -982,7 +1049,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/base_model/" class="md-nav__link">
+      <a href="../api/base_model/" class="md-nav__link">
         
   
   
@@ -1013,7 +1080,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/model_registry/" class="md-nav__link">
+      <a href="../api/model_registry/" class="md-nav__link">
         
   
   
@@ -1077,7 +1144,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/infer_model/" class="md-nav__link">
+      <a href="../api/infer_model/" class="md-nav__link">
         
   
   
@@ -1100,7 +1167,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/runtimes/" class="md-nav__link">
+      <a href="../api/runtimes/" class="md-nav__link">
         
   
   
@@ -1131,7 +1198,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/processor/" class="md-nav__link">
+      <a href="../api/processor/" class="md-nav__link">
         
   
   
@@ -1154,7 +1221,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/hub/" class="md-nav__link">
+      <a href="../api/hub/" class="md-nav__link">
         
   
   
@@ -1218,7 +1285,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/trainer_evaluation/" class="md-nav__link">
+      <a href="../api/trainer_evaluation/" class="md-nav__link">
         
   
   
@@ -1241,7 +1308,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/trainer_hooks/" class="md-nav__link">
+      <a href="../api/trainer_hooks/" class="md-nav__link">
         
   
   
@@ -1272,7 +1339,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/auto_dataset/" class="md-nav__link">
+      <a href="../api/auto_dataset/" class="md-nav__link">
         
   
   
@@ -1295,7 +1362,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/ports/" class="md-nav__link">
+      <a href="../api/ports/" class="md-nav__link">
         
   
   
@@ -1318,7 +1385,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/config/" class="md-nav__link">
+      <a href="../api/config/" class="md-nav__link">
         
   
   
@@ -1341,7 +1408,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/cli/" class="md-nav__link">
+      <a href="../api/cli/" class="md-nav__link">
         
   
   
@@ -1381,6 +1448,25 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -1399,14 +1485,110 @@
   
 
 
-  <h1>Contributing</h1>
+<h1 id="quantization-beta">Quantization (Beta)<a class="headerlink" href="#quantization-beta" title="Permanent link">#</a></h1>
+<p>The quantization of Focoos models is currently in working in progress stage.</p>
+<p>currently tested and working for <strong>classification models</strong>.</p>
+<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">#</a></h2>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelManager</span><span class="p">,</span><span class="n">ASSETS_DIR</span><span class="p">,</span> <span class="n">MODELS_DIR</span><span class="p">,</span> <span class="n">RuntimeType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">focoos.infer.quantizer</span><span class="w"> </span><span class="kn">import</span> <span class="n">OnnxQuantizer</span><span class="p">,</span> <span class="n">QuantizationCfg</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
-<!-- BEGIN INCLUDE helpers/wip.md -->
-<p>🚧 <strong>Work in Progress</strong> 🚧</p>
-<p>This page is currently being developed and may not be complete.</p>
-<hr />
-<p>Feel free to contribute to this page! If you have suggestions or would like to help improve it, please <a href="mailto:info@focoos.ai">contact us</a>.</p>
-<!-- END INCLUDE -->
+<span class="n">image_size</span> <span class="o">=</span> <span class="mi">224</span>  <span class="c1"># 224px input size</span>
+<span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;fai-cls-m-coco&quot;</span> <span class="c1"># you can also take model from focoos hub with &quot;hub://YOUR_MODEL_REF&quot;</span>
+<span class="n">im</span> <span class="o">=</span> <span class="n">ASSETS_DIR</span> <span class="o">/</span> <span class="s2">&quot;federer.jpg&quot;</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">ModelManager</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+
+<span class="n">exported_model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">runtime_type</span><span class="o">=</span><span class="n">RuntimeType</span><span class="o">.</span><span class="n">ONNX_CPU</span><span class="p">,</span> <span class="c1"># optimized for edge or cpu</span>
+    <span class="n">image_size</span><span class="o">=</span><span class="n">image_size</span><span class="p">,</span>
+    <span class="n">dynamic_axes</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># quantization need static axes!</span>
+    <span class="n">simplify_onnx</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="c1"># simplify and optimize onnx model graph</span>
+    <span class="n">onnx_opset</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span>
+    <span class="n">out_dir</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">MODELS_DIR</span><span class="p">,</span> <span class="s2">&quot;my_edge_model&quot;</span><span class="p">))</span> <span class="c1"># save to models dir</span>
+
+<span class="c1"># benchmark onnx model</span>
+<span class="n">exported_model</span><span class="o">.</span><span class="n">benchmark</span><span class="p">(</span><span class="n">iterations</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="c1"># test onnx model</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">exported_model</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">im</span><span class="p">,</span><span class="n">annotate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
+
+
+<span class="n">quantization_cfg</span> <span class="o">=</span> <span class="n">QuantizationCfg</span><span class="p">(</span>
+  <span class="n">size</span> <span class="o">=</span> <span class="n">image_size</span><span class="p">,</span> <span class="c1"># input size: must be same as exported model</span>
+  <span class="n">calibration_images_folder</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">ASSETS_DIR</span><span class="p">),</span> <span class="c1"># Calibration images folder: It is strongly recommended</span>
+                                               <span class="c1"># to use the dataset validation split on which the model was trained.</span>
+                                               <span class="c1"># Here, for example, we will use the assets folder.</span>
+  <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;QDQ&quot;</span><span class="p">,</span> <span class="c1"># QO (QOperator): All the quantized operators have their own ONNX definitions, like QLinearConv, MatMulInteger etc.</span>
+                <span class="c1"># QDQ (Quantize-DeQuantize): inserts DeQuantizeLinear(QuantizeLinear(tensor)) between the original operators to simulate the quantization and dequantization process.</span>
+  <span class="n">per_channel</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>      <span class="c1"># Per-channel quantization: each channel has its own scale/zero-point → more accurate,</span>
+                         <span class="c1"># especially for convolutions, at the cost of extra memory and computation.</span>
+  <span class="n">normalize_images</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="c1"># normalize images during preprocessing: some models have normalization outside of model forward</span>
+<span class="p">)</span>
+
+<span class="n">quantizer</span> <span class="o">=</span> <span class="n">OnnxQuantizer</span><span class="p">(</span>
+    <span class="n">input_model_path</span><span class="o">=</span><span class="n">exported_model</span><span class="o">.</span><span class="n">model_path</span><span class="p">,</span>
+    <span class="n">cfg</span><span class="o">=</span><span class="n">quantization_cfg</span>
+<span class="p">)</span>
+<span class="n">model_path</span> <span class="o">=</span> <span class="n">quantizer</span><span class="o">.</span><span class="n">quantize</span><span class="p">(</span>
+  <span class="n">benchmark</span><span class="o">=</span><span class="kc">True</span> <span class="c1"># benchmark bot fp32 and int8 models</span>
+<span class="p">)</span>
+
+<span class="n">quantized_model</span> <span class="o">=</span> <span class="n">InferModel</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">runtime_type</span><span class="o">=</span><span class="n">RuntimeType</span><span class="o">.</span><span class="n">ONNX_CPU</span><span class="p">)</span>
+
+<span class="n">res</span> <span class="o">=</span> <span class="n">quantized_model</span><span class="o">.</span><span class="n">infer</span><span class="p">(</span><span class="n">im</span><span class="p">,</span><span class="n">annotate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
 
 
 
@@ -1488,10 +1670,10 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["content.code.copy", "navigation.tabs", "navigation.tabs.sticky"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>
       
     
   </body>
