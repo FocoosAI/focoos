@@ -26,6 +26,9 @@ class TestModelRegistry:
             "rtmo-s-coco",
             "rtmo-m-coco",
             "rtmo-l-coco",
+            "fai-cls-n-coco",
+            "fai-cls-m-coco",
+            "fai-cls-s-coco",
         ]
 
         models = ModelRegistry.list_models()

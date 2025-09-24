@@ -46,7 +46,7 @@ def get_dataset(task: Task):
         ds_name = "balloons-coco-sem.zip"
         layout = DatasetLayout.ROBOFLOW_SEG
 
-    elif task == Task.DETECTION:
+    elif task in [Task.DETECTION, Task.CLASSIFICATION]:
         ds_name = "chess-coco-detection.zip"
         layout = DatasetLayout.ROBOFLOW_COCO
     elif task == Task.INSTANCE_SEGMENTATION:

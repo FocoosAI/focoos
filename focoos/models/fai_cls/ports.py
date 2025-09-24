@@ -14,4 +14,4 @@ class ClassificationModelOutput(ModelOutput):
 
 @dataclass
 class ClassificationTargets:
-    labels: torch.Tensor  # [N], class indices
+    labels: torch.Tensor  # [N], [num_classes] One hot encoded labels

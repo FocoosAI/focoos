@@ -2,9 +2,24 @@
 
 ## Overview
 
-FAI-CLS is a versatile image classification model developed by FocoosAI that can utilize any backbone architecture for feature extraction. This model is designed for both single-label and multi-label image classification tasks, offering flexibility in architecture choices and training configurations.
+Fai-cls is a versatile image classification model developed by FocoosAI that can utilize any backbone architecture for feature extraction. This model is designed for both single-label and multi-label image classification tasks, offering flexibility in architecture choices and training configurations.
 
 The model employs a simple yet effective approach: a configurable backbone extracts features from input images, followed by a classification head that produces class predictions. This design enables easy adaptation to different domains and datasets while maintaining high performance and computational efficiency.
+
+## Available Models
+
+Currently, you can find 3 fai-cls models on the Focoos Hub, all trained on COCO dataset for image classification.
+
+| Model Name | Architecture | Domain (Classes) | Dataset | Metric | FPS Nvidia-T4 |
+|------------|--------------|------------------|----------|---------|--------------|
+| fai-cls-n-coco | Classification (STDC-Small) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | F1: 48.66<br>Precision: 58.48<br>Recall: 41.66 | - |
+| fai-cls-s-coco | Classification (STDC-Small) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | F1: 61.92<br>Precision: 68.69<br>Recall: 56.37 | - |
+| fai-cls-m-coco | Classification (STDC-Large) | Common Objects (80) | [COCO](https://cocodataset.org/#home) | F1: 66.98<br>Precision: 73.00<br>Recall: 61.88 | - |
+
+## Supported dataset
+- [ROBOFLOW_COCO](/focoos/api/ports/#focoos.ports.DatasetLayout) (multi-class)
+
+- [CLASSIFICATION_FOLDER](/focoos/api/ports/#focoos.ports.DatasetLayout)
 
 ## Neural Network Architecture
 
@@ -20,12 +35,14 @@ The FAI-CLS architecture consists of two main components:
 ### Classification Head
 - **Architecture**: Multi-layer perceptron (MLP) with configurable depth
 - **Components**:
+
   - Global Average Pooling (AdaptiveAvgPool2d) for spatial dimension reduction
   - Flatten layer to convert 2D features to 1D
   - Linear layers with ReLU activation
   - Dropout for regularization
   - Final linear layer for class predictions
 - **Configurations**:
+
   - **Single Layer**: Direct mapping from features to classes
   - **Two Layer**: Hidden layer with ReLU and dropout for better feature transformation
 
@@ -53,22 +70,26 @@ The FAI-CLS architecture consists of two main components:
 ### Single-Label Classification
 - **Output**: Single class prediction per image
 - **Use Cases**:
-  - Image categorization (animals, objects, scenes)
-  - Medical image diagnosis
-  - Quality control in manufacturing
-  - Content moderation
-  - Agricultural crop classification
+
+    - Image categorization (animals, objects, scenes)
+    - Medical image diagnosis
+    - Quality control in manufacturing
+    - Content moderation
+    - Agricultural crop classification
+
 - **Loss**: Cross-entropy or focal loss
 - **Configuration**: Set `multi_label=False`
 
 ### Multi-Label Classification
 - **Output**: Multiple class predictions per image
 - **Use Cases**:
-  - Multi-object recognition
-  - Image tagging and annotation
-  - Scene attribute recognition
-  - Medical condition classification
-  - Content-based image retrieval
+
+    - Multi-object recognition
+    - Image tagging and annotation
+    - Scene attribute recognition
+    - Medical condition classification
+    - Content-based image retrieval
+
 - **Loss**: Binary cross-entropy with logits
 - **Configuration**: Set `multi_label=True`
 
@@ -96,12 +117,6 @@ The model supports multiple loss function configurations:
 - **Features**: Optional label smoothing for better generalization
 - **Activation**: Softmax for probability distribution
 
-### Focal Loss
-- **Use Case**: Imbalanced datasets with hard-to-classify examples
-- **Parameters**:
-  - Alpha (α): Controls importance of rare class
-  - Gamma (γ): Focuses learning on hard examples
-- **Benefits**: Improved performance on imbalanced datasets
 
 ### Binary Cross-Entropy Loss
 - **Use Case**: Multi-label classification tasks
@@ -144,7 +159,30 @@ AdaptiveAvgPool2d(1) → Flatten → Linear(features → hidden_dim) → ReLU �
 This flexible architecture makes FAI-CLS suitable for a wide range of image classification applications, from simple binary classification to complex multi-label scenarios, while maintaining computational efficiency and ease of use.
 
 
-## Example Usage
+### Quick Start with Pre-trained Model
+
+```python
+from focoos import ASSETS_DIR, ModelManager
+from PIL import Image
+
+# Load a pre-trained model
+model = ModelManager.get("fai-cls-m-coco")
+
+image = ASSETS_DIR / "federer.jpg"
+result = model.infer(image,threshold=0.5, annotate=True)
+
+# Process results
+for detection in result.detections:
+    print(f"Class: {detection.label}, Confidence: {detection.conf:.3f}")
+
+# Visualize image
+Image.fromarray(result.image)
+
+```
+For the training process, please refer to the specific section of the documentation.
+
+
+## Custom Model Configuration
 
 ### Single-Label Classification Setup
 

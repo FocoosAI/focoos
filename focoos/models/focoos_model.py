@@ -30,10 +30,9 @@ from focoos.ports import (
 from focoos.processor.processor_manager import ProcessorManager
 from focoos.utils.api_client import ApiClient
 from focoos.utils.distributed.dist import launch
-from focoos.utils.env import TORCH_VERSION
 from focoos.utils.logger import get_logger
 from focoos.utils.system import get_cpu_name, get_device_name, get_device_type, get_focoos_version, get_system_info
-from focoos.utils.vision import annotate_frame, image_loader
+from focoos.utils.vision import annotate_image, image_loader
 
 logger = get_logger("FocoosModel")
 
@@ -374,7 +373,7 @@ class FocoosModel:
         if annotate:
             t2 = perf_counter()
             skeleton = self.model_info.config.get("skeleton", None)
-            focoos_det.image = annotate_frame(
+            focoos_det.image = annotate_image(
                 im,
                 focoos_det,
                 task=self.model_info.task,
@@ -391,11 +390,13 @@ class FocoosModel:
     def export(
         self,
         runtime_type: RuntimeType = RuntimeType.TORCHSCRIPT_32,
-        onnx_opset: int = 17,
+        onnx_opset: int = 18,
         out_dir: Optional[str] = None,
         device: Literal["cuda", "cpu", "auto"] = "auto",
+        simplify_onnx: bool = True,
         overwrite: bool = True,
         image_size: Optional[Union[int, Tuple[int, int]]] = None,
+        dynamic_axes: bool = True,
     ) -> InferModel:
         """Export the model to different runtime formats.
 
@@ -406,7 +407,8 @@ class FocoosModel:
             runtime_type: Target runtime format for export.
             onnx_opset: ONNX opset version to use for ONNX export.
             out_dir: Output directory for exported model. If None, uses default location.
-            device: Device to use for export ("cuda" or "cpu").
+            device: Device to use for export ("cuda", "cpu", "auto").
+            simplify_onnx: Whether to simplify the ONNX model. Default is True.
             overwrite: Whether to overwrite existing exported model files.
             image_size: Custom image size for export. Can be int (square) or tuple (height, width). If None, uses model's default size.
 
@@ -417,7 +419,10 @@ class FocoosModel:
             ValueError: If unsupported PyTorch version or export format.
         """
         if device == "auto":
-            device = get_device_type()  # type: ignore
+            if runtime_type == RuntimeType.ONNX_CPU:
+                device = "cpu"
+            else:
+                device = get_device_type()  # type: ignore
         else:
             device = device
 
@@ -450,60 +455,82 @@ class FocoosModel:
         export_model_name = ArtifactName.ONNX if format == ExportFormat.ONNX else ArtifactName.PT
         _out_file = os.path.join(out_dir, export_model_name)
 
-        dynamic_axes = self.processor.get_dynamic_axes()
+        axes = self.processor.get_dynamic_axes()
 
         # Hack to warm up the model and record the spacial shapes if needed
         exportable_model(data)
 
         if not overwrite and os.path.exists(_out_file):
             logger.info(f"Model file {_out_file} already exists. Set overwrite to True to overwrite.")
-            return InferModel(model_dir=out_dir, runtime_type=runtime_type)
+            return InferModel(model_path=out_dir, runtime_type=runtime_type)
 
         if format == "onnx":
+            import onnx
+
             with torch.no_grad():
-                logger.info("🚀 Exporting ONNX model..")
-                if TORCH_VERSION >= (2, 5):
-                    exp_program = torch.onnx.export(
-                        exportable_model,
-                        (data,),
-                        f=_out_file,
-                        opset_version=onnx_opset,
-                        verbose=False,
-                        verify=True,
-                        dynamo=False,
-                        external_data=False,  # model weights external to model
-                        input_names=dynamic_axes.input_names,
-                        output_names=dynamic_axes.output_names,
-                        dynamic_axes=dynamic_axes.dynamic_axes,
-                        do_constant_folding=True,
-                        export_params=True,
-                        # dynamic_shapes={
-                        #    "x": {
-                        #        0: torch.export.Dim("batch", min=1, max=64),
-                        #        #2: torch.export.Dim("height", min=18, max=4096),
-                        #        #3: torch.export.Dim("width", min=18, max=4096),
-                        #    }
-                        # },
+                logger.info("🚀 Exporting ONNX model with Optimum..")
+                # Try to use Optimum for enhanced ONNX export with additional optimizations
+                import shutil
+
+                # First export using standard torch.onnx.export
+                torch.onnx.export(
+                    exportable_model,
+                    (data,),
+                    f=_out_file,
+                    opset_version=onnx_opset,
+                    verbose=False,
+                    verify=True,
+                    dynamo=False,
+                    external_data=False,  # model weights external to model
+                    input_names=axes.input_names,
+                    output_names=axes.output_names,
+                    dynamic_axes=axes.dynamic_axes if dynamic_axes else None,
+                    do_constant_folding=True,
+                    export_params=True,
+                )
+                # Load original model to count nodes before optimization
+                original_model = onnx.load(_out_file)
+                original_nodes = len(original_model.graph.node)
+                logger.info(f"📊 Nodes in graph: {original_nodes}")
+
+                logger.info("✅ ONNX export completed ")
+
+                if simplify_onnx:
+                    from onnxruntime.transformers.optimizer import optimize_model as ort_optimize_model
+
+                    opt_level = 99 if device == "cuda" else 1  # quantization on cpu fail otherwise
+
+                    logger.info("🔧 Applying ONNX Simplify: Run Optimum graph optimizations...")
+                    optimized_model_path = _out_file.replace(".onnx", "_optimized.onnx")
+
+                    optimized_model = ort_optimize_model(
+                        input=_out_file,
+                        model_type="bert",  # Generic model type for optimization
+                        num_heads=0,  # Auto-detected
+                        hidden_size=0,  # Auto-detected
+                        opt_level=opt_level,  # Maximum optimization level
+                        use_gpu=(device == "cuda"),
+                        only_onnxruntime=False,
                     )
-                elif TORCH_VERSION >= (2, 0):
-                    torch.onnx.export(
-                        exportable_model,
-                        (data,),
-                        f=_out_file,
-                        opset_version=onnx_opset,
-                        verbose=False,
-                        input_names=dynamic_axes.input_names,
-                        output_names=dynamic_axes.output_names,
-                        dynamic_axes=dynamic_axes.dynamic_axes,
-                        do_constant_folding=True,
-                        export_params=True,
-                    )
-                else:
-                    raise ValueError(f"Unsupported Torch version: {TORCH_VERSION}. Install torch 2.x")
-                # if exp_program is not None:
-                #    exp_program.optimize()
-                #    exp_program.save(_out_file)
-                logger.info(f"✅ Exported {format} model to {_out_file}")
+
+                    optimized_model.save_model_to_file(optimized_model_path)
+
+                    if os.path.exists(optimized_model_path):
+                        import shutil
+
+                        shutil.move(optimized_model_path, _out_file)
+
+                        # Load optimized model to count nodes and log comparison
+                        optimized_onnx_model = onnx.load(_out_file)
+                        optimized_nodes = len(optimized_onnx_model.graph.node)
+                        reduction_pct = round((original_nodes - optimized_nodes) / original_nodes * 100, 1)
+
+                        logger.info(f"📊 After ONNX Runtime optimizations: {optimized_nodes} nodes in graph")
+                        logger.info(f"📈 Reduction: ~{reduction_pct}% nodes removed!")
+                        logger.info("✅ Onnx model successfully simplified.")
+                    else:
+                        raise RuntimeError("ONNX Runtime optimization output not found")
+                    logger.info(f"✅ Exported {format}  model to {_out_file}")
 
         elif format == "torchscript":
             with torch.no_grad():
@@ -518,7 +545,7 @@ class FocoosModel:
 
         # Fixme: this may override the model_info with the one from the exportable model
         self.model_info.dump_json(os.path.join(out_dir, ArtifactName.INFO))
-        return InferModel(model_dir=out_dir, runtime_type=runtime_type)
+        return InferModel(model_path=_out_file, runtime_type=runtime_type, device=device)
 
     def __call__(
         self,

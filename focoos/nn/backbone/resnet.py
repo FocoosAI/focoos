@@ -24,9 +24,9 @@ resnet_cfg = {
 
 donwload_url = {
     18: "https://public.focoos.ai/pretrained_models/backbones/resnet18.pth",
-    34: "https://public.focoos.ai/pretrained_models/backbones/resnet34.pt",
-    50: "https://public.focoos.ai/pretrained_models/backbones/resnet50.pt",
-    101: "https://public.focoos.ai/pretrained_models/backbones/resnet101.pt",
+    34: "https://public.focoos.ai/pretrained_models/backbones/resnet34.pth",
+    50: "https://public.focoos.ai/pretrained_models/backbones/resnet50.pth",
+    101: "https://public.focoos.ai/pretrained_models/backbones/resnet101.pth",
 }
 
 

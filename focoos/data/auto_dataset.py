@@ -22,7 +22,7 @@ from focoos.utils.system import (
     is_inside_sagemaker,
 )
 
-logger = get_logger(__name__)
+logger = get_logger("AutoDataset")
 
 
 class AutoDataset:
@@ -61,23 +61,23 @@ class AutoDataset:
         self.dataset_path = str(dataset_path)
         self.dataset_name = dataset_name
         logger.info(
-            f"✅ Dataset name: {self.dataset_name}, Dataset Path: {self.dataset_path}, Dataset Layout: {self.layout}"
+            f"🔄 Loading dataset {self.dataset_name}, 📁 Dataset Path: {self.dataset_path}, 🗂️ Dataset Layout: {self.layout}"
         )
 
     def _load_split(self, dataset_name: str, split: DatasetSplitType) -> DictDataset:
         if self.layout == DatasetLayout.CATALOG:
-            return DictDataset.from_catalog(ds_name=dataset_name, split=split, root=self.dataset_path)
+            return DictDataset.from_catalog(ds_name=dataset_name, split_type=split, root=self.dataset_path)
         else:
             ds_root = self.dataset_path
             if not check_folder_exists(ds_root):
                 raise FileNotFoundError(f"Dataset {ds_root} not found")
             split_path = self._get_split_path(dataset_root=ds_root, split_type=split)
             if self.layout == DatasetLayout.ROBOFLOW_SEG:
-                return DictDataset.from_roboflow_seg(ds_dir=split_path, task=self.task)
+                return DictDataset.from_roboflow_seg(ds_dir=split_path, task=self.task, split_type=split)
             elif self.layout == DatasetLayout.CLS_FOLDER:
-                return DictDataset.from_folder(root_dir=split_path)
+                return DictDataset.from_folder(root_dir=split_path, split_type=split)
             elif self.layout == DatasetLayout.ROBOFLOW_COCO:
-                return DictDataset.from_roboflow_coco(ds_dir=split_path, task=self.task)
+                return DictDataset.from_roboflow_coco(ds_dir=split_path, task=self.task, split_type=split)
             else:  # Focoos
                 raise NotImplementedError(f"Dataset layout {self.layout} not implemented")
 

@@ -48,7 +48,7 @@ TASK_METRICS = {
     Task.DETECTION.value: "bbox/AP",
     Task.SEMSEG.value: "sem_seg/mIoU",
     Task.INSTANCE_SEGMENTATION.value: "segm/AP",
-    Task.CLASSIFICATION.value: "classification/Accuracy",
+    Task.CLASSIFICATION.value: "classification/F1",
     Task.KEYPOINT.value: "keypoints/AP",
     # Task.PANOPTIC_SEGMENTATION.value: "panoptic_seg/PQ",
 }
@@ -190,6 +190,7 @@ class FocoosTrainer:
                 f"📁 output_dir: {self.output_dir}",
                 "========== 🔧 Main Hyperparameters 🔧 ==========",
                 f" - max_iter: {self.args.max_iters}",
+                f" - eval_period: {self.args.eval_period}",
                 f" - batch_size: {self.args.batch_size}",
                 f" - learning_rate: {self.args.learning_rate}",
                 " - resolution: !TODO",

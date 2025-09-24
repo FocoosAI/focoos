@@ -171,7 +171,7 @@ class ONNXRuntime(BaseRuntime):
         if isinstance(size, int):
             size = (size, size)
 
-        logger.info(f"⏱️ Benchmarking latency on {device_name}, size: {size}x{size}..")
+        logger.info(f"⏱️ Benchmarking latency on {device_name}, size: {size}..")
 
         np_input = (255 * np.random.random((1, 3, size[0], size[1]))).astype(self.dtype)
         input_name = self.ort_sess.get_inputs()[0].name

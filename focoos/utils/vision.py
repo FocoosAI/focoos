@@ -15,7 +15,8 @@ from focoos.ports import CACHE_DIR, FocoosDet, FocoosDetections, Task
 from focoos.utils.api_client import ApiClient
 
 api_client = ApiClient()
-focoos_color_palette = sv.ColorPalette.from_hex(["#015fe6", "#3faebd", "#63dba6", "#a151ff", "#df923a"])
+FOCOOS_PALETTE = ["#015fe6", "#3faebd", "#63dba6", "#a151ff", "#df923a"]
+focoos_color_palette = sv.ColorPalette.from_hex(FOCOOS_PALETTE)
 label_annotator = sv.LabelAnnotator(color=focoos_color_palette, text_padding=10, border_radius=10, smart_position=False)
 box_annotator = sv.BoxAnnotator(color=focoos_color_palette)
 mask_annotator = sv.MaskAnnotator(color=focoos_color_palette)
@@ -369,42 +370,71 @@ def masks_to_xyxy(masks: np.ndarray) -> np.ndarray:
     return xyxy
 
 
-#!TODO DEPRECATED
+def draw_classification_labels(im: np.ndarray, labels: list[str]) -> np.ndarray:
+    """
+    Draw classification labels on an image with colored backgrounds.
+
+    Args:
+        im (np.ndarray): Input image in RGB format
+        labels (list[str]): List of labels to draw
+
+    Returns:
+        np.ndarray: Annotated image with labels drawn
+    """
+    if not labels:
+        return im
+
+    # Convert RGB to BGR for OpenCV operations
+    annotated_im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 0.8
+    thickness = 2
+    y0 = 40
+    dy = 40
+    padding = 10
+
+    # Convert FOCOOS_PALETTE hex colors directly to BGR for OpenCV
+    bgr_colors = []
+    for hex_color in FOCOOS_PALETTE:
+        # Convert hex to RGB, then to BGR for OpenCV
+        hex_color = hex_color.lstrip("#")
+        rgb = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+        bgr = (rgb[2], rgb[1], rgb[0])  # BGR format for OpenCV
+        bgr_colors.append(bgr)
+
+    for i, label in enumerate(labels):
+        color_bgr = bgr_colors[i % len(bgr_colors)]
+        y = y0 + i * dy
+
+        # Get text dimensions
+        (text_w, text_h), baseline = cv2.getTextSize(label, font, font_scale, thickness)
+
+        # Draw background rectangle
+        cv2.rectangle(
+            annotated_im,
+            (padding, y - text_h - padding),
+            (padding + text_w + padding, y + baseline + padding),
+            color_bgr,
+            thickness=cv2.FILLED,
+        )
+
+        # Draw text
+        cv2.putText(
+            annotated_im,
+            label,
+            (padding + 5, y),
+            font,
+            font_scale,
+            (255, 255, 255),  # White text
+            thickness,
+            lineType=cv2.LINE_AA,
+        )
+
+    # Convert BGR to RGB for PIL compatibility
+    return cv2.cvtColor(annotated_im, cv2.COLOR_BGR2RGB)
+
+
 def annotate_image(
-    im: Union[np.ndarray, Image.Image], detections: FocoosDetections, task: Task, classes: Optional[list[str]] = None
-) -> Image.Image:
-    if isinstance(im, Image.Image):
-        im = np.array(im)
-
-    sv_detections = fai_detections_to_sv(detections, im.shape[:2])
-    # Optimized early return - check if there are detections
-    if sv_detections.xyxy.shape[0] == 0:
-        return Image.fromarray(im)
-
-    # Use image directly without unnecessary copies
-    annotated_im = im
-
-    if task == Task.DETECTION:
-        annotated_im = box_annotator.annotate(scene=annotated_im, detections=sv_detections)
-
-    elif task in [
-        Task.SEMSEG,
-        Task.INSTANCE_SEGMENTATION,
-    ]:
-        annotated_im = mask_annotator.annotate(scene=annotated_im, detections=sv_detections)
-
-    # Optimize label creation
-    if classes is not None and sv_detections.class_id is not None and sv_detections.confidence is not None:
-        labels = [
-            f"{classes[int(class_id)]}: {confid * 100:.0f}%"
-            for class_id, confid in zip(sv_detections.class_id, sv_detections.confidence)
-        ]
-        annotated_im = label_annotator.annotate(scene=annotated_im, detections=sv_detections, labels=labels)
-
-    return Image.fromarray(annotated_im)
-
-
-def annotate_frame(
     im: np.ndarray,
     detections: FocoosDetections,
     task: Task,
@@ -416,6 +446,17 @@ def annotate_frame(
         im = np.array(im)
     if len(detections.detections) == 0:
         return im
+    if task == Task.CLASSIFICATION:
+        # Optimized sorting: filter and sort in single pass, avoid redundant None checks
+        valid_detections = [d for d in detections.detections if d.conf is not None and d.label is not None]
+        if valid_detections:
+            # Sort by confidence descending - use type assertion since we've filtered None values
+            valid_detections.sort(key=lambda d: d.conf or 0.0, reverse=True)
+            labels = [f"{d.label}: {(d.conf or 0.0) * 100:.0f}%" for d in valid_detections]
+        else:
+            labels = []
+        return draw_classification_labels(im, labels)
+
     has_bbox = detections.detections[0].bbox is not None
     has_mask = detections.detections[0].mask is not None
     has_keypoints = detections.detections[0].keypoints is not None
@@ -425,7 +466,7 @@ def annotate_frame(
     if sv_detections.xyxy.shape[0] == 0:
         return im  # Return original RGB image
 
-    annotated_im = im
+    annotated_im = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
 
     if has_bbox and task != Task.SEMSEG:
         annotated_im = box_annotator.annotate(scene=annotated_im, detections=sv_detections)
@@ -437,11 +478,11 @@ def annotate_frame(
 
         annotated_im = edge_annotator.annotate(scene=annotated_im, key_points=sv_keypoints)
         annotated_im = vertex_annotator.annotate(scene=annotated_im, key_points=sv_keypoints)
-    # Optimize label creation
+    # label creation
     if classes is not None and sv_detections.class_id is not None and sv_detections.confidence is not None:
         labels = [
             f"{classes[int(class_id)]}: {confid * 100:.0f}%"
             for class_id, confid in zip(sv_detections.class_id, sv_detections.confidence)
         ]
         annotated_im = label_annotator.annotate(scene=annotated_im, detections=sv_detections, labels=labels)
-    return annotated_im
+    return cv2.cvtColor(annotated_im, cv2.COLOR_BGR2RGB)

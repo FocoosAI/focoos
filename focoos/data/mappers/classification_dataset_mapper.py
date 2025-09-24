@@ -20,7 +20,7 @@ class ClassificationDatasetDict(DatasetEntry):
     Extends the base DatasetEntry with fields needed for classification.
     """
 
-    label: Optional[int] = None
+    label: Optional[list[int]] = None
 
 
 class ClassificationDatasetMapper(DatasetMapper):
@@ -52,9 +52,12 @@ class ClassificationDatasetMapper(DatasetMapper):
             augmentations=augmentations,  # type: ignore
             image_format=image_format,
         )
-        self.logger = get_logger(__name__)
-        mode = "training" if is_train else "inference"
-        self.logger.info(f"[ClassificationDatasetMapper] Augmentations used in {mode}: {augmentations}")
+        self.logger = get_logger("ClassificationDsMapper")
+        mode = "train" if is_train else "val"
+        augs_str = "\n - ".join([str(aug) for aug in augmentations])
+        self.logger.info(
+            f"\n =========== 🎨 {mode} augmentations =========== \n - {augs_str} \n============================================"
+        )
 
     def __call__(self, dataset_dict: dict) -> ClassificationDatasetDict:
         """
@@ -71,10 +74,10 @@ class ClassificationDatasetMapper(DatasetMapper):
         self.check_image_size(dataset_dict, image)
 
         # Extract class label from annotations
-        label = None
+        label = []
         if "annotations" in dataset_dict and len(dataset_dict["annotations"]) > 0:
             # For classification, we take the first annotation's category_id as the label
-            label = dataset_dict["annotations"][0].get("category_id", None)
+            label = [ann.get("category_id", None) for ann in dataset_dict["annotations"]]
 
         # Apply augmentations
         aug_input = A.AugInput(image)

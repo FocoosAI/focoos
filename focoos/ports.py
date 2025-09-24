@@ -11,7 +11,6 @@ from typing import Any, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 from pydantic import BaseModel
-from torch import Tensor
 
 from focoos.structures import Instances
 
@@ -84,6 +83,8 @@ class DatasetLayout(str, Enum):
     Values:
         - ROBOFLOW_COCO: (Detection,Instance Segmentation)
         - ROBOFLOW_SEG: (Semantic Segmentation)
+        - CATALOG: (Any)
+        - CLS_FOLDER: (Classification)
     Example:
         ```python
         - ROBOFLOW_COCO: (Detection,Instance Segmentation) Roboflow COCO format:
@@ -106,6 +107,22 @@ class DatasetLayout(str, Enum):
                     - _classes.csv (comma separated csv)
                     - img_3_mask.png
                     - img_4_mask.png
+        - CLS_FOLDER: (Classification)
+            root/
+                train/
+                    - class_1/
+                        - img_1.jpg
+                        - img_2.jpg
+                    - class_2/
+                        - img_3.jpg
+                        - img_4.jpg
+                valid/
+                    - class_1/
+                        - img_14.jpg
+                        - img_12.jpg
+                    - class_2/
+                        - img_5.jpg
+                        - img_6.jpg
         ```
     """
 
@@ -917,7 +934,7 @@ class ModelOutput(DictClass):
 
 @dataclass
 class DatasetEntry(DictClass):
-    image: Optional[Tensor] = None
+    image: Optional["torch.Tensor"] = None  # noqa: F821
     height: Optional[int] = None
     width: Optional[int] = None
     instances: Optional[Instances] = None
@@ -1007,7 +1024,7 @@ class TrainerArgs:
     ddp_find_unused: bool = True
     checkpointer_period: int = 1000
     checkpointer_max_to_keep: int = 1
-    eval_period: int = 50
+    eval_period: int = 200
     log_period: int = 20
     samples: int = 9
     seed: int = 42

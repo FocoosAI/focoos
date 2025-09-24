@@ -19,11 +19,12 @@ class ClassificationConfig(ModelConfig):
     hidden_dim: int = 512
     dropout_rate: float = 0.2
     features: str = "res5"
-    num_layers: int = 2
+    num_layers: int = 1
+    dense_prediction: bool = False
 
     # Loss configuration
     use_focal_loss: bool = False
     focal_alpha: float = 0.75
     focal_gamma: float = 2.0
     label_smoothing: float = 0.0
-    multi_label: bool = False
+    pos_weight: float = 10.0

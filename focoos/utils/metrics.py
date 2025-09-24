@@ -28,6 +28,7 @@ INSTANCE_SEGMENTATION_VALIDATION_METRICS = [
     "segm/APl",
 ]
 PANOPTIC_SEGMENTATION_VALIDATION_METRICS = ["panoptic_seg/PQ"]
+CLASSIFICATION_VALIDATION_METRICS = ["classification/F1", "classification/Precision", "classification/Recall"]
 
 
 def is_json_compatible(value):
@@ -224,6 +225,7 @@ def parse_metrics(metrics_path: str) -> Metrics:
         + OBJECT_DETECTIONS_VALIDATION_METRICS
         + SEGMENTATION_VALIDATION_METRICS
         + PANOPTIC_SEGMENTATION_VALIDATION_METRICS
+        + CLASSIFICATION_VALIDATION_METRICS
     )
 
     # Iterate over each metric dictionary in the content
@@ -255,6 +257,7 @@ def parse_metrics(metrics_path: str) -> Metrics:
             OBJECT_DETECTIONS_VALIDATION_METRICS[0],
             SEGMENTATION_VALIDATION_METRICS[0],
             PANOPTIC_SEGMENTATION_VALIDATION_METRICS[0],
+            CLASSIFICATION_VALIDATION_METRICS[0],
         ]
 
         # Determine the best metric to use for finding the best iteration

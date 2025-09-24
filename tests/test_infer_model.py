@@ -44,9 +44,11 @@ def mock_model_dir(tmp_path, mock_model_info: ModelInfo):
     model_dir.mkdir()
     model_info_path = model_dir / "model_info.json"
     model_info_path.write_text(json.dumps(asdict(mock_model_info)))
-    (model_dir / "model.onnx").touch()
-    (model_dir / "model.pt").touch()
-    return model_dir
+    onnx_model_path = model_dir / "model.onnx"
+    torch_model_path = model_dir / "model.pt"
+    onnx_model_path.touch()
+    torch_model_path.touch()
+    return {"dir": model_dir, "onnx_path": onnx_model_path, "torch_path": torch_model_path}
 
 
 @pytest.fixture
@@ -60,7 +62,7 @@ def mock_local_model_onnx(mocker: MockerFixture, mock_model_dir):
     mocker.patch("focoos.infer.infer_model.ProcessorManager.get_processor")
     mocker.patch("focoos.model_manager.ConfigManager.from_dict")
 
-    model = InferModel(model_dir=mock_model_dir, runtime_type=RuntimeType.ONNX_CPU)
+    model = InferModel(model_path=mock_model_dir["onnx_path"], runtime_type=RuntimeType.ONNX_CPU)
     return model
 
 
@@ -75,29 +77,31 @@ def mock_local_model_torch(mocker: MockerFixture, mock_model_dir):
     mocker.patch("focoos.infer.infer_model.ProcessorManager.get_processor")
     mocker.patch("focoos.model_manager.ConfigManager.from_dict")
 
-    model = InferModel(model_dir=mock_model_dir, runtime_type=RuntimeType.TORCHSCRIPT_32)
+    model = InferModel(model_path=mock_model_dir["torch_path"], runtime_type=RuntimeType.TORCHSCRIPT_32)
     return model
 
 
 def test_initialization_fail_no_model_dir():
     with pytest.raises(FileNotFoundError):
-        InferModel(model_dir="fakedir", runtime_type=RuntimeType.ONNX_CPU)
+        InferModel(model_path="fakedir.onnx", runtime_type=RuntimeType.ONNX_CPU)
 
 
 def test_init_file_not_found(mocker: MockerFixture):
     mocker.patch("focoos.infer.infer_model.os.path.exists", return_value=False)
     with pytest.raises(FileNotFoundError):
-        InferModel(model_dir="fakedir", runtime_type=RuntimeType.ONNX_CPU)
+        InferModel(model_path="fakedir.onnx", runtime_type=RuntimeType.ONNX_CPU)
 
 
 def test_initialization_onnx(mock_local_model_onnx: InferModel, mock_model_dir, mock_model_info):
-    assert mock_local_model_onnx.model_dir == mock_model_dir
+    assert mock_local_model_onnx.model_path == mock_model_dir["onnx_path"]
+    assert str(mock_local_model_onnx.model_dir) == str(mock_model_dir["dir"])
     assert mock_local_model_onnx.model_info.name == mock_model_info.name
     assert isinstance(mock_local_model_onnx.runtime, MagicMock)
 
 
 def test_initialization_torch(mock_local_model_torch: InferModel, mock_model_dir, mock_model_info):
-    assert mock_local_model_torch.model_dir == mock_model_dir
+    assert mock_local_model_torch.model_path == mock_model_dir["torch_path"]
+    assert str(mock_local_model_torch.model_dir) == str(mock_model_dir["dir"])
     assert mock_local_model_torch.model_info.name == mock_model_info.name
     assert isinstance(mock_local_model_torch.runtime, MagicMock)
 
@@ -246,10 +250,12 @@ def test_read_model_info_file_not_found(mocker: MockerFixture, tmp_path):
     # Create model directory without model_info.json
     model_dir = tmp_path / "model"
     model_dir.mkdir()
+    model_path = model_dir / "model.onnx"
+    model_path.touch()
 
-    # Mock os.path.exists to return False for model.onnx check but True for directory
+    # Mock os.path.exists to return False for model_info.json check but True for model file
     def mock_exists(path):
-        if "model.onnx" in str(path):
+        if "model.onnx" in str(path) and "model_info.json" not in str(path):
             return True
         if "model_info.json" in str(path):
             return False
@@ -258,7 +264,7 @@ def test_read_model_info_file_not_found(mocker: MockerFixture, tmp_path):
     mocker.patch("focoos.infer.infer_model.os.path.exists", side_effect=mock_exists)
 
     with pytest.raises(FileNotFoundError, match="Model info file not found"):
-        InferModel(model_dir=model_dir, runtime_type=RuntimeType.ONNX_CPU)
+        InferModel(model_path=model_path, runtime_type=RuntimeType.ONNX_CPU)
 
 
 def test_benchmark_with_default_size(mock_local_model_onnx: InferModel):

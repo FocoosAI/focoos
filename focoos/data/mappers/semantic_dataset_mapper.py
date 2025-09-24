@@ -57,9 +57,12 @@ class SemanticDatasetMapper(DatasetMapper):
         self.img_format = image_format
         self.ignore_label = ignore_label
 
-        logger = get_logger(__name__)
-        mode = "training" if is_train else "inference"
-        logger.info(f"[{self.__class__.__name__}] Augmentations used in {mode}: {augmentations}")
+        logger = get_logger("SemSegMapper")
+        mode = "train" if is_train else "val"
+        augs_str = "\n - ".join([str(aug) for aug in augmentations])
+        logger.info(
+            f"\n =========== 🎨 {mode} augmentations =========== \n - {augs_str} \n============================================"
+        )
 
     def __call__(self, dataset_dict: dict) -> SemanticSegmentationDatasetEntry:
         dataset_dict = copy.deepcopy(dataset_dict)  # it will be modified by code below
