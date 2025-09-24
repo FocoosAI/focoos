@@ -57,7 +57,6 @@
                 "seatonjiang.gitmoji-vscode",
                 "ms-vscode.remote-repositories",
                 "donjayamanne.python-environment-manager",
-                "ninoseki.vscode-pylens",
                 "ninoseki.vscode-mogami",
                 "charliermarsh.ruff"
             ]
