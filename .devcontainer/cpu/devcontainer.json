@@ -28,7 +28,7 @@
             "ppa": "false"
         },
         // "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
-        "ghcr.io/iterative/features/nvtop:1": {},
+        "ghcr.io/iterative/features/nvtop:1": {}
     },
     "customizations": {
         "devpod": {
@@ -37,7 +37,7 @@
         "vscode": {
             "settings": {
                 "terminal.integrated.shell.linux": "/bin/bash",
-                "python.terminal.activateEnvInCurrentTerminal": true,
+                "python.terminal.activateEnvInCurrentTerminal": true
             },
             "extensions": [
                 "ms-python.python",
