@@ -49,7 +49,7 @@ im = "https://public.focoos.ai/samples/motogp.jpg" # can be local/remote path, n
 
 model = ModelManager.get("fai-detr-l-obj365") # any models from ModelRegistry, FocoosHub or local folder
 
-detections = model.infer(im,annotate=true)
+detections = model.infer(im,annotate=True)
 
 ```
 
