@@ -3,7 +3,7 @@
     "build": {
         "target": "focoos-gpu",
         "context": "../..",
-        "dockerfile": "../../Dockerfile",
+        "dockerfile": "../../Dockerfile"
     },
     "shutdownAction": "none",
     "remoteUser": "root",
@@ -41,7 +41,7 @@
             "version": "os-provided",
             "ppa": "false"
         },
-        "ghcr.io/iterative/features/nvtop:1": {},
+        "ghcr.io/iterative/features/nvtop:1": {}
     },
     "customizations": {
         "devpod": {
@@ -50,7 +50,7 @@
         "vscode": {
             "settings": {
                 "terminal.integrated.shell.linux": "/bin/bash",
-                "python.terminal.activateEnvInCurrentTerminal": true,
+                "python.terminal.activateEnvInCurrentTerminal": true
             },
             "extensions": [
                 "ms-python.python",
@@ -70,7 +70,6 @@
                 "seatonjiang.gitmoji-vscode",
                 "ms-vscode.remote-repositories",
                 "donjayamanne.python-environment-manager",
-                "ninoseki.vscode-pylens",
                 "ninoseki.vscode-mogami",
                 "charliermarsh.ruff"
             ]
