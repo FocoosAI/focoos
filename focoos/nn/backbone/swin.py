@@ -679,7 +679,7 @@ class Swin(BaseBackbone):
             self.add_module(layer_name, layer)
 
         if config.use_pretrained and backbone_url:
-            state = torch.hub.load_state_dict_from_url(backbone_url)
+            state = torch.hub.load_state_dict_from_url(backbone_url, map_location="cpu")
             self.load_state_dict(state, strict=False)
             logger.info(f"Loaded pretrained weights from {backbone_url}")
 

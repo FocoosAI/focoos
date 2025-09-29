@@ -369,11 +369,11 @@ class CSPDarknet(BaseBackbone):
         }
         if config.use_pretrained:
             if config.backbone_url:
-                state = torch.hub.load_state_dict_from_url(config.backbone_url)
+                state = torch.hub.load_state_dict_from_url(config.backbone_url, map_location="cpu")
                 self.load_state_dict(state)
                 logger.info(f"Loaded pretrained weights from {config.backbone_url}")
             else:
-                state = torch.hub.load_state_dict_from_url(CONFIGS[config.size]["url"])
+                state = torch.hub.load_state_dict_from_url(CONFIGS[config.size]["url"], map_location="cpu")
                 self.load_state_dict(state)
                 logger.info(f"Loaded pretrained weights from {CONFIGS[config.size]['url']}")
 

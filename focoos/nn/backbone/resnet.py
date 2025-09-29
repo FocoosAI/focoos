@@ -227,7 +227,7 @@ class ResNet(BaseBackbone):
             self._freeze_norm(self)
 
         if use_pretrained:
-            state = torch.hub.load_state_dict_from_url(backbone_url)
+            state = torch.hub.load_state_dict_from_url(backbone_url, map_location="cpu")
             self.load_state_dict(state)
             logger.info(f"Load ResNet{depth} state_dict")
 
