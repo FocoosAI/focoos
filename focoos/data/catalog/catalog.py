@@ -86,6 +86,19 @@ CATALOG = [
         ),
     ),
     CatalogDataset(
+        name="coco_2017_cls",
+        task=Task.CLASSIFICATION,
+        train_split=CatalogSplit(
+            image_root="coco/train2017",
+            json_file="coco/annotations/instances_train2017.json",
+        ),
+        val_split=CatalogSplit(
+            image_root="coco/val2017",
+            json_file="coco/annotations/instances_val2017.json",
+            filter_empty=False,
+        ),
+    ),
+    CatalogDataset(
         name="coco_2017_instance",
         task=Task.INSTANCE_SEGMENTATION,
         train_split=CatalogSplit(
@@ -131,6 +144,7 @@ def _load_dataset_split(
     split_name: str,
     split: CatalogSplit,
     task: Task,
+    split_type: DatasetSplitType,
     root=DATASETS_DIR,
 ) -> DictDataset:
     """
@@ -152,7 +166,7 @@ def _load_dataset_split(
         task=task,
     )
 
-    if task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION, Task.KEYPOINT]:
+    if task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION, Task.KEYPOINT, Task.CLASSIFICATION]:
         dataset_dict = load_coco_json(json_file_path, image_root_path, metadata, task=task)
         if split.filter_empty:
             dataset_dict = filter_images_with_only_crowd_annotations(dataset_dicts=dataset_dict)
@@ -171,7 +185,7 @@ def _load_dataset_split(
         raise ValueError(f"Unknown task {task}")
 
     metadata.count = len(dataset_dict)
-    return DictDataset(dataset_dict, task=task, metadata=metadata)
+    return DictDataset(dataset_dict, task=task, metadata=metadata, split_type=split_type)
 
 
 def get_dataset_split(name: str, split: DatasetSplitType, datasets_root=DATASETS_DIR) -> DictDataset:
@@ -192,4 +206,4 @@ def get_dataset_split(name: str, split: DatasetSplitType, datasets_root=DATASETS
     else:
         raise ValueError(f"Unknown split {split}")
 
-    return _load_dataset_split(split_name, entry, ds.task, datasets_root)
+    return _load_dataset_split(split_name=split_name, split=entry, task=ds.task, split_type=split, root=datasets_root)

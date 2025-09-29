@@ -182,7 +182,7 @@ class STDCConfig(BackboneConfig):
     block_num: int = 4
     block_type: str = "cat"
     backbone_url: Optional[str] = None
-    size: Optional[Literal["small", "large"]] = None
+    size: Optional[Literal["nano", "small", "large"]] = None
     use_conv_last: bool = False
 
 
@@ -202,11 +202,14 @@ class STDC(BaseBackbone):
             base = 64
             block_num = 4
             block_type = "cat"
+        elif config.size == "nano":
+            config.backbone_url = "https://public.focoos.ai/pretrained_models/backbones/stdc_small.pth"
+            layers = [2, 2, 2]
+            base = 32
+            block_num = 4
+            block_type = "cat"
         else:
-            base = config.base
-            layers = config.layers
-            block_num = config.block_num
-            block_type = config.block_type
+            raise ValueError(f"Invalid size: {config.size}. The size should be small, large or nano.")
 
         if block_type == "cat":
             block = CatBottleneck
