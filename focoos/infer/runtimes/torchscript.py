@@ -49,7 +49,9 @@ class TorchscriptRuntime(BaseRuntime):
 
         if self.opts.warmup_iter > 0:
             size = (
-                self.model_info.im_size if self.model_info.task == Task.DETECTION and self.model_info.im_size else 640
+                self.model_info.im_size
+                if self.model_info.task in [Task.DETECTION, Task.CLASSIFICATION] and self.model_info.im_size
+                else 640
             )
             logger.info(f"⏱️ Warming up model {self.model_info.name} on {self.device}, size: {size}x{size}..")
             with torch.no_grad():
