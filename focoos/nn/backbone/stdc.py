@@ -189,27 +189,46 @@ class STDCConfig(BackboneConfig):
 class STDC(BaseBackbone):
     def __init__(self, config: STDCConfig):
         super().__init__(config)
-
-        if config.size == "small":
-            config.backbone_url = "https://public.focoos.ai/pretrained_models/backbones/stdc_small.pth"
-            layers = [2, 2, 2]
-            base = 64
-            block_num = 4
-            block_type = "cat"
-        elif config.size == "large":
-            config.backbone_url = "https://public.focoos.ai/pretrained_models/backbones/stdc_large.pth"
-            layers = [4, 5, 3]
-            base = 64
-            block_num = 4
-            block_type = "cat"
-        elif config.size == "nano":
-            config.backbone_url = "https://public.focoos.ai/pretrained_models/backbones/stdc_small.pth"
-            layers = [2, 2, 2]
-            base = 32
-            block_num = 4
-            block_type = "cat"
+        if config.size is not None:
+            if config.size == "small":
+                config.backbone_url = "https://public.focoos.ai/pretrained_models/backbones/stdc_small.pth"
+                layers = [2, 2, 2]
+                base = 64
+                block_num = 4
+                block_type = "cat"
+            elif config.size == "large":
+                config.backbone_url = "https://public.focoos.ai/pretrained_models/backbones/stdc_large.pth"
+                layers = [4, 5, 3]
+                base = 64
+                block_num = 4
+                block_type = "cat"
+            elif config.size == "nano":
+                config.backbone_url = "https://public.focoos.ai/pretrained_models/backbones/stdc_nano.pth"
+                layers = [2, 2, 2]
+                base = 32
+                block_num = 4
+                block_type = "cat"
+            else:
+                raise ValueError(f"Invalid size: {config.size}. The size should be small, large or nano.")
+            if config.layers and layers != config.layers:
+                logger.warning(f"Layers must be {layers} if size is {config.size}, provided {config.layers} not used.")
+            if config.base and base != config.base:
+                logger.warning(f"Base must be {base} if size is {config.size}, provided {config.base} not used.")
+            if config.block_num and block_num != config.block_num:
+                logger.warning(
+                    f"Block num must be {block_num} if size is {config.size}, provided {config.block_num} not used."
+                )
+            if config.block_type and block_type != config.block_type:
+                logger.warning(
+                    f"Block type must be {block_type} if size is {config.size}, provided {config.block_type} not used."
+                )
         else:
-            raise ValueError(f"Invalid size: {config.size}. The size should be small, large or nano.")
+            if not config.layers or not config.base or not config.block_num or not config.block_type:
+                raise ValueError("Layers, base, block_num and block_type must be provided if size is not provided.")
+            layers = config.layers
+            base = config.base
+            block_num = config.block_num
+            block_type = config.block_type
 
         if block_type == "cat":
             block = CatBottleneck

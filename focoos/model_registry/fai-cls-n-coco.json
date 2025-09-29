@@ -375,7 +375,29 @@
         "classification/Recall-zebra": 91.76470947265625
     },
     "focoos_version": "0.20.2",
-    "latency": [],
+    "latency": [
+        {
+            "fps": 851,
+            "engine": "torchscript",
+            "min": 1.051,
+            "max": 1.824,
+            "mean": 1.175,
+            "std": 0.146,
+            "im_size": 224,
+            "device": "Tesla T4"
+        },
+        {
+            "fps": 1225,
+            "engine": "onnx.CUDAExecutionProvider",
+            "min": 0.789,
+            "max": 1.072,
+            "mean": 0.816,
+            "std": 0.044,
+            "im_size": 224,
+            "device": "Tesla T4"
+        },
+        {"fps": 2170, "engine": "onnx.TensorrtExecutionProvider", "min": 0.444, "max": 0.627, "mean": 0.461, "std": 0.029, "im_size": 224, "device": "Tesla T4"}
+    ],
     "training_info": null,
     "updated_at": null
 }

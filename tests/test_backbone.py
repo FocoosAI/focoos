@@ -6,9 +6,16 @@ from focoos.nn.backbone.base import BackboneConfig, ShapeSpec
 from focoos.nn.backbone.build import load_backbone
 
 # List of all backbone types with their minimum required config
+
+stdc_configs_size = [
+    {"model_type": "stdc", "use_pretrained": True, "size": size} for size in ["nano", "small", "large"]
+]
+stdc_configs_base = [
+    {"model_type": "stdc", "use_pretrained": True, "base": 64, "layers": [2, 2, 2], "block_num": 4, "block_type": "cat"}
+]
 BACKBONE_CONFIGS = {
     "resnet": [{"model_type": "resnet", "use_pretrained": False, "depth": 18}],
-    "stdc": [{"model_type": "stdc", "use_pretrained": False, "base": 64, "layers": [4, 5, 3]}],
+    "stdc": stdc_configs_size + stdc_configs_base,
     "swin": [{"model_type": "swin", "use_pretrained": False}],
     "mobilenet_v2": [{"model_type": "mobilenet_v2", "use_pretrained": False}],
     "convnextv2": [{"model_type": "convnextv2", "use_pretrained": False}],
