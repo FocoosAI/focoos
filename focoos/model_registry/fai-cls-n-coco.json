@@ -126,7 +126,7 @@
     "ref": null,
     "focoos_model": "fai-cls-n-coco",
     "status": "TRAINING_COMPLETED",
-    "description": "A classification model",
+    "description": "Very tiny classification model optimized for Arduino Nicla Vision",
     "train_args": null,
     "weights_uri": "https://public.focoos.ai/pretrained_models/fai-cls-n-coco/model_final.pth",
     "val_metrics": {
@@ -372,14 +372,7 @@
         "classification/Recall-umbrella": 33.33333206176758,
         "classification/Recall-vase": 38.68613052368164,
         "classification/Recall-wine glass": 17.272727966308594,
-        "classification/Recall-zebra": 91.76470947265625,
-        "data_time": 2.2380218694961513,
-        "eta_seconds": 36049.89328805823,
-        "iteration": 83999,
-        "lr": 5e-05,
-        "rank_data_time": 2.2380218694961513,
-        "time": 2.3537144459915,
-        "total_loss": 0.11789610236883163
+        "classification/Recall-zebra": 91.76470947265625
     },
     "focoos_version": "0.20.2",
     "latency": [],
