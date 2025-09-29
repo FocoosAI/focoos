@@ -205,7 +205,7 @@ class MobileNetV2(BaseBackbone):
             self.layers.append(layer_name)
 
         if config.use_pretrained and config.backbone_url:
-            state = torch.hub.load_state_dict_from_url(config.backbone_url)
+            state = torch.hub.load_state_dict_from_url(config.backbone_url, map_location="cpu")
             self.load_state_dict(state)
             logger.info("Load MobileNetV2 state_dict")
 

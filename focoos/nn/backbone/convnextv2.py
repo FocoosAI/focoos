@@ -158,7 +158,7 @@ class ConvNeXtV2(BaseBackbone):
             cur += depths[i]
 
         if config.use_pretrained and backbone_url:
-            state = torch.hub.load_state_dict_from_url(backbone_url)
+            state = torch.hub.load_state_dict_from_url(backbone_url, map_location="cpu")
             self.load_state_dict(state)
             logger.info(f"Load ConvNeXtV2{config.model_size} state_dict")
 
