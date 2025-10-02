@@ -101,3 +101,4 @@ experiments_debug
 *.pth
 .vscode
 
+pruning-test/models/*
