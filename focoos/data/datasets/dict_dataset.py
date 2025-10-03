@@ -10,6 +10,7 @@ from typing import Tuple, Union
 import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
+from typing_extensions import deprecated
 
 from focoos.data.datasets.serialize import TorchSerializedDataset
 from focoos.ports import (
@@ -63,9 +64,16 @@ class DictDataset(Dataset):
     def __len__(self):
         return len(self.dicts)
 
+    @deprecated("Use save instead")
     def store_coco_roboflow_format(self, output_dir: str):
         """
-        Store the dataset in COCO format.
+        Store the dataset in Roboflow COCO format.
+        """
+        self.save(output_dir)
+
+    def save(self, output_dir: str):
+        """
+        Store the dataset in Roboflow COCO format.
         """
 
         def compute_area_seg(seg):
@@ -124,10 +132,10 @@ class DictDataset(Dataset):
                 obj = {
                     "id": annotation_idx,
                     "image_id": data.image_id,
-                    "category_id": ann["category_id"],
+                    "category_id": ann["category_id"] + 1,
                     "bbox": ann["bbox"],
                     "area": area,  # to compute
-                    "iscrowd": ann["iscrowd"],
+                    "iscrowd": ann.get("iscrowd", 0),
                 }
                 if use_seg:
                     obj["segmentation"] = ann["segmentation"]
@@ -405,7 +413,13 @@ class DictDataset(Dataset):
             image_file = os.path.join(ds_dir, images[image_id])
             label_file = os.path.join(ds_dir, ann["file_name"])
 
-            dataset_dicts.append(DetectronDict(file_name=image_file, sem_seg_file_name=label_file, image_id=image_id))
+            dataset_dicts.append(
+                DetectronDict(
+                    file_name=image_file,
+                    sem_seg_file_name=label_file,
+                    image_id=image_id,
+                )
+            )
 
         logger.info("Loaded {} images with semantic segmentation from {}".format(len(dataset_dicts), ds_dir))
 
