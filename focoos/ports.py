@@ -950,16 +950,21 @@ class DatasetSplitType(str, Enum):
 
 def get_gpus_count():
     try:
-        import torch.cuda
+        import torch
 
-        return torch.cuda.device_count()
+        if torch.backends.mps.is_available():
+            return 1
+        elif torch.cuda.is_available():
+            return torch.cuda.device_count()
+        else:
+            return 0
     except ImportError:
         return 0
 
 
 SchedulerType = Literal["POLY", "FIXED", "COSINE", "MULTISTEP"]
 OptimizerType = Literal["ADAMW", "SGD", "RMSPROP"]
-DeviceType = Literal["cuda", "cpu"]
+DeviceType = Literal["cuda", "cpu", "mps"]
 
 
 @dataclass
