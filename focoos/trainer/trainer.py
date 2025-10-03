@@ -632,7 +632,7 @@ class TrainerLoop:
         self.zero_grad_before_forward = zero_grad_before_forward
 
         # AMP setup
-        if amp:
+        if amp and torch.cuda.is_available():
             if grad_scaler is None:
                 # the init_scale avoids the first step to be too large
                 # and the scheduler.step() warning
@@ -725,8 +725,10 @@ class TrainerLoop:
         if self.zero_grad_before_forward:
             self.optimizer.zero_grad()
 
-        if self.amp:
-            assert torch.cuda.is_available(), "[UnifiedTrainerLoop] CUDA is required for AMP training!"
+        if not torch.cuda.is_available():
+            logger.warning("[UnifiedTrainerLoop] CUDA is not available, training without AMP!")
+
+        if self.amp and torch.cuda.is_available():
             with autocast(enabled=self.amp, dtype=self.precision, device_type="cuda"):
                 # we need to have preprocess data here
                 images, targets = self.processor.preprocess(data, dtype=self.precision, device=self.model.device)
