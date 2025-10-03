@@ -1,6 +1,7 @@
 import importlib.metadata as metadata
 import os
 import platform
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -340,8 +341,24 @@ def extract_archive(
         logger.info(f"[elapsed {t1 - t0:.3f} ] Extracted archive to: {extracted_dir}")
 
     comm.synchronize()
+    # Remove __MACOSX directory
+    if "__MACOSX" in os.listdir(extracted_dir):
+        shutil.rmtree(os.path.join(extracted_dir, "__MACOSX"))
+
     if len(list_dir(extracted_dir)) == 1:
         extracted_dir = list_dir(extracted_dir)[0]
+
+    POSSIBLE_TRAIN_DIRS = ["train", "training"]
+    POSSIBLE_VAL_DIRS = ["valid", "val", "validation"]
+    if len(list_dir(extracted_dir)) > 1:
+        if not any(dir in POSSIBLE_TRAIN_DIRS for dir in os.listdir(extracted_dir)):
+            raise FileNotFoundError(
+                f"Train split not found in {extracted_dir}: {[str(x) for x in list_dir(extracted_dir)]}. You should provide a zip dataset with only a root folder or train and val subfolders."
+            )
+        if not any(dir in POSSIBLE_VAL_DIRS for dir in os.listdir(extracted_dir)):
+            raise FileNotFoundError(
+                f"Validation split not found in {extracted_dir}: {[str(x) for x in list_dir(extracted_dir)]}. You should provide a zip dataset with only a root folder or train and val subfolders."
+            )
 
     # Optionally delete the original archive
     if delete_original:
