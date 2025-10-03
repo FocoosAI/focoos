@@ -77,6 +77,8 @@ class FocoosTrainer:
         self.resume = args.resume
         self.finished = False
 
+        self.model.to(self.args.device)
+
         self.args.run_name = self.args.run_name.strip()
         # Setup logging and environment
         self.output_dir = os.path.join(self.args.output_dir, self.args.run_name)
@@ -631,6 +633,10 @@ class TrainerLoop:
         self.gather_metric_period = gather_metric_period
         self.zero_grad_before_forward = zero_grad_before_forward
 
+        if not torch.cuda.is_available():
+            logger.warning("[UnifiedTrainerLoop] CUDA is not available, training without AMP!")
+            amp = False
+
         # AMP setup
         if amp and torch.cuda.is_available():
             if grad_scaler is None:
@@ -724,9 +730,6 @@ class TrainerLoop:
 
         if self.zero_grad_before_forward:
             self.optimizer.zero_grad()
-
-        if not torch.cuda.is_available():
-            logger.warning("[UnifiedTrainerLoop] CUDA is not available, training without AMP!")
 
         if self.amp and torch.cuda.is_available():
             with autocast(enabled=self.amp, dtype=self.precision, device_type="cuda"):

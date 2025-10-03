@@ -160,8 +160,17 @@ class FocoosModel:
         """
         device = get_cpu_name()
         system_info = get_system_info()
-        if system_info.gpu_info and system_info.gpu_info.devices and len(system_info.gpu_info.devices) > 0:
+        if (
+            train_args.device == "cuda"
+            and system_info.gpu_info
+            and system_info.gpu_info.devices
+            and len(system_info.gpu_info.devices) > 0
+        ):
             device = system_info.gpu_info.devices[0].gpu_name
+        elif train_args.device == "mps" and torch.backends.mps.is_available():
+            device = "mps"
+        else:
+            device = "cpu"
         self.model_info.ref = None
 
         self.model_info.train_args = train_args  # type: ignore
