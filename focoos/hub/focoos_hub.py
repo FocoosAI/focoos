@@ -37,7 +37,12 @@ from focoos.utils.logger import get_logger
 logger = get_logger("HUB")
 
 
-SUPPORTED_MODEL_FAMILIES = [ModelFamily.BISENETFORMER, ModelFamily.DETR, ModelFamily.MASKFORMER]
+SUPPORTED_MODEL_FAMILIES = [
+    ModelFamily.BISENETFORMER,
+    ModelFamily.DETR,
+    ModelFamily.MASKFORMER,
+    ModelFamily.IMAGE_CLASSIFIER,
+]
 
 
 class FocoosHUB:
