@@ -10,9 +10,13 @@ from focoos.models.base_model import BaseModelNN
 from focoos.models.fai_cls.ports import ClassificationModelOutput
 
 # Configuration
+DATASETS_DIR = "/home/andre/FocoosAI/datasets"
+DEVICE = "cuda:0"
+ROOT_DIR = "/home/andre/focoos-1/pruning-test"
+
 MODEL_NAME = "fai-cls-n-coco"
 RESOLUTION = 224
-PRUNE_RATIO = 0.5
+PRUNE_RATIO = 0.99
 LAYERS_TO_PRUNE = [
     "model.backbone.features.2.conv_list.0.conv",
     "model.backbone.features.2.conv_list.1.conv",
@@ -129,7 +133,7 @@ class PrunedBaseModel(BaseModelNN):
 
     @property
     def device(self):
-        return torch.device("cuda")
+        return torch.device(DEVICE)
 
     @property
     def dtype(self):
@@ -162,7 +166,7 @@ def main():
     # Step 3: Create output directory
     NAME = f"{MODEL_NAME}-pruned"
     FOLDER_NAME = f"{NAME}_RATIO={PRUNE_RATIO}_LAYERS={len(LAYERS_TO_PRUNE)}"
-    OUTPUT_DIRECTORY = f"/home/ubuntu/focoos-2/pruning-test/models/{FOLDER_NAME}"
+    OUTPUT_DIRECTORY = f"{ROOT_DIR}/models/{FOLDER_NAME}"
     os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
 
     # Step 4: Run pruning
@@ -218,9 +222,9 @@ def main():
 
     # Step 7: Create PrunedBaseModel wrapper
     print("6. Creating PrunedBaseModel wrapper")
-    input_tensor = torch.randn(1, 3, RESOLUTION, RESOLUTION).to("cuda")
+    input_tensor = torch.randn(1, 3, RESOLUTION, RESOLUTION).to(DEVICE)
     model_pruned_wrapper = PrunedBaseModel(model_pruned, config=focoos_model.model.config)
-    model_pruned_wrapper = model_pruned_wrapper.to("cuda")
+    model_pruned_wrapper = model_pruned_wrapper.to(DEVICE)
     model_pruned_wrapper.eval()
 
     # Step 8: Warm up the model
@@ -244,7 +248,7 @@ def main():
         dataset_name="coco_2017_cls",
         task=Task.CLASSIFICATION,
         layout=DatasetLayout.CATALOG,
-        datasets_dir="/home/ubuntu/anyma/datasets",
+        datasets_dir=DATASETS_DIR,
     )
 
     train_augs, val_augs = get_default_by_task(Task.CLASSIFICATION, resolution=RESOLUTION)
@@ -259,6 +263,7 @@ def main():
         eval_period=50,
         learning_rate=0.0008,
         sync_to_hub=False,  # use this to sync model info, weights and metrics on the hub
+        device=DEVICE,
     )
 
     focoos_model.eval(args, valid_dataset)
