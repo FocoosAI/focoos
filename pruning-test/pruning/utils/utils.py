@@ -20,8 +20,8 @@ class PruningCompatibleModel(torch.nn.Module):
 
 
 def prune_model_with_torch_pruning(
-    model, dummy_input, layers_to_prune, prune_ratio=0.2, norm_type=2, output_path="pruned_model.pth"
-):
+    model, dummy_input, layers_to_prune, prune_ratio=0.2, norm_type=2, output_path="pruned_model.pth", verbose=False
+) -> torch.nn.Module:
     """
     Prunes specified layers of a model using torch-pruning DependencyGraph and saves the pruned model.
 
@@ -32,6 +32,7 @@ def prune_model_with_torch_pruning(
         prune_ratio (float): Fraction of output channels to prune in each specified layer.
         norm_type (int): Norm type (1 for L1 norm, 2 for L2 norm) used to select channels to prune.
         output_path (str): Path to save the pruned model.
+        verbose (bool): Whether to print verbose output.
     """
 
     # Ensure model and input are on the same device
@@ -40,11 +41,12 @@ def prune_model_with_torch_pruning(
     model = model.to(device)
     model.eval()
 
-    print(f"Building dependency graph for model on device: {device}")
-    print(f"Model type: {type(model)}")
+    if verbose:
+        print(f"Building dependency graph for model on device: {device}")
+        print(f"Model type: {type(model)}")
 
     # Build dependency graph for the model
-    DG = tp.DependencyGraph().build_dependency(model, example_inputs=dummy_input)
+    DG = tp.DependencyGraph().build_dependency(model, example_inputs=dummy_input, verbose=verbose)
 
     if DG is None:
         raise RuntimeError(
@@ -80,16 +82,18 @@ def prune_model_with_torch_pruning(
         prune_indices = torch.argsort(norms)[:num_prune].tolist()
 
         # Print the name of the layer that will be pruned
-        print(f"Preparing to prune layer: {layer_name}")
-        print(f"Layer: {layer}")
-        print(f"Prune indices: {prune_indices}")
-        print(f"Prune indices ratio: {len(prune_indices) / num_channels}")
-        print(f"len(Prune indices): {len(prune_indices)}")
-        print("--------------------------------")
+        if verbose:
+            print(f"Preparing to prune layer: {layer_name}")
+            print(f"Layer: {layer}")
+            print(f"Prune indices: {prune_indices}")
+            print(f"Prune indices ratio: {len(prune_indices) / num_channels}")
+            print(f"len(Prune indices): {len(prune_indices)}")
+            print("--------------------------------")
 
         # Get pruning group from dependency graph
         prune_group = DG.get_pruning_group(layer, tp.prune_conv_out_channels, idxs=prune_indices)
-        print(f"Prune group: {prune_group}")
+        if verbose:
+            print(f"Prune group: {prune_group}")
 
         if DG.check_pruning_group(prune_group):
             prune_group.prune()
@@ -98,7 +102,9 @@ def prune_model_with_torch_pruning(
             print(f"Pruning group for {layer_name} invalid, skipping.")
 
     torch.save(model, output_path)
-    print(f"Pruned model state dict saved to {output_path}")
+    if verbose:
+        print(f"Pruned model state dict saved to {output_path}")
+    return model
 
 
 class PrunedBaseModel(BaseModelNN):

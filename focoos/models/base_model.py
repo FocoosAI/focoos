@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from PIL import Image
 from torch import nn
+from tqdm import tqdm
 
 from focoos.ports import DatasetEntry, LatencyMetrics, ModelConfig, ModelOutput
 from focoos.utils.checkpoint import IncompatibleKeys, strip_prefix_if_present
@@ -179,7 +180,7 @@ class BaseModelNN(ABC, nn.Module):
         data = 128 * torch.randn(1, 3, size[0], size[1]).to(self.device)
         durations: list[float] = []
         if self.device.type == "cuda":
-            for _ in range(iterations):
+            for _ in tqdm(range(iterations)):
                 start = torch.cuda.Event(enable_timing=True)
                 end = torch.cuda.Event(enable_timing=True)
                 start.record(stream=torch.cuda.Stream())
@@ -190,7 +191,7 @@ class BaseModelNN(ABC, nn.Module):
         else:
             import time
 
-            for _ in range(iterations):
+            for _ in tqdm(range(iterations)):
                 start_time = time.time()
                 _ = self(data)
                 end_time = time.time()

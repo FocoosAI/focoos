@@ -1,7 +1,7 @@
 import os
 
 import torch
-from pruning.utils.print_results import print_results
+from pruning.utils.print_results import load_eval_metrics_from_model_info, print_results
 from pruning.utils.utils import PrunedBaseModel, PruningCompatibleModel, prune_model_with_torch_pruning
 
 from focoos import DatasetLayout, DatasetSplitType, ModelManager, Task, TrainerArgs
@@ -17,12 +17,13 @@ DATASETS_DIR = "/Users/andreapellegrino_focoosai/FocoosAI/datasets"
 DATASET_NAME = "coco_2017_cls"
 DATASET_LAYOUT = DatasetLayout.CATALOG
 DEVICE = "cpu"
+VERBOSE = False
 
 ROOT_DIR = "/Users/andreapellegrino_focoosai/Work/focoos-1/pruning-test"
 MODEL_NAME = "fai-cls-n-coco"
 RESOLUTION = 224
 PRUNE_RATIO = 0.99
-BENCHMARK_ITERATIONS = 5000
+BENCHMARK_ITERATIONS = 10_000
 LAYERS_TO_PRUNE = [
     "model.backbone.features.2.conv_list.0.conv",
     "model.backbone.features.2.conv_list.1.conv",
@@ -43,32 +44,61 @@ def main():
     logger.info(f"Prune ratio: {PRUNE_RATIO}")
     logger.info(f"Layers to prune: {LAYERS_TO_PRUNE}")
     logger.info(f"Benchmark iterations: {BENCHMARK_ITERATIONS}")
-    logger.info("\n")
 
     # Step 1: Load the original model
-    logger.info(f"1 / 11. Loading model: {MODEL_NAME}")
+    logger.info(f"1/12 - Loading model: {MODEL_NAME}")
     focoos_model = ModelManager.get(MODEL_NAME)
     original_model = focoos_model.model
-    # Step 2: Benchmark original model
-    logger.info("1.5 / 11. Benchmarking original model")
+
+    # Step 2: Evaluate original model
+    logger.info("2/12 - Evaluating original model")
+    auto_dataset = AutoDataset(
+        dataset_name=DATASET_NAME,
+        task=TASK,
+        layout=DATASET_LAYOUT,
+        datasets_dir=DATASETS_DIR,
+    )
+    train_augs, val_augs = get_default_by_task(TASK, resolution=RESOLUTION)
+    valid_dataset = auto_dataset.get_split(augs=val_augs.get_augmentations(), split=DatasetSplitType.VAL)
+
+    args_original = TrainerArgs(
+        run_name=f"{focoos_model.name}_{valid_dataset.name}_original",
+        batch_size=16,
+        max_iters=50,
+        eval_period=50,
+        learning_rate=0.0008,
+        sync_to_hub=False,
+        device=DEVICE,
+        num_gpus=get_gpus_count() if DEVICE == "cuda" else -1,
+    )
+
+    # Evaluate original model
+    focoos_model.eval(args_original, valid_dataset)
+    original_eval_dir = os.path.join(args_original.output_dir, f"{args_original.run_name.strip()}_eval")
+    original_model_info_path = os.path.join(original_eval_dir, "model_info.json")
+    original_eval_metrics = load_eval_metrics_from_model_info(original_model_info_path, task_type=TASK)
+
+    # Step 3: Benchmark original model
+    logger.info("3/12 - Benchmarking original model")
     result_original_model = focoos_model.benchmark(
         iterations=BENCHMARK_ITERATIONS,
         size=(RESOLUTION, RESOLUTION),
         device=DEVICE,
     )
 
-    # Step 2: Wrap the model for pruning compatibility
-    logger.info("2 / 11. Wrapping model for pruning compatibility")
+    # Step 4: Wrap the model for pruning compatibility
+    logger.info("4/12 - Wrapping model for pruning compatibility")
     model = PruningCompatibleModel(original_model)
 
-    # Step 3: Create output directory
+    # Step 5: Create output directory
+    logger.info("5/12 - Creating output directory")
     NAME = f"{MODEL_NAME}-pruned"
     FOLDER_NAME = f"{NAME}_RATIO={PRUNE_RATIO}_LAYERS={len(LAYERS_TO_PRUNE)}"
     OUTPUT_DIRECTORY = f"{ROOT_DIR}/models/{FOLDER_NAME}"
     os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
 
-    # Step 4: Run pruning
-    logger.info(f"3 / 11. Running pruning with ratio {PRUNE_RATIO} on {len(LAYERS_TO_PRUNE)} layers")
+    # Step 6: Run pruning
+    logger.info(f"6/12 - Running pruning with ratio {PRUNE_RATIO} on {len(LAYERS_TO_PRUNE)} layers")
     dummy_input = torch.randn(1, 3, RESOLUTION, RESOLUTION)
     output_path = os.path.join(OUTPUT_DIRECTORY, "model_pruned.pth")
 
@@ -76,11 +106,18 @@ def main():
         os.remove(output_path)
 
     prune_model_with_torch_pruning(
-        model, dummy_input, LAYERS_TO_PRUNE, prune_ratio=PRUNE_RATIO, norm_type=2, output_path=output_path
+        model,
+        dummy_input,
+        LAYERS_TO_PRUNE,
+        prune_ratio=PRUNE_RATIO,
+        norm_type=2,
+        output_path=output_path,
+        verbose=VERBOSE,
     )
+    logger.info(f"Pruned model saved to {output_path}")
 
-    # Step 5: Save model structure and state dict info
-    logger.info("4 / 11. Saving model structure and state dict info")
+    # Step 7: Save model structure and state dict info
+    logger.info("7/12 - Saving model structure and state dict info")
     with open(os.path.join(OUTPUT_DIRECTORY, f"layers_{FOLDER_NAME}.txt"), "w") as f:
         f.write(str(model))
 
@@ -97,8 +134,8 @@ def main():
         for k, v in model.state_dict().items():
             print(f"{k}: {v.shape}", file=f)
 
-    # Step 6: Load and prepare pruned model for export
-    logger.info("5 / 11. Loading pruned model and preparing for export")
+    # Step 8: Load and prepare pruned model for export
+    logger.info("8/12 - Loading pruned model and preparing for export")
     model_pruned = torch.load(output_path, map_location="cpu", weights_only=False)
     state_dict = model_pruned.state_dict()
 
@@ -118,59 +155,57 @@ def main():
 
     logger.info("State_dict is correct")
 
-    # Step 7: Create PrunedBaseModel wrapper
-    logger.info("6 / 11. Creating PrunedBaseModel wrapper")
+    # Step 9: Create PrunedBaseModel wrapper
+    logger.info("9/12 - Creating PrunedBaseModel wrapper")
     input_tensor = torch.randn(1, 3, RESOLUTION, RESOLUTION).to(DEVICE)
     model_pruned_wrapper = PrunedBaseModel(model_pruned, config=focoos_model.model.config, device=DEVICE)
     model_pruned_wrapper = model_pruned_wrapper.to(DEVICE)
     model_pruned_wrapper.eval()
 
-    # Step 8: Warm up the model
-    logger.info("7 / 11. Warming up the model")
+    # Step 10: Warm up the model
+    logger.info("10/12 - Warming up the model")
     for i in range(50):
         model_pruned_wrapper(input_tensor)
 
-    # Step 10: Export pruned model
-    logger.info("9 / 11. Exporting pruned model")
+    # Step 11: Evaluate pruned model
+    logger.info("11/12 - Evaluating pruned model")
     focoos_model.model = model_pruned_wrapper
-    # focoos_model.export(runtime_type=RuntimeType.TORCHSCRIPT_32, out_dir=OUTPUT_DIRECTORY, overwrite=True)
 
-    # Step 11: Benchmark pruned model
-    logger.info("10 / 11. Benchmarking pruned model")
+    # Step 12: Benchmark pruned model
+    logger.info("12/12 - Benchmarking pruned model")
     result_pruned_model = focoos_model.benchmark(
         iterations=BENCHMARK_ITERATIONS,
         size=(RESOLUTION, RESOLUTION),
         device=DEVICE,
     )
 
-    auto_dataset = AutoDataset(
-        dataset_name=DATASET_NAME,
-        task=TASK,
-        layout=DATASET_LAYOUT,
-        datasets_dir=DATASETS_DIR,
-    )
-
-    train_augs, val_augs = get_default_by_task(TASK, resolution=RESOLUTION)
-
-    # train_dataset = auto_dataset.get_split(augs=train_augs.get_augmentations(), split=DatasetSplitType.TRAIN)
-    valid_dataset = auto_dataset.get_split(augs=val_augs.get_augmentations(), split=DatasetSplitType.VAL)
-
-    args = TrainerArgs(
-        run_name=f"{focoos_model.name}_{valid_dataset.name}",
+    args_pruned = TrainerArgs(
+        run_name=f"{focoos_model.name}_{valid_dataset.name}_pruned",
         batch_size=16,
         max_iters=50,
         eval_period=50,
         learning_rate=0.0008,
-        sync_to_hub=False,  # use this to sync model info, weights and metrics on the hub
+        sync_to_hub=False,
         device=DEVICE,
         num_gpus=get_gpus_count() if DEVICE == "cuda" else -1,
     )
 
-    # Evaluate
-    focoos_model.eval(args, valid_dataset)
+    # Evaluate pruned model
+    focoos_model.eval(args_pruned, valid_dataset)
+    pruned_eval_dir = os.path.join(args_pruned.output_dir, f"{args_pruned.run_name.strip()}_eval")
+    pruned_model_info_path = os.path.join(pruned_eval_dir, "model_info.json")
+    pruned_eval_metrics = load_eval_metrics_from_model_info(pruned_model_info_path, task_type=TASK)
 
-    # Step 12: Print results
-    print_results(result_original_model, result_pruned_model, MODEL_NAME, OUTPUT_DIRECTORY)
+    # Step 13: Print results
+    print_results(
+        result_original_model,
+        result_pruned_model,
+        MODEL_NAME,
+        OUTPUT_DIRECTORY,
+        original_eval_metrics,
+        pruned_eval_metrics,
+        task_type=TASK,
+    )
 
     logger.info("Pruning pipeline completed successfully")
     logger.info(f"Output directory: {OUTPUT_DIRECTORY}")
