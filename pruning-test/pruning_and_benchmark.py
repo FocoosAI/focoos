@@ -1,7 +1,7 @@
 import os
 
 import torch
-from pruning.utils.print_results import load_eval_metrics_from_model_info, print_results
+from pruning.utils.print_results import calculate_model_size_mb, load_eval_metrics_from_model_info, print_results
 from pruning.utils.utils import PrunedBaseModel, PruningCompatibleModel, prune_model_with_torch_pruning
 
 from focoos import DatasetLayout, DatasetSplitType, ModelManager, Task, TrainerArgs
@@ -13,7 +13,8 @@ logger = get_logger("pruning_and_benchmark")
 
 # Configuration
 TASK = Task.CLASSIFICATION
-DATASETS_DIR = "/Users/andreapellegrino_focoosai/FocoosAI/datasets"
+FOCOOSAI_DIR = "/Users/andreapellegrino_focoosai/FocoosAI"
+DATASETS_DIR = f"{FOCOOSAI_DIR}/datasets"
 DATASET_NAME = "coco_2017_cls"
 DATASET_LAYOUT = DatasetLayout.CATALOG
 DEVICE = "cpu"
@@ -23,7 +24,7 @@ ROOT_DIR = "/Users/andreapellegrino_focoosai/Work/focoos-1/pruning-test"
 MODEL_NAME = "fai-cls-n-coco"
 RESOLUTION = 224
 PRUNE_RATIO = 0.99
-BENCHMARK_ITERATIONS = 10_000
+BENCHMARK_ITERATIONS = 10
 LAYERS_TO_PRUNE = [
     "model.backbone.features.2.conv_list.0.conv",
     "model.backbone.features.2.conv_list.1.conv",
@@ -49,6 +50,14 @@ def main():
     logger.info(f"1/12 - Loading model: {MODEL_NAME}")
     focoos_model = ModelManager.get(MODEL_NAME)
     original_model = focoos_model.model
+
+    # Calculate original model size
+    logger.info("1.1/12 - Calculating original model size")
+    original_model_path = os.path.expanduser(os.path.join(FOCOOSAI_DIR, "models", MODEL_NAME, "model_final.pth"))
+    if os.path.exists(original_model_path):
+        original_model_size_mb = calculate_model_size_mb(original_model_path)
+    else:
+        original_model_size_mb = None
 
     # Step 2: Evaluate original model
     logger.info("2/12 - Evaluating original model")
@@ -196,7 +205,13 @@ def main():
     pruned_model_info_path = os.path.join(pruned_eval_dir, "model_info.json")
     pruned_eval_metrics = load_eval_metrics_from_model_info(pruned_model_info_path, task_type=TASK)
 
-    # Step 13: Print results
+    # Step 13: Calculate pruned model size
+    logger.info("13/13 - Calculating pruned model size")
+    pruned_model_path = os.path.join(OUTPUT_DIRECTORY, "model_pruned.pth")
+    pruned_model_size_mb = calculate_model_size_mb(pruned_model_path)
+    logger.info(f"Pruned model size: {pruned_model_size_mb:.2f} MB")
+
+    # Step 14: Print results
     print_results(
         result_original_model,
         result_pruned_model,
@@ -205,6 +220,8 @@ def main():
         original_eval_metrics,
         pruned_eval_metrics,
         task_type=TASK,
+        original_model_size_mb=original_model_size_mb,
+        pruned_model_size_mb=pruned_model_size_mb,
     )
 
     logger.info("Pruning pipeline completed successfully")

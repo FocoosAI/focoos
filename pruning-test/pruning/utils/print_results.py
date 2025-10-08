@@ -4,6 +4,23 @@ import os
 from focoos import Task
 
 
+def calculate_model_size_mb(model_path):
+    """Calculate model size in MB from file path.
+
+    Args:
+        model_path (str): Path to the model file (.pth)
+
+    Returns:
+        float: Model size in MB, or 0.0 if file doesn't exist
+    """
+    if not os.path.exists(model_path):
+        return 0.0
+
+    file_size_bytes = os.path.getsize(model_path)
+    file_size_mb = file_size_bytes / (1024 * 1024)
+    return file_size_mb
+
+
 def load_eval_metrics_from_model_info(model_info_path, task_type=Task.DETECTION):
     """Load evaluation metrics from model_info.json file.
 
@@ -64,7 +81,7 @@ def load_eval_metrics_from_model_info(model_info_path, task_type=Task.DETECTION)
         return None
 
 
-def format_row(label, model_name, metrics, folder_path, eval_metrics=None, metric_columns=None):
+def format_row(label, model_name, metrics, folder_path, eval_metrics=None, metric_columns=None, model_size_mb=None):
     if metrics is None:
         fps_str = "N/A"
         mean_str = "N/A"
@@ -76,6 +93,12 @@ def format_row(label, model_name, metrics, folder_path, eval_metrics=None, metri
         std_str = f"{metrics.std:<6}"
         device_str = f"{metrics.device:<12}"
 
+    # Format model size
+    if model_size_mb is not None:
+        size_str = f"{model_size_mb:<8.2f}"
+    else:
+        size_str = f"{'N/A':<8}"
+
     # Format evaluation metrics dynamically based on available metrics
     eval_strs = []
     if eval_metrics is not None and metric_columns is not None:
@@ -83,18 +106,18 @@ def format_row(label, model_name, metrics, folder_path, eval_metrics=None, metri
             value = eval_metrics.get(col, "N/A")
             if value != "N/A":
                 # Format with 3 decimal places, fixed width 8
-                eval_strs.append(f"{float(value):<10.3f}")
+                eval_strs.append(f"{float(value):<9.3f}")
             else:
-                eval_strs.append(f"{'N/A':<10}")
+                eval_strs.append(f"{'N/A':<9}")
     else:
         # Fallback to default columns if no metrics available
-        eval_strs = [f"{'N/A':<10}" for _ in range(3)]
+        eval_strs = [f"{'N/A':<9}" for _ in range(3)]
 
     eval_metrics_str = " | ".join(eval_strs)
 
     return (
         f"{label:<16} | {model_name:<16} | {fps_str} | "
-        f"{mean_str} | {std_str} | {device_str} | "
+        f"{mean_str} | {std_str} | {device_str} | {size_str} | "
         f"{eval_metrics_str} | {folder_path:<40}"
     )
 
@@ -107,6 +130,8 @@ def print_results(
     original_eval_metrics=None,
     pruned_eval_metrics=None,
     task_type=Task.DETECTION,
+    original_model_size_mb=None,
+    pruned_model_size_mb=None,
 ):
     """Print benchmark results in a formatted table and save to summary.txt."""
     print("\nBenchmark Results:")
@@ -124,18 +149,30 @@ def print_results(
         metric_columns = ["F1", "Precision", "Recall"]
 
     # Create header dynamically, fixed width 6 for each metric column
-    metric_header = " | ".join([f"{col:<10}" for col in metric_columns])
+    metric_header = " | ".join([f"{col:<9}" for col in metric_columns])
     header = (
         f"{'Model':<16} | {'MODEL_NAME':<16} | {'FPS':>5} | "
-        f"{'Mean':<6} | {'Std':<6} | {'Device':<12} | "
+        f"{'Mean':<6} | {'Std':<6} | {'Device':<12} | {'Size (MB)':<8} | "
         f"{metric_header} | {'Folder path':<40}"
     )
     separator = "-" * len(header)
     row_original = format_row(
-        "Original Model", MODEL_NAME, result_original_model, ORIGINAL_FOLDER, original_eval_metrics, metric_columns
+        "Original Model",
+        MODEL_NAME,
+        result_original_model,
+        ORIGINAL_FOLDER,
+        original_eval_metrics,
+        metric_columns,
+        original_model_size_mb,
     )
     row_pruned = format_row(
-        "Pruned Model", MODEL_NAME, result_pruned_model, OUTPUT_DIRECTORY, pruned_eval_metrics, metric_columns
+        "Pruned Model",
+        MODEL_NAME,
+        result_pruned_model,
+        OUTPUT_DIRECTORY,
+        pruned_eval_metrics,
+        metric_columns,
+        pruned_model_size_mb,
     )
 
     print(header)
