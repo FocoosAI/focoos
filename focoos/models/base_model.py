@@ -177,15 +177,24 @@ class BaseModelNN(ABC, nn.Module):
         logger.info(f"⏱️ Benchmarking latency on {device_name} ({self.device}), size: {size}x{size}..")
         # warmup
         data = 128 * torch.randn(1, 3, size[0], size[1]).to(self.device)
-        durations = []
-        for _ in range(iterations):
-            start = torch.cuda.Event(enable_timing=True)
-            end = torch.cuda.Event(enable_timing=True)
-            start.record(stream=torch.cuda.Stream())
-            _ = self(data)
-            end.record(stream=torch.cuda.Stream())
-            torch.cuda.synchronize()
-            durations.append(start.elapsed_time(end))
+        durations: list[float] = []
+        if self.device.type == "cuda":
+            for _ in range(iterations):
+                start = torch.cuda.Event(enable_timing=True)
+                end = torch.cuda.Event(enable_timing=True)
+                start.record(stream=torch.cuda.Stream())
+                _ = self(data)
+                end.record(stream=torch.cuda.Stream())
+                torch.cuda.synchronize()
+                durations.append(start.elapsed_time(end))
+        else:
+            import time
+
+            for _ in range(iterations):
+                start_time = time.time()
+                _ = self(data)
+                end_time = time.time()
+                durations.append((end_time - start_time) * 1000)  # Convert to milliseconds
 
         durations = np.array(durations)
         metrics = LatencyMetrics(

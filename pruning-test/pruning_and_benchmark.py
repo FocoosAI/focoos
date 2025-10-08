@@ -8,12 +8,16 @@ from focoos import DatasetLayout, DatasetSplitType, ModelManager, Task, TrainerA
 from focoos.data import AutoDataset, get_default_by_task
 from focoos.models.base_model import BaseModelNN
 from focoos.models.fai_cls.ports import ClassificationModelOutput
+from focoos.ports import get_gpus_count
 
 # Configuration
-DATASETS_DIR = "/home/andre/FocoosAI/datasets"
-DEVICE = "cuda:0"
-ROOT_DIR = "/home/andre/focoos-1/pruning-test"
+TASK = Task.CLASSIFICATION
+DATASETS_DIR = "/Users/andreapellegrino_focoosai/FocoosAI/datasets"
+DATASET_NAME = "coco_2017_cls"
+DATASET_LAYOUT = DatasetLayout.CATALOG
+DEVICE = "cpu"
 
+ROOT_DIR = "/Users/andreapellegrino_focoosai/Work/focoos-1/pruning-test"
 MODEL_NAME = "fai-cls-n-coco"
 RESOLUTION = 224
 PRUNE_RATIO = 0.99
@@ -157,6 +161,7 @@ def main():
     result_original_model = focoos_model.benchmark(
         iterations=200,
         size=(RESOLUTION, RESOLUTION),
+        device=DEVICE,
     )
 
     # Step 2: Wrap the model for pruning compatibility
@@ -242,16 +247,17 @@ def main():
     result_pruned_model = focoos_model.benchmark(
         iterations=200,
         size=(RESOLUTION, RESOLUTION),
+        device=DEVICE,
     )
 
     auto_dataset = AutoDataset(
-        dataset_name="coco_2017_cls",
-        task=Task.CLASSIFICATION,
-        layout=DatasetLayout.CATALOG,
+        dataset_name=DATASET_NAME,
+        task=TASK,
+        layout=DATASET_LAYOUT,
         datasets_dir=DATASETS_DIR,
     )
 
-    train_augs, val_augs = get_default_by_task(Task.CLASSIFICATION, resolution=RESOLUTION)
+    train_augs, val_augs = get_default_by_task(TASK, resolution=RESOLUTION)
 
     # train_dataset = auto_dataset.get_split(augs=train_augs.get_augmentations(), split=DatasetSplitType.TRAIN)
     valid_dataset = auto_dataset.get_split(augs=val_augs.get_augmentations(), split=DatasetSplitType.VAL)
@@ -264,8 +270,10 @@ def main():
         learning_rate=0.0008,
         sync_to_hub=False,  # use this to sync model info, weights and metrics on the hub
         device=DEVICE,
+        num_gpus=get_gpus_count() if DEVICE == "cuda" else -1,
     )
 
+    # Evaluate
     focoos_model.eval(args, valid_dataset)
 
     # Step 12: Print results

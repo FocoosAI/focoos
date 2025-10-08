@@ -691,6 +691,9 @@ class FocoosModel:
             size = self.model_info.im_size
         if isinstance(size, int):
             size = (size, size)
+        if device == "cuda" and not torch.cuda.is_available():
+            logger.warning("CUDA not available, falling back to CPU for benchmarking")
+            device = "cpu"
         model = self.model.to(device)
         metrics = model.benchmark(size=size, iterations=iterations)
         return metrics

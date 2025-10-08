@@ -700,6 +700,7 @@ dependencies = [
     { name = "supervision" },
     { name = "tensorboard" },
     { name = "torch" },
+    { name = "torch-pruning" },
     { name = "torchvision" },
     { name = "tqdm" },
     { name = "typer" },
@@ -787,6 +788,7 @@ requires-dist = [
     { name = "tensorboard", specifier = "~=2.19.0" },
     { name = "tensorrt", marker = "extra == 'tensorrt'", specifier = "==10.5.0" },
     { name = "torch", specifier = "~=2.7.1" },
+    { name = "torch-pruning", specifier = "~=1.2.4" },
     { name = "torchvision", specifier = "~=0.22.0" },
     { name = "tox", marker = "extra == 'dev'" },
     { name = "tox-uv", marker = "extra == 'dev'" },
@@ -3391,6 +3393,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/56/7e/67c3fe2b8c33f40af06326a3d6ae7776b3e3a01daa8f71d125d78594d874/torch-2.7.1-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:c33360cfc2edd976c2633b3b66c769bdcbbf0e0b6550606d188431c81e7dd1fc", size = 821025792, upload-time = "2025-06-04T17:34:58.747Z" },
     { url = "https://files.pythonhosted.org/packages/a1/37/a37495502bc7a23bf34f89584fa5a78e25bae7b8da513bc1b8f97afb7009/torch-2.7.1-cp312-cp312-win_amd64.whl", hash = "sha256:d8bf6e1856ddd1807e79dc57e54d3335f2b62e6f316ed13ed3ecfe1fc1df3d8b", size = 216050349, upload-time = "2025-06-04T17:38:59.709Z" },
     { url = "https://files.pythonhosted.org/packages/3a/60/04b77281c730bb13460628e518c52721257814ac6c298acd25757f6a175c/torch-2.7.1-cp312-none-macosx_11_0_arm64.whl", hash = "sha256:787687087412c4bd68d315e39bc1223f08aae1d16a9e9771d95eabbb04ae98fb", size = 68645146, upload-time = "2025-06-04T17:38:52.97Z" },
+]
+
+[[package]]
+name = "torch-pruning"
+version = "1.2.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "torch" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2f/76/3ee022bb048440513173dfbb268e49761daa896324cabf740747a2833730/torch-pruning-1.2.5.tar.gz", hash = "sha256:3f457c23cbabcaf611e78b5dced5f703238467efa3d0e211b88860b8e777947a", size = 58775, upload-time = "2023-09-06T17:12:11.958Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5a/5a/c6a7e7ae643e3f82037615875cca7295c0f6e9fb92f995046ff4e51fdc89/torch_pruning-1.2.5-py3-none-any.whl", hash = "sha256:5232800f6716ea159179fe33068209a5e57beac3db004950a6bb4b772b62b224", size = 49368, upload-time = "2023-09-06T17:12:10.011Z" },
 ]
 
 [[package]]
