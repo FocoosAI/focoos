@@ -1,14 +1,15 @@
 import os
 
 import torch
-import torch_pruning as tp
 from pruning.utils.print_results import print_results
+from pruning.utils.utils import PrunedBaseModel, PruningCompatibleModel, prune_model_with_torch_pruning
 
 from focoos import DatasetLayout, DatasetSplitType, ModelManager, Task, TrainerArgs
 from focoos.data import AutoDataset, get_default_by_task
-from focoos.models.base_model import BaseModelNN
-from focoos.models.fai_cls.ports import ClassificationModelOutput
 from focoos.ports import get_gpus_count
+from focoos.utils.logger import get_logger
+
+logger = get_logger("pruning_and_benchmark")
 
 # Configuration
 TASK = Task.CLASSIFICATION
@@ -21,6 +22,7 @@ ROOT_DIR = "/Users/andreapellegrino_focoosai/Work/focoos-1/pruning-test"
 MODEL_NAME = "fai-cls-n-coco"
 RESOLUTION = 224
 PRUNE_RATIO = 0.99
+BENCHMARK_ITERATIONS = 5000
 LAYERS_TO_PRUNE = [
     "model.backbone.features.2.conv_list.0.conv",
     "model.backbone.features.2.conv_list.1.conv",
@@ -33,139 +35,30 @@ LAYERS_TO_PRUNE = [
 ]
 
 
-class PruningCompatibleModel(torch.nn.Module):
-    """Wrapper to make the model compatible with torch-pruning by ensuring clean tensor outputs."""
-
-    def __init__(self, model):
-        super().__init__()
-        self.model = model
-
-    def forward(self, x):
-        # Call the original model and return only the logits tensor
-        output = self.model(x)
-        # Ensure we return a clean tensor that torch-pruning can handle
-        return output.logits
-
-
-def prune_model_with_torch_pruning(
-    model, dummy_input, layers_to_prune, prune_ratio=0.2, norm_type=2, output_path="pruned_model.pth"
-):
-    """
-    Prunes specified layers of a model using torch-pruning DependencyGraph and saves the pruned model.
-
-    Args:
-        model (torch.nn.Module): Input model to prune.
-        dummy_input (torch.Tensor): Example input tensor to trace model.
-        layers_to_prune (list of str): List of layer names to prune (e.g., ['conv1', 'layer1.0.conv1']).
-        prune_ratio (float): Fraction of output channels to prune in each specified layer.
-        norm_type (int): Norm type (1 for L1 norm, 2 for L2 norm) used to select channels to prune.
-        output_path (str): Path to save the pruned model.
-    """
-
-    # Ensure model and input are on the same device
-    device = next(model.parameters()).device
-    dummy_input = dummy_input.to(device)
-    model = model.to(device)
-    model.eval()
-
-    print(f"Building dependency graph for model on device: {device}")
-    print(f"Model type: {type(model)}")
-
-    # Build dependency graph for the model
-    DG = tp.DependencyGraph().build_dependency(model, example_inputs=dummy_input)
-
-    if DG is None:
-        raise RuntimeError(
-            "Failed to build dependency graph. This might be due to unsupported model architecture or torch-pruning compatibility issues."
-        )
-
-    for layer_name in layers_to_prune:
-        # Access the layer by attribute chain (support nested modules like layer1.0.conv1)
-        layer = model
-        for attr in layer_name.split("."):
-            layer = getattr(layer, attr)
-
-        # Check if layer has weight attribute (conv layers)
-        if not hasattr(layer, "weight"):
-            print(f"Layer {layer_name} does not have weight attribute, skipping.")
-            continue
-
-        # Compute norms over output channels
-        if norm_type == 1:
-            norms = layer.weight.data.abs().sum(dim=(1, 2, 3)).to(device)
-        else:
-            norms = torch.norm(layer.weight.data.view(layer.weight.size(0), -1), p=norm_type, dim=1).to(device)
-
-        num_channels = norms.size(0)
-        num_prune = int(num_channels * prune_ratio)
-        # num_prune = 64 # OVERWRITE PRUNE RATIO
-
-        if num_prune == 0:
-            print(f"Skipping pruning for {layer_name}, no channels to prune.")
-            continue
-
-        # Get indices of channels with smallest norms to prune
-        prune_indices = torch.argsort(norms)[:num_prune].tolist()
-
-        # Print the name of the layer that will be pruned
-        print(f"Preparing to prune layer: {layer_name}")
-        print(f"Layer: {layer}")
-        print(f"Prune indices: {prune_indices}")
-        print(f"Prune indices ratio: {len(prune_indices) / num_channels}")
-        print(f"len(Prune indices): {len(prune_indices)}")
-        print("--------------------------------")
-
-        # Get pruning group from dependency graph
-        prune_group = DG.get_pruning_group(layer, tp.prune_conv_out_channels, idxs=prune_indices)
-        print(f"Prune group: {prune_group}")
-
-        if DG.check_pruning_group(prune_group):
-            prune_group.prune()
-            print(f"Pruned {num_prune} channels from {layer_name}")
-        else:
-            print(f"Pruning group for {layer_name} invalid, skipping.")
-
-    torch.save(model, output_path)
-    print(f"Pruned model state dict saved to {output_path}")
-
-
-class PrunedBaseModel(BaseModelNN):
-    def __init__(self, model, config):
-        super().__init__(config)
-        self.model = model
-        self.config = config
-
-    @property
-    def device(self):
-        return torch.device(DEVICE)
-
-    @property
-    def dtype(self):
-        return torch.float
-
-    def forward(self, x):
-        return ClassificationModelOutput(logits=self.model(x), loss=None)
-
-
 def main():
-    print("=" * 60)
-    print("STARTING PRUNING AND BENCHMARK PIPELINE")
-    print("=" * 60)
+    logger.info("Starting pruning and benchmark pipeline")
+    logger.info(f"Device: {DEVICE}")
+    logger.info(f"Model: {MODEL_NAME}")
+    logger.info(f"Resolution: {RESOLUTION}")
+    logger.info(f"Prune ratio: {PRUNE_RATIO}")
+    logger.info(f"Layers to prune: {LAYERS_TO_PRUNE}")
+    logger.info(f"Benchmark iterations: {BENCHMARK_ITERATIONS}")
+    logger.info("\n")
 
     # Step 1: Load the original model
-    print(f"\n1. Loading model: {MODEL_NAME}")
+    logger.info(f"1 / 11. Loading model: {MODEL_NAME}")
     focoos_model = ModelManager.get(MODEL_NAME)
     original_model = focoos_model.model
     # Step 2: Benchmark original model
-    print("1.5. Benchmarking original model")
+    logger.info("1.5 / 11. Benchmarking original model")
     result_original_model = focoos_model.benchmark(
-        iterations=200,
+        iterations=BENCHMARK_ITERATIONS,
         size=(RESOLUTION, RESOLUTION),
         device=DEVICE,
     )
 
     # Step 2: Wrap the model for pruning compatibility
-    print("2. Wrapping model for pruning compatibility")
+    logger.info("2 / 11. Wrapping model for pruning compatibility")
     model = PruningCompatibleModel(original_model)
 
     # Step 3: Create output directory
@@ -175,7 +68,7 @@ def main():
     os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
 
     # Step 4: Run pruning
-    print(f"3. Running pruning with ratio {PRUNE_RATIO} on {len(LAYERS_TO_PRUNE)} layers")
+    logger.info(f"3 / 11. Running pruning with ratio {PRUNE_RATIO} on {len(LAYERS_TO_PRUNE)} layers")
     dummy_input = torch.randn(1, 3, RESOLUTION, RESOLUTION)
     output_path = os.path.join(OUTPUT_DIRECTORY, "model_pruned.pth")
 
@@ -187,7 +80,7 @@ def main():
     )
 
     # Step 5: Save model structure and state dict info
-    print("4. Saving model structure and state dict info")
+    logger.info("4 / 11. Saving model structure and state dict info")
     with open(os.path.join(OUTPUT_DIRECTORY, f"layers_{FOLDER_NAME}.txt"), "w") as f:
         f.write(str(model))
 
@@ -205,7 +98,7 @@ def main():
             print(f"{k}: {v.shape}", file=f)
 
     # Step 6: Load and prepare pruned model for export
-    print("5. Loading pruned model and preparing for export")
+    logger.info("5 / 11. Loading pruned model and preparing for export")
     model_pruned = torch.load(output_path, map_location="cpu", weights_only=False)
     state_dict = model_pruned.state_dict()
 
@@ -221,31 +114,31 @@ def main():
     for i, k in enumerate(state_dict.keys()):
         if k.startswith(PREFIX):
             print(f"Error: {k} starts with {PREFIX} at index {i}")
-            return
+            exit()
 
-    print("State_dict is correct")
+    logger.info("State_dict is correct")
 
     # Step 7: Create PrunedBaseModel wrapper
-    print("6. Creating PrunedBaseModel wrapper")
+    logger.info("6 / 11. Creating PrunedBaseModel wrapper")
     input_tensor = torch.randn(1, 3, RESOLUTION, RESOLUTION).to(DEVICE)
-    model_pruned_wrapper = PrunedBaseModel(model_pruned, config=focoos_model.model.config)
+    model_pruned_wrapper = PrunedBaseModel(model_pruned, config=focoos_model.model.config, device=DEVICE)
     model_pruned_wrapper = model_pruned_wrapper.to(DEVICE)
     model_pruned_wrapper.eval()
 
     # Step 8: Warm up the model
-    print("7. Warming up the model")
+    logger.info("7 / 11. Warming up the model")
     for i in range(50):
         model_pruned_wrapper(input_tensor)
 
     # Step 10: Export pruned model
-    print("9. Exporting pruned model")
+    logger.info("9 / 11. Exporting pruned model")
     focoos_model.model = model_pruned_wrapper
     # focoos_model.export(runtime_type=RuntimeType.TORCHSCRIPT_32, out_dir=OUTPUT_DIRECTORY, overwrite=True)
 
     # Step 11: Benchmark pruned model
-    print("10. Benchmarking pruned model")
+    logger.info("10 / 11. Benchmarking pruned model")
     result_pruned_model = focoos_model.benchmark(
-        iterations=200,
+        iterations=BENCHMARK_ITERATIONS,
         size=(RESOLUTION, RESOLUTION),
         device=DEVICE,
     )
@@ -277,13 +170,10 @@ def main():
     focoos_model.eval(args, valid_dataset)
 
     # Step 12: Print results
-    print("11. Printing results")
     print_results(result_original_model, result_pruned_model, MODEL_NAME, OUTPUT_DIRECTORY)
 
-    print("=" * 60)
-    print("PIPELINE COMPLETED SUCCESSFULLY")
-    print(f"Output directory: {OUTPUT_DIRECTORY}")
-    print("=" * 60)
+    logger.info("Pruning pipeline completed successfully")
+    logger.info(f"Output directory: {OUTPUT_DIRECTORY}")
 
 
 if __name__ == "__main__":
