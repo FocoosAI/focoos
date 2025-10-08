@@ -83,12 +83,12 @@ def format_row(label, model_name, metrics, folder_path, eval_metrics=None, metri
             value = eval_metrics.get(col, "N/A")
             if value != "N/A":
                 # Format with 3 decimal places, fixed width 8
-                eval_strs.append(f"{float(value):<6.3f}")
+                eval_strs.append(f"{float(value):<10.3f}")
             else:
-                eval_strs.append(f"{'N/A':<6}")
+                eval_strs.append(f"{'N/A':<10}")
     else:
         # Fallback to default columns if no metrics available
-        eval_strs = [f"{'N/A':<6}" for _ in range(3)]
+        eval_strs = [f"{'N/A':<10}" for _ in range(3)]
 
     eval_metrics_str = " | ".join(eval_strs)
 
@@ -124,7 +124,7 @@ def print_results(
         metric_columns = ["F1", "Precision", "Recall"]
 
     # Create header dynamically, fixed width 6 for each metric column
-    metric_header = " | ".join([f"{col:<6}" for col in metric_columns])
+    metric_header = " | ".join([f"{col:<10}" for col in metric_columns])
     header = (
         f"{'Model':<16} | {'MODEL_NAME':<16} | {'FPS':>5} | "
         f"{'Mean':<6} | {'Std':<6} | {'Device':<12} | "
@@ -147,11 +147,9 @@ def print_results(
     summary_path = os.path.join(OUTPUT_DIRECTORY, "summary_eval-benchmark_results.txt")
     try:
         with open(summary_path, "w") as f:
-            f.write("Benchmark Results:\n\n")
             f.write(header + "\n")
             f.write(separator + "\n")
             f.write(row_original + "\n")
             f.write(row_pruned + "\n")
-        print(f"\nResults summary saved to {summary_path}")
     except Exception as e:
         print(f"Warning: Could not write summary to {summary_path}: {e}")
