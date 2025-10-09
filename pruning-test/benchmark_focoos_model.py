@@ -1,7 +1,7 @@
 from focoos import ModelManager
 
 RESOLUTION = 224
-DEVICE = "mps"
+DEVICE = "cpu"
 NUM_ITERATIONS = 10_000
 
 

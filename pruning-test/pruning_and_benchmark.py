@@ -1,6 +1,8 @@
 import os
+from typing import List
 
 import torch
+from layers_to_prune import layers_prunable_fai_cls_n_coco
 from pruning.utils.print_results import calculate_model_size_mb, load_eval_metrics_from_model_info, print_results
 from pruning.utils.utils import PrunedBaseModel, PruningCompatibleModel, prune_model_with_torch_pruning
 
@@ -23,17 +25,10 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_NAME = "fai-cls-n-coco"
 RESOLUTION = 224
 PRUNE_RATIO = 0.99
-BENCHMARK_ITERATIONS = 10
-LAYERS_TO_PRUNE = [
-    "model.backbone.features.2.conv_list.0.conv",
-    "model.backbone.features.2.conv_list.1.conv",
-    "model.backbone.features.2.conv_list.2.conv",
-    "model.backbone.features.2.conv_list.3.conv",
-    "model.backbone.features.3.conv_list.0.conv",
-    "model.backbone.features.3.conv_list.1.conv",
-    "model.backbone.features.3.conv_list.2.conv",
-    "model.backbone.features.3.conv_list.3.conv",
-]
+BENCHMARK_ITERATIONS = 10_000
+
+# Get layers to prune from layers_to_prune.py
+LAYERS_TO_PRUNE: List[str] = layers_prunable_fai_cls_n_coco
 
 
 def main():
@@ -102,7 +97,7 @@ def main():
     # Step 5: Create output directory
     logger.info("5/12 - Creating output directory")
     NAME = f"{MODEL_NAME}-pruned"
-    FOLDER_NAME = f"{NAME}_RATIO={PRUNE_RATIO}_LAYERS={len(LAYERS_TO_PRUNE)}"
+    FOLDER_NAME = f"{NAME}_RATIO={PRUNE_RATIO}_NUM_LAYERS={len(LAYERS_TO_PRUNE)}"
     OUTPUT_DIRECTORY = f"{ROOT_DIR}/models/{FOLDER_NAME}"
     os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
 
