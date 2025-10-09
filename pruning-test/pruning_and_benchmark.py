@@ -1,7 +1,9 @@
 import os
 
 import torch
-from pruning.utils.layers import get_layers_to_prune
+from layers_to_prune import (
+    layers_prunable_fai_cls_m_coco,
+)
 from pruning.utils.print_results import calculate_model_size_mb, load_eval_metrics_from_model_info, print_results
 from pruning.utils.utils import PrunedBaseModel, PruningCompatibleModel, prune_model_with_torch_pruning
 
@@ -289,14 +291,11 @@ def main():
     BENCHMARK_ITERATIONS = 10
 
     # Get layers to prune from layers_to_prune.py
-    # LAYERS_TO_PRUNE = layers_prunable_fai_cls_m_coco
-    LAYERS_TO_PRUNE = get_layers_to_prune(
-        regex_pattern=r"conv.weight",
-        layers_file_path="pruning-test/models/fai-cls-s-coco-pruned_RATIO=0.99_NUM_LAYERS=12/state_dict_shape_fai-cls-s-coco-pruned_RATIO=0.99_NUM_LAYERS=12.txt",
-    )
-    # for l in LAYERS_TO_PRUNE:
-    #     print(l)
-    # exit()
+    LAYERS_TO_PRUNE = layers_prunable_fai_cls_m_coco
+    # LAYERS_TO_PRUNE = get_layers_to_prune(
+    #     regex_pattern=r"conv.weight",
+    #     layers_file_path="pruning-test/models/fai-cls-s-coco-pruned_RATIO=0.99_NUM_LAYERS=12/state_dict_shape_fai-cls-s-coco-pruned_RATIO=0.99_NUM_LAYERS=12.txt",
+    # )
 
     pipeline = FocoosPruning(
         task=TASK,
