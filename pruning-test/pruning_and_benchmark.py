@@ -1,7 +1,7 @@
 import os
 
 import torch
-from layers_to_prune import layers_prunable_fai_cls_n_coco
+from pruning.utils.layers import get_layers_to_prune
 from pruning.utils.print_results import calculate_model_size_mb, load_eval_metrics_from_model_info, print_results
 from pruning.utils.utils import PrunedBaseModel, PruningCompatibleModel, prune_model_with_torch_pruning
 
@@ -73,21 +73,21 @@ class FocoosPruning:
         self.logger.info(f"Layers to prune: {self.layers_to_prune}")
         self.logger.info(f"Benchmark iterations: {self.benchmark_iterations}")
 
-        self.load_model()
-        self.evaluate_model()
-        self.benchmark_model()
-        self.prune_model()
-        self.save_model_info()
-        self.prepare_pruned_model()
-        self.evaluate_pruned_model()
-        self.benchmark_pruned_model()
-        self.calculate_pruned_model_size()
-        self.print_results()
+        self._load_model()
+        self._evaluate_model()
+        self._benchmark_model()
+        self._prune_model()
+        self._save_model_info()
+        self._prepare_pruned_model()
+        self._evaluate_pruned_model()
+        self._benchmark_pruned_model()
+        self._calculate_pruned_model_size()
+        self._print_results()
 
         self.logger.info("Pruning pipeline completed successfully")
         self.logger.info(f"Output directory: {self.output_directory}")
 
-    def load_model(self):
+    def _load_model(self):
         """Load the original model and calculate its size"""
         self.logger.info(f"1/12 - Loading model: {self.model_name}")
         self.focoos_model = ModelManager.get(self.model_name)
@@ -101,7 +101,7 @@ class FocoosPruning:
         else:
             self.original_model_size_mb = None
 
-    def evaluate_model(self):
+    def _evaluate_model(self):
         """Evaluate the original model"""
         self.logger.info("2/12 - Evaluating original model")
         self.auto_dataset = AutoDataset(
@@ -131,7 +131,7 @@ class FocoosPruning:
         original_model_info_path = os.path.join(original_eval_dir, "model_info.json")
         self.original_eval_metrics = load_eval_metrics_from_model_info(original_model_info_path, task_type=self.task)
 
-    def benchmark_model(self):
+    def _benchmark_model(self):
         """Benchmark the original model"""
         self.logger.info("3/12 - Benchmarking original model")
         self.result_original_model = self.focoos_model.benchmark(
@@ -140,7 +140,7 @@ class FocoosPruning:
             device=self.device,
         )
 
-    def prune_model(self):
+    def _prune_model(self):
         """Wrap model for pruning compatibility and run pruning"""
         self.logger.info("4/12 - Wrapping model for pruning compatibility")
         self.model = PruningCompatibleModel(self.original_model)
@@ -171,7 +171,7 @@ class FocoosPruning:
         )
         self.logger.info(f"Pruned model saved to {self.output_path}")
 
-    def save_model_info(self):
+    def _save_model_info(self):
         """Save model structure and state dict info"""
         self.logger.info("7/12 - Saving model structure and state dict info")
         NAME = f"{self.model_name}-pruned"
@@ -193,7 +193,7 @@ class FocoosPruning:
             for k, v in self.model.state_dict().items():
                 print(f"{k}: {v.shape}", file=f)
 
-    def prepare_pruned_model(self):
+    def _prepare_pruned_model(self):
         """Load and prepare pruned model for export"""
         self.logger.info("8/12 - Loading pruned model and preparing for export")
         self.model_pruned = torch.load(self.output_path, map_location="cpu", weights_only=False)
@@ -229,7 +229,7 @@ class FocoosPruning:
         for i in range(50):
             self.model_pruned_wrapper(input_tensor)
 
-    def evaluate_pruned_model(self):
+    def _evaluate_pruned_model(self):
         """Evaluate the pruned model"""
         self.logger.info("11/12 - Evaluating pruned model")
         self.focoos_model.model = self.model_pruned_wrapper
@@ -241,7 +241,7 @@ class FocoosPruning:
         pruned_model_info_path = os.path.join(pruned_eval_dir, "model_info.json")
         self.pruned_eval_metrics = load_eval_metrics_from_model_info(pruned_model_info_path, task_type=self.task)
 
-    def benchmark_pruned_model(self):
+    def _benchmark_pruned_model(self):
         """Benchmark the pruned model"""
         self.logger.info("12/12 - Benchmarking pruned model")
         self.result_pruned_model = self.focoos_model.benchmark(
@@ -250,14 +250,14 @@ class FocoosPruning:
             device=self.device,
         )
 
-    def calculate_pruned_model_size(self):
+    def _calculate_pruned_model_size(self):
         """Calculate pruned model size"""
         self.logger.info("13/13 - Calculating pruned model size")
         pruned_model_path = os.path.join(self.output_directory, "model_pruned.pth")
         self.pruned_model_size_mb = calculate_model_size_mb(pruned_model_path)
         self.logger.info(f"Pruned model size: {self.pruned_model_size_mb:.2f} MB")
 
-    def print_results(self):
+    def _print_results(self):
         """Print final results"""
         print_results(
             self.result_original_model,
@@ -276,20 +276,27 @@ def main():
     root_dir = os.path.dirname(os.path.abspath(__file__))
 
     # Configuration
-    TASK = Task.CLASSIFICATION
-    DATASET_NAME = "coco_2017_cls"
+    TASK = Task.DETECTION
+    DATASET_NAME = "coco_2017_det"
     DATASET_LAYOUT = DatasetLayout.CATALOG
     DEVICE = "cpu"
     VERBOSE = False
     DO_EVAL = True  # Do not compute eval metrics
 
-    MODEL_NAME = "fai-cls-n-coco"
-    RESOLUTION = 224
+    MODEL_NAME = "fai-dter-m-coco"
+    RESOLUTION = 640
     PRUNE_RATIO = 0.99
     BENCHMARK_ITERATIONS = 10
 
     # Get layers to prune from layers_to_prune.py
-    LAYERS_TO_PRUNE = layers_prunable_fai_cls_n_coco
+    # LAYERS_TO_PRUNE = layers_prunable_fai_cls_m_coco
+    LAYERS_TO_PRUNE = get_layers_to_prune(
+        regex_pattern=r"conv.weight",
+        layers_file_path="pruning-test/models/fai-cls-s-coco-pruned_RATIO=0.99_NUM_LAYERS=12/state_dict_shape_fai-cls-s-coco-pruned_RATIO=0.99_NUM_LAYERS=12.txt",
+    )
+    # for l in LAYERS_TO_PRUNE:
+    #     print(l)
+    # exit()
 
     pipeline = FocoosPruning(
         task=TASK,

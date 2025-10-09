@@ -1,6 +1,10 @@
+import os
+from typing import Optional
+
 import torch
 import torch_pruning as tp
 
+from focoos import ModelManager
 from focoos.models.base_model import BaseModelNN
 from focoos.models.fai_cls.ports import ClassificationModelOutput
 
@@ -124,3 +128,21 @@ class PrunedBaseModel(BaseModelNN):
 
     def forward(self, x):
         return ClassificationModelOutput(logits=self.model(x), loss=None)
+
+
+def get_model_layers(model_name, output_folder_path: Optional[str] = ""):
+    """Get the layers of the model"""
+    focoos_model = ModelManager.get(model_name)
+    state_dict = focoos_model.model.state_dict()
+
+    layers = []
+    if output_folder_path:
+        if not os.path.exists(output_folder_path):
+            os.makedirs(output_folder_path)
+        with open(os.path.join(output_folder_path, f"state_dict_shape_{model_name}.txt"), "a") as f:
+            for k, v in state_dict.items():
+                str_layer = str(f"{k}: {v.shape}")
+                print(str_layer, file=f)
+                print(str_layer)
+                layers.append(str_layer)
+    return layers
