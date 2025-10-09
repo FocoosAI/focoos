@@ -3,6 +3,17 @@ import os
 
 from focoos import Task
 
+# Define column widths for alignment - shared across functions
+COL_WIDTHS = {
+    "label": 17,  # 16 + 1 for space
+    "fps": 7,  # 5 + 2 for space
+    "mean": 11,  # 9 + 2 for space
+    "std": 10,  # 8 + 2 for space
+    "size": 11,  # 8 + 3 for space
+    "metric": 11,  # 10 + 1 for space
+    "folder": 40,
+}
+
 
 def calculate_model_size_mb(model_path):
     """Calculate model size in MB from file path.
@@ -81,23 +92,21 @@ def load_eval_metrics_from_model_info(model_info_path, task_type=Task.DETECTION)
         return None
 
 
-def format_row(label, model_name, metrics, folder_path, eval_metrics=None, metric_columns=None, model_size_mb=None):
+def format_row(label, metrics, folder_path, eval_metrics=None, metric_columns=None, model_size_mb=None):
     if metrics is None:
-        fps_str = "N/A"
-        mean_str = "N/A"
-        std_str = "N/A"
-        device_str = "N/A"
+        fps_str = f"{'N/A':>{COL_WIDTHS['fps'] - 2}}"
+        mean_str = f"{'N/A':<{COL_WIDTHS['mean'] - 2}}"
+        std_str = f"{'N/A':<{COL_WIDTHS['std'] - 2}}"
     else:
-        fps_str = f"{metrics.fps:>5}"
-        mean_str = f"{metrics.mean:<6}"
-        std_str = f"{metrics.std:<6}"
-        device_str = f"{metrics.device:<12}"
+        fps_str = f"{metrics.fps:>{COL_WIDTHS['fps'] - 2}}"
+        mean_str = f"{metrics.mean:<{COL_WIDTHS['mean'] - 2}}"
+        std_str = f"{metrics.std:<{COL_WIDTHS['std'] - 2}}"
 
     # Format model size
     if model_size_mb is not None:
-        size_str = f"{model_size_mb:<8.2f}"
+        size_str = f"{model_size_mb:<{COL_WIDTHS['size'] - 2}.2f}"
     else:
-        size_str = f"{'N/A':<8}"
+        size_str = f"{'N/A':<{COL_WIDTHS['size'] - 2}}"
 
     # Format evaluation metrics dynamically based on available metrics
     eval_strs = []
@@ -105,20 +114,23 @@ def format_row(label, model_name, metrics, folder_path, eval_metrics=None, metri
         for col in metric_columns:
             value = eval_metrics.get(col, "N/A")
             if value != "N/A":
-                # Format with 3 decimal places, fixed width 8
-                eval_strs.append(f"{float(value):<9.3f}")
+                eval_strs.append(f"{float(value):<{COL_WIDTHS['metric'] - 1}.3f}")
             else:
-                eval_strs.append(f"{'N/A':<9}")
+                eval_strs.append(f"{'N/A':<{COL_WIDTHS['metric'] - 1}}")
     else:
         # Fallback to default columns if no metrics available
-        eval_strs = [f"{'N/A':<9}" for _ in range(3)]
+        eval_strs = [f"{'N/A':<{COL_WIDTHS['metric'] - 1}}" for _ in range(3)]
 
     eval_metrics_str = " | ".join(eval_strs)
 
     return (
-        f"{label:<16} | {model_name:<16} | {fps_str} | "
-        f"{mean_str} | {std_str} | {device_str} | {size_str} | "
-        f"{eval_metrics_str} | {folder_path:<40}"
+        f"{label:<{COL_WIDTHS['label']}}|"
+        f" {fps_str} |"
+        f" {mean_str} |"
+        f" {std_str} |"
+        f" {size_str} | "
+        f"{eval_metrics_str}| "
+        f"{folder_path:<{COL_WIDTHS['folder']}}"
     )
 
 
@@ -134,7 +146,20 @@ def print_results(
     pruned_model_size_mb=None,
 ):
     """Print benchmark results in a formatted table and save to summary.txt."""
-    print("\nBenchmark Results:")
+
+    # Try to get device from the result objects, fallback to "N/A"
+    device = None
+    if result_original_model and hasattr(result_original_model, "device"):
+        device = result_original_model.device
+    elif result_pruned_model and hasattr(result_pruned_model, "device"):
+        device = result_pruned_model.device
+    else:
+        device = "N/A"
+
+    print("\nBenchmark Results:\n")
+    print(f"- Model: {MODEL_NAME}")
+    print(f"- Device: {device}")
+    print()
 
     ORIGINAL_FOLDER = "Focoos AI ModelRegistry"  # Assuming OUTPUT_DIRECTORY is for original model
 
@@ -148,17 +173,27 @@ def print_results(
         # Fallback to default classification metrics
         metric_columns = ["F1", "Precision", "Recall"]
 
-    # Create header dynamically, fixed width 6 for each metric column
-    metric_header = " | ".join([f"{col:<9}" for col in metric_columns])
+    # Create header dynamically, fixed width for each metric column
+    metric_header = " | ".join([f"{col:<{COL_WIDTHS['metric'] - 1}}" for col in metric_columns])
+
+    # Format header strings to match data row spacing
+    fps_header = f"{'FPS':>{COL_WIDTHS['fps'] - 2}}"
+    mean_header = f"{'Mean (ms)':<{COL_WIDTHS['mean'] - 2}}"
+    std_header = f"{'Std (ms)':<{COL_WIDTHS['std'] - 2}}"
+    size_header = f"{'Size (MB)':<{COL_WIDTHS['size'] - 2}}"
+
     header = (
-        f"{'Model':<16} | {'MODEL_NAME':<16} | {'FPS':>5} | "
-        f"{'Mean':<6} | {'Std':<6} | {'Device':<12} | {'Size (MB)':<8} | "
-        f"{metric_header} | {'Folder path':<40}"
+        f"{'':<{COL_WIDTHS['label']}}|"
+        f" {fps_header} |"
+        f" {mean_header} |"
+        f" {std_header} |"
+        f" {size_header} | "
+        f"{metric_header}| "
+        f"{'Folder path':<{COL_WIDTHS['folder']}}"
     )
     separator = "-" * len(header)
     row_original = format_row(
         "Original Model",
-        MODEL_NAME,
         result_original_model,
         ORIGINAL_FOLDER,
         original_eval_metrics,
@@ -167,7 +202,6 @@ def print_results(
     )
     row_pruned = format_row(
         "Pruned Model",
-        MODEL_NAME,
         result_pruned_model,
         OUTPUT_DIRECTORY,
         pruned_eval_metrics,
@@ -179,14 +213,21 @@ def print_results(
     print(separator)
     print(row_original)
     print(row_pruned)
+    print(separator)
+    print()
 
     # Save to summary.txt in OUTPUT_DIRECTORY
     summary_path = os.path.join(OUTPUT_DIRECTORY, "summary_eval-benchmark_results.txt")
     try:
         with open(summary_path, "w") as f:
+            f.write("Benchmark Results:\n")
+            f.write(f"- Model: {MODEL_NAME}\n")
+            f.write(f"- Device: {device}\n")
+            f.write("\n")
             f.write(header + "\n")
             f.write(separator + "\n")
             f.write(row_original + "\n")
             f.write(row_pruned + "\n")
+            f.write(separator + "\n")
     except Exception as e:
         print(f"Warning: Could not write summary to {summary_path}: {e}")

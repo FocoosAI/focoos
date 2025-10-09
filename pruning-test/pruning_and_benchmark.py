@@ -4,7 +4,7 @@ import torch
 from pruning.utils.print_results import calculate_model_size_mb, load_eval_metrics_from_model_info, print_results
 from pruning.utils.utils import PrunedBaseModel, PruningCompatibleModel, prune_model_with_torch_pruning
 
-from focoos import DatasetLayout, DatasetSplitType, ModelManager, Task, TrainerArgs
+from focoos import DATASETS_DIR, MODELS_DIR, DatasetLayout, DatasetSplitType, ModelManager, Task, TrainerArgs
 from focoos.data import AutoDataset, get_default_by_task
 from focoos.ports import get_gpus_count
 from focoos.utils.logger import get_logger
@@ -13,14 +13,13 @@ logger = get_logger("pruning_and_benchmark")
 
 # Configuration
 TASK = Task.CLASSIFICATION
-FOCOOSAI_DIR = "/Users/andreapellegrino_focoosai/FocoosAI"
-DATASETS_DIR = f"{FOCOOSAI_DIR}/datasets"
 DATASET_NAME = "coco_2017_cls"
 DATASET_LAYOUT = DatasetLayout.CATALOG
 DEVICE = "cpu"
 VERBOSE = False
+DO_EVAL = True  # Do not compute eval metrics
 
-ROOT_DIR = "/Users/andreapellegrino_focoosai/Work/focoos-1/pruning-test"
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_NAME = "fai-cls-n-coco"
 RESOLUTION = 224
 PRUNE_RATIO = 0.99
@@ -53,7 +52,7 @@ def main():
 
     # Calculate original model size
     logger.info("1.1/12 - Calculating original model size")
-    original_model_path = os.path.expanduser(os.path.join(FOCOOSAI_DIR, "models", MODEL_NAME, "model_final.pth"))
+    original_model_path = os.path.expanduser(os.path.join(MODELS_DIR, MODEL_NAME, "model_final.pth"))
     if os.path.exists(original_model_path):
         original_model_size_mb = calculate_model_size_mb(original_model_path)
     else:
@@ -82,7 +81,8 @@ def main():
     )
 
     # Evaluate original model
-    focoos_model.eval(args_original, valid_dataset)
+    if DO_EVAL:
+        focoos_model.eval(args_original, valid_dataset)
     original_eval_dir = os.path.join(args_original.output_dir, f"{args_original.run_name.strip()}_eval")
     original_model_info_path = os.path.join(original_eval_dir, "model_info.json")
     original_eval_metrics = load_eval_metrics_from_model_info(original_model_info_path, task_type=TASK)
@@ -200,7 +200,8 @@ def main():
     )
 
     # Evaluate pruned model
-    focoos_model.eval(args_pruned, valid_dataset)
+    if DO_EVAL:
+        focoos_model.eval(args_pruned, valid_dataset)
     pruned_eval_dir = os.path.join(args_pruned.output_dir, f"{args_pruned.run_name.strip()}_eval")
     pruned_model_info_path = os.path.join(pruned_eval_dir, "model_info.json")
     pruned_eval_metrics = load_eval_metrics_from_model_info(pruned_model_info_path, task_type=TASK)
