@@ -129,9 +129,11 @@ class FocoosPruning:
         # Evaluate original model
         if self.do_eval:
             self.focoos_model.eval(self.trainer_args, self.valid_dataset)
-        original_eval_dir = os.path.join(self.trainer_args.output_dir, f"{self.trainer_args.run_name.strip()}_eval")
-        original_model_info_path = os.path.join(original_eval_dir, "model_info.json")
-        self.original_eval_metrics = load_eval_metrics_from_model_info(original_model_info_path, task_type=self.task)
+            original_eval_dir = os.path.join(self.trainer_args.output_dir, f"{self.trainer_args.run_name.strip()}_eval")
+            original_model_info_path = os.path.join(original_eval_dir, "model_info.json")
+            self.original_eval_metrics = load_eval_metrics_from_model_info(
+                original_model_info_path, task_type=self.task
+            )
 
     def _benchmark_model(self):
         """Benchmark the original model"""
@@ -239,9 +241,9 @@ class FocoosPruning:
         # Evaluate pruned model (reusing the same trainer_args)
         if self.do_eval:
             self.focoos_model.eval(self.trainer_args, self.valid_dataset)
-        pruned_eval_dir = os.path.join(self.trainer_args.output_dir, f"{self.trainer_args.run_name.strip()}_eval")
-        pruned_model_info_path = os.path.join(pruned_eval_dir, "model_info.json")
-        self.pruned_eval_metrics = load_eval_metrics_from_model_info(pruned_model_info_path, task_type=self.task)
+            pruned_eval_dir = os.path.join(self.trainer_args.output_dir, f"{self.trainer_args.run_name.strip()}_eval")
+            pruned_model_info_path = os.path.join(pruned_eval_dir, "model_info.json")
+            self.pruned_eval_metrics = load_eval_metrics_from_model_info(pruned_model_info_path, task_type=self.task)
 
     def _benchmark_pruned_model(self):
         """Benchmark the pruned model"""
