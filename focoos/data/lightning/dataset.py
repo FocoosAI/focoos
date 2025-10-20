@@ -3,7 +3,7 @@ Lightning Dataset Wrapper for Focoos.
 Wrapper che integra DictDataset con Albumentations e supporto Mosaic.
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import albumentations as A
 import numpy as np
@@ -13,10 +13,8 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 from focoos.data.datasets.dict_dataset import DictDataset
-from focoos.ports import Task
-from focoos.structures import BoxMode
-
-from .types import ClassificationSample, DetectionSample, GenericSample, SegmentationSample
+from focoos.ports import DatasetEntry, Task
+from focoos.structures import BitMasks, Boxes, BoxMode, Instances
 
 
 class LightningDatasetWrapper(Dataset):
@@ -106,7 +104,7 @@ class LightningDatasetWrapper(Dataset):
 
         return additional_images
 
-    def __getitem__(self, idx: int) -> Union[DetectionSample, ClassificationSample, SegmentationSample, GenericSample]:
+    def __getitem__(self, idx: int) -> DatasetEntry:
         item: Dict[str, Any] = self.dict_dataset[idx]
         image: NDArray[np.uint8] = np.array(Image.open(item["file_name"]).convert("RGB"))
 
@@ -119,7 +117,7 @@ class LightningDatasetWrapper(Dataset):
         else:
             return self._process_generic(image, item, idx)
 
-    def _process_detection(self, image: NDArray[np.uint8], item: Dict[str, Any], idx: int) -> DetectionSample:
+    def _process_detection(self, image: NDArray[np.uint8], item: Dict[str, Any], idx: int) -> DatasetEntry:
         """Processa sample per detection/instance segmentation con supporto Mosaic"""
         bboxes: List[Any] = []
         labels: List[Any] = []
@@ -159,26 +157,43 @@ class LightningDatasetWrapper(Dataset):
         else:
             image_tensor = torch.from_numpy(image.transpose(2, 0, 1)).float() / 255.0
 
-        # Denormalizza bboxes
-        if len(bboxes) > 0:
-            _, h, w = image_tensor.shape
-            bboxes_tensor = torch.tensor(
-                [[b[0] * w, b[1] * h, b[2] * w, b[3] * h] for b in bboxes], dtype=torch.float32
-            )
-            labels_tensor = torch.tensor(labels, dtype=torch.int64)
-        else:
-            bboxes_tensor = torch.zeros((0, 4), dtype=torch.float32)
-            labels_tensor = torch.zeros(0, dtype=torch.int64)
+        # Get final image dimensions
+        _, height, width = image_tensor.shape
 
-        return DetectionSample(
+        # Create DatasetEntry with Instances
+        entry = DatasetEntry(
             image=image_tensor,
-            bboxes=bboxes_tensor,
-            labels=labels_tensor,
+            height=height,
+            width=width,
             image_id=item.get("image_id", idx),
             file_name=item["file_name"],
         )
 
-    def _process_classification(self, image: NDArray[np.uint8], item: Dict[str, Any], idx: int) -> ClassificationSample:
+        # Always create Instances object for detection/segmentation (even if empty)
+        # Denormalize bboxes to absolute coordinates
+        if len(bboxes) > 0:
+            # Convert to numpy first for efficient vectorized operations, then to tensor
+            bboxes_array = np.array(bboxes, dtype=np.float32)
+            bboxes_array[:, [0, 2]] *= width  # x coordinates
+            bboxes_array[:, [1, 3]] *= height  # y coordinates
+            bboxes_tensor = torch.from_numpy(bboxes_array)
+            labels_tensor = torch.as_tensor(labels, dtype=torch.int64)
+        else:
+            bboxes_tensor = torch.zeros((0, 4), dtype=torch.float32)
+            labels_tensor = torch.zeros(0, dtype=torch.int64)
+
+        # Create Instances object with boxes and classes passed to constructor
+        # (this ensures _fields dict is properly populated for .to(device))
+        instances = Instances(
+            image_size=(height, width),
+            boxes=Boxes(bboxes_tensor),
+            classes=labels_tensor,
+        )
+        entry.instances = instances
+
+        return entry
+
+    def _process_classification(self, image: NDArray[np.uint8], item: Dict[str, Any], idx: int) -> DatasetEntry:
         """Processa sample per classificazione"""
         label = item["annotations"][0]["category_id"] if "annotations" in item and len(item["annotations"]) > 0 else -1
 
@@ -188,11 +203,20 @@ class LightningDatasetWrapper(Dataset):
             else torch.from_numpy(image.transpose(2, 0, 1)).float() / 255.0
         )
 
-        return ClassificationSample(
-            image=image_tensor, label=label, image_id=item.get("image_id", idx), file_name=item["file_name"]
-        )
+        _, height, width = image_tensor.shape
 
-    def _process_segmentation(self, image: NDArray[np.uint8], item: Dict[str, Any], idx: int) -> SegmentationSample:
+        entry = DatasetEntry(
+            image=image_tensor,
+            height=height,
+            width=width,
+            image_id=item.get("image_id", idx),
+            file_name=item["file_name"],
+        )
+        entry.label = label
+
+        return entry
+
+    def _process_segmentation(self, image: NDArray[np.uint8], item: Dict[str, Any], idx: int) -> DatasetEntry:
         """Processa sample per semantic segmentation"""
         # Carica la maschera di segmentazione
         if "sem_seg_file_name" not in item:
@@ -210,20 +234,56 @@ class LightningDatasetWrapper(Dataset):
         if self.transform:
             transformed = self.transform(image=image, mask=mask)
             image_tensor = transformed["image"]
-            mask_tensor = torch.from_numpy(transformed["mask"]).long()
+            # Use as_tensor which handles both tensor and numpy without unnecessary copies
+            mask_tensor = torch.as_tensor(transformed["mask"], dtype=torch.long)
         else:
             image_tensor = torch.from_numpy(image.transpose(2, 0, 1)).float() / 255.0
             mask_tensor = torch.from_numpy(mask).long()
 
-        return SegmentationSample(
+        _, height, width = image_tensor.shape
+
+        entry = DatasetEntry(
             image=image_tensor,
-            mask=mask_tensor,
+            height=height,
+            width=width,
             image_id=item.get("image_id", idx),
             file_name=item["file_name"],
-            sem_seg_file_name=sem_seg_file_name,
         )
+        entry.sem_seg = mask_tensor
+        entry.sem_seg_file_name = sem_seg_file_name  # For evaluation
 
-    def _process_generic(self, image: NDArray[np.uint8], item: Dict[str, Any], idx: int) -> GenericSample:
+        # Also populate instances for models that expect it (like MaskFormer)
+        # Convert semantic mask to instance masks (one per class)
+        unique_classes = torch.unique(mask_tensor)
+        # Remove background class (0) if present
+        unique_classes = unique_classes[unique_classes > 0]
+
+        if len(unique_classes) > 0:
+            # Create binary masks for each class
+            instance_masks = []
+            instance_classes = []
+            for cls in unique_classes:
+                binary_mask = mask_tensor == cls
+                instance_masks.append(binary_mask)
+                instance_classes.append(cls.item())
+
+            masks_tensor = torch.stack(instance_masks)  # Shape: (N, H, W)
+            classes_tensor = torch.tensor(instance_classes, dtype=torch.int64)
+        else:
+            masks_tensor = torch.zeros((0, height, width), dtype=torch.bool)
+            classes_tensor = torch.zeros(0, dtype=torch.int64)
+
+        # Create Instances with masks
+        instances = Instances(
+            image_size=(height, width),
+            masks=BitMasks(masks_tensor),
+            classes=classes_tensor,
+        )
+        entry.instances = instances
+
+        return entry
+
+    def _process_generic(self, image: NDArray[np.uint8], item: Dict[str, Any], idx: int) -> DatasetEntry:
         """Processa sample per task generici"""
         image_tensor = (
             self.transform(image=image)["image"]
@@ -231,4 +291,12 @@ class LightningDatasetWrapper(Dataset):
             else torch.from_numpy(image.transpose(2, 0, 1)).float() / 255.0
         )
 
-        return GenericSample(image=image_tensor, image_id=item.get("image_id", idx), file_name=item["file_name"])
+        _, height, width = image_tensor.shape
+
+        return DatasetEntry(
+            image=image_tensor,
+            height=height,
+            width=width,
+            image_id=item.get("image_id", idx),
+            file_name=item["file_name"],
+        )

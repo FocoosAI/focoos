@@ -10,7 +10,6 @@ import albumentations as A
 import cv2
 import lightning as L
 import numpy as np
-from albumentations.pytorch import ToTensorV2
 from PIL import Image
 from torch.utils.data import DataLoader
 
@@ -18,10 +17,10 @@ from focoos.data.datasets.dict_dataset import DictDataset
 from focoos.ports import DATASETS_DIR, DatasetLayout, DatasetSplitType, Task
 from focoos.structures import BoxMode
 from focoos.utils.logger import get_logger
+from focoos.utils.system import extract_archive
 
 from .dataset import LightningDatasetWrapper
-from .transforms import LetterBox
-from .types import DetectionSample
+from .default_augmentations import get_default_train_augmentations, get_default_val_augmentations
 
 
 class FocoosLightningDataModule(L.LightningDataModule):
@@ -68,9 +67,24 @@ class FocoosLightningDataModule(L.LightningDataModule):
         self.datasets_dir = datasets_dir
         self.task = task
         self.layout = layout
+
+        # Initialize logger early
+        self.logger_focoos = get_logger("FocoosLightningDataModule")
+
         self.dataset_path = (
             datasets_dir if layout == DatasetLayout.CATALOG else os.path.join(datasets_dir, dataset_name)
         )
+
+        # Extract zip archive if necessary (only for non-catalog layouts)
+        if self.layout != DatasetLayout.CATALOG and not os.path.exists(self.dataset_path):
+            zip_path = f"{self.dataset_path}.zip"
+            if os.path.exists(zip_path):
+                self.logger_focoos.info(f"📦 Extracting dataset from {zip_path}...")
+                self.dataset_path = str(extract_archive(zip_path, destination=self.datasets_dir))
+            else:
+                raise FileNotFoundError(
+                    f"Dataset not found: neither directory {self.dataset_path} nor archive {zip_path} exist"
+                )
 
         # Parametri DataLoader
         self.batch_size = batch_size
@@ -80,96 +94,15 @@ class FocoosLightningDataModule(L.LightningDataModule):
 
         # Augmentations
         self.image_size = image_size
-        self.train_augmentations = train_augmentations or self._get_default_train_augmentations()
-        self.val_augmentations = val_augmentations or self._get_default_val_augmentations()
+        self.train_augmentations = train_augmentations or get_default_train_augmentations(self.task, self.image_size)
+        self.val_augmentations = val_augmentations or get_default_val_augmentations(self.task, self.image_size)
 
-        # Logger e logging
+        # Save hyperparameters and log augmentations
         self.save_hyperparameters()
-        self.logger_focoos = get_logger("FocoosLightningDataModule")
         self._log_augmentations()
 
         # Setup automatico
         self._setup()
-
-    def _get_default_train_augmentations(self) -> A.Compose:
-        """Augmentations di default per il training basate sul task con Albumentations"""
-
-        if self.task == Task.CLASSIFICATION:
-            return A.Compose(
-                [  # type: ignore
-                    LetterBox(height=self.image_size, width=self.image_size),
-                    A.HorizontalFlip(p=0.5),
-                    A.VerticalFlip(p=0.2),
-                    A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.5),
-                    A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=20, val_shift_limit=10, p=0.5),
-                    A.GaussianBlur(blur_limit=(3, 7), p=0.3),
-                    A.GaussNoise(p=0.3),
-                    A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-                    ToTensorV2(),
-                ]
-            )
-
-        elif self.task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION]:
-            # Mosaic viene applicato come prima augmentation nel pipeline
-            transforms_list = [
-                A.Mosaic(
-                    target_size=(self.image_size, self.image_size),
-                    metadata_key="mosaic_metadata",
-                    p=0.5,
-                ),
-                LetterBox(height=self.image_size, width=self.image_size, p=1.0),
-                A.HorizontalFlip(p=0.5),
-                A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.5),
-                A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=20, val_shift_limit=10, p=0.5),
-                A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-                ToTensorV2(),
-            ]
-            return A.Compose(
-                transforms_list,
-                bbox_params=A.BboxParams(format="albumentations", label_fields=["labels"]),
-            )
-
-        elif self.task == Task.SEMSEG:
-            return A.Compose(
-                [
-                    LetterBox(height=self.image_size, width=self.image_size),
-                    A.HorizontalFlip(p=0.5),
-                    A.VerticalFlip(p=0.2),
-                    A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.5),
-                    A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-                    ToTensorV2(),
-                ]
-            )
-
-        else:
-            return A.Compose(
-                [
-                    LetterBox(height=self.image_size, width=self.image_size),
-                    A.HorizontalFlip(p=0.5),
-                    A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-                    ToTensorV2(),
-                ]
-            )
-
-    def _get_default_val_augmentations(self) -> A.Compose:
-        """Augmentations di default per la validation (solo letterbox e normalize)"""
-        if self.task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION]:
-            return A.Compose(
-                [
-                    LetterBox(height=self.image_size, width=self.image_size),
-                    A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-                    ToTensorV2(),
-                ],
-                bbox_params=A.BboxParams(format="albumentations", label_fields=["labels"]),
-            )
-        else:
-            return A.Compose(
-                [
-                    LetterBox(height=self.image_size, width=self.image_size),
-                    A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-                    ToTensorV2(),
-                ]
-            )
 
     def _log_augmentations(self) -> None:
         """Log delle augmentations per train e val, ispirato ai DatasetMapper di Focoos"""
@@ -234,7 +167,7 @@ class FocoosLightningDataModule(L.LightningDataModule):
 
             if split_dir is None:
                 raise FileNotFoundError(
-                    f"Split directory not found in {self.dataset_path}. Tried: {', '.join(split_names)}"
+                    f"Split directory not found in {self.dataset_path} . Tried: {', '.join(split_names)}"
                 )
 
         if self.layout == DatasetLayout.ROBOFLOW_COCO:
@@ -274,6 +207,11 @@ class FocoosLightningDataModule(L.LightningDataModule):
         """Compatibilità con Lightning Trainer (setup già eseguito in __init__)"""
         pass
 
+    def _collate_fn(self, batch):
+        """Custom collate function - batch is already a list of DatasetEntry objects"""
+        # No conversion needed - LightningDatasetWrapper already returns DatasetEntry
+        return batch
+
     def train_dataloader(self):
         """Ritorna il DataLoader per il training"""
         return DataLoader(
@@ -284,6 +222,7 @@ class FocoosLightningDataModule(L.LightningDataModule):
             pin_memory=self.pin_memory,
             persistent_workers=self.persistent_workers,
             drop_last=True,
+            collate_fn=self._collate_fn,
         )
 
     def val_dataloader(self):
@@ -296,6 +235,7 @@ class FocoosLightningDataModule(L.LightningDataModule):
             pin_memory=self.pin_memory,
             persistent_workers=self.persistent_workers,
             drop_last=False,
+            collate_fn=self._collate_fn,
         )
 
     def _draw_annotations(
@@ -407,8 +347,11 @@ class FocoosLightningDataModule(L.LightningDataModule):
         else:
             # Con augmentations, usa il pipeline normale
             sample = dataset[index]
-            image_tensor = sample.image
 
+            if sample.image is None:
+                raise ValueError(f"Image tensor is None for sample {index}")
+
+            image_tensor = sample.image
             image = image_tensor.cpu().numpy()
             if image.shape[0] == 3:
                 image = image.transpose(1, 2, 0)
@@ -435,9 +378,11 @@ class FocoosLightningDataModule(L.LightningDataModule):
             # Estrai bboxes e labels se disponibili
             bboxes_list = []
             labels_list = []
-            if isinstance(sample, DetectionSample):
-                bboxes_list = sample.bboxes.cpu().numpy().tolist()
-                labels_list = sample.labels.cpu().numpy().tolist()
+            if hasattr(sample, "instances") and sample.instances is not None:
+                if sample.instances.boxes is not None:
+                    bboxes_list = sample.instances.boxes.tensor.cpu().numpy().tolist()
+                if sample.instances.classes is not None:
+                    labels_list = sample.instances.classes.cpu().numpy().tolist()
 
             # Disegna annotazioni con OpenCV
             class_names = getattr(dataset.dict_dataset.metadata, "thing_classes", None)

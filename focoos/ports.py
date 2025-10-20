@@ -1060,6 +1060,33 @@ class TrainerArgs:
 
 
 @dataclass
+class TrainArgs(TrainerArgs):
+    """Extended training configuration with dataset parameters for Lightning training.
+
+    Extends TrainerArgs with additional parameters needed for dataset loading
+    and Lightning DataModule setup.
+
+    Additional Dataset Parameters:
+        dataset_name (str): Name of the dataset to load
+        task (Task): Task type (DETECTION, CLASSIFICATION, SEMSEG, etc.)
+        layout (DatasetLayout): Dataset layout format (ROBOFLOW_COCO, CLS_FOLDER, etc.)
+        datasets_dir (str): Root directory containing datasets
+        image_size (int): Target image size for training
+        pin_memory (bool): Whether to pin memory in DataLoader
+        persistent_workers (bool): Whether to use persistent workers in DataLoader
+    """
+
+    # Dataset parameters
+    dataset_name: str = ""
+    task: Task = Task.DETECTION
+    layout: DatasetLayout = DatasetLayout.ROBOFLOW_COCO
+    datasets_dir: str = DATASETS_DIR
+    image_size: int = 640
+    pin_memory: bool = True
+    persistent_workers: bool = True
+
+
+@dataclass
 class DatasetMetadata:
     """Dataclass for storing dataset metadata."""
 
