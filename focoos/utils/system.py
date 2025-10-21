@@ -66,7 +66,7 @@ def get_gpu_info() -> GPUInfo:
         GPUInfo: An object containing comprehensive GPU information including devices list,
                 driver version, CUDA version and GPU count.
     """
-    gpu_info = GPUInfo()
+    gpu_info = GPUInfo(mps_available=torch.backends.mps.is_available())
     gpus_device = []
     try:
         # Get all GPU information in a single query

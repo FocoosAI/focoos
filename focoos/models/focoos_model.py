@@ -114,10 +114,17 @@ class FocoosModel:
         self.processor.eval()
         self.model = model.eval()
 
-        try:
-            self.model = self.model.cuda()
-        except Exception:
-            logger.warning("Unable to use CUDA")
+        if torch.cuda.is_available():
+            try:
+                self.model = self.model.cuda()
+            except Exception:
+                logger.warning("Unable to use CUDA")
+
+        if torch.backends.mps.is_available():
+            try:
+                self.model = self.model.to(device="mps")
+            except Exception:
+                logger.warning("Unable to use MPS")
 
         if self.model_info.weights_uri:
             self._load_weights()
@@ -153,8 +160,17 @@ class FocoosModel:
         """
         device = get_cpu_name()
         system_info = get_system_info()
-        if system_info.gpu_info and system_info.gpu_info.devices and len(system_info.gpu_info.devices) > 0:
+        if (
+            train_args.device == "cuda"
+            and system_info.gpu_info
+            and system_info.gpu_info.devices
+            and len(system_info.gpu_info.devices) > 0
+        ):
             device = system_info.gpu_info.devices[0].gpu_name
+        elif train_args.device == "mps" and torch.backends.mps.is_available():
+            device = "mps"
+        else:
+            device = "cpu"
         self.model_info.ref = None
 
         self.model_info.train_args = train_args  # type: ignore
@@ -392,7 +408,7 @@ class FocoosModel:
         runtime_type: RuntimeType = RuntimeType.TORCHSCRIPT_32,
         onnx_opset: int = 18,
         out_dir: Optional[str] = None,
-        device: Literal["cuda", "cpu", "auto"] = "auto",
+        device: Literal["cuda", "cpu", "mps", "auto"] = "auto",
         simplify_onnx: bool = True,
         overwrite: bool = True,
         image_size: Optional[Union[int, Tuple[int, int]]] = None,
