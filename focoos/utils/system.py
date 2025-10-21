@@ -310,6 +310,8 @@ def extract_archive(
     # Determine the extraction path
     t0 = time.time()
     base_dir = os.path.dirname(archive_path)
+    archive_name = os.path.basename(archive_path)
+    archive_name = archive_name.split(".")[0]
     if destination is not None:
         extracted_dir = os.path.join(base_dir, destination)
     else:
@@ -340,6 +342,7 @@ def extract_archive(
         logger.info(f"[elapsed {t1 - t0:.3f} ] Extracted archive to: {extracted_dir}")
 
     comm.synchronize()
+    extracted_dir = os.path.join(extracted_dir, archive_name)
     if len(list_dir(extracted_dir)) == 1:
         extracted_dir = list_dir(extracted_dir)[0]
 

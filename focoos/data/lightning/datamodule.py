@@ -74,17 +74,16 @@ class FocoosLightningDataModule(L.LightningDataModule):
         self.dataset_path = (
             datasets_dir if layout == DatasetLayout.CATALOG else os.path.join(datasets_dir, dataset_name)
         )
-
-        # Extract zip archive if necessary (only for non-catalog layouts)
-        if self.layout != DatasetLayout.CATALOG and not os.path.exists(self.dataset_path):
-            zip_path = f"{self.dataset_path}.zip"
-            if os.path.exists(zip_path):
-                self.logger_focoos.info(f"📦 Extracting dataset from {zip_path}...")
-                self.dataset_path = str(extract_archive(zip_path, destination=self.datasets_dir))
+        if self.dataset_path.endswith(".zip") or self.dataset_path.endswith(".gz"):
+            _d_name = dataset_name.split(".")[0]
+            _dest_path = os.path.join(self.datasets_dir, _d_name)
+            if not os.path.exists(_dest_path):
+                self.logger_focoos.info(f"📦 Extracting dataset from {self.dataset_path}...")
+                self.dataset_path = str(extract_archive(self.dataset_path))
+                self.logger_focoos.info(f"Extracted archive: {self.dataset_path}, {os.listdir(self.dataset_path)}")
             else:
-                raise FileNotFoundError(
-                    f"Dataset not found: neither directory {self.dataset_path} nor archive {zip_path} exist"
-                )
+                self.logger_focoos.info(f"Dataset already extracted: {_dest_path}")
+                self.dataset_path = _dest_path
 
         # Parametri DataLoader
         self.batch_size = batch_size
