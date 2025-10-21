@@ -676,6 +676,7 @@ class GPUInfo(PydanticBase):
     gpu_cuda_version: Optional[str] = None
     total_gpu_memory_gb: Optional[float] = None
     devices: Optional[list[GPUDevice]] = None
+    mps_available: Optional[bool] = None
 
 
 class SystemInfo(PydanticBase):
@@ -743,6 +744,7 @@ class SystemInfo(PydanticBase):
                 output_lines.append(f"  - total_memory_gb: {value.get('total_gpu_memory_gb')} GB")
                 output_lines.append(f"  - gpu_driver: {value.get('gpu_driver')}")
                 output_lines.append(f"  - gpu_cuda_version: {value.get('gpu_cuda_version')}")
+                output_lines.append(f"  - mps_available: {value.get('mps_available')}")
                 if value.get("devices"):
                     output_lines.append("  - devices:")
                     for device in value.get("devices", []):
