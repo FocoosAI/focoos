@@ -73,6 +73,7 @@ class FocoosLightningModule(L.LightningModule):
         self.best_val_metric = 0.0
         self.validation_step_outputs: List[Dict[str, Any]] = []
         self.validation_step_inputs: List[DatasetEntry] = []
+        self.evaluator: Optional[Any] = None  # Lazy initialization on first validation
 
         # Timing tracking for data_time metric
         self._step_end_time: Optional[float] = None
@@ -141,53 +142,66 @@ class FocoosLightningModule(L.LightningModule):
         eta_seconds = iter_time * remaining_iters
         return str(datetime.timedelta(seconds=int(eta_seconds)))
 
-    def _print_training_metrics(self, metrics: Dict[str, float], iteration: int):
+    def _print_evaluation_results(self, metrics: Dict[str, Any], task_name: str):
         """
-        Print training metrics in compact tabular format (similar to CommonMetricPrinter).
-
-        Format: eta: XX:XX:XX  iter: XXX  total_loss: X.XXX  time: X.XXXX  data_time: X.XXXX  lr: X.XXXXX  max_mem: XXXM
+        Print evaluation results in a compact, tabular, and elegant format.
 
         Args:
-            metrics: Dictionary of metric names and values
-            iteration: Current training iteration
+            metrics: Dictionary of metric names and values from evaluator
+            task_name: Name of the task (e.g., "bbox", "segm", "sem_seg")
         """
-        # Calculate ETA
-        eta_str = ""
-        if len(self._time_history) > 0:
-            avg_time = sum(self._time_history) / len(self._time_history)
-            eta_str = f"eta: {self._format_eta(avg_time, iteration)}  "
+        if not metrics:
+            return
 
-        # Format losses (all keys containing 'loss')
-        losses = []
-        for key in sorted(metrics.keys()):
-            if "loss" in key.lower() and metrics[key] is not None:
-                losses.append(f"{key}: {metrics[key]:.4f}")
-        losses_str = "  ".join(losses) if losses else ""
+        # Separate main metrics from per-class metrics
+        main_metrics = {}
+        class_metrics = {}
 
-        # Get timing metrics
-        time_str = ""
-        data_time_str = ""
-        if len(self._time_history) > 0:
-            avg_time = sum(self._time_history) / len(self._time_history)
-            time_str = f"time: {avg_time:.4f}  "
-        if len(self._data_time_history) > 0:
-            avg_data_time = sum(self._data_time_history) / len(self._data_time_history)
-            data_time_str = f"data_time: {avg_data_time:.4f}  "
+        for metric_name, metric_value in metrics.items():
+            if metric_value is None or metric_value != metric_value:  # Skip None and NaN
+                continue
 
-        # Get learning rate
-        lr_str = ""
-        if "lr" in metrics:
-            lr_str = f"lr: {metrics['lr']:.5g}  "
+            if metric_name.startswith("AP-") or metric_name.startswith("AR-"):
+                # Per-class metric
+                class_metrics[metric_name] = metric_value
+            else:
+                # Main metric
+                main_metrics[metric_name] = metric_value
 
-        # Get memory usage
-        memory_str = ""
-        if torch.cuda.is_available():
-            max_mem_mb = torch.cuda.max_memory_allocated() / 1024.0 / 1024.0
-            memory_str = f"max_mem: {max_mem_mb:.0f}M"
+        # Build compact output
+        logger.info("")
+        logger.info("=" * 70)
+        logger.info(f"📊 {task_name.upper()} VALIDATION")
+        logger.info("=" * 70)
 
-        # Combine all parts
-        log_message = f" {eta_str}iter: {iteration}  {losses_str}  {time_str}{data_time_str}{lr_str}{memory_str}"
-        logger.info(log_message)
+        if main_metrics:
+            # Print main metrics in compact rows of 4 (already in 0-100 scale from evaluator)
+            metrics_list = list(main_metrics.items())
+            for i in range(0, len(metrics_list), 4):
+                row = metrics_list[i : i + 4]
+                row_str = " | ".join([f"{name:6s} {value:5.2f}" for name, value in row])
+                logger.info(f"{row_str}")
+
+        # Print per-class summary only if many classes
+        if class_metrics and len(class_metrics) > 10:
+            ap_metrics = {k: v for k, v in class_metrics.items() if k.startswith("AP-")}
+            if ap_metrics:
+                sorted_ap = sorted(ap_metrics.items(), key=lambda x: x[1], reverse=True)
+                logger.info("-" * 70)
+                # Show top-3 and bottom-3 in compact format (already in 0-100 scale)
+                top3 = [f"{name[3:]:>12s}:{val:5.1f}" for name, val in sorted_ap[:3]]
+                bot3 = [f"{name[3:]:>12s}:{val:5.1f}" for name, val in sorted_ap[-3:]]
+                logger.info(f"Top-3: {' '.join(top3)}")
+                logger.info(f"Low-3: {' '.join(bot3)}")
+
+        # Print best metric on same line (values already in 0-100 scale)
+        metric_key = self.val_metric_key.split("/")[-1] if "/" in self.val_metric_key else self.val_metric_key
+        current_value = main_metrics.get(metric_key, 0.0)
+        best_value = self.best_val_metric
+        logger.info("=" * 70)
+        logger.info(f"🏆 {metric_key}: {current_value:.2f}  |  Best: {best_value:.2f}")
+        logger.info("=" * 70)
+        logger.info("")
 
     # =========================================================================
     # FORWARD PASS
@@ -271,6 +285,12 @@ class FocoosLightningModule(L.LightningModule):
             self._time_history.append(step_time)
             self.log("time", step_time, prog_bar=False, batch_size=batch_size)
 
+        # Log GPU memory usage to progress bar in MB with fixed format
+        if torch.cuda.is_available():
+            max_mem_mb = torch.cuda.max_memory_allocated() / 1024.0 / 1024.0
+            # Use format that shows as "XXXXM" in progress bar
+            self.log("mem_MB", int(max_mem_mb), prog_bar=True, batch_size=batch_size)
+
         # Record end time for next iteration's data_time calculation
         self._step_end_time = step_end_time
 
@@ -289,9 +309,6 @@ class FocoosLightningModule(L.LightningModule):
                 optimizer = self.optimizers()
                 if isinstance(optimizer, Optimizer):
                     metrics_to_print["lr"] = optimizer.param_groups[0]["lr"]
-
-            # Print in compact format
-            self._print_training_metrics(metrics_to_print, current_iter)
 
         return total_loss  # type: ignore
 
@@ -377,39 +394,71 @@ class FocoosLightningModule(L.LightningModule):
 
         # Compute metrics based on task
         try:
-            if self.task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION]:
-                self._evaluate_detection(val_dict_dataset)
-            elif self.task == Task.SEMSEG:
-                self._evaluate_semseg(val_dict_dataset)
+            self._run_evaluation(val_dict_dataset)
         finally:
             # CRITICAL: Clear accumulated data to prevent memory leaks
             # This ensures GPU tensors are released after evaluation
             self.validation_step_inputs.clear()
             self.validation_step_outputs.clear()
 
-    def _evaluate_detection(self, val_dict_dataset):
+    def _run_evaluation(self, val_dict_dataset):
         """
-        Evaluate detection/instance segmentation metrics.
+        Unified evaluation function for all tasks.
 
         Args:
             val_dict_dataset: Validation dataset dictionary
         """
-        task_name = "segm" if self.task == Task.INSTANCE_SEGMENTATION else "bbox"
-        evaluator = DetectionLightningEvaluator(
-            dataset_dict=val_dict_dataset,
-            task=task_name,
-            distributed=False,  # Lightning handles distribution
-        )
+        # Initialize evaluator on first use (lazy initialization)
+        if self.evaluator is None:
+            if self.task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION]:
+                task_name = "segm" if self.task == Task.INSTANCE_SEGMENTATION else "bbox"
+                self.evaluator = DetectionLightningEvaluator(
+                    dataset_dict=val_dict_dataset,
+                    task=task_name,
+                    distributed=False,  # Lightning handles distribution
+                )
+            elif self.task == Task.SEMSEG:
+                self.evaluator = SemSegEvaluator(
+                    dataset_dict=val_dict_dataset,
+                    distributed=False,  # Lightning handles distribution
+                )
+            else:
+                logger.warning(f"No evaluator available for task: {self.task}")
+                return
+        self.evaluator.reset()
+        # Task-specific preprocessing
+        if self.task == Task.SEMSEG:
+            # Add sem_seg_file_name from dataset to inputs
+            for inp in self.validation_step_inputs:
+                if hasattr(inp, "image_id") and inp.image_id is not None:
+                    dataset_item = val_dict_dataset[inp.image_id]
+                    if "sem_seg_file_name" in dataset_item:
+                        inp.sem_seg_file_name = dataset_item["sem_seg_file_name"]  # type: ignore
 
         # Process all accumulated predictions
-        evaluator.process(self.validation_step_inputs, self.validation_step_outputs)
+        self.evaluator.process(self.validation_step_inputs, self.validation_step_outputs)  # type: ignore
 
         # Evaluate and get metrics
-        metrics = evaluator.evaluate()
+        metrics = self.evaluator.evaluate()
 
-        # Log metrics
+        # Determine task name for logging
+        if self.task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION]:
+            task_name = "segm" if self.task == Task.INSTANCE_SEGMENTATION else "bbox"
+            primary_metric = "AP"
+        elif self.task == Task.SEMSEG:
+            task_name = "sem_seg"
+            primary_metric = "mIoU"
+        else:
+            return
+
+        # Log metrics and print results
         if metrics and task_name in metrics:
             task_metrics = metrics[task_name]
+
+            # Print formatted results
+            self._print_evaluation_results(task_metrics, task_name)
+
+            # Log metrics to Lightning logger
             for metric_name, metric_value in task_metrics.items():
                 if metric_value is not None and metric_value == metric_value:  # Check for NaN
                     # For per-category metrics (AP-class_name), log under separate namespace
@@ -427,7 +476,7 @@ class FocoosLightningModule(L.LightningModule):
                             f"{task_name}/{metric_name}",
                             metric_value,
                             on_epoch=True,
-                            prog_bar=(metric_name == "AP"),
+                            prog_bar=(metric_name == primary_metric),
                         )
 
             # Track best metric
@@ -439,56 +488,6 @@ class FocoosLightningModule(L.LightningModule):
                 )
                 if current_val_metric > self.best_val_metric:
                     self.best_val_metric = current_val_metric
-                    logger.info(f"✨ New best validation metric: {current_val_metric:.4f}")
-
-    def _evaluate_semseg(self, val_dict_dataset):
-        """
-        Evaluate semantic segmentation metrics.
-
-        Args:
-            val_dict_dataset: Validation dataset dictionary
-        """
-        evaluator = SemSegEvaluator(
-            dataset_dict=val_dict_dataset,
-            distributed=False,  # Lightning handles distribution
-        )
-        evaluator.reset()  # Initialize confusion matrix
-
-        # Add sem_seg_file_name from dataset to inputs before evaluation
-        for inp in self.validation_step_inputs:
-            if hasattr(inp, "image_id") and inp.image_id is not None:
-                dataset_item = val_dict_dataset[inp.image_id]
-                if "sem_seg_file_name" in dataset_item:
-                    inp.sem_seg_file_name = dataset_item["sem_seg_file_name"]  # type: ignore
-
-        # Process all accumulated predictions
-        evaluator.process(self.validation_step_inputs, self.validation_step_outputs)  # type: ignore
-
-        # Evaluate and get metrics
-        metrics = evaluator.evaluate()
-
-        # Log metrics
-        if metrics and "sem_seg" in metrics:
-            task_metrics = metrics["sem_seg"]
-            for metric_name, metric_value in task_metrics.items():
-                if metric_value is not None and metric_value == metric_value:  # Check for NaN
-                    self.log(
-                        f"sem_seg/{metric_name}",
-                        metric_value,
-                        on_epoch=True,
-                        prog_bar=(metric_name == "mIoU"),
-                    )
-
-            # Track best metric
-            if self.val_metric_key in self.trainer.callback_metrics:
-                metric_value = self.trainer.callback_metrics[self.val_metric_key]
-                # Convert to float if it's a tensor
-                current_val_metric = (
-                    metric_value.item() if isinstance(metric_value, torch.Tensor) else float(metric_value)
-                )
-                if current_val_metric > self.best_val_metric:
-                    self.best_val_metric = current_val_metric
-                    logger.info(f"✨ New best validation metric: {current_val_metric:.4f}")
 
     # =========================================================================
     # OPTIMIZER & SCHEDULER CONFIGURATION

@@ -258,7 +258,7 @@ def run_train_lightning(
         trainer = L.Trainer(
             # max_steps=train_args.max_iters,
             max_epochs=max_epochs,
-            enable_progress_bar=True,
+            enable_progress_bar=True,  # Disabled - using custom ProgressBar callback instead
             enable_model_summary=True,
             sync_batchnorm=True,
             # val_check_interval=eval_epochs,
