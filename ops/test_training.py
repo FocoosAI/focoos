@@ -5,7 +5,7 @@ from typing import List, Optional, Union
 
 from focoos.data.lightning import FocoosLightningDataModule
 from focoos.model_manager import ModelManager
-from focoos.ports import DATASETS_DIR, DatasetLayout, RuntimeType, Task, TrainArgs
+from focoos.ports import DATASETS_DIR, DatasetLayout, RuntimeType, Task, TrainerArgs
 from focoos.utils.api_client import ApiClient
 from focoos.utils.logger import get_logger
 
@@ -102,7 +102,7 @@ def train(model_name: str, iter: int):
     logger.info(f"Created temporary directory for training output: {_temp_dir}")
     output_dir = "./output"
     # Configure training arguments with dataset parameters
-    train_args = TrainArgs(
+    train_args = TrainerArgs(
         run_name=model_name + "_test",
         output_dir=output_dir,
         dataset_name=dataset_name,

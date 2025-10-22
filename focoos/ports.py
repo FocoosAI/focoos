@@ -969,8 +969,16 @@ class TrainerArgs:
     """Configuration class for unified model training.
 
     Attributes:
-        run_name (str): Name of the training run
+        dataset_name (str): Name of the dataset to use
+        task (Task): Type of task (detection, segmentation, etc)
+        layout (DatasetLayout): Dataset directory layout format
+        datasets_dir (str): Root directory containing datasets
+        image_size (int): Input image size for training
+        pin_memory (bool): Whether to pin memory in data loading
+        persistent_workers (bool): Whether to use persistent data workers
+        auto_scale_batch_size (bool): Whether to automatically find optimal batch size
         output_dir (str): Directory to save outputs
+        run_name (Optional[str]): Name of the training run
         ckpt_dir (Optional[str]): Directory for checkpoints
         init_checkpoint (Optional[str]): Initial checkpoint to load
         resume (bool): Whether to resume from checkpoint
@@ -984,36 +992,45 @@ class TrainerArgs:
         checkpointer_max_to_keep (int): Maximum checkpoints to keep
         eval_period (int): How often to evaluate
         log_period (int): How often to log
-        vis_period (int): How often to visualize
         samples (int): Number of samples for visualization
         seed (int): Random seed
         early_stop (bool): Whether to use early stopping
         patience (int): Early stopping patience
-        ema_enabled (bool): Whether to use EMA
+        ema_enabled (bool): Whether to use exponential moving average
         ema_decay (float): EMA decay rate
         ema_warmup (int): EMA warmup period
         learning_rate (float): Base learning rate
         weight_decay (float): Weight decay
         max_iters (int): Maximum training iterations
         batch_size (int): Batch size
-        scheduler (str): Learning rate scheduler type
+        scheduler (SchedulerType): Learning rate scheduler type
         scheduler_extra (Optional[dict]): Extra scheduler parameters
-        optimizer (str): Optimizer type
+        optimizer (OptimizerType): Optimizer type
         optimizer_extra (Optional[dict]): Extra optimizer parameters
         weight_decay_norm (float): Weight decay for normalization layers
         weight_decay_embed (float): Weight decay for embeddings
         backbone_multiplier (float): Learning rate multiplier for backbone
         decoder_multiplier (float): Learning rate multiplier for decoder
         head_multiplier (float): Learning rate multiplier for head
-        freeze_bn (bool): Whether to freeze batch norm
+        freeze_bn (bool): Whether to freeze batch normalization layers
         clip_gradients (float): Gradient clipping value
         size_divisibility (int): Input size divisibility requirement
         gather_metric_period (int): How often to gather metrics
         zero_grad_before_forward (bool): Whether to zero gradients before forward pass
+        sync_to_hub (bool): Whether to sync model to hub during training
     """
 
-    run_name: str
+    # Dataset parameters
+    dataset_name: str = ""
+    task: Task = Task.DETECTION
+    layout: DatasetLayout = DatasetLayout.ROBOFLOW_COCO
+    datasets_dir: str = DATASETS_DIR
+    image_size: int = 640
+    pin_memory: bool = True
+    persistent_workers: bool = True
+    auto_scale_batch_size: bool = False
     output_dir: str = MODELS_DIR
+    run_name: Optional[str] = None
     ckpt_dir: Optional[str] = None
     init_checkpoint: Optional[str] = None
     resume: bool = False
@@ -1059,35 +1076,6 @@ class TrainerArgs:
 
     # Sync to hub
     sync_to_hub: bool = False
-
-
-@dataclass
-class TrainArgs(TrainerArgs):
-    """Extended training configuration with dataset parameters for Lightning training.
-
-    Extends TrainerArgs with additional parameters needed for dataset loading
-    and Lightning DataModule setup.
-
-    Additional Dataset Parameters:
-        dataset_name (str): Name of the dataset to load
-        task (Task): Task type (DETECTION, CLASSIFICATION, SEMSEG, etc.)
-        layout (DatasetLayout): Dataset layout format (ROBOFLOW_COCO, CLS_FOLDER, etc.)
-        datasets_dir (str): Root directory containing datasets
-        image_size (int): Target image size for training
-        pin_memory (bool): Whether to pin memory in DataLoader
-        persistent_workers (bool): Whether to use persistent workers in DataLoader
-        auto_scale_batch_size (bool): Whether to automatically find optimal batch size
-    """
-
-    # Dataset parameters
-    dataset_name: str = ""
-    task: Task = Task.DETECTION
-    layout: DatasetLayout = DatasetLayout.ROBOFLOW_COCO
-    datasets_dir: str = DATASETS_DIR
-    image_size: int = 640
-    pin_memory: bool = True
-    persistent_workers: bool = True
-    auto_scale_batch_size: bool = False
 
 
 @dataclass

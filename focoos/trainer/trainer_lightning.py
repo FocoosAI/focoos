@@ -4,42 +4,128 @@ This module provides an alternative training approach using PyTorch Lightning.
 """
 
 import os
+from datetime import datetime
 from typing import Optional
 
+import lightning as L
 import torch
+from lightning.pytorch.callbacks import (
+    BatchSizeFinder,
+    DeviceStatsMonitor,
+    LearningRateMonitor,
+    ModelCheckpoint,
+    RichModelSummary,
+    ThroughputMonitor,
+    Timer,
+)
+from lightning.pytorch.loggers import TensorBoardLogger
 
+from focoos.data.lightning import FocoosLightningDataModule
 from focoos.hub.focoos_hub import FocoosHUB
 from focoos.models.base_model import BaseModelNN
-from focoos.ports import ArtifactName, HubSyncLocalTraining, ModelInfo, ModelStatus, TrainArgs
+from focoos.ports import ArtifactName, HubSyncLocalTraining, ModelInfo, ModelStatus, TrainerArgs, TrainingInfo
 from focoos.processor.base_processor import Processor
+from focoos.trainer.callbacks import MetricsJSONWriter, VisualizationCallback
+from focoos.trainer.lightning_module import FocoosLightningModule
 from focoos.utils.distributed.dist import comm
 from focoos.utils.env import seed_all_rng
 from focoos.utils.logger import capture_all_output, get_logger
-
-try:
-    import lightning as L
-    from lightning.pytorch.callbacks import (
-        BatchSizeFinder,
-        DeviceStatsMonitor,
-        LearningRateMonitor,
-        ModelCheckpoint,
-        RichModelSummary,
-        ThroughputMonitor,
-        Timer,
-    )
-    from lightning.pytorch.loggers import TensorBoardLogger
-except ImportError:
-    raise ImportError("PyTorch Lightning is required for this training mode. Install it with: pip install lightning")
-
-from focoos.data.lightning import FocoosLightningDataModule
-from focoos.trainer.callbacks import MetricsJSONWriter, VisualizationCallback
-from focoos.trainer.lightning_module import FocoosLightningModule
+from focoos.utils.system import get_cpu_name, get_focoos_version, get_system_info
 
 logger = get_logger("LightningTrainer")
 
 
+def setup_model_info_for_training(
+    train_args: TrainerArgs,
+    model_info: ModelInfo,
+    datamodule: FocoosLightningDataModule,
+) -> None:
+    """Setup model info with training configuration and dataset metadata.
+
+    This function validates the training configuration, updates model_info with
+    training metadata, dataset information, and device details, then saves it.
+
+    Args:
+        train_args: Training configuration arguments
+        model_info: Model metadata to be configured
+        datamodule: Lightning datamodule containing train/val datasets
+
+    Raises:
+        AssertionError: If validation checks fail (num_classes, task mismatch, etc.)
+    """
+    # =========================================================================
+    # VALIDATION CHECKS
+    # =========================================================================
+    assert datamodule.train_dataset.dict_dataset.metadata.num_classes > 0, (
+        "Number of dataset classes must be greater than 0"
+    )
+    assert model_info.task == datamodule.train_dataset.dict_dataset.metadata.task, (
+        "Task mismatch between model and dataset"
+    )
+    assert model_info.config["num_classes"] == datamodule.train_dataset.dict_dataset.metadata.num_classes, (
+        "Number of classes mismatch between model and dataset"
+    )
+
+    # =========================================================================
+    # DEVICE INFO
+    # =========================================================================
+    device = get_cpu_name()
+    system_info = get_system_info()
+    if system_info.gpu_info and system_info.gpu_info.devices and len(system_info.gpu_info.devices) > 0:
+        device = system_info.gpu_info.devices[0].gpu_name
+
+    # =========================================================================
+    # UPDATE MODEL INFO WITH TRAINING METADATA
+    # =========================================================================
+    model_info.ref = None
+    model_info.train_args = train_args  # type: ignore
+    model_info.val_dataset = datamodule.val_dataset.dict_dataset.metadata.name
+    model_info.val_metrics = None
+    model_info.classes = datamodule.train_dataset.dict_dataset.metadata.classes
+    model_info.focoos_version = get_focoos_version()
+    model_info.status = ModelStatus.TRAINING_STARTING
+    model_info.im_size = datamodule.image_size
+    model_info.updated_at = datetime.now().isoformat()
+    model_info.latency = []
+    model_info.metrics = None
+    model_info.training_info = TrainingInfo(
+        instance_device=device,
+        main_status=ModelStatus.TRAINING_STARTING,
+        start_time=datetime.now().isoformat(),
+        status_transitions=[
+            dict(
+                status=ModelStatus.TRAINING_STARTING,
+                timestamp=datetime.now().isoformat(),
+            )
+        ],
+    )
+
+    # =========================================================================
+    # UPDATE CONFIG WITH DATASET METADATA
+    # =========================================================================
+    model_info.config["num_classes"] = len(datamodule.train_dataset.dict_dataset.metadata.classes)
+    if datamodule.train_dataset.dict_dataset.metadata.keypoints is not None:
+        model_info.config["keypoints"] = datamodule.train_dataset.dict_dataset.metadata.keypoints
+        model_info.config["num_keypoints"] = len(datamodule.train_dataset.dict_dataset.metadata.keypoints)
+    if datamodule.train_dataset.dict_dataset.metadata.keypoints_skeleton is not None:
+        model_info.config["skeleton"] = datamodule.train_dataset.dict_dataset.metadata.keypoints_skeleton
+
+    # Update run name
+    if train_args.run_name:
+        model_info.name = train_args.run_name.strip()
+
+    # Save model info (train_args.run_name is guaranteed to be set by caller)
+    assert train_args.run_name is not None, "train_args.run_name must be set before calling this function"
+    run_name: str = train_args.run_name  # Type narrowing for linter
+    model_info_path = os.path.join(train_args.output_dir, run_name, ArtifactName.INFO)
+    os.makedirs(os.path.dirname(model_info_path), exist_ok=True)
+    model_info.dump_json(model_info_path)
+
+    logger.info("✅ Model setup complete - configuration validated and metadata updated")
+
+
 def run_train_lightning(
-    train_args: TrainArgs,
+    train_args: TrainerArgs,
     image_model: Optional[BaseModelNN] = None,
     processor: Optional[Processor] = None,
     model_info: Optional[ModelInfo] = None,
@@ -100,6 +186,8 @@ def run_train_lightning(
     assert image_model is not None
     assert processor is not None
     assert model_info is not None
+    if train_args.run_name is None:
+        train_args.run_name = f"{model_info.name}_{train_args.dataset_name}".split(".")[0]
 
     # Set random seed for reproducibility
     seed_all_rng(None if train_args.seed < 0 else train_args.seed + comm.get_rank())
@@ -119,6 +207,12 @@ def run_train_lightning(
         seed=train_args.seed,
     )
 
+    # Setup datamodule to get datasets
+    datamodule.setup(stage="fit")
+
+    # Setup model info with training configuration and dataset metadata
+    setup_model_info_for_training(train_args, model_info, datamodule)
+
     # Prepare model for training (similar to old trainer)
     from focoos.nn.layers.norm import FrozenBatchNorm2d
     from focoos.trainer.solver import ema
@@ -128,14 +222,14 @@ def run_train_lightning(
 
     # Apply model modifications
     if train_args.freeze_bn:
-        image_model = FrozenBatchNorm2d.convert_frozen_batchnorm(image_model)
+        image_model = FrozenBatchNorm2d.convert_frozen_batchnorm(image_model)  # type: ignore
 
     # Setup SyncBatchNorm for multi-GPU if needed
     if comm.get_world_size() > 1:
-        image_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(image_model)
+        image_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(image_model)  # type: ignore
 
     # Move model to device
-    image_model = image_model.to(train_args.device)
+    image_model = image_model.to(train_args.device)  # type: ignore
 
     # Setup EMA if enabled
     if train_args.ema_enabled and not hasattr(image_model, "ema_state"):
@@ -180,12 +274,15 @@ def run_train_lightning(
             callbacks.append(batch_size_finder)
             logger.info("🔍 BatchSizeFinder enabled - will search for optimal batch size")
 
-        # Checkpoint callback - save last model (monitoring disabled for now)
+        # Checkpoint callback - save checkpoints based on iterations
         checkpoint_callback = ModelCheckpoint(
             dirpath=output_dir,
-            filename="model_best",
-            save_last=True,
-            save_top_k=0,  # Don't save top-k, just save last
+            filename="ckpt-{epoch:02d}-{step:06d}",
+            auto_insert_metric_name=False,
+            verbose=True,
+            save_last=False,  # Always save last checkpoint as "last.ckpt"
+            every_n_train_steps=train_args.checkpointer_period,  # Save every N steps
+            save_top_k=-1,  # Keep all checkpoints (or set to specific number to keep only last N)
         )
         callbacks.append(checkpoint_callback)
 
@@ -193,7 +290,7 @@ def run_train_lightning(
             period=train_args.eval_period,
             n_sample=2,
             output_dir=output_dir,
-            confidence_threshold=0.3,
+            confidence_threshold=0.5,
         )
         callbacks.append(visualization_callback)
 
@@ -258,7 +355,7 @@ def run_train_lightning(
         trainer = L.Trainer(
             # max_steps=train_args.max_iters,
             max_epochs=max_epochs,
-            enable_progress_bar=True,  # Disabled - using custom ProgressBar callback instead
+            enable_progress_bar=True,  # Using TQDMProgressBar callback with refresh_rate=1 for validation visibility
             enable_model_summary=True,
             sync_batchnorm=True,
             # val_check_interval=eval_epochs,

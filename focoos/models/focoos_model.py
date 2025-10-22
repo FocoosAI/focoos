@@ -24,7 +24,6 @@ from focoos.ports import (
     ModelInfo,
     ModelStatus,
     RuntimeType,
-    TrainArgs,
     TrainerArgs,
     TrainingInfo,
 )
@@ -106,14 +105,14 @@ class FocoosModel:
             model_info: Metadata and configuration information for the model.
         """
 
-        self.model_info = model_info
+        self.model_info: ModelInfo = model_info
         self.processor = ProcessorManager.get_processor(
             self.model_info.model_family,
             self.model_info.config,  # type: ignore
             self.model_info.im_size,
         )
         self.processor.eval()
-        self.model = model.eval()
+        self.model: BaseModelNN = model.eval()
 
         try:
             self.model = self.model.cuda()
@@ -248,7 +247,7 @@ class FocoosModel:
 
     def train_lightning(
         self,
-        args: TrainArgs,
+        args: TrainerArgs,
         hub: Optional[FocoosHUB] = None,
         eval_only: bool = False,
     ):
@@ -257,7 +256,7 @@ class FocoosModel:
         This method provides an alternative training approach using PyTorch Lightning's
         Trainer. It offers simplified training logic, built-in callbacks, and better
         integration with modern ML workflows. The datamodule is created automatically
-        from the TrainArgs configuration.
+        from the TrainerArgs configuration.
 
         Args:
             args: Training configuration with dataset parameters (TrainArgs).

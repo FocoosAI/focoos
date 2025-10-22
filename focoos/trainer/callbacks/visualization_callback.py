@@ -339,7 +339,8 @@ class VisualizationCallback(Callback):
                     for idx, img in enumerate(all_visualized_images):
                         output_path = os.path.join(preview_dir, f"sample_{idx}_iter_{current_step}.jpg")
                         encode_params = [cv2.IMWRITE_JPEG_QUALITY, 90]
-                        cv2.imwrite(output_path, img, encode_params)
+                        img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+                        cv2.imwrite(output_path, img_bgr, encode_params)
 
                     logger.info(f"Saved {len(all_visualized_images)} visualization samples to: {preview_dir}")
 
