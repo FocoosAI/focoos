@@ -1,26 +1,75 @@
 import os
+import re
 from typing import Optional
 
 import torch
 import torch_pruning as tp
 
-from focoos import ModelManager
+from focoos import ModelManager, Task
 from focoos.models.base_model import BaseModelNN
 from focoos.models.fai_cls.ports import ClassificationModelOutput
+from focoos.models.fai_detr.ports import DETRModelOutput
 
 
 class PruningCompatibleModel(torch.nn.Module):
     """Wrapper to make the model compatible with torch-pruning by ensuring clean tensor outputs."""
 
-    def __init__(self, model):
+    def __init__(self, model, task, is_eval=False):
         super().__init__()
         self.model = model
+        self.task = task
+        self.is_eval = is_eval
 
     def forward(self, x):
         # Call the original model and return only the logits tensor
         output = self.model(x)
         # Ensure we return a clean tensor that torch-pruning can handle
-        return output.logits
+        if self.is_eval:
+            return output
+        else:
+            if self.task == Task.CLASSIFICATION:
+                return output.logits
+            elif self.task == Task.DETECTION:
+                return output.boxes
+            else:
+                raise ValueError(f"Task {self.task} not supported")
+
+    def __getattr__(self, name):
+        """Delegate attribute access to the underlying model to support nested attribute access."""
+        try:
+            return super().__getattr__(name)
+        except AttributeError:
+            return getattr(self.model, name)
+
+    def load_state_dict(self, state_dict, strict=True):
+        """Override load_state_dict to load into the underlying model."""
+        return self.model.load_state_dict(state_dict, strict=strict)
+
+
+class PrunedBaseModel(BaseModelNN):
+    def __init__(self, model, config, device, task):
+        super().__init__(config)
+        self.model = model
+        self.config = config
+        self._device = device
+        self.task = task
+
+    @property
+    def device(self):
+        return torch.device(self._device)
+
+    @property
+    def dtype(self):
+        return torch.float
+
+    def forward(self, x):
+        output = self.model(x)
+        if self.task == Task.DETECTION:
+            return DETRModelOutput(boxes=output.boxes, logits=output.logits, loss=None)  # output.shape == (B, N_DET, 4)
+        elif self.task == Task.CLASSIFICATION:
+            return ClassificationModelOutput(logits=output.logits, loss=None)  # output.shape == (B, N_DET, num_logits)
+        else:  # add more here
+            raise ValueError(f"Task {self.task} not supported")
 
 
 def prune_model_with_torch_pruning(
@@ -105,29 +154,10 @@ def prune_model_with_torch_pruning(
         else:
             print(f"Pruning group for {layer_name} invalid, skipping.")
 
-    torch.save(model, output_path)
+    torch.save(model.model.state_dict(), output_path)
     if verbose:
         print(f"Pruned model state dict saved to {output_path}")
     return model
-
-
-class PrunedBaseModel(BaseModelNN):
-    def __init__(self, model, config, device):
-        super().__init__(config)
-        self.model = model
-        self.config = config
-        self._device = device
-
-    @property
-    def device(self):
-        return torch.device(self._device)
-
-    @property
-    def dtype(self):
-        return torch.float
-
-    def forward(self, x):
-        return ClassificationModelOutput(logits=self.model(x), loss=None)
 
 
 def get_model_layers(model_name, output_folder_path: Optional[str] = ""):
@@ -146,3 +176,36 @@ def get_model_layers(model_name, output_folder_path: Optional[str] = ""):
                 print(str_layer)
                 layers.append(str_layer)
     return layers
+
+
+def get_layers_to_prune(regex_pattern: str, layers_file_path: str) -> list[str]:
+    """
+    Returns a list of layer names from the given file that match the provided regex pattern.
+
+    Args:
+        regex_pattern (str): Regular expression pattern to match layer names.
+        layers_file_path (str): Path to the file containing layer names (one per line, as keys before ':').
+
+    Returns:
+        list[str]: List of matching layer names.
+    """
+    pattern = re.compile(regex_pattern)
+    matching_layers = []
+    with open(layers_file_path, "r") as f:
+        for line in f:
+            line = line.strip()
+            if not line or ":" not in line:
+                continue
+            layer_name = line.split(":", 1)[0].strip()
+            if pattern.fullmatch(layer_name) or pattern.search(layer_name):
+                matching_layers.append(layer_name)
+
+    # remove suffix ".weight"
+    suffix = ".weight"
+    matching_layers = [layer.replace(suffix, "") for layer in matching_layers]
+    return matching_layers
+
+
+def load_layers_from_file(layers_file_path: str) -> list[str]:
+    with open(layers_file_path, "r") as f:
+        return [line.strip() for line in f.readlines()]

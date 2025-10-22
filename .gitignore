@@ -101,4 +101,6 @@ experiments_debug
 *.pth
 .vscode
 
-pruning-test/models/*
+*.DS_Store
+pruning_outputs
+pruning_outputs-test

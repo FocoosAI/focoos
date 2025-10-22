@@ -1,0 +1,51 @@
+{
+    "fai-cls-n-coco": [
+        "model.backbone.features.2.conv_list.0.conv",
+        "model.backbone.features.2.conv_list.1.conv",
+        "model.backbone.features.2.conv_list.2.conv",
+        "model.backbone.features.2.conv_list.3.conv",
+        "model.backbone.features.3.conv_list.0.conv",
+        "model.backbone.features.3.conv_list.1.conv",
+        "model.backbone.features.3.conv_list.2.conv",
+        "model.backbone.features.3.conv_list.3.conv",
+        "model.backbone.features.4.conv_list.0.conv",
+        "model.backbone.features.4.conv_list.1.conv",
+        "model.backbone.features.4.conv_list.2.conv",
+        "model.backbone.features.4.conv_list.3.conv"
+    ],
+    "fai-cls-s-coco": [
+        "model.backbone.features.2.conv_list.0.conv",
+        "model.backbone.features.2.conv_list.1.conv",
+        "model.backbone.features.2.conv_list.2.conv",
+        "model.backbone.features.2.conv_list.3.conv",
+        "model.backbone.features.3.conv_list.0.conv",
+        "model.backbone.features.3.conv_list.1.conv",
+        "model.backbone.features.3.conv_list.2.conv",
+        "model.backbone.features.3.conv_list.3.conv",
+        "model.backbone.features.4.conv_list.0.conv",
+        "model.backbone.features.4.conv_list.1.conv",
+        "model.backbone.features.4.conv_list.2.conv",
+        "model.backbone.features.4.conv_list.3.conv"
+    ],
+    "fai_cls_m_coco": [
+        "model.backbone.features.2.conv_list.0.conv",
+        "model.backbone.features.2.conv_list.1.conv",
+        "model.backbone.features.2.conv_list.2.conv",
+        "model.backbone.features.2.conv_list.3.conv",
+        "model.backbone.features.3.conv_list.0.conv",
+        "model.backbone.features.3.conv_list.1.conv",
+        "model.backbone.features.3.conv_list.2.conv",
+        "model.backbone.features.3.conv_list.3.conv",
+        "model.backbone.features.4.conv_list.0.conv",
+        "model.backbone.features.4.conv_list.1.conv",
+        "model.backbone.features.4.conv_list.2.conv",
+        "model.backbone.features.4.conv_list.3.conv"
+    ],
+    "fai-detr-m-coco": [
+        "model.pixel_decoder.backbone.features.2.conv_list.0.conv",
+        "model.pixel_decoder.backbone.features.2.conv_list.1.conv",
+        "model.pixel_decoder.backbone.features.2.conv_list.2.conv",
+        "model.pixel_decoder.backbone.features.2.conv_list.3.conv",
+        "model.pixel_decoder.backbone.features.3.conv_list.0.conv"
+    ]
+}

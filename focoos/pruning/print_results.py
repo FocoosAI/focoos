@@ -134,9 +134,10 @@ def format_row(label, metrics, folder_path, eval_metrics=None, metric_columns=No
     )
 
 
-def print_results(
+def show_results(
     result_original_model,
     result_pruned_model,
+    original_model_directory,
     MODEL_NAME,
     OUTPUT_DIRECTORY,
     original_eval_metrics=None,
@@ -144,8 +145,10 @@ def print_results(
     task_type=Task.DETECTION,
     original_model_size_mb=None,
     pruned_model_size_mb=None,
+    resolution=None,
+    prune_ratio=None,
 ):
-    """Print benchmark results in a formatted table and save to summary.txt."""
+    """Print benchmark results in a formatted table, save to summary.txt, and return summary as dict."""
 
     # Try to get device from the result objects, fallback to "N/A"
     device = None
@@ -159,9 +162,14 @@ def print_results(
     print("\nBenchmark Results:\n")
     print(f"- Model: {MODEL_NAME}")
     print(f"- Device: {device}")
+    print(f"- Resolution: {resolution}")
+    print(f"- Prune ratio: {prune_ratio}")
     print()
 
-    ORIGINAL_FOLDER = "Focoos AI ModelRegistry"  # Assuming OUTPUT_DIRECTORY is for original model
+    if original_model_directory:
+        original_folder = original_model_directory
+    else:
+        original_folder = "Focoos AI ModelRegistry"
 
     # Determine metric columns based on available metrics
     metric_columns = []
@@ -192,10 +200,11 @@ def print_results(
         f"{'Folder path':<{COL_WIDTHS['folder']}}"
     )
     separator = "-" * len(header)
+
     row_original = format_row(
         "Original Model",
         result_original_model,
-        ORIGINAL_FOLDER,
+        original_folder,
         original_eval_metrics,
         metric_columns,
         original_model_size_mb,
@@ -223,6 +232,8 @@ def print_results(
             f.write("Benchmark Results:\n")
             f.write(f"- Model: {MODEL_NAME}\n")
             f.write(f"- Device: {device}\n")
+            f.write(f"- Resolution: {resolution}\n")
+            f.write(f"- Prune ratio: {prune_ratio}\n")
             f.write("\n")
             f.write(header + "\n")
             f.write(separator + "\n")
@@ -231,3 +242,69 @@ def print_results(
             f.write(separator + "\n")
     except Exception as e:
         print(f"Warning: Could not write summary to {summary_path}: {e}")
+
+    # Helper to collect all relevant metrics into a dict
+    def _extract_result(label, metrics, folder_path, eval_metrics, metric_columns, model_size_mb):
+        result = {
+            "label": label,
+            "fps": None,
+            "mean": None,
+            "std": None,
+            "size_mb": model_size_mb if model_size_mb is not None else "N/A",
+            "folder_path": folder_path,
+            "metrics": {},
+        }
+        if metrics is not None:
+            result["fps"] = metrics.fps if hasattr(metrics, "fps") else "N/A"
+            result["mean"] = float(metrics.mean) if hasattr(metrics, "mean") else "N/A"
+            result["std"] = float(metrics.std) if hasattr(metrics, "std") else "N/A"
+        else:
+            result["fps"] = "N/A"
+            result["mean"] = "N/A"
+            result["std"] = "N/A"
+
+        # Fill in each eval metric from metric_columns
+        if eval_metrics is not None and metric_columns is not None:
+            for col in metric_columns:
+                value = eval_metrics.get(col, "N/A")
+                try:
+                    # Try to cast to float if not "N/A"
+                    if value != "N/A":
+                        value = float(value)
+                except Exception:
+                    pass
+                result["metrics"][col] = value
+        else:
+            for col in metric_columns:
+                result["metrics"][col] = "N/A"
+        return result
+
+    dict_results = {
+        "model": MODEL_NAME,
+        "device": device,
+        "resolution": resolution,
+        "prune_ratio": prune_ratio,
+        "results": {
+            "original_model": _extract_result(
+                "Original Model",
+                result_original_model,
+                original_folder,
+                original_eval_metrics,
+                metric_columns,
+                original_model_size_mb,
+            ),
+            "pruned_model": _extract_result(
+                "Pruned Model",
+                result_pruned_model,
+                OUTPUT_DIRECTORY,
+                pruned_eval_metrics,
+                metric_columns,
+                pruned_model_size_mb,
+            ),
+        },
+    }
+
+    with open(os.path.join(OUTPUT_DIRECTORY, "summary_results.json"), "w") as f:
+        json.dump(dict_results, f, indent=4)
+
+    return dict_results

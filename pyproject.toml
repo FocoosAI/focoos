@@ -56,7 +56,6 @@ dependencies = [
     "torch~=2.7.1",
     "torchvision~=0.22.0",
     "typer>=0.16.0",
-    "torch-pruning~=1.2.4",
 ]
 
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]
@@ -100,6 +99,10 @@ docs = [
     "mkdocs-material>=9.5.28,<10.0.0",
     "mkdocstrings[python]>=0.29.0,<0.30.0",
     "mkdocs-include-markdown-plugin>=6.2.1,<7.0.0",
+]
+
+pruning = [
+    "torch-pruning~=1.2.4",
 ]
 
 [project.scripts]
