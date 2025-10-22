@@ -249,25 +249,23 @@ class FocoosModel:
     def train_lightning(
         self,
         args: TrainArgs,
-        datamodule=None,  # Optional[FocoosLightningDataModule]
         hub: Optional[FocoosHUB] = None,
         eval_only: bool = False,
     ):
-        """Train or evaluate the model using PyTorch Lightning with FocoosLightningDataModule.
+        """Train or evaluate the model using PyTorch Lightning.
 
         This method provides an alternative training approach using PyTorch Lightning's
         Trainer. It offers simplified training logic, built-in callbacks, and better
-        integration with modern ML workflows.
+        integration with modern ML workflows. The datamodule is created automatically
+        from the TrainArgs configuration.
 
         Args:
             args: Training configuration with dataset parameters (TrainArgs).
-            datamodule: Optional FocoosLightningDataModule. If not provided, will be created from args.
             hub: Optional Focoos Hub instance for model syncing.
             eval_only: If True, only run validation without training.
 
         Raises:
-            AssertionError: If task mismatch between model and dataset.
-            AssertionError: If number of classes mismatch between model and dataset.
+            ValueError: If dataset_name is not provided in args.
             ImportError: If PyTorch Lightning is not installed.
 
         Example:
@@ -287,80 +285,16 @@ class FocoosModel:
             >>> # For evaluation only
             >>> model.train_lightning(args=train_args, eval_only=True)
         """
-        from focoos.data.lightning import FocoosLightningDataModule
         from focoos.trainer.trainer_lightning import run_train_lightning
 
-        # Create datamodule if not provided
-        if datamodule is None:
-            if not args.dataset_name:
-                raise ValueError("dataset_name must be provided in args if datamodule is not provided")
-
-            datamodule = FocoosLightningDataModule(
-                dataset_name=args.dataset_name,
-                task=args.task,
-                layout=args.layout,
-                datasets_dir=args.datasets_dir,
-                batch_size=args.batch_size,
-                num_workers=args.workers,
-                image_size=args.image_size,
-                pin_memory=args.pin_memory,
-                persistent_workers=args.persistent_workers,
-            )
-        else:
-            # Setup datamodule if needed
-            if not hasattr(datamodule, "train_dataset") or not hasattr(datamodule, "val_dataset"):
-                datamodule._setup()
+        # Run training/evaluation - datamodule creation and model preparation happen in run_train_lightning
+        results = run_train_lightning(args, self.model, self.processor, self.model_info, hub, eval_only)
 
         if eval_only:
-            # For evaluation only, use validation dataset metadata
-            num_classes = len(datamodule.val_dataset.dict_dataset.metadata.classes)
-            task = datamodule.val_dataset.dict_dataset.metadata.task
-
-            assert num_classes > 0, "Number of dataset classes must be greater than 0"
-            assert self.model_info.task == task, "Task mismatch between model and dataset."
-
-            # Set model to eval mode
-            self.model = self.model.eval()
-
-            # Run evaluation only
-            results = run_train_lightning(
-                args, datamodule, self.model, self.processor, self.model_info, hub, eval_only=True
-            )
-
             return results
         else:
-            # Get metadata from datamodule (training)
-            num_classes = len(datamodule.train_dataset.dict_dataset.metadata.classes)
-            task = datamodule.train_dataset.dict_dataset.metadata.task
-
-            assert num_classes > 0, "Number of dataset classes must be greater than 0"
-
-            # Update model config with dataset information
-            self.model_info.classes = datamodule.train_dataset.dict_dataset.metadata.classes
-            self.model_info.config["num_classes"] = num_classes
-
-            if datamodule.train_dataset.dict_dataset.metadata.keypoints is not None:
-                self.model_info.config["keypoints"] = datamodule.train_dataset.dict_dataset.metadata.keypoints
-                self.model_info.config["num_keypoints"] = len(datamodule.train_dataset.dict_dataset.metadata.keypoints)
-            if datamodule.train_dataset.dict_dataset.metadata.keypoints_skeleton is not None:
-                self.model_info.config["skeleton"] = datamodule.train_dataset.dict_dataset.metadata.keypoints_skeleton
-
-            # Reload model with updated config
-            self._reload_model()
-            self.model_info.name = args.run_name.strip()
-            self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)  # type: ignore
-            self.model = self.model.train()
-
-            assert self.model_info.task == task, "Task mismatch between model and dataset."
-            assert self.model_info.config["num_classes"] == num_classes, (
-                "Number of classes mismatch between model and dataset."
-            )
-
-            # Lightning handles multi-GPU training automatically
-            trained_model, updated_info = run_train_lightning(
-                args, datamodule, self.model, self.processor, self.model_info, hub, eval_only=False
-            )
-
+            # Update model and info after training
+            trained_model, updated_info = results
             self.model = trained_model
             self.model_info = updated_info
 

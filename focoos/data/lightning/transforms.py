@@ -8,6 +8,7 @@ from typing import List, Tuple, Union
 import albumentations as A
 import cv2
 import numpy as np
+import torch
 from numpy.typing import NDArray
 
 
@@ -108,3 +109,43 @@ class LetterBox(A.DualTransform):
 
     def get_transform_init_args_names(self) -> Tuple[str, ...]:
         return ("height", "width", "border_value")
+
+
+class ToTensor(A.BasicTransform):
+    """
+    Convert image and mask to torch.Tensor WITHOUT dividing by 255.
+
+    This keeps images in [0, 255] range, which is the expected format for processors
+    that handle normalization with pixel_mean and pixel_std.
+
+    Unlike albumentations.pytorch.ToTensorV2 which divides by 255, this transform
+    maintains the original scale, allowing color augmentations to work naturally
+    and deferring normalization to the processor.
+    """
+
+    def __init__(self, always_apply=True, p=1.0):
+        super().__init__(p=p)
+
+    @property
+    def targets(self):
+        return {"image": self.apply, "mask": self.apply_to_mask}
+
+    def apply(self, img: np.ndarray, **params) -> torch.Tensor:
+        """
+        Convert numpy image to torch tensor [C, H, W] in float32.
+        Keeps values in [0, 255] range.
+        """
+        # HWC to CHW
+        if len(img.shape) == 3:
+            img = img.transpose(2, 0, 1)
+        return torch.from_numpy(img).float()
+
+    def apply_to_mask(self, mask: np.ndarray, **params) -> torch.Tensor:
+        """Convert mask to torch tensor, keeping as long for segmentation."""
+        return torch.from_numpy(mask).long()
+
+    def get_transform_init_args_names(self) -> Tuple[str, ...]:
+        return ()
+
+    def get_params_dependent_on_targets(self, params):
+        return {}

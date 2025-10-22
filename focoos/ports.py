@@ -937,6 +937,8 @@ class DatasetEntry(DictClass):
     image: Optional["torch.Tensor"] = None  # noqa: F821
     height: Optional[int] = None
     width: Optional[int] = None
+    original_height: Optional[int] = None
+    original_width: Optional[int] = None
     instances: Optional[Instances] = None
     file_name: Optional[str] = None
     image_id: Optional[int] = None

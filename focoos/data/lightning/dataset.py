@@ -181,17 +181,19 @@ class LightningDatasetWrapper(Dataset):
             bboxes = list(transformed["bboxes"])
             labels = list(transformed["labels"])
         else:
-            image_tensor = torch.from_numpy(image.transpose(2, 0, 1)).float() / 255.0
+            # Keep images in [0, 255] range - normalization happens in processor
+            image_tensor = torch.from_numpy(image.transpose(2, 0, 1)).float()
 
         # Get dimensions of TRANSFORMED image (after augmentations)
         _, height_transformed, width_transformed = image_tensor.shape
 
-        # Create DatasetEntry with ORIGINAL dimensions
-        # Il processor userà queste dimensioni per scalare le predizioni alle dimensioni target originali
+        # Create DatasetEntry with both transformed and original dimensions
         entry = DatasetEntry(
             image=image_tensor,
-            height=original_height,  # ← Dimensioni originali (prima delle augmentations)
-            width=original_width,  # ← Dimensioni originali (prima delle augmentations)
+            height=height_transformed,  # ← Dimensioni trasformate (dopo augmentations)
+            width=width_transformed,  # ← Dimensioni trasformate (dopo augmentations)
+            original_height=original_height,  # ← Dimensioni originali (prima delle augmentations)
+            original_width=original_width,  # ← Dimensioni originali (prima delle augmentations)
             image_id=item.get("image_id", idx),
             file_name=item["file_name"],
         )
@@ -230,13 +232,18 @@ class LightningDatasetWrapper(Dataset):
         image_tensor = (
             self.transform(image=image)["image"]
             if self.transform
-            else torch.from_numpy(image.transpose(2, 0, 1)).float() / 255.0
+            else torch.from_numpy(image.transpose(2, 0, 1)).float()  # Keep [0, 255] range
         )
+
+        # Get transformed dimensions
+        _, height_transformed, width_transformed = image_tensor.shape
 
         entry = DatasetEntry(
             image=image_tensor,
-            height=original_height,  # ← Dimensioni originali
-            width=original_width,  # ← Dimensioni originali
+            height=height_transformed,  # ← Dimensioni trasformate (dopo augmentations)
+            width=width_transformed,  # ← Dimensioni trasformate (dopo augmentations)
+            original_height=original_height,  # ← Dimensioni originali (prima delle augmentations)
+            original_width=original_width,  # ← Dimensioni originali (prima delle augmentations)
             image_id=item.get("image_id", idx),
             file_name=item["file_name"],
         )
@@ -255,32 +262,43 @@ class LightningDatasetWrapper(Dataset):
             raise ValueError(f"sem_seg_file_name not found in item {idx}")
 
         sem_seg_file_name = item["sem_seg_file_name"]
-        # Leggi la maschera come grayscale
+        # Leggi la maschera - convert to double like the old mapper for augmentations
         mask = np.array(Image.open(sem_seg_file_name))
 
         # Se la maschera è RGB, prendi solo il primo canale
         if len(mask.shape) == 3:
             mask = mask[:, :, 0]
 
+        # Convert to double for augmentations (like SemanticDatasetMapper)
+        # PyTorch transformation not implemented for uint16, so converting it to double first
+        mask = mask.astype("double")
+
         # Applica transforms (Albumentations supporta mask come target)
         if self.transform:
             transformed = self.transform(image=image, mask=mask)
             image_tensor = transformed["image"]
-            # Use as_tensor which handles both tensor and numpy without unnecessary copies
-            mask_tensor = torch.as_tensor(transformed["mask"], dtype=torch.long)
+            # Convert mask to long after augmentations
+            # Handle both numpy array and tensor (if ToTensor was applied)
+            mask_output = transformed["mask"]
+            if isinstance(mask_output, torch.Tensor):
+                mask_tensor = mask_output.long()
+            else:
+                mask_tensor = torch.as_tensor(mask_output.astype("long"), dtype=torch.long)
         else:
-            image_tensor = torch.from_numpy(image.transpose(2, 0, 1)).float() / 255.0
-            mask_tensor = torch.from_numpy(mask).long()
+            # Keep images in [0, 255] range - normalization happens in processor
+            image_tensor = torch.from_numpy(image.transpose(2, 0, 1)).float()
+            mask_tensor = torch.from_numpy(mask.astype("long")).long()
 
         # Get dimensions of TRANSFORMED image (after augmentations)
         _, height_transformed, width_transformed = image_tensor.shape
 
-        # Create DatasetEntry with ORIGINAL dimensions
-        # Il processor userà queste dimensioni per scalare le predizioni alle dimensioni target originali
+        # Create DatasetEntry with both transformed and original dimensions
         entry = DatasetEntry(
             image=image_tensor,
-            height=original_height,  # ← Dimensioni originali (prima delle augmentations)
-            width=original_width,  # ← Dimensioni originali (prima delle augmentations)
+            height=height_transformed,  # ← Dimensioni trasformate (dopo augmentations)
+            width=width_transformed,  # ← Dimensioni trasformate (dopo augmentations)
+            original_height=original_height,  # ← Dimensioni originali (prima delle augmentations)
+            original_width=original_width,  # ← Dimensioni originali (prima delle augmentations)
             image_id=item.get("image_id", idx),
             file_name=item["file_name"],
         )
@@ -289,9 +307,12 @@ class LightningDatasetWrapper(Dataset):
 
         # Also populate instances for models that expect it (like MaskFormer)
         # Convert semantic mask to instance masks (one per class)
+        # IMPORTANT: Filter ONLY ignore_label (255) like the old SemanticDatasetMapper
+        # Background (class 0) is a VALID class and should be included!
+        ignore_label = 255
         unique_classes = torch.unique(mask_tensor)
-        # Remove background class (0) if present
-        unique_classes = unique_classes[unique_classes > 0]
+        # Remove ONLY ignore_label (255), keep background (0) as it's a valid class
+        unique_classes = unique_classes[unique_classes != ignore_label]
 
         if len(unique_classes) > 0:
             # Create binary masks for each class
@@ -328,13 +349,18 @@ class LightningDatasetWrapper(Dataset):
         image_tensor = (
             self.transform(image=image)["image"]
             if self.transform
-            else torch.from_numpy(image.transpose(2, 0, 1)).float() / 255.0
+            else torch.from_numpy(image.transpose(2, 0, 1)).float()  # Keep [0, 255] range
         )
+
+        # Get transformed dimensions
+        _, height_transformed, width_transformed = image_tensor.shape
 
         return DatasetEntry(
             image=image_tensor,
-            height=original_height,  # ← Dimensioni originali
-            width=original_width,  # ← Dimensioni originali
+            height=height_transformed,  # ← Dimensioni trasformate (dopo augmentations)
+            width=width_transformed,  # ← Dimensioni trasformate (dopo augmentations)
+            original_height=original_height,  # ← Dimensioni originali (prima delle augmentations)
+            original_width=original_width,  # ← Dimensioni originali (prima delle augmentations)
             image_id=item.get("image_id", idx),
             file_name=item["file_name"],
         )

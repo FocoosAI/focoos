@@ -199,10 +199,10 @@ class DetectionLightningEvaluator(DatasetEvaluator):
                 # Convert to [0, 100] scale
                 per_class_ap = per_class_ap * 100.0
 
-                # Get class names from dataset if available
+                # Get class names from dataset metadata (same as old DetectionEvaluator)
                 class_names = None
-                if hasattr(self.dataset_dict, "thing_classes"):
-                    class_names = self.dataset_dict.thing_classes
+                if hasattr(self.dataset_dict, "metadata") and hasattr(self.dataset_dict.metadata, "thing_classes"):
+                    class_names = self.dataset_dict.metadata.thing_classes
 
                 # Add per-category AP using the same format as old DetectionEvaluator: "AP-{class_name}"
                 for class_idx, ap_value in enumerate(per_class_ap):

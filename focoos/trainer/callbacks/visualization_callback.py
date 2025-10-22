@@ -26,7 +26,8 @@ class VisualizationCallback(Callback):
     """
     Lightning callback that visualizes model predictions during training.
 
-    Saves individual sample predictions as separate images to disk and/or TensorBoard.
+    Creates side-by-side comparison images with ground truth annotations on the left
+    and model predictions on the right. Saves images to disk and/or TensorBoard.
     Similar to VisualizationHook from the original trainer.
 
     Args:
@@ -46,6 +47,7 @@ class VisualizationCallback(Callback):
         >>> trainer = L.Trainer(callbacks=[viz_callback, ...])
 
     The callback will save images as: {output_dir}/preview/sample_{idx}_iter_{step}.jpg
+    Each image contains ground truth (left) and predictions (right) side-by-side.
     """
 
     def __init__(
@@ -224,44 +226,105 @@ class VisualizationCallback(Callback):
                     # Post-process predictions
                     prediction = processor.eval_postprocess(outputs, samples)[0]
 
-                    # Denormalize image for visualization
-                    # The image in sample is normalized, we need to denormalize it
+                    # Convert image tensor to numpy array for visualization
+                    # Images are in [0, 255] range from ToTensor transform
                     image_vis = sample.image.permute(1, 2, 0).cpu().numpy()  # CHW -> HWC
 
-                    # Denormalize with ImageNet stats (standard for Albumentations)
-                    mean = np.array([0.485, 0.456, 0.406])
-                    std = np.array([0.229, 0.224, 0.225])
-                    image_vis = std * image_vis + mean
+                    # Convert to uint8 [0, 255] range
+                    image_vis = np.clip(image_vis, 0, 255).astype(np.uint8)
 
-                    # Clip to [0, 1] and convert to uint8
-                    image_vis = np.clip(image_vis, 0, 1)
-                    image_vis = (image_vis * 255).astype(np.uint8)
+                    # Create visualizer for ground truth
+                    visualizer_gt = Visualizer(
+                        image_vis.copy(),
+                        self.metadata,
+                        instance_mode=ColorMode.IMAGE,
+                    )
 
-                    # Create visualizer
-                    visualizer = Visualizer(
-                        image_vis,
+                    # Draw ground truth annotations
+                    gt_img = None
+                    if hasattr(sample, "instances") and sample.instances is not None:
+                        gt_instances = sample.instances.to(self.cpu_device)
+                        vis_output_gt = visualizer_gt.draw_instance_predictions(predictions=gt_instances)
+                        gt_img = vis_output_gt.get_image()
+                    elif hasattr(sample, "sem_seg") and sample.sem_seg is not None:
+                        vis_output_gt = visualizer_gt.draw_sem_seg(sample.sem_seg.to(self.cpu_device))
+                        gt_img = vis_output_gt.get_image()
+
+                    # Create visualizer for predictions
+                    visualizer_pred = Visualizer(
+                        image_vis.copy(),
                         self.metadata,
                         instance_mode=ColorMode.IMAGE,
                     )
 
                     # Draw predictions based on task
-                    vis_output = None
+                    pred_img = None
                     if "panoptic_seg" in prediction:
                         panoptic_seg, segments_info = prediction["panoptic_seg"]
-                        vis_output = visualizer.draw_panoptic_seg_predictions(
+                        vis_output = visualizer_pred.draw_panoptic_seg_predictions(
                             panoptic_seg.to(self.cpu_device), segments_info
                         )
+                        pred_img = vis_output.get_image()
                     elif "sem_seg" in prediction:
-                        vis_output = visualizer.draw_sem_seg(prediction["sem_seg"].argmax(dim=0).to(self.cpu_device))
+                        vis_output = visualizer_pred.draw_sem_seg(
+                            prediction["sem_seg"].argmax(dim=0).to(self.cpu_device)
+                        )
+                        pred_img = vis_output.get_image()
                     elif "instances" in prediction:
                         instances = prediction["instances"].to(self.cpu_device)
                         # Filter based on confidence threshold
                         instances = instances[instances.scores > self.confidence_threshold]
-                        vis_output = visualizer.draw_instance_predictions(predictions=instances)
-
-                    if vis_output is not None:
+                        vis_output = visualizer_pred.draw_instance_predictions(predictions=instances)
                         pred_img = vis_output.get_image()
-                        all_visualized_images.append(pred_img)
+
+                    # Concatenate GT (left) and Predictions (right) horizontally
+                    if gt_img is not None and pred_img is not None:
+                        # Ensure both images have the same height
+                        h_gt, w_gt = gt_img.shape[:2]
+                        h_pred, w_pred = pred_img.shape[:2]
+
+                        if h_gt != h_pred:
+                            # Resize to match heights
+                            target_h = max(h_gt, h_pred)
+                            if h_gt < target_h:
+                                gt_img = cv2.resize(gt_img, (w_gt, target_h))
+                            if h_pred < target_h:
+                                pred_img = cv2.resize(pred_img, (w_pred, target_h))
+
+                        # Add text labels to identify GT and Predictions
+                        h_gt, w_gt = gt_img.shape[:2]
+                        h_pred, w_pred = pred_img.shape[:2]
+
+                        # Add "Ground Truth" label on GT image
+                        font = cv2.FONT_HERSHEY_SIMPLEX
+                        font_scale = 1.0
+                        thickness = 2
+                        text_gt = "Ground Truth"
+                        text_pred = f"Predictions (conf > {self.confidence_threshold})"
+
+                        # Get text size to create background rectangle
+                        (text_w_gt, text_h_gt), _ = cv2.getTextSize(text_gt, font, font_scale, thickness)
+                        (text_w_pred, text_h_pred), _ = cv2.getTextSize(text_pred, font, font_scale, thickness)
+
+                        # Add background rectangle and text for GT
+                        cv2.rectangle(gt_img, (10, 10), (20 + text_w_gt, 20 + text_h_gt), (0, 0, 0), -1)
+                        cv2.putText(gt_img, text_gt, (15, 15 + text_h_gt), font, font_scale, (255, 255, 255), thickness)
+
+                        # Add background rectangle and text for Predictions
+                        cv2.rectangle(pred_img, (10, 10), (20 + text_w_pred, 20 + text_h_pred), (0, 0, 0), -1)
+                        cv2.putText(
+                            pred_img,
+                            text_pred,
+                            (15, 15 + text_h_pred),
+                            font,
+                            font_scale,
+                            (255, 255, 255),
+                            thickness,
+                        )
+
+                        # Concatenate horizontally: GT on left, predictions on right
+                        combined_img = np.hstack([gt_img, pred_img])
+                        all_visualized_images.append(combined_img)
 
             # Save individual images if we have images
             if all_visualized_images:

@@ -99,57 +99,80 @@ class FocoosLightningDataModule(L.LightningDataModule):
         self.train_augmentations = train_augmentations or get_default_train_augmentations(self.task, self.image_size)
         self.val_augmentations = val_augmentations or get_default_val_augmentations(self.task, self.image_size)
 
-        # Save hyperparameters and log augmentations
+        # Save hyperparameters
         self.save_hyperparameters()
-        self._log_augmentations()
 
-        # Automatic setup
+        # Automatic setup (will log augmentations + dataset info together)
         self._setup()
 
-    def _log_augmentations(self) -> None:
-        """Log train and val augmentations, inspired by Focoos DatasetMapper"""
+    def _format_augmentations(self, augs: Optional[A.Compose]) -> str:
+        """Format augmentations into readable string"""
+        if augs is None:
+            return "None"
 
-        def format_augmentations(augs: Optional[A.Compose]) -> str:
-            """Format augmentations into readable string"""
-            if augs is None:
-                return "None"
+        aug_list = []
+        if hasattr(augs, "transforms"):
+            for aug in augs.transforms:
+                aug_name = aug.__class__.__name__
+                params = []
+                if hasattr(aug, "p") and aug.p != 1.0:
+                    params.append(f"p={aug.p}")
 
-            aug_list = []
-            if hasattr(augs, "transforms"):
-                for aug in augs.transforms:
-                    aug_name = aug.__class__.__name__
-                    params = []
-                    if hasattr(aug, "p") and aug.p != 1.0:
-                        params.append(f"p={aug.p}")
+                if aug_name in ["Resize", "LetterBox"]:
+                    height = getattr(aug, "height", None)
+                    width = getattr(aug, "width", None)
+                    if height and width:
+                        params.append(f"size=({height}x{width})")
+                elif aug_name == "Normalize":
+                    mean = getattr(aug, "mean", None)
+                    std = getattr(aug, "std", None)
+                    if mean and std:
+                        mean_str = str(mean[:3]) if len(mean) > 3 else str(mean)
+                        std_str = str(std[:3]) if len(std) > 3 else str(std)
+                        params.append(f"mean={mean_str}")
+                        params.append(f"std={std_str}")
 
-                    if aug_name in ["Resize", "LetterBox"]:
-                        height = getattr(aug, "height", None)
-                        width = getattr(aug, "width", None)
-                        if height and width:
-                            params.append(f"size=({height}x{width})")
-                    elif aug_name == "Normalize":
-                        mean = getattr(aug, "mean", None)
-                        std = getattr(aug, "std", None)
-                        if mean and std:
-                            mean_str = str(mean[:3]) if len(mean) > 3 else str(mean)
-                            std_str = str(std[:3]) if len(std) > 3 else str(std)
-                            params.append(f"mean={mean_str}")
-                            params.append(f"std={std_str}")
+                param_str = f"({', '.join(params)})" if params else ""
+                aug_list.append(f"{aug_name}{param_str}")
 
-                    param_str = f"({', '.join(params)})" if params else ""
-                    aug_list.append(f"{aug_name}{param_str}")
+        return "\n - ".join(aug_list)
 
-            return "\n - ".join(aug_list)
+    def _log_dataset_summary(self) -> None:
+        """Log combined dataset statistics and augmentations"""
+        # Format augmentations
+        train_augs_str = self._format_augmentations(self.train_augmentations)
+        val_augs_str = self._format_augmentations(self.val_augmentations)
 
-        train_augs_str = format_augmentations(self.train_augmentations)
-        self.logger_focoos.info(
-            f"\n =========== 🎨 train augmentations =========== \n - {train_augs_str} \n============================================"
-        )
+        # Build summary message
+        summary = []
+        summary.append("\n" + "=" * 60)
+        summary.append("📊 DATASET SUMMARY")
+        summary.append("=" * 60)
 
-        val_augs_str = format_augmentations(self.val_augmentations)
-        self.logger_focoos.info(
-            f"\n =========== 🎨 val augmentations =========== \n - {val_augs_str} \n============================================"
-        )
+        # Dataset info
+        summary.append(f"Dataset: {self.dataset_name}")
+        summary.append(f"Dataset path: {self.dataset_path}")
+        summary.append(f"Task: {self.task.value}")
+        summary.append(f"Train samples: {len(self.train_dataset)}")
+        summary.append(f"Val samples: {len(self.val_dataset)}")
+        summary.append(f"Num classes: {self.train_dataset.dict_dataset.metadata.num_classes}")
+
+        # Mosaic info if enabled
+        if self.train_dataset.use_mosaic:
+            summary.append(f"🎨 Mosaic augmentation: enabled (p={self.train_dataset.mosaic_p})")
+
+        # Train augmentations
+        summary.append("\n🎨 TRAIN AUGMENTATIONS:")
+        summary.append(" - " + train_augs_str)
+
+        # Val augmentations
+        summary.append("\n🎨 VAL AUGMENTATIONS:")
+        summary.append(" - " + val_augs_str)
+
+        summary.append("=" * 60 + "\n")
+
+        # Log everything at once
+        self.logger_focoos.info("\n".join(summary))
 
     def _load_dict_dataset(self, split: DatasetSplitType) -> DictDataset:
         """Load DictDataset directly based on layout"""
@@ -198,15 +221,8 @@ class FocoosLightningDataModule(L.LightningDataModule):
             transform=self.val_augmentations,
         )
 
-        # Log Mosaic status if detected
-        if self.train_dataset.use_mosaic:
-            self.logger_focoos.info(
-                f"🎨 Mosaic augmentation detected in train pipeline (p={self.train_dataset.mosaic_p})"
-            )
-
-        self.logger_focoos.info(
-            f"✅ Setup completed - Train: {len(self.train_dataset)} samples, Val: {len(self.val_dataset)} samples"
-        )
+        # Log dataset info and augmentations together
+        self._log_dataset_summary()
 
     def setup(self, stage: Optional[str] = None) -> None:
         """Lightning Trainer compatibility (setup already done in __init__)"""
@@ -249,6 +265,88 @@ class FocoosLightningDataModule(L.LightningDataModule):
             drop_last=False,
             collate_fn=self._collate_fn,
         )
+
+    def _generate_colors(self, num_colors: int) -> list:
+        """
+        Generate distinct colors for visualization.
+
+        Args:
+            num_colors: Number of distinct colors to generate
+
+        Returns:
+            List of RGB color tuples
+        """
+        colors = []
+        np.random.seed(42)  # Fixed seed for consistent colors
+        for i in range(num_colors):
+            # Generate colors with good contrast
+            hue = i * 360 // num_colors
+            # Convert HSV to RGB (OpenCV uses 0-179 for hue)
+            hsv = np.array([[[hue // 2, 255, 255]]], dtype=np.uint8)
+            rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)[0][0]
+            colors.append((int(rgb[0]), int(rgb[1]), int(rgb[2])))
+        return colors
+
+    def _draw_segmentation_mask(
+        self,
+        image: np.ndarray,
+        mask: np.ndarray,
+        class_names: Optional[list],
+        alpha: float = 0.5,
+    ) -> np.ndarray:
+        """
+        Draw segmentation mask overlay on image.
+
+        Args:
+            image: Numpy array image in RGB format
+            mask: Segmentation mask (H, W) with class indices
+            class_names: List of class names (optional)
+            alpha: Transparency factor for overlay (0=transparent, 1=opaque)
+
+        Returns:
+            Image with mask overlay
+        """
+        # Get unique classes in mask (excluding background=0)
+        unique_classes = np.unique(mask)
+        unique_classes = unique_classes[unique_classes > 0]
+
+        if len(unique_classes) == 0:
+            return image
+
+        # Generate colors for all possible classes
+        num_classes = int(mask.max()) + 1
+        colors = self._generate_colors(num_classes)
+
+        # Create colored mask overlay
+        overlay = image.copy()
+        for cls_id in unique_classes:
+            color = colors[int(cls_id)]
+            # Create binary mask for this class
+            class_mask = mask == cls_id
+            # Apply color to overlay
+            overlay[class_mask] = color
+
+        # Blend original image with overlay
+        image = cv2.addWeighted(image, 1 - alpha, overlay, alpha, 0)
+
+        # Draw legend with class names
+        if class_names:
+            y_offset = 40
+            for cls_id in unique_classes:
+                color = colors[int(cls_id)]
+                class_name = class_names[int(cls_id)] if cls_id < len(class_names) else f"Class {int(cls_id)}"
+
+                # Draw color box
+                cv2.rectangle(image, (10, y_offset), (30, y_offset + 15), color, -1)
+                cv2.rectangle(image, (10, y_offset), (30, y_offset + 15), (255, 255, 255), 1)
+
+                # Draw text
+                cv2.putText(image, class_name, (35, y_offset + 12), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+                cv2.putText(image, class_name, (34, y_offset + 11), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1)
+
+                y_offset += 20
+
+        return image
 
     def _draw_annotations(
         self,
@@ -349,9 +447,26 @@ class FocoosLightningDataModule(L.LightningDataModule):
                         bboxes_list.append(bbox)
                         labels_list.append(ann["category_id"])
 
-            # Draw annotations (bboxes + index)
-            class_names = getattr(dataset.dict_dataset.metadata, "thing_classes", None)
-            image = self._draw_annotations(image, bboxes_list, labels_list, class_names, index)
+                # Draw annotations (bboxes + index)
+                class_names = getattr(dataset.dict_dataset.metadata, "thing_classes", None)
+                image = self._draw_annotations(image, bboxes_list, labels_list, class_names, index)
+
+            elif self.task == Task.SEMSEG:
+                # Load and draw segmentation mask
+                if "sem_seg_file_name" in item:
+                    mask = np.array(Image.open(item["sem_seg_file_name"]))
+                    # If mask is RGB, take first channel
+                    if len(mask.shape) == 3:
+                        mask = mask[:, :, 0]
+
+                    class_names = getattr(dataset.dict_dataset.metadata, "stuff_classes", None)
+                    image = self._draw_segmentation_mask(image, mask, class_names, alpha=0.5)
+
+                # Draw index
+                index_text = f"#{index}"
+                (text_width, text_height), baseline = cv2.getTextSize(index_text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
+                cv2.rectangle(image, (5, 5), (8 + text_width, 8 + text_height), (0, 0, 255), -1)
+                cv2.putText(image, index_text, (5, 5 + text_height), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
             # Convert to PIL for return
             pil_image = Image.fromarray(image)
@@ -377,28 +492,46 @@ class FocoosLightningDataModule(L.LightningDataModule):
                             has_normalize = True
                             break
 
-            # Denormalize only if image was normalized
+            # Handle image range based on whether it was normalized
             if has_normalize:
+                # Image was normalized with mean/std, denormalize it
                 mean = np.array([0.485, 0.456, 0.406])
                 std = np.array([0.229, 0.224, 0.225])
                 image = std * image + mean
+                # After denormalization, image is in [0, 1]
+                image = np.clip(image, 0, 1)
+                image = (image * 255).astype(np.uint8)
+            else:
+                # Image is in [0, 255] range (our custom ToTensor doesn't divide by 255)
+                image = np.clip(image, 0, 255).astype(np.uint8)
 
-            image = np.clip(image, 0, 1)
-            # Convert to uint8 for OpenCV
-            image = (image * 255).astype(np.uint8)
+            if self.task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION]:
+                # Extract bboxes and labels if available
+                bboxes_list = []
+                labels_list = []
+                if hasattr(sample, "instances") and sample.instances is not None:
+                    if sample.instances.boxes is not None:
+                        bboxes_list = sample.instances.boxes.tensor.cpu().numpy().tolist()
+                    if sample.instances.classes is not None:
+                        labels_list = sample.instances.classes.cpu().numpy().tolist()
 
-            # Extract bboxes and labels if available
-            bboxes_list = []
-            labels_list = []
-            if hasattr(sample, "instances") and sample.instances is not None:
-                if sample.instances.boxes is not None:
-                    bboxes_list = sample.instances.boxes.tensor.cpu().numpy().tolist()
-                if sample.instances.classes is not None:
-                    labels_list = sample.instances.classes.cpu().numpy().tolist()
+                # Draw annotations with OpenCV
+                class_names = getattr(dataset.dict_dataset.metadata, "thing_classes", None)
+                image = self._draw_annotations(image, bboxes_list, labels_list, class_names, index)
 
-            # Draw annotations with OpenCV
-            class_names = getattr(dataset.dict_dataset.metadata, "thing_classes", None)
-            image = self._draw_annotations(image, bboxes_list, labels_list, class_names, index)
+            elif self.task == Task.SEMSEG:
+                # Draw segmentation mask
+                sem_seg = getattr(sample, "sem_seg", None)
+                if sem_seg is not None:
+                    mask = sem_seg.cpu().numpy()
+                    class_names = getattr(dataset.dict_dataset.metadata, "stuff_classes", None)
+                    image = self._draw_segmentation_mask(image, mask, class_names, alpha=0.5)
+
+                # Draw index
+                index_text = f"#{index}"
+                (text_width, text_height), baseline = cv2.getTextSize(index_text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
+                cv2.rectangle(image, (5, 5), (8 + text_width, 8 + text_height), (0, 0, 255), -1)
+                cv2.putText(image, index_text, (5, 5 + text_height), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
             # Convert to PIL for return
             pil_image = Image.fromarray(image)

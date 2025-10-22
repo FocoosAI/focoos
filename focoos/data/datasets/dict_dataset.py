@@ -51,10 +51,6 @@ class DictDataset(Dataset):
         self.dicts: Union[TorchSerializedDataset, list[DetectronDict]] = (
             TorchSerializedDataset(dicts) if serialize else dicts
         )
-        serialize_size = len(self.dicts._lst) / 1024**2 if isinstance(self.dicts, TorchSerializedDataset) else "unknown"
-        logger.info(
-            f"\n ============= ✅ {self.split_type.value} dataset: {self.metadata.name} loaded ============= \n - images: {self.metadata.count} \n - classes: {self.metadata.num_classes} \n - dir: {self.metadata.image_root} \n - task: {self.metadata.task} \n - Coco json size: {serialize_size:.3f} MiB \n ============================================"
-        )
 
     def __getitem__(self, index) -> dict:
         entry = self.dicts[index]

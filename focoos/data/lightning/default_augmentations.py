@@ -4,7 +4,6 @@ Provides task-specific augmentations for training and validation.
 """
 
 import albumentations as A
-from albumentations.pytorch import ToTensorV2
 
 from focoos.ports import Task
 
@@ -31,10 +30,9 @@ def get_default_train_augmentations(task: Task, image_size: int) -> A.Compose:
                 A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=20, val_shift_limit=10, p=0.5),
                 A.GaussianBlur(blur_limit=(3, 7), p=0.3),
                 A.GaussNoise(p=0.3),
-                A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-                # LetterBox(height=image_size, width=image_size),
                 A.Resize(height=image_size, width=image_size),
-                ToTensorV2(),
+                # Normalization will be done in the processor
+                # ToTensor(),
             ]
         )
 
@@ -50,10 +48,15 @@ def get_default_train_augmentations(task: Task, image_size: int) -> A.Compose:
             A.RandomBrightnessContrast(p=0.5),
             A.HueSaturationValue(p=0.5),
             A.ColorJitter(p=0.2),
-            LetterBox(height=image_size, width=image_size, p=1.0),
-            # A.Resize(height=image_size, width=image_size),
-            # A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-            ToTensorV2(),
+            A.OneOf(
+                transforms=[
+                    LetterBox(height=image_size, width=image_size, p=1.0),
+                    A.Resize(height=image_size, width=image_size, p=1.0),
+                    A.RandomResizedCrop(size=(image_size, image_size), p=1.0),
+                ],
+                p=1.0,
+            ),
+            A.ToTensorV2(),
         ]
         return A.Compose(
             transforms_list,
@@ -67,8 +70,8 @@ def get_default_train_augmentations(task: Task, image_size: int) -> A.Compose:
                 A.HorizontalFlip(p=0.5),
                 A.VerticalFlip(p=0.2),
                 A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.5),
-                # A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-                ToTensorV2(),
+                # Normalization will be done in the processor
+                A.ToTensorV2(),
             ]
         )
 
@@ -78,8 +81,8 @@ def get_default_train_augmentations(task: Task, image_size: int) -> A.Compose:
             [
                 LetterBox(height=image_size, width=image_size),
                 A.HorizontalFlip(p=0.5),
-                # A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-                ToTensorV2(),
+                # Normalization will be done in the processor
+                A.ToTensorV2(),
             ]
         )
 
@@ -101,10 +104,10 @@ def get_default_val_augmentations(task: Task, image_size: int) -> A.Compose:
     if task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION]:
         return A.Compose(
             [
-                LetterBox(height=image_size, width=image_size),
-                # A.Resize(height=image_size, width=image_size),
-                # A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-                ToTensorV2(),
+                # LetterBox(height=image_size, width=image_size),
+                A.Resize(height=image_size, width=image_size),
+                # Normalation will be done in the processor
+                A.ToTensorV2(),
             ],
             bbox_params=A.BboxParams(format="albumentations", label_fields=["labels"]),
         )
@@ -112,7 +115,7 @@ def get_default_val_augmentations(task: Task, image_size: int) -> A.Compose:
         return A.Compose(
             [
                 LetterBox(height=image_size, width=image_size),
-                # A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-                ToTensorV2(),
+                # Normalization will be done in the processor
+                A.ToTensorV2(),
             ]
         )

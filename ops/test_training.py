@@ -62,9 +62,8 @@ def get_dataset(task: Task):
     api_client = ApiClient()
     api_client.download_ext_file(url, DATASETS_DIR, skip_if_exists=True)
 
-    # Return dataset name without .zip extension
-    ds_name = ds_file.replace(".zip", "")
-    return ds_name, layout
+    # ds_name = ds_file.replace(".zip", "")
+    return ds_file, layout
 
 
 def train(model_name: str, iter: int):
@@ -101,11 +100,11 @@ def train(model_name: str, iter: int):
 
     _temp_dir = tempfile.mkdtemp()
     logger.info(f"Created temporary directory for training output: {_temp_dir}")
-
+    output_dir = "./output"
     # Configure training arguments with dataset parameters
     train_args = TrainArgs(
         run_name=model_name + "_test",
-        output_dir="./output",
+        output_dir=output_dir,
         dataset_name=dataset_name,
         task=task,
         layout=layout,

@@ -1,6 +1,7 @@
 import importlib.metadata as metadata
 import os
 import platform
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -317,6 +318,9 @@ def extract_archive(
     else:
         extracted_dir = base_dir
 
+    # Get list of top-level items in archive BEFORE extraction
+    top_level_items = set()
+
     if comm.is_main_process():
         logger.info(f"Extracting archive: {archive_path} to {extracted_dir}")
 
@@ -326,25 +330,76 @@ def extract_archive(
         # Get the file extension
         file_extension = get_file_extension(archive_path)
 
-        # Extract the archive
         if file_extension == "application/zip":
             with zipfile.ZipFile(archive_path, "r") as zip_ref:
+                for name in zip_ref.namelist():
+                    # Get first component of path (top-level folder or file)
+                    top_level = name.split("/")[0]
+                    # Skip empty strings, hidden files/folders (starting with .), and __MACOSX
+                    if top_level and not top_level.startswith(".") and top_level != "__MACOSX":
+                        top_level_items.add(top_level)
                 zip_ref.extractall(extracted_dir)
         elif file_extension == "application/gzip":
             with tarfile.open(archive_path, "r:gz") as tar_ref:
+                for member in tar_ref.getmembers():
+                    top_level = member.name.split("/")[0]
+                    # Skip empty strings, hidden files/folders, and __MACOSX
+                    if top_level and not top_level.startswith(".") and top_level != "__MACOSX":
+                        top_level_items.add(top_level)
                 tar_ref.extractall(extracted_dir)
         elif file_extension == "application/x-tar":
             with tarfile.open(archive_path, "r:") as tar_ref:
+                for member in tar_ref.getmembers():
+                    top_level = member.name.split("/")[0]
+                    # Skip empty strings, hidden files/folders, and __MACOSX
+                    if top_level and not top_level.startswith(".") and top_level != "__MACOSX":
+                        top_level_items.add(top_level)
                 tar_ref.extractall(extracted_dir)
         else:
             raise ValueError("Unsupported archive format. Only .zip and .tar.gz are supported.")
         t1 = time.time()
         logger.info(f"[elapsed {t1 - t0:.3f} ] Extracted archive to: {extracted_dir}")
+        logger.info(f"Top-level items in archive: {top_level_items}")
 
     comm.synchronize()
-    extracted_dir = os.path.join(extracted_dir, archive_name)
-    if len(list_dir(extracted_dir)) == 1:
-        extracted_dir = list_dir(extracted_dir)[0]
+
+    # Check what was extracted - only look at the items that were in the archive
+    # Filter out system/hidden files that might have been extracted (e.g., __MACOSX)
+    extracted_contents = []
+    for item in top_level_items:
+        item_path = os.path.join(extracted_dir, item)
+        # Only include items that actually exist and are not system/hidden
+        if os.path.exists(item_path) and not item.startswith(".") and item != "__MACOSX":
+            extracted_contents.append(item_path)
+
+    if len(extracted_contents) == 1:
+        # If there's only one folder, use that folder directly
+        # (zip contains a single root folder with train/valid inside)
+        extracted_dir = extracted_contents[0]
+        if comm.is_main_process():
+            logger.info(f"Using extracted folder: {extracted_dir}")
+    else:
+        # If there are multiple items (e.g., train/, valid/ at root),
+        # create a folder with the archive name and move everything there
+        target_dir = os.path.join(extracted_dir, archive_name)
+        if comm.is_main_process():
+            if not os.path.exists(target_dir):
+                logger.info(f"Creating target directory and moving {len(extracted_contents)} items: {target_dir}")
+                os.makedirs(target_dir, exist_ok=True)
+                # Move all extracted contents to the target directory
+                for item in extracted_contents:
+                    item_name = os.path.basename(item)
+                    dest = os.path.join(target_dir, item_name)
+                    if os.path.exists(dest):
+                        if os.path.isdir(dest):
+                            shutil.rmtree(dest)
+                        else:
+                            os.remove(dest)
+                    shutil.move(str(item), dest)
+            else:
+                logger.info(f"Target directory already exists: {target_dir}")
+        comm.synchronize()
+        extracted_dir = target_dir
 
     # Optionally delete the original archive
     if delete_original:
