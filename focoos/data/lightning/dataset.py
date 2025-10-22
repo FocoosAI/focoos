@@ -6,6 +6,7 @@ Wrapper che integra DictDataset con Albumentations e supporto Mosaic.
 from typing import Any, Dict, List, Optional
 
 import albumentations as A
+import cv2
 import numpy as np
 import torch
 from numpy.typing import NDArray
@@ -34,25 +35,46 @@ class LightningDatasetWrapper(Dataset):
         self,
         dict_dataset: DictDataset,
         transform: Optional[A.Compose] = None,
-        use_mosaic: bool = False,
-        mosaic_p: float = 0.5,
     ) -> None:
         """
         Args:
             dict_dataset: DictDataset di Focoos
             transform: Albumentations transform pipeline
-            use_mosaic: Se True, applica Mosaic augmentation (solo per detection tasks)
-            mosaic_p: Probabilità di applicare Mosaic (default: 0.5)
         """
         self.dict_dataset = dict_dataset
         self.transform = transform
         self.task = dict_dataset.metadata.task
         self.metadata = dict_dataset.metadata
-        self.use_mosaic = use_mosaic and self.task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION]
-        self.mosaic_p = mosaic_p
+
+        # Auto-detect Mosaic augmentation from transform pipeline
+        self.use_mosaic = False
+        self.mosaic_p = 0.0
+        self._detect_mosaic_augmentation()
 
     def __len__(self) -> int:
         return len(self.dict_dataset)
+
+    def _detect_mosaic_augmentation(self) -> None:
+        """
+        Auto-detect if Mosaic augmentation is present in the transform pipeline.
+        Sets self.use_mosaic and self.mosaic_p accordingly.
+        """
+        if not self.transform or self.task not in [Task.DETECTION, Task.INSTANCE_SEGMENTATION]:
+            return
+
+        # Check if transform has a transforms attribute (A.Compose)
+        if not hasattr(self.transform, "transforms"):
+            return
+
+        # Look for Mosaic augmentation in the pipeline
+        for aug in self.transform.transforms:
+            aug_name = aug.__class__.__name__
+            if aug_name == "Mosaic":
+                # Extract probability from the augmentation
+                if hasattr(aug, "p"):
+                    self.mosaic_p = aug.p
+                self.use_mosaic = True if aug.p > 0.0 else False
+                break
 
     def _load_additional_images(self, current_idx: int, num_images: int = 3) -> List[Dict[str, Any]]:
         """
@@ -106,7 +128,7 @@ class LightningDatasetWrapper(Dataset):
 
     def __getitem__(self, idx: int) -> DatasetEntry:
         item: Dict[str, Any] = self.dict_dataset[idx]
-        image: NDArray[np.uint8] = np.array(Image.open(item["file_name"]).convert("RGB"))
+        image: NDArray[np.uint8] = cv2.cvtColor(cv2.imread(item["file_name"]), cv2.COLOR_BGR2RGB)
 
         if self.task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION]:
             return self._process_detection(image, item, idx)
@@ -121,6 +143,10 @@ class LightningDatasetWrapper(Dataset):
         """Processa sample per detection/instance segmentation con supporto Mosaic"""
         bboxes: List[Any] = []
         labels: List[Any] = []
+
+        # IMPORTANTE: Salva dimensioni originali PRIMA delle augmentations
+        # Queste saranno usate dal processor per scalare le predizioni alle dimensioni target
+        original_height, original_width = image.shape[:2]
 
         if "annotations" in item and len(item["annotations"]) > 0:
             h, w = image.shape[:2]
@@ -157,25 +183,26 @@ class LightningDatasetWrapper(Dataset):
         else:
             image_tensor = torch.from_numpy(image.transpose(2, 0, 1)).float() / 255.0
 
-        # Get final image dimensions
-        _, height, width = image_tensor.shape
+        # Get dimensions of TRANSFORMED image (after augmentations)
+        _, height_transformed, width_transformed = image_tensor.shape
 
-        # Create DatasetEntry with Instances
+        # Create DatasetEntry with ORIGINAL dimensions
+        # Il processor userà queste dimensioni per scalare le predizioni alle dimensioni target originali
         entry = DatasetEntry(
             image=image_tensor,
-            height=height,
-            width=width,
+            height=original_height,  # ← Dimensioni originali (prima delle augmentations)
+            width=original_width,  # ← Dimensioni originali (prima delle augmentations)
             image_id=item.get("image_id", idx),
             file_name=item["file_name"],
         )
 
         # Always create Instances object for detection/segmentation (even if empty)
-        # Denormalize bboxes to absolute coordinates
+        # Denormalize bboxes to TRANSFORMED image dimensions (l'immagine che abbiamo effettivamente)
         if len(bboxes) > 0:
             # Convert to numpy first for efficient vectorized operations, then to tensor
             bboxes_array = np.array(bboxes, dtype=np.float32)
-            bboxes_array[:, [0, 2]] *= width  # x coordinates
-            bboxes_array[:, [1, 3]] *= height  # y coordinates
+            bboxes_array[:, [0, 2]] *= width_transformed  # x coordinates sulle dimensioni trasformate
+            bboxes_array[:, [1, 3]] *= height_transformed  # y coordinates sulle dimensioni trasformate
             bboxes_tensor = torch.from_numpy(bboxes_array)
             labels_tensor = torch.as_tensor(labels, dtype=torch.int64)
         else:
@@ -183,9 +210,9 @@ class LightningDatasetWrapper(Dataset):
             labels_tensor = torch.zeros(0, dtype=torch.int64)
 
         # Create Instances object with boxes and classes passed to constructor
-        # (this ensures _fields dict is properly populated for .to(device))
+        # image_size deve essere delle dimensioni trasformate (corrispondenti alle bbox)
         instances = Instances(
-            image_size=(height, width),
+            image_size=(height_transformed, width_transformed),
             boxes=Boxes(bboxes_tensor),
             classes=labels_tensor,
         )
@@ -195,6 +222,9 @@ class LightningDatasetWrapper(Dataset):
 
     def _process_classification(self, image: NDArray[np.uint8], item: Dict[str, Any], idx: int) -> DatasetEntry:
         """Processa sample per classificazione"""
+        # Salva dimensioni originali PRIMA delle augmentations
+        original_height, original_width = image.shape[:2]
+
         label = item["annotations"][0]["category_id"] if "annotations" in item and len(item["annotations"]) > 0 else -1
 
         image_tensor = (
@@ -203,12 +233,10 @@ class LightningDatasetWrapper(Dataset):
             else torch.from_numpy(image.transpose(2, 0, 1)).float() / 255.0
         )
 
-        _, height, width = image_tensor.shape
-
         entry = DatasetEntry(
             image=image_tensor,
-            height=height,
-            width=width,
+            height=original_height,  # ← Dimensioni originali
+            width=original_width,  # ← Dimensioni originali
             image_id=item.get("image_id", idx),
             file_name=item["file_name"],
         )
@@ -218,6 +246,10 @@ class LightningDatasetWrapper(Dataset):
 
     def _process_segmentation(self, image: NDArray[np.uint8], item: Dict[str, Any], idx: int) -> DatasetEntry:
         """Processa sample per semantic segmentation"""
+        # IMPORTANTE: Salva dimensioni originali PRIMA delle augmentations
+        # Queste saranno usate dal processor per scalare le predizioni alle dimensioni target
+        original_height, original_width = image.shape[:2]
+
         # Carica la maschera di segmentazione
         if "sem_seg_file_name" not in item:
             raise ValueError(f"sem_seg_file_name not found in item {idx}")
@@ -240,12 +272,15 @@ class LightningDatasetWrapper(Dataset):
             image_tensor = torch.from_numpy(image.transpose(2, 0, 1)).float() / 255.0
             mask_tensor = torch.from_numpy(mask).long()
 
-        _, height, width = image_tensor.shape
+        # Get dimensions of TRANSFORMED image (after augmentations)
+        _, height_transformed, width_transformed = image_tensor.shape
 
+        # Create DatasetEntry with ORIGINAL dimensions
+        # Il processor userà queste dimensioni per scalare le predizioni alle dimensioni target originali
         entry = DatasetEntry(
             image=image_tensor,
-            height=height,
-            width=width,
+            height=original_height,  # ← Dimensioni originali (prima delle augmentations)
+            width=original_width,  # ← Dimensioni originali (prima delle augmentations)
             image_id=item.get("image_id", idx),
             file_name=item["file_name"],
         )
@@ -270,12 +305,14 @@ class LightningDatasetWrapper(Dataset):
             masks_tensor = torch.stack(instance_masks)  # Shape: (N, H, W)
             classes_tensor = torch.tensor(instance_classes, dtype=torch.int64)
         else:
-            masks_tensor = torch.zeros((0, height, width), dtype=torch.bool)
+            # Use transformed dimensions for empty masks
+            masks_tensor = torch.zeros((0, height_transformed, width_transformed), dtype=torch.bool)
             classes_tensor = torch.zeros(0, dtype=torch.int64)
 
         # Create Instances with masks
+        # image_size deve essere delle dimensioni trasformate (corrispondenti alle mask)
         instances = Instances(
-            image_size=(height, width),
+            image_size=(height_transformed, width_transformed),
             masks=BitMasks(masks_tensor),
             classes=classes_tensor,
         )
@@ -285,18 +322,19 @@ class LightningDatasetWrapper(Dataset):
 
     def _process_generic(self, image: NDArray[np.uint8], item: Dict[str, Any], idx: int) -> DatasetEntry:
         """Processa sample per task generici"""
+        # Salva dimensioni originali PRIMA delle augmentations
+        original_height, original_width = image.shape[:2]
+
         image_tensor = (
             self.transform(image=image)["image"]
             if self.transform
             else torch.from_numpy(image.transpose(2, 0, 1)).float() / 255.0
         )
 
-        _, height, width = image_tensor.shape
-
         return DatasetEntry(
             image=image_tensor,
-            height=height,
-            width=width,
+            height=original_height,  # ← Dimensioni originali
+            width=original_width,  # ← Dimensioni originali
             image_id=item.get("image_id", idx),
             file_name=item["file_name"],
         )

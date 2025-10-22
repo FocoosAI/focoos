@@ -15,8 +15,7 @@ from focoos.utils.logger import get_logger
 logger = get_logger("DETRProcessor")
 
 
-# perhaps should rename to "resize_instance"
-def detector_postprocess(
+def resize_instances(
     results: Instances,
     output_height: int,
     output_width: int,
@@ -131,7 +130,7 @@ class DETRProcessor(Processor):
 
             boxes = Boxes(processed_box_pred)
             result = Instances(image_size=(1, 1), boxes=boxes, scores=scores, classes=labels)
-            result = detector_postprocess(
+            result = resize_instances(
                 result, output_height=batched_inputs[i].height or 1, output_width=batched_inputs[i].width or 1
             )
             results.append({"instances": result})

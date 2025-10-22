@@ -1347,7 +1347,6 @@ class FAIDetr(BaseModelNN):
         targets: list[DETRTargets] = [],
     ) -> DETRModelOutput:
         images = (images - self.pixel_mean) / self.pixel_std  # type: ignore
-
         features = self.pixel_decoder(images)
         outputs, losses = self.head(features, targets)
 

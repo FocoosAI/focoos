@@ -1074,6 +1074,7 @@ class TrainArgs(TrainerArgs):
         image_size (int): Target image size for training
         pin_memory (bool): Whether to pin memory in DataLoader
         persistent_workers (bool): Whether to use persistent workers in DataLoader
+        auto_scale_batch_size (bool): Whether to automatically find optimal batch size
     """
 
     # Dataset parameters
@@ -1084,6 +1085,7 @@ class TrainArgs(TrainerArgs):
     image_size: int = 640
     pin_memory: bool = True
     persistent_workers: bool = True
+    auto_scale_batch_size: bool = False
 
 
 @dataclass

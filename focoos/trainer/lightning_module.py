@@ -3,6 +3,7 @@ FocoosLightningModule - PyTorch Lightning wrapper for Focoos models.
 This module enables training Focoos models using PyTorch Lightning's Trainer.
 """
 
+import time
 from typing import Any, Dict, List, Optional
 
 import lightning as L
@@ -76,17 +77,35 @@ class FocoosLightningModule(L.LightningModule):
         self.validation_step_outputs: List[Dict[str, Any]] = []
         self.validation_step_inputs: List[DatasetEntry] = []
 
+        # Timing tracking (for data_time metric like in original trainer)
+        self._step_end_time: Optional[float] = None
+        self._batch_start_time: Optional[float] = None
+
         logger.info(f"🚀 FocoosLightningModule initialized for task: {self.task}")
         logger.info(f"📊 Tracking validation metric: {self.val_metric_key}")
+
+    @property
+    def flops_per_batch(self) -> Optional[float]:
+        """
+        Return the number of FLOPs (floating point operations) per batch.
+        This is used by ThroughputMonitor for detailed performance metrics.
+
+        Returns:
+            None if FLOPs calculation is not available.
+            In the future, this could be computed based on model architecture.
+        """
+        # TODO: Implement FLOPS calculation based on model architecture
+        # For now, return None to satisfy ThroughputMonitor without detailed FLOPS tracking
+        return None
 
     def _get_task_metric_key(self) -> str:
         """Get the primary metric key for the current task."""
         task_metrics = {
-            Task.DETECTION.value: "val/bbox_AP",
-            Task.SEMSEG.value: "val/sem_seg_mIoU",
-            Task.INSTANCE_SEGMENTATION.value: "val/segm_AP",
-            Task.CLASSIFICATION.value: "val/classification_F1",
-            Task.KEYPOINT.value: "val/keypoints_AP",
+            Task.DETECTION.value: "bbox/AP",
+            Task.SEMSEG.value: "sem_seg/mIoU",
+            Task.INSTANCE_SEGMENTATION.value: "sem_seg/mIoU",
+            Task.CLASSIFICATION.value: "classification/F1",
+            Task.KEYPOINT.value: "keypoints/AP",
         }
         return task_metrics.get(self.task.value, "val/loss")
 
@@ -105,6 +124,10 @@ class FocoosLightningModule(L.LightningModule):
             return self.model(images, targets)
         return self.model(images)
 
+    def on_train_batch_start(self, batch: Any, batch_idx: int) -> None:
+        """Called at the start of each training batch to track data loading time."""
+        self._batch_start_time = time.perf_counter()
+
     def training_step(self, batch: Dict[str, Any], batch_idx: int) -> torch.Tensor:
         """
         Training step - computes loss on a batch.
@@ -116,6 +139,15 @@ class FocoosLightningModule(L.LightningModule):
         Returns:
             Loss tensor for backpropagation
         """
+        # Get batch size for logging (needed early for time metrics)
+        batch_size = len(batch)
+
+        # Calculate data_time (time between end of previous step and start of this batch)
+        # This includes data loading time, similar to the original trainer
+        if self._step_end_time is not None and self._batch_start_time is not None:
+            data_time = self._batch_start_time - self._step_end_time
+            self.log("data_time", data_time, on_step=True, on_epoch=True, prog_bar=False, batch_size=batch_size)
+
         # Preprocess data using the processor
         images, targets = self.processor.preprocess(
             batch,  # type: ignore
@@ -127,22 +159,28 @@ class FocoosLightningModule(L.LightningModule):
         output = self.model(images, targets)
         loss_dict = output.loss
 
-        # Get batch size for logging
-        batch_size = len(batch)
-
         # Handle different loss formats
         if isinstance(loss_dict, torch.Tensor):
             total_loss = loss_dict
-            self.log("train/total_loss", total_loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=batch_size)
+            self.log("total_loss", total_loss, prog_bar=True, batch_size=batch_size)
         else:
             # Sum all losses
             total_loss = sum(loss_dict.values())  # type: ignore
 
-            # Log individual losses
+            # Log individual losses (no prefix)
             for loss_name, loss_value in loss_dict.items():
-                self.log(f"train/{loss_name}", loss_value, on_step=True, on_epoch=True, batch_size=batch_size)
+                self.log(f"{loss_name}", loss_value, prog_bar=False, batch_size=batch_size)
 
-            self.log("train/total_loss", total_loss, on_step=True, on_epoch=True, prog_bar=True, batch_size=batch_size)
+            self.log("total_loss", total_loss, prog_bar=True, batch_size=batch_size)
+
+        # Calculate and log step time
+        step_end_time = time.perf_counter()
+        if self._batch_start_time is not None:
+            step_time = step_end_time - self._batch_start_time
+            self.log("time", step_time, prog_bar=False, batch_size=batch_size)
+
+        # Record end time for next iteration's data_time calculation
+        self._step_end_time = step_end_time
 
         return total_loss  # type: ignore
 
@@ -269,7 +307,7 @@ class FocoosLightningModule(L.LightningModule):
 
         # Compute metrics based on task
         if self.task in [Task.DETECTION, Task.INSTANCE_SEGMENTATION]:
-            # Create detection/instance segmentation evaluator
+            # Use DetectionLightningEvaluator for detection/instance segmentation
             task_name = "segm" if self.task == Task.INSTANCE_SEGMENTATION else "bbox"
             evaluator = DetectionEvaluator(
                 dataset_dict=val_dict_dataset,
@@ -288,13 +326,23 @@ class FocoosLightningModule(L.LightningModule):
                 task_metrics = metrics[task_name]
                 for metric_name, metric_value in task_metrics.items():
                     if metric_value is not None and metric_value == metric_value:  # Check for NaN
-                        self.log(
-                            f"val/{task_name}_{metric_name}",
-                            metric_value,
-                            on_epoch=True,
-                            prog_bar=(metric_name == "AP"),
-                        )
-
+                        # For per-category metrics (AP-class_name), log under separate namespace
+                        if metric_name.startswith("AP-"):
+                            class_name = metric_name[3:]  # Remove "AP-" prefix
+                            sanitized_name = class_name.replace(" ", "_").replace("/", "_")
+                            self.log(
+                                f"{task_name}/{sanitized_name}",
+                                metric_value,
+                                on_epoch=True,
+                            )
+                        else:
+                            # Log main metrics
+                            self.log(
+                                f"{task_name}/{metric_name}",
+                                metric_value,
+                                on_epoch=True,
+                                prog_bar=(metric_name == "AP"),
+                            )
                 # Track best metric
                 if self.val_metric_key in self.trainer.callback_metrics:
                     current_val_metric = self.trainer.callback_metrics[self.val_metric_key].item()
@@ -336,13 +384,66 @@ class FocoosLightningModule(L.LightningModule):
                             on_epoch=True,
                             prog_bar=(metric_name == "mIoU"),
                         )
-
                 # Track best metric
                 if self.val_metric_key in self.trainer.callback_metrics:
                     current_val_metric = self.trainer.callback_metrics[self.val_metric_key].item()
                     if current_val_metric > self.best_val_metric:
                         self.best_val_metric = current_val_metric
                         logger.info(f"✨ New best validation metric: {current_val_metric:.4f}")
+
+    def _print_semseg_metrics_summary(self, metrics: Dict[str, Any]):
+        """Print a formatted summary of semantic segmentation validation metrics.
+
+        Args:
+            metrics: Dictionary of metric names and values
+        """
+        # Build summary string
+        summary_lines = [
+            "",
+            "=" * 70,
+            "📊 Validation Metrics Summary (SEMANTIC SEGMENTATION)",
+            "=" * 70,
+            "",
+        ]
+
+        # Define metrics to display
+        metric_descriptions = {
+            "mIoU": "Mean Intersection over Union (mIoU)",
+            "fwIoU": "Frequency Weighted IoU       (fwIoU)",
+            "mACC": "Mean Pixel Accuracy          (mACC)",
+            "pACC": "Pixel Accuracy               (pACC)",
+        }
+
+        # Add available metrics
+        for metric_key, metric_desc in metric_descriptions.items():
+            if metric_key in metrics:
+                value = metrics[metric_key]
+                if value is not None:
+                    summary_lines.append(f"  {metric_desc} = {value:6.2f}")
+
+        # Add any other metrics not in the description list
+        other_metrics = {k: v for k, v in metrics.items() if k not in metric_descriptions}
+        if other_metrics:
+            summary_lines.extend(
+                [
+                    "",
+                    "Other Metrics:",
+                    "-" * 70,
+                ]
+            )
+            for metric_key, value in other_metrics.items():
+                summary_lines.append(f"  {metric_key:<35} = {value:6.2f}")
+
+        summary_lines.extend(
+            [
+                "",
+                "=" * 70,
+                "",
+            ]
+        )
+
+        # Print summary
+        logger.info("\n".join(summary_lines))
 
     def on_train_start(self):
         """Called at the start of training."""

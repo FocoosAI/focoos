@@ -105,11 +105,13 @@ def train(model_name: str, iter: int):
     # Configure training arguments with dataset parameters
     train_args = TrainArgs(
         run_name=model_name + "_test",
+        output_dir="./output",
         dataset_name=dataset_name,
         task=task,
         layout=layout,
         datasets_dir=DATASETS_DIR,
         image_size=resolution,
+        eval_period=50,
         amp_enabled=True,
         batch_size=8,
         max_iters=iter,
@@ -120,6 +122,7 @@ def train(model_name: str, iter: int):
         num_gpus=1,
         pin_memory=True,
         persistent_workers=True,
+        auto_scale_batch_size=False,
     )
 
     # Start Lightning training (datamodule will be created automatically from train_args)

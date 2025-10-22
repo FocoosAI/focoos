@@ -1,6 +1,6 @@
 """
 Lightning DataModule for Focoos.
-DataModule completo con setup automatico, augmentations e funzione sample().
+Complete DataModule with automatic setup, augmentations and sample() function.
 """
 
 import os
@@ -10,6 +10,7 @@ import albumentations as A
 import cv2
 import lightning as L
 import numpy as np
+import torch
 from PIL import Image
 from torch.utils.data import DataLoader
 
@@ -25,9 +26,9 @@ from .default_augmentations import get_default_train_augmentations, get_default_
 
 class FocoosLightningDataModule(L.LightningDataModule):
     """
-    DataModule Lightning semplificato che usa direttamente DictDataset di Focoos.
-    Architettura piatta: DictDataset → LightningDatasetWrapper → DataLoader
-    Setup automatico nell'__init__ - pronto all'uso immediato.
+    Simplified Lightning DataModule that directly uses Focoos DictDataset.
+    Flat architecture: DictDataset → LightningDatasetWrapper → DataLoader
+    Automatic setup in __init__ - ready for immediate use.
     """
 
     dataset_name: str
@@ -59,10 +60,11 @@ class FocoosLightningDataModule(L.LightningDataModule):
         val_augmentations: Optional[A.Compose] = None,
         pin_memory: bool = True,
         persistent_workers: bool = True,
+        seed: int = -1,
     ) -> None:
         super().__init__()
 
-        # Parametri base
+        # Base parameters
         self.dataset_name = dataset_name
         self.datasets_dir = datasets_dir
         self.task = task
@@ -85,11 +87,12 @@ class FocoosLightningDataModule(L.LightningDataModule):
                 self.logger_focoos.info(f"Dataset already extracted: {_dest_path}")
                 self.dataset_path = _dest_path
 
-        # Parametri DataLoader
+        # DataLoader parameters
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.persistent_workers = persistent_workers and num_workers > 0
+        self.seed = seed
 
         # Augmentations
         self.image_size = image_size
@@ -100,14 +103,14 @@ class FocoosLightningDataModule(L.LightningDataModule):
         self.save_hyperparameters()
         self._log_augmentations()
 
-        # Setup automatico
+        # Automatic setup
         self._setup()
 
     def _log_augmentations(self) -> None:
-        """Log delle augmentations per train e val, ispirato ai DatasetMapper di Focoos"""
+        """Log train and val augmentations, inspired by Focoos DatasetMapper"""
 
         def format_augmentations(augs: Optional[A.Compose]) -> str:
-            """Formatta le augmentations in una stringa leggibile"""
+            """Format augmentations into readable string"""
             if augs is None:
                 return "None"
 
@@ -149,7 +152,7 @@ class FocoosLightningDataModule(L.LightningDataModule):
         )
 
     def _load_dict_dataset(self, split: DatasetSplitType) -> DictDataset:
-        """Carica DictDataset direttamente in base al layout"""
+        """Load DictDataset directly based on layout"""
 
         if split == DatasetSplitType.TRAIN:
             split_names = ["train", "training"]
@@ -178,32 +181,35 @@ class FocoosLightningDataModule(L.LightningDataModule):
         elif self.layout == DatasetLayout.CATALOG:
             return DictDataset.from_catalog(ds_name=self.dataset_name, split_type=split, root=self.datasets_dir)
         else:
-            raise ValueError(f"Layout {self.layout} non supportato")
+            raise ValueError(f"Layout {self.layout} not supported")
 
     def _setup(self) -> None:
-        """Setup automatico dei dataset per training e validation"""
+        """Automatic setup of training and validation datasets"""
         train_dict_dataset = self._load_dict_dataset(DatasetSplitType.TRAIN)
         val_dict_dataset = self._load_dict_dataset(DatasetSplitType.VAL)
 
         self.train_dataset = LightningDatasetWrapper(
             dict_dataset=train_dict_dataset,
             transform=self.train_augmentations,
-            use_mosaic=True,
-            mosaic_p=0.5,
         )
 
         self.val_dataset = LightningDatasetWrapper(
             dict_dataset=val_dict_dataset,
             transform=self.val_augmentations,
-            use_mosaic=False,
         )
 
+        # Log Mosaic status if detected
+        if self.train_dataset.use_mosaic:
+            self.logger_focoos.info(
+                f"🎨 Mosaic augmentation detected in train pipeline (p={self.train_dataset.mosaic_p})"
+            )
+
         self.logger_focoos.info(
-            f"✅ Setup completato - Train: {len(self.train_dataset)} samples, Val: {len(self.val_dataset)} samples"
+            f"✅ Setup completed - Train: {len(self.train_dataset)} samples, Val: {len(self.val_dataset)} samples"
         )
 
     def setup(self, stage: Optional[str] = None) -> None:
-        """Compatibilità con Lightning Trainer (setup già eseguito in __init__)"""
+        """Lightning Trainer compatibility (setup already done in __init__)"""
         pass
 
     def _collate_fn(self, batch):
@@ -212,7 +218,13 @@ class FocoosLightningDataModule(L.LightningDataModule):
         return batch
 
     def train_dataloader(self):
-        """Ritorna il DataLoader per il training"""
+        """Returns DataLoader for training"""
+        # Create generator with seed for reproducibility
+        generator = None
+        if self.seed >= 0:
+            generator = torch.Generator()
+            generator.manual_seed(self.seed)
+
         return DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
@@ -222,10 +234,11 @@ class FocoosLightningDataModule(L.LightningDataModule):
             persistent_workers=self.persistent_workers,
             drop_last=True,
             collate_fn=self._collate_fn,
+            generator=generator,
         )
 
     def val_dataloader(self):
-        """Ritorna il DataLoader per la validation"""
+        """Returns DataLoader for validation"""
         return DataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
@@ -246,39 +259,39 @@ class FocoosLightningDataModule(L.LightningDataModule):
         index: int,
     ) -> np.ndarray:
         """
-        Disegna bounding boxes, labels e indice su un'immagine usando OpenCV.
+        Draw bounding boxes, labels and index on an image using OpenCV.
 
         Args:
-            image: Immagine numpy array in formato RGB
-            bboxes: Lista di bounding boxes [x_min, y_min, x_max, y_max]
-            labels: Lista di labels corrispondenti
-            class_names: Lista dei nomi delle classi (opzionale)
-            index: Indice del sample da visualizzare
+            image: Numpy array image in RGB format
+            bboxes: List of bounding boxes [x_min, y_min, x_max, y_max]
+            labels: List of corresponding labels
+            class_names: List of class names (optional)
+            index: Sample index to display
 
         Returns:
-            Immagine annotata (modifica in-place ma ritorna per chiarezza)
+            Annotated image (modified in-place but returned for clarity)
         """
-        # Disegna bboxes
+        # Draw bboxes
         for bbox, label in zip(bboxes, labels):
             x_min, y_min, x_max, y_max = map(int, bbox)
-            # Disegna rettangolo
-            cv2.rectangle(image, (x_min, y_min), (x_max, y_max), (255, 0, 0), 2)  # Rosso in RGB
+            # Draw rectangle
+            cv2.rectangle(image, (x_min, y_min), (x_max, y_max), (255, 0, 0), 2)  # Red in RGB
 
-            # Disegna label
+            # Draw label
             class_name = class_names[int(label)] if class_names and label < len(class_names) else f"C{int(label)}"
-            # Calcola dimensioni del testo
+            # Calculate text dimensions
             (text_width, text_height), baseline = cv2.getTextSize(class_name, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
-            # Disegna sfondo del testo
+            # Draw text background
             cv2.rectangle(image, (x_min, y_min - text_height - 5), (x_min + text_width, y_min), (255, 0, 0), -1)
-            # Disegna testo
+            # Draw text
             cv2.putText(image, class_name, (x_min, y_min - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
 
-        # Disegna l'indice
+        # Draw index
         index_text = f"#{index}"
         (text_width, text_height), baseline = cv2.getTextSize(index_text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
-        # Sfondo blu
-        cv2.rectangle(image, (5, 5), (8 + text_width, 8 + text_height), (0, 0, 255), -1)  # Blu in RGB
-        # Testo bianco
+        # Blue background
+        cv2.rectangle(image, (5, 5), (8 + text_width, 8 + text_height), (0, 0, 255), -1)  # Blue in RGB
+        # White text
         cv2.putText(image, index_text, (5, 5 + text_height), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
         return image
@@ -291,41 +304,41 @@ class FocoosLightningDataModule(L.LightningDataModule):
         random_seed: Optional[int] = None,
     ) -> Image.Image:
         """
-        Ritorna una singola immagine dal dataset con opzione di mostrare le augmentations.
-        L'immagine include l'indice visualizzato nell'angolo in alto a sinistra.
+        Returns a single image from the dataset with option to show augmentations.
+        The image includes the index displayed in the top-left corner.
 
         Args:
-            split: "train" o "val" per scegliere lo split
-            index: Indice specifico del sample (se None, sceglie casualmente)
-            with_augmentations: Se True, applica augmentations; se False, solo resize
-            random_seed: Seed per la riproducibilità quando index è None
+            split: "train" or "val" to choose split
+            index: Specific sample index (if None, chooses randomly)
+            with_augmentations: If True, applies augmentations; if False, only resize
+            random_seed: Seed for reproducibility when index is None
 
         Returns:
-            PIL.Image: Immagine con annotazioni disegnate (bounding boxes per detection, indice, etc.)
+            PIL.Image: Image with drawn annotations (bounding boxes for detection, index, etc.)
         """
         if not hasattr(self, "train_dataset"):
-            raise RuntimeError("Devi chiamare setup() prima di usare sample()")
+            raise RuntimeError("You must call setup() before using sample()")
 
         dataset = self.train_dataset if split == "train" else self.val_dataset if split == "val" else None
         if dataset is None:
-            raise ValueError(f"Split deve essere 'train' o 'val', non {split}")
+            raise ValueError(f"Split must be 'train' or 'val', not {split}")
 
-        # Seleziona indice
+        # Select index
         if index is None:
             if random_seed is not None:
                 np.random.seed(random_seed)
             index = np.random.randint(0, len(dataset))
 
-        # Se non vogliamo augmentations, carica direttamente con OpenCV senza passare per tensor
+        # If we don't want augmentations, load directly with OpenCV without going through tensor
         if not with_augmentations:
             item = dataset.dict_dataset[index]
-            # Carica con OpenCV e converti in RGB (cv2 carica in BGR)
+            # Load with OpenCV and convert to RGB (cv2 loads in BGR)
             image = cv2.imread(item["file_name"])
             if image is None:
-                raise ValueError(f"Impossibile caricare l'immagine: {item['file_name']}")
+                raise ValueError(f"Could not load image: {item['file_name']}")
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-            # Per detection, estrai e disegna bboxes
+            # For detection, extract and draw bboxes
             bboxes_list = []
             labels_list = []
 
@@ -336,15 +349,15 @@ class FocoosLightningDataModule(L.LightningDataModule):
                         bboxes_list.append(bbox)
                         labels_list.append(ann["category_id"])
 
-            # Disegna annotazioni (bboxes + indice)
+            # Draw annotations (bboxes + index)
             class_names = getattr(dataset.dict_dataset.metadata, "thing_classes", None)
             image = self._draw_annotations(image, bboxes_list, labels_list, class_names, index)
 
-            # Converti in PIL per il return
+            # Convert to PIL for return
             pil_image = Image.fromarray(image)
             sample = None
         else:
-            # Con augmentations, usa il pipeline normale
+            # With augmentations, use normal pipeline
             sample = dataset[index]
 
             if sample.image is None:
@@ -355,7 +368,7 @@ class FocoosLightningDataModule(L.LightningDataModule):
             if image.shape[0] == 3:
                 image = image.transpose(1, 2, 0)
 
-            # Controlla se il transform include normalizzazione
+            # Check if transform includes normalization
             has_normalize = False
             if hasattr(dataset, "transform") and dataset.transform is not None:
                 if hasattr(dataset.transform, "transforms"):
@@ -364,17 +377,17 @@ class FocoosLightningDataModule(L.LightningDataModule):
                             has_normalize = True
                             break
 
-            # Denormalizza solo se l'immagine è stata normalizzata
+            # Denormalize only if image was normalized
             if has_normalize:
                 mean = np.array([0.485, 0.456, 0.406])
                 std = np.array([0.229, 0.224, 0.225])
                 image = std * image + mean
 
             image = np.clip(image, 0, 1)
-            # Converti in uint8 per OpenCV
+            # Convert to uint8 for OpenCV
             image = (image * 255).astype(np.uint8)
 
-            # Estrai bboxes e labels se disponibili
+            # Extract bboxes and labels if available
             bboxes_list = []
             labels_list = []
             if hasattr(sample, "instances") and sample.instances is not None:
@@ -383,17 +396,17 @@ class FocoosLightningDataModule(L.LightningDataModule):
                 if sample.instances.classes is not None:
                     labels_list = sample.instances.classes.cpu().numpy().tolist()
 
-            # Disegna annotazioni con OpenCV
+            # Draw annotations with OpenCV
             class_names = getattr(dataset.dict_dataset.metadata, "thing_classes", None)
             image = self._draw_annotations(image, bboxes_list, labels_list, class_names, index)
 
-            # Converti in PIL per il return
+            # Convert to PIL for return
             pil_image = Image.fromarray(image)
 
         return pil_image
 
     def get_dataset_info(self) -> Dict[str, Any]:
-        """Ritorna informazioni sul dataset (compatibile con AutoDataset)"""
+        """Returns dataset information (compatible with AutoDataset)"""
         info: Dict[str, Any] = {
             "dataset_name": self.dataset_name,
             "datasets_dir": self.datasets_dir,
