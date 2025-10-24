@@ -1,6 +1,6 @@
 import os
 import re
-from typing import Optional
+from typing import Optional, Union
 
 import torch
 import torch_pruning as tp
@@ -166,46 +166,48 @@ def get_model_layers(model_name, output_folder_path: Optional[str] = ""):
     state_dict = focoos_model.model.state_dict()
 
     layers = []
+    for k in state_dict.keys():
+        layers.append(k)
     if output_folder_path:
         if not os.path.exists(output_folder_path):
             os.makedirs(output_folder_path)
-        with open(os.path.join(output_folder_path, f"state_dict_shape_{model_name}.txt"), "a") as f:
-            for k, v in state_dict.items():
-                str_layer = str(f"{k}: {v.shape}")
-                print(str_layer, file=f)
-                print(str_layer)
-                layers.append(str_layer)
+        with open(os.path.join(output_folder_path, f"state_dict_keys_{model_name}.txt"), "a") as f:
+            for k in state_dict.keys():
+                print(k, file=f)
     return layers
 
 
-def get_layers_to_prune(regex_pattern: str, layers_file_path: str) -> list[str]:
+def get_layers_to_prune(regex_pattern: str, layers: Union[str, list[str]]) -> list[str]:
     """
-    Returns a list of layer names from the given file that match the provided regex pattern.
+    Returns a list of layer names from the given layers that match the provided regex pattern.
 
     Args:
         regex_pattern (str): Regular expression pattern to match layer names.
-        layers_file_path (str): Path to the file containing layer names (one per line, as keys before ':').
+        layers (Union[str, list[str]]): List of layer names or a string containing layer names separated by newlines.
 
     Returns:
         list[str]: List of matching layer names.
     """
+    if isinstance(layers, str):
+        # layers is a path to a input file
+        with open(layers, "r") as f:
+            layers = [line.strip() for line in f.readlines()]
     pattern = re.compile(regex_pattern)
-    matching_layers = []
-    with open(layers_file_path, "r") as f:
-        for line in f:
-            line = line.strip()
-            if not line or ":" not in line:
-                continue
-            layer_name = line.split(":", 1)[0].strip()
-            if pattern.fullmatch(layer_name) or pattern.search(layer_name):
-                matching_layers.append(layer_name)
-
-    # remove suffix ".weight"
-    suffix = ".weight"
-    matching_layers = [layer.replace(suffix, "") for layer in matching_layers]
+    matching_layers = [layer for layer in layers if pattern.fullmatch(layer) or pattern.search(layer)]
     return matching_layers
 
 
-def load_layers_from_file(layers_file_path: str) -> list[str]:
-    with open(layers_file_path, "r") as f:
-        return [line.strip() for line in f.readlines()]
+def get_prunable_layers(model_name: str, regex_pattern: str, output_file_name: Optional[str] = "") -> list[str]:
+    """Get the prunable layers of the model"""
+    if output_file_name:
+        output_folder_path = os.path.dirname(output_file_name)
+    layers = get_model_layers(model_name, output_folder_path)
+    matching_layers = get_layers_to_prune(regex_pattern, layers)
+    # Format output and save if output_file_name is provided
+    if output_file_name:
+        with open(output_file_name, "w") as f:
+            print(f"{model_name} = [", file=f)
+            for layer in matching_layers:
+                print(f'    "{layer}",', file=f)
+            print("]", file=f)
+    return matching_layers

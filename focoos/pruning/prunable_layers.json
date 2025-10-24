@@ -42,10 +42,10 @@
         "model.backbone.features.4.conv_list.3.conv"
     ],
     "fai-detr-m-coco": [
-        "model.pixel_decoder.backbone.features.2.conv_list.0.conv",
-        "model.pixel_decoder.backbone.features.2.conv_list.1.conv",
-        "model.pixel_decoder.backbone.features.2.conv_list.2.conv",
-        "model.pixel_decoder.backbone.features.2.conv_list.3.conv",
-        "model.pixel_decoder.backbone.features.3.conv_list.0.conv"
+        "pixel_decoder.backbone.features.2.conv_list.0.conv",
+        "pixel_decoder.backbone.features.2.conv_list.1.conv",
+        "pixel_decoder.backbone.features.2.conv_list.2.conv",
+        "pixel_decoder.backbone.features.2.conv_list.3.conv",
+        "pixel_decoder.backbone.features.3.conv_list.0.conv"
     ]
 }
