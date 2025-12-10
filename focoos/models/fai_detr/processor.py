@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -58,7 +58,7 @@ def detector_postprocess(
 
 
 class DETRProcessor(Processor):
-    def __init__(self, config: DETRConfig, image_size: Optional[int] = None):
+    def __init__(self, config: DETRConfig, image_size: Optional[Union[int, Tuple[int, int]]] = None):
         super().__init__(config, image_size)
         self.top_k = config.top_k
         self.threshold = config.threshold
@@ -104,7 +104,13 @@ class DETRProcessor(Processor):
                 raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
 
             # Use optimized get_tensors with optional resizing for better memory efficiency
-            target_size = (self.image_size, self.image_size) if self.image_size is not None else None
+            if self.image_size is not None:
+                if isinstance(self.image_size, int):
+                    target_size = (self.image_size, self.image_size)
+                else:
+                    target_size = self.image_size
+            else:
+                target_size = None
             images_torch = self.get_torch_batch(
                 inputs,  # type: ignore
                 target_size=target_size,

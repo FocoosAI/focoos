@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -19,11 +19,13 @@ class Processor(ABC):
         training (bool): Flag indicating whether the processor is in training mode.
     """
 
-    def __init__(self, config: ModelConfig, image_size: Optional[int] = None):
+    def __init__(self, config: ModelConfig, image_size: Optional[Union[int, Tuple[int, int]]] = None):
         """Initialize the processor with the given configuration.
 
         Args:
             config (ModelConfig): Model configuration containing settings and parameters.
+            image_size (Optional[Union[int, Tuple[int, int]]]): Image size. If int, treated as square (size, size).
+                If tuple, treated as (height, width).
         """
         self.config = config
         self.training = False

@@ -1,7 +1,7 @@
 import copy
 import sys
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 from focoos.data.transforms import augmentation as A
 from focoos.data.transforms import transform as T
@@ -21,8 +21,9 @@ class DatasetAugmentations:
     color and geometric augmentations.
 
     Attributes:
-        resolution (int): Target image size for resizing operations.
-            Range [256, 1024]. Default: 640.
+        resolution (Union[int, Tuple[int, int]]): Target image size for resizing operations.
+            If int, treated as square (size, size). If tuple, treated as (height, width).
+            Range [256, 1024] for int. Default: 640.
         ==
         color_augmentation (float): Strenght of color augmentations.
             Range [0,1]. Default: 0.0.
@@ -56,7 +57,7 @@ class DatasetAugmentations:
     """
 
     # Resolution for resizing
-    resolution: int = 640
+    resolution: Union[int, Tuple[int, int]] = 640
 
     # Color augmentation parameters
     color_augmentation: float = 0.0
@@ -102,6 +103,14 @@ class DatasetAugmentations:
         augs = []
         self.max_size = self.max_size if self.max_size else sys.maxsize
 
+        # Normalize resolution to tuple format for easier handling
+        if isinstance(self.resolution, int):
+            resolution_tuple = (self.resolution, self.resolution)
+            resolution_value = self.resolution  # For scalar operations
+        else:
+            resolution_tuple = self.resolution
+            resolution_value = min(self.resolution)  # Use min for scalar operations (shortest edge)
+
         ### Add color augmentation if configured
         if self.color_augmentation > 0:
             brightness_delta = int(self.color_base_brightness * self.color_augmentation)
@@ -139,7 +148,7 @@ class DatasetAugmentations:
 
         ### Add AspectRatio augmentations based on configuration
         if self.square > 0.0:
-            augs.append(A.RandomApply(A.Resize(shape=(self.resolution, self.resolution)), prob=self.square))
+            augs.append(A.RandomApply(A.Resize(shape=resolution_tuple), prob=self.square))
         elif self.aspect_ratio > 0.0:
             augs.append(A.RandomAspectRatio(aspect_ratio=self.aspect_ratio))
 
@@ -147,7 +156,7 @@ class DatasetAugmentations:
         min_scale, max_scale = 2 ** (-self.scale_ratio), 2**self.scale_ratio
         augs.append(
             A.ResizeShortestEdge(
-                short_edge_length=[int(x * self.resolution) for x in [min_scale, max_scale]],
+                short_edge_length=[int(x * resolution_value) for x in [min_scale, max_scale]],
                 sample_style="range",
                 max_size=self.max_size,
             )
@@ -160,7 +169,10 @@ class DatasetAugmentations:
 
         # Add cropping if configured
         if self.crop:
-            crop_range = (self.crop_size or self.resolution, self.crop_size or self.resolution)
+            if self.crop_size:
+                crop_range = (self.crop_size, self.crop_size)
+            else:
+                crop_range = resolution_tuple
             augs.append(A.RandomCrop(crop_type="absolute_range", crop_size=crop_range))
 
         return augs
@@ -251,7 +263,7 @@ keypoints_val_augs = DatasetAugmentations(
 
 
 def get_default_by_task(
-    task: Task, resolution: int = 640, advanced: bool = False
+    task: Task, resolution: Union[int, Tuple[int, int]] = 640, advanced: bool = False
 ) -> Tuple[DatasetAugmentations, DatasetAugmentations]:
     if task == Task.DETECTION:
         train, val = (

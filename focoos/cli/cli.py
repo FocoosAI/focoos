@@ -73,7 +73,7 @@ See Also:
 """
 
 import uuid
-from typing import Optional, cast, get_args
+from typing import Optional, Tuple, Union, cast, get_args
 
 import typer
 from typing_extensions import Annotated
@@ -99,6 +99,40 @@ from focoos.ports import (
 from focoos.utils.logger import get_logger
 
 logger = get_logger("CLI")
+
+
+def parse_im_size(value: Union[str, int]) -> Union[int, Tuple[int, int]]:
+    """Parse image size from string or int.
+
+    Supports formats:
+    - int: 640 (square image)
+    - str: "640" (square image)
+    - str: "640,480" or "640x480" (non-square image as height,width)
+
+    Args:
+        value: Image size as int or string
+
+    Returns:
+        int for square images, tuple (height, width) for non-square
+    """
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        # Try comma or x separator
+        if "," in value:
+            parts = value.split(",")
+        elif "x" in value or "X" in value:
+            parts = value.replace("X", "x").split("x")
+        else:
+            # Single number - square image
+            return int(value)
+
+        if len(parts) == 2:
+            return (int(parts[0].strip()), int(parts[1].strip()))
+        else:
+            raise ValueError(f"Invalid image size format: {value}. Use '640', '640,480', or '640x480'")
+    return value
+
 
 app = typer.Typer(
     name="focoos",
@@ -251,7 +285,9 @@ def train(
         Optional[str], typer.Option(help="Datasets directory (default: ~/FocoosAI/datasets/)")
     ] = None,
     dataset_layout: Annotated[DatasetLayout, typer.Option(help="Dataset layout")] = DatasetLayout.ROBOFLOW_COCO,
-    im_size: Annotated[int, typer.Option(help="Image size")] = 640,
+    im_size: Annotated[
+        str, typer.Option(help="Image size (int for square, or 'height,width' or 'heightxwidth' for non-square)")
+    ] = "640",
     output_dir: Annotated[Optional[str], typer.Option(help="Output directory")] = None,
     ckpt_dir: Annotated[Optional[str], typer.Option(help="Checkpoint directory")] = None,
     init_checkpoint: Annotated[Optional[str], typer.Option(help="Initial checkpoint path")] = None,
@@ -316,7 +352,9 @@ def train(
             generates a unique name using model name and UUID.
         datasets_dir (Optional[str]): Custom directory for datasets.
         dataset_layout (DatasetLayout): Layout format of the dataset. Defaults to ROBOFLOW_COCO.
-        im_size (int): Input image size for training. Defaults to 640.
+        im_size (str): Input image size for training. Can be int (e.g., "640") for square images,
+            or "height,width" or "heightxwidth" (e.g., "640,480" or "640x480") for non-square images.
+            Defaults to "640".
         output_dir (Optional[str]): Directory to save training outputs and logs.
         ckpt_dir (Optional[str]): Directory to save model checkpoints.
         init_checkpoint (Optional[str]): Path to initial checkpoint for transfer learning.
@@ -435,11 +473,12 @@ def train(
         validated_optimizer = cast(OptimizerType, optimizer.upper())
         assert optimizer in get_args(OptimizerType)
 
+        parsed_im_size = parse_im_size(im_size)
         train_command(
             model_name=model,
             dataset_name=dataset,
             dataset_layout=dataset_layout,
-            im_size=im_size,
+            im_size=parsed_im_size,
             run_name=run_name or f"{model}-{uuid.uuid4()}",
             output_dir=output_dir,
             ckpt_dir=ckpt_dir,
@@ -494,7 +533,9 @@ def val(
     ] = None,
     run_name: Annotated[Optional[str], typer.Option(help="Run name")] = None,
     dataset_layout: Annotated[DatasetLayout, typer.Option(help="Dataset layout")] = DatasetLayout.ROBOFLOW_COCO,
-    im_size: Annotated[int, typer.Option(help="Image size")] = 640,
+    im_size: Annotated[
+        str, typer.Option(help="Image size (int for square, or 'height,width' or 'heightxwidth' for non-square)")
+    ] = "640",
     output_dir: Annotated[Optional[str], typer.Option(help="Output directory")] = None,
     ckpt_dir: Annotated[Optional[str], typer.Option(help="Checkpoint directory")] = None,
     init_checkpoint: Annotated[Optional[str], typer.Option(help="Initial checkpoint")] = None,
@@ -677,11 +718,12 @@ def val(
         validated_optimizer = cast(OptimizerType, optimizer.upper())
         assert optimizer in get_args(OptimizerType)
 
+        parsed_im_size = parse_im_size(im_size)
         val_command(
             model_name=model,
             dataset_name=dataset,
             dataset_layout=dataset_layout,
-            im_size=im_size,
+            im_size=parsed_im_size,
             run_name=run_name or f"{model}-{uuid.uuid4()}",
             output_dir=output_dir,
             ckpt_dir=ckpt_dir,
@@ -881,7 +923,10 @@ def export(
     output_dir: Annotated[Optional[str], typer.Option(help="Output directory")] = None,
     device: Annotated[Optional[str], typer.Option(help="Device (cuda or cpu)")] = "cuda",
     onnx_opset: Annotated[Optional[int], typer.Option(help="ONNX opset version")] = 17,
-    im_size: Annotated[Optional[int], typer.Option(help="Image size for export")] = 640,
+    im_size: Annotated[
+        Optional[str],
+        typer.Option(help="Image size for export (int for square, or 'height,width' or 'heightxwidth' for non-square)"),
+    ] = "640",
     overwrite: Annotated[Optional[bool], typer.Option(help="Overwrite existing files")] = False,
 ):
     """Export a trained model to various deployment formats.
@@ -985,13 +1030,14 @@ def export(
     try:
         validated_device = cast(DeviceType, device)
         assert device in get_args(DeviceType)
+        parsed_im_size = parse_im_size(im_size) if im_size is not None else None
         export_command(
             model_name=model,
             format=format,
             output_dir=output_dir,
             device=validated_device,
             onnx_opset=onnx_opset,
-            im_size=im_size,
+            im_size=parsed_im_size,
             overwrite=overwrite,
         )
     except Exception as e:

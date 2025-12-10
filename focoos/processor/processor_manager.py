@@ -1,5 +1,5 @@
 import importlib
-from typing import Callable, Dict, Optional, Type
+from typing import Callable, Dict, Optional, Tuple, Type, Union
 
 from focoos.ports import ModelConfig, ModelFamily
 from focoos.processor.base_processor import Processor
@@ -30,7 +30,10 @@ class ProcessorManager:
 
     @classmethod
     def get_processor(
-        cls, model_family: ModelFamily, model_config: ModelConfig, image_size: Optional[int] = None
+        cls,
+        model_family: ModelFamily,
+        model_config: ModelConfig,
+        image_size: Optional[Union[int, Tuple[int, int]]] = None,
     ) -> Processor:
         """
         Get a processor instance for the given model family.

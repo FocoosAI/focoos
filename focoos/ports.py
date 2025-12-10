@@ -1219,7 +1219,7 @@ class ModelInfo(DictClass):
     name: str
     model_family: ModelFamily
     classes: list[str]
-    im_size: int
+    im_size: Union[int, Tuple[int, int]]
     task: Task
     config: dict
     ref: Optional[str] = None
@@ -1260,12 +1260,22 @@ class ModelInfo(DictClass):
                 **{k: v for k, v in model_info_json["training_info"].items() if k in TrainingInfo.__dataclass_fields__}
             )
 
+        # Handle im_size: can be int (square) or list/tuple (height, width)
+        im_size_value = model_info_json["im_size"]
+        if isinstance(im_size_value, (list, tuple)):
+            im_size = tuple(im_size_value)
+        elif isinstance(im_size_value, int):
+            im_size = im_size_value
+        else:
+            # Try to convert to int for backward compatibility
+            im_size = int(im_size_value)
+
         model_info = cls(
             name=model_info_json["name"],
             ref=model_info_json.get("ref", None),
             model_family=ModelFamily(model_info_json["model_family"]),
             classes=model_info_json["classes"],
-            im_size=int(model_info_json["im_size"]),
+            im_size=im_size,
             status=ModelStatus(model_info_json.get("status")) if model_info_json.get("status") else None,
             task=Task(model_info_json["task"]),
             focoos_model=model_info_json.get("focoos_model", None),

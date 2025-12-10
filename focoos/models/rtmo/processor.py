@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 
 
 class RTMOProcessor(Processor):
-    def __init__(self, config: RTMOConfig, image_size: Optional[int] = None):
+    def __init__(self, config: RTMOConfig, image_size: Optional[Union[int, Tuple[int, int]]] = None):
         super().__init__(config, image_size)
 
         self.score_thr = config.score_thr
@@ -84,7 +84,13 @@ class RTMOProcessor(Processor):
         else:
             if self.training:
                 raise ValueError("During training, inputs should be a list of DatasetEntry")
-            target_size = (self.image_size, self.image_size) if self.image_size is not None else None
+            if self.image_size is not None:
+                if isinstance(self.image_size, int):
+                    target_size = (self.image_size, self.image_size)
+                else:
+                    target_size = self.image_size
+            else:
+                target_size = None
             images_torch = self.get_torch_batch(
                 inputs,  # type: ignore
                 target_size=target_size,
@@ -132,8 +138,14 @@ class RTMOProcessor(Processor):
             h, w = int(size[0]), int(size[1])
             scale = False
             if self.image_size is not None:
-                scale_x = w / self.image_size
-                scale_y = h / self.image_size
+                if isinstance(self.image_size, int):
+                    # Square image - use same scale for both dimensions
+                    scale_x = w / self.image_size
+                    scale_y = h / self.image_size
+                else:
+                    # Non-square image - use different scales
+                    scale_x = w / self.image_size[1]  # width
+                    scale_y = h / self.image_size[0]  # height
                 scale = True
 
             # logger.debug(f"outputs.outputs.scores[i].shape: {outputs.outputs.scores[i].shape}")

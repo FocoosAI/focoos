@@ -35,7 +35,7 @@ requires-python = ">=3.10,<3.13"
 dependencies = [
     "requests",
     "Pillow~=10.2.0",
-    "supervision~=0.26.0",
+    "supervision~=0.27.0",
     "opencv-python~=4.11.0.86",
     "pydantic~=2.11.4",
     "pydantic-settings~=2.8.1",

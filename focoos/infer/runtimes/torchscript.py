@@ -53,9 +53,17 @@ class TorchscriptRuntime(BaseRuntime):
                 if self.model_info.task in [Task.DETECTION, Task.CLASSIFICATION] and self.model_info.im_size
                 else 640
             )
-            logger.info(f"⏱️ Warming up model {self.model_info.name} on {self.device}, size: {size}x{size}..")
+            # Normalize size to tuple format
+            if isinstance(size, int):
+                size_tuple = (size, size)
+                size_str = f"{size}x{size}"
+            else:
+                size_tuple = size
+                size_str = f"{size[0]}x{size[1]}"
+
+            logger.info(f"⏱️ Warming up model {self.model_info.name} on {self.device}, size: {size_str}..")
             with torch.no_grad():
-                np_image = torch.rand(1, 3, size, size).to(self.device)
+                np_image = torch.rand(1, 3, size_tuple[0], size_tuple[1]).to(self.device)
                 for _ in range(self.opts.warmup_iter):
                     self.model(np_image)
 
@@ -91,12 +99,18 @@ class TorchscriptRuntime(BaseRuntime):
             device_name = get_cpu_name()
         else:
             device_name = get_device_name()
-        logger.info(f"⏱️ Benchmarking latency on {device_name}, size: {size}x{size}..")
 
+        # Normalize size to tuple format
         if isinstance(size, int):
-            size = (size, size)
+            size_tuple = (size, size)
+            size_str = f"{size}x{size}"
+        else:
+            size_tuple = size
+            size_str = f"{size[0]}x{size[1]}"
 
-        torch_input = torch.rand(1, 3, size[0], size[1], device=self.device)
+        logger.info(f"⏱️ Benchmarking latency on {device_name}, size: {size_str}..")
+
+        torch_input = torch.rand(1, 3, size_tuple[0], size_tuple[1], device=self.device)
         durations = []
 
         with torch.no_grad():
@@ -110,6 +124,8 @@ class TorchscriptRuntime(BaseRuntime):
 
         durations = np.array(durations)
 
+        # For LatencyMetrics.im_size (int), use height (first dimension) as representative value
+        im_size_repr = size_tuple[0] if isinstance(size, tuple) and size_tuple[0] != size_tuple[1] else size_tuple[0]
         metrics = LatencyMetrics(
             fps=int(1000 / durations.mean().astype(float)),
             engine=engine,
@@ -117,7 +133,7 @@ class TorchscriptRuntime(BaseRuntime):
             max=round(durations.max().astype(float), 3),
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
-            im_size=size[0],
+            im_size=im_size_repr,
             device=device_name,
         )
         logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")

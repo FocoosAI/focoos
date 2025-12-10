@@ -455,18 +455,15 @@ class FocoosModel:
             input_size=export_image_size,
         )
         os.makedirs(out_dir, exist_ok=True)
-        if image_size is None:
-            data = 128 * torch.randn(1, 3, self.model_info.im_size, self.model_info.im_size).to(device)
+
+        if isinstance(export_image_size, int):
+            height, width = export_image_size, export_image_size
         else:
-            if isinstance(image_size, int):
-                # Square image
-                data = 128 * torch.randn(1, 3, image_size, image_size).to(device)
-                self.model_info.im_size = image_size
-            else:
-                # Tuple (height, width)
-                height, width = image_size
-                data = 128 * torch.randn(1, 3, height, width).to(device)
-                self.model_info.im_size = max(height, width)  # Use max dimension for compatibility
+            height, width = export_image_size
+
+        self.model_info.im_size = export_image_size
+
+        data = 128 * torch.randn(1, 3, height, width).to(device)
 
         export_model_name = ArtifactName.ONNX if format == ExportFormat.ONNX else ArtifactName.PT
         _out_file = os.path.join(out_dir, export_model_name)

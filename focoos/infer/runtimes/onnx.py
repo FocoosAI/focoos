@@ -127,8 +127,16 @@ class ONNXRuntime(BaseRuntime):
 
     def _warmup(self):
         size = self.model_info.im_size
-        logger.info(f"⏱️ Warming up model {self.name} on {self.active_provider}, size: {size}x{size}..")
-        np_image = np.random.rand(1, 3, size, size).astype(self.dtype)
+        # Normalize size to tuple format
+        if isinstance(size, int):
+            size_tuple = (size, size)
+            size_str = f"{size}x{size}"
+        else:
+            size_tuple = size
+            size_str = f"{size[0]}x{size[1]}"
+
+        logger.info(f"⏱️ Warming up model {self.name} on {self.active_provider}, size: {size_str}..")
+        np_image = np.random.rand(1, 3, size_tuple[0], size_tuple[1]).astype(self.dtype)
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
 
@@ -168,12 +176,18 @@ class ONNXRuntime(BaseRuntime):
         device_name = get_device_name()
         if self.active_provider == "CPUExecutionProvider":
             device_name = get_cpu_name()
+
+        # Normalize size to tuple format
         if isinstance(size, int):
-            size = (size, size)
+            size_tuple = (size, size)
+            size_str = f"{size}x{size}"
+        else:
+            size_tuple = size
+            size_str = f"{size[0]}x{size[1]}"
 
-        logger.info(f"⏱️ Benchmarking latency on {device_name}, size: {size}..")
+        logger.info(f"⏱️ Benchmarking latency on {device_name}, size: {size_str}..")
 
-        np_input = (255 * np.random.random((1, 3, size[0], size[1]))).astype(self.dtype)
+        np_input = (255 * np.random.random((1, 3, size_tuple[0], size_tuple[1]))).astype(self.dtype)
         input_name = self.ort_sess.get_inputs()[0].name
         out_name = [output.name for output in self.ort_sess.get_outputs()]
 
@@ -188,6 +202,9 @@ class ONNXRuntime(BaseRuntime):
 
         durations = np.array(durations)
 
+        # For LatencyMetrics.im_size (int), use height (first dimension) as representative value
+        # This maintains backward compatibility while supporting non-square images
+        im_size_repr = size_tuple[0] if isinstance(size, tuple) and size_tuple[0] != size_tuple[1] else size_tuple[0]
         metrics = LatencyMetrics(
             fps=int(1000 / durations.mean()),
             engine=engine,
@@ -195,7 +212,7 @@ class ONNXRuntime(BaseRuntime):
             max=round(durations.max().astype(float), 3),
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
-            im_size=size[0],  # FIXME: this is a hack to get the im_size as int, assuming it's a square
+            im_size=im_size_repr,
             device=device_name,
         )
         logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")

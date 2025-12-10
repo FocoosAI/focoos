@@ -56,7 +56,7 @@ See Also:
     - [`focoos.ports.TrainerArgs`][focoos.ports.TrainerArgs]: Configuration parameters
 """
 
-from typing import Optional
+from typing import Optional, Tuple, Union
 
 from focoos.data.auto_dataset import AutoDataset
 from focoos.data.default_aug import get_default_by_task
@@ -82,7 +82,7 @@ def val_command(
     ## Dataset args
     dataset_name: str,
     dataset_layout: DatasetLayout,
-    im_size: int,
+    im_size: Union[int, Tuple[int, int]],
     ##################
     ## Training args
     run_name: str,
@@ -163,8 +163,9 @@ def val_command(
             and dataset identifiers.
         dataset_layout (DatasetLayout): Layout format of the dataset.
             Supported formats: ROBOFLOW_COCO, YOLO, COCO, etc.
-        im_size (int): Input image size for validation. Images are resized
-            to this size while maintaining aspect ratio.
+        im_size (Union[int, Tuple[int, int]]): Input image size for validation.
+            If int, treated as square (size, size). If tuple, treated as (height, width).
+            Images are resized to this size while maintaining aspect ratio.
         run_name (str): Unique name for this validation run. Used for
             result organization, logging, and report generation.
         output_dir (Optional[str], optional): Directory to save validation outputs
