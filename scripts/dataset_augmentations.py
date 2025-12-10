@@ -444,7 +444,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--mosaic_output_size", type=str, default="640,640", help="Comma-separated width,height for mosaic output"
     )
-    parser.add_argument("--copy_val_dataset", type=bool, default=False, help="Whether to copy validation dataset")
+    parser.add_argument(
+        "--copy_val_dataset",
+        action="store_true",
+        help="Copy validation dataset alongside the augmented training split",
+    )
     parser.add_argument(
         "--output_suffix",
         type=str,
