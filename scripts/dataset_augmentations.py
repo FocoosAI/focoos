@@ -356,19 +356,19 @@ class CopyPasteAugmentation:
                     alpha * scaled_image + (1 - alpha) * roi
                 ).astype(np.uint8)
 
-            # Calculate new area
-            new_area = new_w * new_h
+                # Calculate new area
+                new_area = new_w * new_h
 
-            # Add the new box to the annotations in XYWH_ABS format
-            copy_paste_dataset_dict["annotations"].append(
-                {
-                    "bbox": [paste_x, paste_y, new_w, new_h],
-                    "bbox_mode": BoxMode.XYWH_ABS,
-                    "category_id": category_id,
-                    "area": new_area,
-                    "iscrowd": iscrowd,
-                }
-            )
+                # Add the new box to the annotations in XYWH_ABS format
+                copy_paste_dataset_dict["annotations"].append(
+                    {
+                        "bbox": [paste_x, paste_y, new_w, new_h],
+                        "bbox_mode": BoxMode.XYWH_ABS,
+                        "category_id": category_id,
+                        "area": new_area,
+                        "iscrowd": iscrowd,
+                    }
+                )
 
         # Update the image in the dataset dict
         copy_paste_dataset_dict["image"] = copy_paste_image
