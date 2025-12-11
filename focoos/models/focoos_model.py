@@ -720,7 +720,9 @@ class FocoosModel:
         metrics = model.benchmark(size=size, iterations=iterations)
         return metrics
 
-    def end2end_benchmark(self, iterations: int = 50, size: Optional[int] = None) -> LatencyMetrics:
+    def end2end_benchmark(
+        self, iterations: int = 50, size: Optional[Union[int, Tuple[int, int]]] = None
+    ) -> LatencyMetrics:
         """Benchmark the complete end-to-end inference pipeline.
 
         This method measures the full inference latency including preprocessing,
@@ -736,6 +738,15 @@ class FocoosModel:
         """
         if size is None:
             size = self.model_info.im_size
+        if isinstance(size, (tuple, list)):
+            if len(size) != 2:
+                raise ValueError("Size tuples must be (height, width)")
+            height, width = (int(size[0]), int(size[1]))
+        elif isinstance(size, int):
+            height = width = int(size)
+        else:
+            raise TypeError("size must be an int or tuple/list of two ints")
+        normalized_size = (height, width)
         if self.model.device.type == "cpu":
             device_name = get_cpu_name()
         else:
@@ -744,9 +755,12 @@ class FocoosModel:
             model = self.model.cuda()
         except Exception:
             logger.warning("Unable to use CUDA")
-        logger.info(f"⏱️ Benchmarking End-to-End latency on {device_name} ({self.model.device}), size: {size}x{size}..")
+        logger.info(
+            f"⏱️ Benchmarking End-to-End latency on {device_name} ({self.model.device}), "
+            f"size: {height}x{width}.."
+        )
         # warmup
-        data = 128 * torch.randn(1, 3, size, size).to(model.device)
+        data = 128 * torch.randn(1, 3, height, width).to(model.device)
 
         durations = []
         for _ in range(iterations):
@@ -766,7 +780,7 @@ class FocoosModel:
             max=round(durations.max().astype(float), 3),
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
-            im_size=size,
+            im_size=normalized_size,
             device=str(self.model.device),
         )
         logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")
