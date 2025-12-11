@@ -210,7 +210,11 @@ class FocoosModel:
 
         self._reload_model()
         self.model_info.name = train_args.run_name.strip()
-        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)  # type: ignore
+        self.processor = ProcessorManager.get_processor(
+            self.model_info.model_family,
+            self.model_info.config,  # type: ignore
+            self.model_info.im_size,
+        )
         self.model = self.model.train()
         assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
 
