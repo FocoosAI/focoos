@@ -272,7 +272,7 @@ class RemoteModelInfo(PydanticBase):
         metrics (Optional[dict]): Performance metrics of the model (e.g., mAP, accuracy).
         latencies (Optional[list[dict]]): Inference latency measurements across different configurations.
         classes (Optional[list[str]]): List of class names the model can detect or segment.
-        im_size (Optional[int]): Input image size the model expects.
+        im_size (Optional[Union[int, Tuple[int, int]]]): Input image size the model expects.
         training_info (Optional[TrainingInfo]): Information about the training process.
         location (Optional[str]): Storage location of the model.
         dataset (Optional[DatasetPreview]): Information about the dataset used for training.
@@ -292,7 +292,7 @@ class RemoteModelInfo(PydanticBase):
     model_family: Optional[str] = None
     metrics: Optional[dict] = None
     classes: Optional[list[str]] = None
-    im_size: Optional[int] = None
+    im_size: Optional[Union[int, Tuple[int, int]]] = None
     training_info: Optional[TrainingInfo] = None
     dataset: Optional[DatasetPreview] = None
     hyperparameters: Optional[dict] = None
