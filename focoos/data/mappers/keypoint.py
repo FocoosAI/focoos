@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # Modified by Bowen Cheng from https://github.com/facebookresearch/detr/blob/master/d2/detr/dataset_mapper.py
 import copy
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -42,6 +42,7 @@ class KeypointDatasetMapper(DatasetMapper):
         augmentations: Sequence[Union[A.Augmentation, T.Transform]],
         image_format: str,
         keypoint_hflip_indices: Optional[np.ndarray] = None,
+        resolution: Optional[Union[int, Tuple[int, int]]] = None,
     ):
         """
         Args:
@@ -55,6 +56,7 @@ class KeypointDatasetMapper(DatasetMapper):
                 proposals from dataset_dict and keep the top k proposals for each image.
             recompute_boxes: whether to overwrite bounding box annotations
                 by computing tight bounding boxes from instance mask annotations.
+            resolution: Image resolution used for augmentations.
         """
         # fmt: off
         self.is_train               = is_train
@@ -63,6 +65,7 @@ class KeypointDatasetMapper(DatasetMapper):
         self.use_keypoint           = True
         self.keypoint_hflip_indices = keypoint_hflip_indices
         self.recompute_boxes        = False
+        self.resolution             = resolution
         # fmt: on
         logger = get_logger("KeypointMapper")
         mode = "train" if is_train else "val"

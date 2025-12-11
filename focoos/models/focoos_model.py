@@ -171,6 +171,7 @@ class FocoosModel:
             device = "mps"
         else:
             device = "cpu"
+
         self.model_info.ref = None
 
         self.model_info.train_args = train_args  # type: ignore
@@ -201,6 +202,12 @@ class FocoosModel:
             self.model_info.config["num_keypoints"] = len(data_train.dataset.metadata.keypoints)
         if data_train.dataset.metadata.keypoints_skeleton is not None:
             self.model_info.config["skeleton"] = data_train.dataset.metadata.keypoints_skeleton
+
+        # Set im_size from resolution in augmentations if available
+        resolution = getattr(data_train, "resolution", None) or getattr(data_val, "resolution", None)
+        if resolution is not None:
+            self.model_info.im_size = resolution
+
         self._reload_model()
         self.model_info.name = train_args.run_name.strip()
         self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)  # type: ignore

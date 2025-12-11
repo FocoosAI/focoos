@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # Modified by Bowen Cheng from https://github.com/facebookresearch/detr/blob/master/d2/detr/dataset_mapper.py
 import copy
-from typing import List, Optional, Sequence, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -43,6 +43,7 @@ class DetectionDatasetMapper(DatasetMapper):
         use_keypoint: bool = False,
         keypoint_hflip_indices: Optional[np.ndarray] = None,
         recompute_boxes: bool = False,
+        resolution: Optional[Union[int, Tuple[int, int]]] = None,
     ):
         """
         Args:
@@ -56,6 +57,7 @@ class DetectionDatasetMapper(DatasetMapper):
                 proposals from dataset_dict and keep the top k proposals for each image.
             recompute_boxes: whether to overwrite bounding box annotations
                 by computing tight bounding boxes from instance mask annotations.
+            resolution: Image resolution used for augmentations.
         """
         if recompute_boxes:
             assert use_instance_mask, "recompute_boxes requires instance masks"
@@ -67,6 +69,7 @@ class DetectionDatasetMapper(DatasetMapper):
         self.use_keypoint           = use_keypoint
         self.keypoint_hflip_indices = keypoint_hflip_indices
         self.recompute_boxes        = recompute_boxes
+        self.resolution             = resolution
         # fmt: on
         logger = get_logger("DetectionMapper")
         mode = "train" if is_train else "val"

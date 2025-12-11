@@ -1,5 +1,5 @@
 import logging
-from typing import List, Union
+from typing import List, Optional, Tuple, Union
 
 from focoos.data.transforms import augmentation as A
 from focoos.data.transforms import transform as T
@@ -14,10 +14,12 @@ class DatasetMapper:
         *,
         augmentations: List[Union[A.Augmentation, T.Transform]],
         image_format: str,
+        resolution: Optional[Union[int, Tuple[int, int]]] = None,
     ):
         self.is_train = is_train
         self.augmentations = A.AugmentationList(augmentations)
         self.image_format = image_format
+        self.resolution = resolution
 
     def check_image_size(self, dataset_dict, image):
         expected_wh = None

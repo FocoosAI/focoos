@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Optional, Tuple, Union
 
 from focoos.data.datasets.dict_dataset import DictDataset
 from focoos.data.datasets.map_dataset import MapDataset
@@ -85,6 +85,7 @@ class AutoDataset:
         self,
         augs: List[T.Transform],
         is_validation_split: bool,
+        resolution: Optional[Union[int, Tuple[int, int]]] = None,
     ) -> DatasetMapper:
         if self.task == Task.SEMSEG:
             return SemanticDatasetMapper(
@@ -92,12 +93,14 @@ class AutoDataset:
                 ignore_label=255,
                 augmentations=augs,
                 is_train=not is_validation_split,
+                resolution=resolution,
             )
         elif self.task == Task.DETECTION:
             return DetectionDatasetMapper(
                 image_format="RGB",
                 is_train=not is_validation_split,
                 augmentations=augs,
+                resolution=resolution,
             )
         elif self.task == Task.INSTANCE_SEGMENTATION:
             return DetectionDatasetMapper(
@@ -105,18 +108,21 @@ class AutoDataset:
                 is_train=not is_validation_split,
                 augmentations=augs,
                 use_instance_mask=True,
+                resolution=resolution,
             )
         elif self.task == Task.CLASSIFICATION:
             return ClassificationDatasetMapper(
                 image_format="RGB",
                 is_train=not is_validation_split,
                 augmentations=augs,
+                resolution=resolution,
             )
         elif self.task == Task.KEYPOINT:
             return KeypointDatasetMapper(
                 image_format="RGB",
                 augmentations=augs,
                 is_train=not is_validation_split,
+                resolution=resolution,
                 # keypoint_hflip_indices=np.array(keypoint_hflip_indices),
             )
         else:
@@ -144,14 +150,15 @@ class AutoDataset:
         self,
         augs: List[T.Transform],
         split: DatasetSplitType = DatasetSplitType.TRAIN,
+        resolution: Optional[Union[int, Tuple[int, int]]] = None,
     ) -> MapDataset:
         """
         Generate a dataset for a given dataset name with optional augmentations.
 
         Parameters:
-            short_edge_length (int): The length of the shorter edge of the images.
-            max_size (int): The maximum size of the images.
-            extra_augs (List[Transform]): Extra augmentations to apply.
+            augs (List[Transform]): Augmentations to apply.
+            split (DatasetSplitType): Dataset split type (TRAIN or VAL).
+            resolution (Optional[Union[int, Tuple[int, int]]]): Image resolution used for augmentations.
 
         Returns:
             MapDataset: A DictDataset with DatasetMapper for training.
@@ -164,5 +171,6 @@ class AutoDataset:
             mapper=self._load_mapper(
                 augs=augs,
                 is_validation_split=(split == DatasetSplitType.VAL),
+                resolution=resolution,
             ),
         )  # type: ignore
