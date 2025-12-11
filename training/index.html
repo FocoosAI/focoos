@@ -1994,7 +1994,11 @@ Check the reference of your dataset on the platform and use it in the following 
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
-<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoDataset</span><span class="p">,</span><span class="n">DatasetAugmentations</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoDataset</span><span class="p">,</span><span class="n">DatasetAugmentations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">focoos</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetSplitType</span>
 
@@ -2002,7 +2006,11 @@ Check the reference of your dataset on the platform and use it in the following 
 <span class="n">layout</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">layout</span>  <span class="c1"># see ports.DatasetLayout for more information</span>
 <span class="n">auto_dataset</span> <span class="o">=</span> <span class="n">AutoDataset</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_path</span><span class="p">,</span> <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="n">layout</span><span class="p">)</span>
 
-<span class="n">augs</span> <span class="o">=</span> <span class="n">DatasetAugmentations</span><span class="p">(</span><span class="n">resolution</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span><span class="o">.</span><span class="n">get_augmentations</span><span class="p">()</span>
+<span class="c1"># Square resolution (512x512)</span>
+<span class="n">augs</span> <span class="o">=</span> <span class="n">DatasetAugmentations</span><span class="p">(</span><span class="n">resolution</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span>
+
+<span class="c1"># Non-square resolution (640x480, height x width)</span>
+<span class="n">augs</span> <span class="o">=</span> <span class="n">DatasetAugmentations</span><span class="p">(</span><span class="n">resolution</span><span class="o">=</span><span class="p">(</span><span class="mi">640</span><span class="p">,</span> <span class="mi">480</span><span class="p">))</span>
 
 <span class="n">train_dataset</span> <span class="o">=</span> <span class="n">auto_dataset</span><span class="o">.</span><span class="n">get_split</span><span class="p">(</span><span class="n">augs</span><span class="o">=</span><span class="n">augs</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="n">DatasetSplitType</span><span class="o">.</span><span class="n">TRAIN</span><span class="p">)</span>
 <span class="n">valid_dataset</span> <span class="o">=</span> <span class="n">auto_dataset</span><span class="o">.</span><span class="n">get_split</span><span class="p">(</span><span class="n">augs</span><span class="o">=</span><span class="n">augs</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="n">DatasetSplitType</span><span class="o">.</span><span class="n">VAL</span><span class="p">)</span>

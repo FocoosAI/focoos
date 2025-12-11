@@ -2431,7 +2431,9 @@ Subclasses must implement the abstract methods to provide model-specific process
 <span class="normal">291</span>
 <span class="normal">292</span>
 <span class="normal">293</span>
-<span class="normal">294</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Processor</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Processor</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for model processors that handle preprocessing and postprocessing.</span>
 
 <span class="sd">    This class defines the interface for processing inputs and outputs for different model types.</span>
@@ -2442,11 +2444,13 @@ Subclasses must implement the abstract methods to provide model-specific process
 <span class="sd">        training (bool): Flag indicating whether the processor is in training mode.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ModelConfig</span><span class="p">,</span> <span class="n">image_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ModelConfig</span><span class="p">,</span> <span class="n">image_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the processor with the given configuration.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (ModelConfig): Model configuration containing settings and parameters.</span>
+<span class="sd">            image_size (Optional[Union[int, Tuple[int, int]]]): Image size. If int, treated as square (size, size).</span>
+<span class="sd">                If tuple, treated as (height, width).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="o">=</span> <span class="kc">False</span>
@@ -2771,6 +2775,23 @@ Subclasses must implement the abstract methods to provide model-specific process
                 <em>required</em>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>image_size</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Union">Union</span>[<span title="int">int</span>, <span title="typing.Tuple">Tuple</span>[<span title="int">int</span>, <span title="int">int</span>]]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Image size. If int, treated as square (size, size).
+If tuple, treated as (height, width).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -2785,11 +2806,15 @@ Subclasses must implement the abstract methods to provide model-specific process
 <span class="normal">27</span>
 <span class="normal">28</span>
 <span class="normal">29</span>
-<span class="normal">30</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ModelConfig</span><span class="p">,</span> <span class="n">image_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">ModelConfig</span><span class="p">,</span> <span class="n">image_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the processor with the given configuration.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        config (ModelConfig): Model configuration containing settings and parameters.</span>
+<span class="sd">        image_size (Optional[Union[int, Tuple[int, int]]]): Image size. If int, treated as square (size, size).</span>
+<span class="sd">            If tuple, treated as (height, width).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">training</span> <span class="o">=</span> <span class="kc">False</span>
@@ -2838,14 +2863,14 @@ Subclasses must implement the abstract methods to provide model-specific process
 
             <details class="quote">
               <summary>Source code in <code>focoos/processor/base_processor.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">32</span>
-<span class="normal">33</span>
-<span class="normal">34</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">34</span>
 <span class="normal">35</span>
 <span class="normal">36</span>
 <span class="normal">37</span>
 <span class="normal">38</span>
-<span class="normal">39</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the processor to evaluation mode.</span>
 
 <span class="sd">    Returns:</span>
@@ -2956,9 +2981,7 @@ which may differ from inference postprocessing.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/processor/base_processor.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">158</span>
-<span class="normal">159</span>
-<span class="normal">160</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">160</span>
 <span class="normal">161</span>
 <span class="normal">162</span>
 <span class="normal">163</span>
@@ -2970,7 +2993,9 @@ which may differ from inference postprocessing.</p>
 <span class="normal">169</span>
 <span class="normal">170</span>
 <span class="normal">171</span>
-<span class="normal">172</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">eval_postprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outputs</span><span class="p">:</span> <span class="n">ModelOutput</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DatasetEntry</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Postprocess model outputs for evaluation purposes.</span>
 
@@ -3142,9 +3167,7 @@ which may differ from inference postprocessing.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/processor/base_processor.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">109</span>
-<span class="normal">110</span>
-<span class="normal">111</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">111</span>
 <span class="normal">112</span>
 <span class="normal">113</span>
 <span class="normal">114</span>
@@ -3174,7 +3197,9 @@ which may differ from inference postprocessing.</p>
 <span class="normal">138</span>
 <span class="normal">139</span>
 <span class="normal">140</span>
-<span class="normal">141</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">export_postprocess</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">output</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span>
@@ -3286,9 +3311,7 @@ typically used for ONNX export with dynamic batch sizes or image dimensions.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/processor/base_processor.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">143</span>
-<span class="normal">144</span>
-<span class="normal">145</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">145</span>
 <span class="normal">146</span>
 <span class="normal">147</span>
 <span class="normal">148</span>
@@ -3299,7 +3322,9 @@ typically used for ONNX export with dynamic batch sizes or image dimensions.</p>
 <span class="normal">153</span>
 <span class="normal">154</span>
 <span class="normal">155</span>
-<span class="normal">156</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_dynamic_axes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DynamicAxes</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Get dynamic axes configuration for model export.</span>
 
@@ -3413,9 +3438,7 @@ input types including tensors, numpy arrays, and PIL images.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/processor/base_processor.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">174</span>
-<span class="normal">175</span>
-<span class="normal">176</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">176</span>
 <span class="normal">177</span>
 <span class="normal">178</span>
 <span class="normal">179</span>
@@ -3458,7 +3481,9 @@ input types including tensors, numpy arrays, and PIL images.</p>
 <span class="normal">216</span>
 <span class="normal">217</span>
 <span class="normal">218</span>
-<span class="normal">219</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_image_sizes</span><span class="p">(</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_image_sizes</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
 <span class="p">):</span>
@@ -3643,9 +3668,7 @@ When target_size is provided, all images are resized for consistent batching.</p
 
             <details class="quote">
               <summary>Source code in <code>focoos/processor/base_processor.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">221</span>
-<span class="normal">222</span>
-<span class="normal">223</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">223</span>
 <span class="normal">224</span>
 <span class="normal">225</span>
 <span class="normal">226</span>
@@ -3716,7 +3739,9 @@ When target_size is provided, all images are resized for consistent batching.</p
 <span class="normal">291</span>
 <span class="normal">292</span>
 <span class="normal">293</span>
-<span class="normal">294</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_torch_batch</span><span class="p">(</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_torch_batch</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
     <span class="n">target_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -3969,9 +3994,7 @@ Defaults to empty list.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/processor/base_processor.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 79</span>
-<span class="normal"> 80</span>
-<span class="normal"> 81</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 81</span>
 <span class="normal"> 82</span>
 <span class="normal"> 83</span>
 <span class="normal"> 84</span>
@@ -3997,7 +4020,9 @@ Defaults to empty list.</p>
 <span class="normal">104</span>
 <span class="normal">105</span>
 <span class="normal">106</span>
-<span class="normal">107</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">postprocess</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">outputs</span><span class="p">:</span> <span class="n">ModelOutput</span><span class="p">,</span>
@@ -4178,9 +4203,7 @@ such as resizing, normalization, and tensor formatting.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/processor/base_processor.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">55</span>
 <span class="normal">56</span>
 <span class="normal">57</span>
 <span class="normal">58</span>
@@ -4202,7 +4225,9 @@ such as resizing, normalization, and tensor formatting.</p>
 <span class="normal">74</span>
 <span class="normal">75</span>
 <span class="normal">76</span>
-<span class="normal">77</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">preprocess</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
@@ -4302,9 +4327,7 @@ such as resizing, normalization, and tensor formatting.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/processor/base_processor.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">43</span>
 <span class="normal">44</span>
 <span class="normal">45</span>
 <span class="normal">46</span>
@@ -4312,7 +4335,9 @@ such as resizing, normalization, and tensor formatting.</p>
 <span class="normal">48</span>
 <span class="normal">49</span>
 <span class="normal">50</span>
-<span class="normal">51</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">training</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">training</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the processor training mode.</span>
 
 <span class="sd">    Args:</span>
@@ -4428,7 +4453,10 @@ such as resizing, normalization, and tensor formatting.</p>
 <span class="normal">39</span>
 <span class="normal">40</span>
 <span class="normal">41</span>
-<span class="normal">42</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ProcessorManager</span><span class="p">:</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ProcessorManager</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Automatic processor manager with lazy loading&quot;&quot;&quot;</span>
 
     <span class="n">_PROCESSOR_MAPPING</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Type</span><span class="p">[</span><span class="n">Processor</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -4453,7 +4481,10 @@ such as resizing, normalization, and tensor formatting.</p>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_processor</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span> <span class="n">model_family</span><span class="p">:</span> <span class="n">ModelFamily</span><span class="p">,</span> <span class="n">model_config</span><span class="p">:</span> <span class="n">ModelConfig</span><span class="p">,</span> <span class="n">image_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">model_family</span><span class="p">:</span> <span class="n">ModelFamily</span><span class="p">,</span>
+        <span class="n">model_config</span><span class="p">:</span> <span class="n">ModelConfig</span><span class="p">,</span>
+        <span class="n">image_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Processor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get a processor instance for the given model family.</span>
@@ -4509,9 +4540,15 @@ such as resizing, normalization, and tensor formatting.</p>
 <span class="normal">39</span>
 <span class="normal">40</span>
 <span class="normal">41</span>
-<span class="normal">42</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_processor</span><span class="p">(</span>
-    <span class="bp">cls</span><span class="p">,</span> <span class="n">model_family</span><span class="p">:</span> <span class="n">ModelFamily</span><span class="p">,</span> <span class="n">model_config</span><span class="p">:</span> <span class="n">ModelConfig</span><span class="p">,</span> <span class="n">image_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="bp">cls</span><span class="p">,</span>
+    <span class="n">model_family</span><span class="p">:</span> <span class="n">ModelFamily</span><span class="p">,</span>
+    <span class="n">model_config</span><span class="p">:</span> <span class="n">ModelConfig</span><span class="p">,</span>
+    <span class="n">image_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Processor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get a processor instance for the given model family.</span>

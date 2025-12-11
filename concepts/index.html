@@ -2186,7 +2186,7 @@
     <span class="n">name</span><span class="o">=</span><span class="s2">&quot;custom_detector&quot;</span><span class="p">,</span>
     <span class="n">model_family</span><span class="o">=</span><span class="n">ModelFamily</span><span class="o">.</span><span class="n">DETR</span><span class="p">,</span>
     <span class="n">classes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;person&quot;</span><span class="p">,</span> <span class="s2">&quot;car&quot;</span><span class="p">,</span> <span class="s2">&quot;bicycle&quot;</span><span class="p">],</span>
-    <span class="n">im_size</span><span class="o">=</span><span class="mi">640</span><span class="p">,</span>
+    <span class="n">im_size</span><span class="o">=</span><span class="mi">640</span><span class="p">,</span>  <span class="c1"># Square image (640x640), or use (640, 480) for non-square (height, width)</span>
     <span class="n">task</span><span class="o">=</span><span class="n">Task</span><span class="o">.</span><span class="n">DETECTION</span><span class="p">,</span>
     <span class="n">config</span><span class="o">=</span><span class="p">{</span>
         <span class="s2">&quot;num_classes&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
@@ -2300,7 +2300,7 @@
 <p>Exports the model to different runtime formats for optimized inference. The main function arguments are:
  - <code>runtime_type</code>: specify the target runtime and must be one of the supported (see <a href="/focoos/api/ports/#focoos.ports.RuntimeType">RuntimeType</a>)
  - <code>out_dir</code>: the destination folder for the exported model
- - <code>image_size</code>: the target image size, as an optional integer</p>
+ - <code>image_size</code>: the target image size, as an optional integer (square) or tuple (height, width) for non-square images</p>
 <p>The function returns an <a href="#infer-model"><code>InferModel</code></a> instance for the exported model.</p>
 <p><strong>Example:</strong>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>

@@ -2840,15 +2840,15 @@
 
               <details class="quote">
                 <summary>Source code in <code>focoos/ports.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1356</span>
-<span class="normal">1357</span>
-<span class="normal">1358</span>
-<span class="normal">1359</span>
-<span class="normal">1360</span>
-<span class="normal">1361</span>
-<span class="normal">1362</span>
-<span class="normal">1363</span>
-<span class="normal">1364</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ArtifactName</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1366</span>
+<span class="normal">1367</span>
+<span class="normal">1368</span>
+<span class="normal">1369</span>
+<span class="normal">1370</span>
+<span class="normal">1371</span>
+<span class="normal">1372</span>
+<span class="normal">1373</span>
+<span class="normal">1374</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ArtifactName</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Model artifact type.&quot;&quot;&quot;</span>
 
     <span class="n">WEIGHTS</span> <span class="o">=</span> <span class="s2">&quot;model_final.pth&quot;</span>
@@ -4217,13 +4217,13 @@ including the number of samples in training and validation sets and the total si
 
               <details class="quote">
                 <summary>Source code in <code>focoos/ports.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1347</span>
-<span class="normal">1348</span>
-<span class="normal">1349</span>
-<span class="normal">1350</span>
-<span class="normal">1351</span>
-<span class="normal">1352</span>
-<span class="normal">1353</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1357</span>
+<span class="normal">1358</span>
+<span class="normal">1359</span>
+<span class="normal">1360</span>
+<span class="normal">1361</span>
+<span class="normal">1362</span>
+<span class="normal">1363</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DynamicAxes</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Dynamic axes for model export.&quot;&quot;&quot;</span>
 
@@ -4408,17 +4408,7 @@ including the number of samples in training and validation sets and the total si
 
               <details class="quote">
                 <summary>Source code in <code>focoos/ports.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1324</span>
-<span class="normal">1325</span>
-<span class="normal">1326</span>
-<span class="normal">1327</span>
-<span class="normal">1328</span>
-<span class="normal">1329</span>
-<span class="normal">1330</span>
-<span class="normal">1331</span>
-<span class="normal">1332</span>
-<span class="normal">1333</span>
-<span class="normal">1334</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1334</span>
 <span class="normal">1335</span>
 <span class="normal">1336</span>
 <span class="normal">1337</span>
@@ -4428,7 +4418,17 @@ including the number of samples in training and validation sets and the total si
 <span class="normal">1341</span>
 <span class="normal">1342</span>
 <span class="normal">1343</span>
-<span class="normal">1344</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="normal">1344</span>
+<span class="normal">1345</span>
+<span class="normal">1346</span>
+<span class="normal">1347</span>
+<span class="normal">1348</span>
+<span class="normal">1349</span>
+<span class="normal">1350</span>
+<span class="normal">1351</span>
+<span class="normal">1352</span>
+<span class="normal">1353</span>
+<span class="normal">1354</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExportCfg</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for model export.</span>
 
@@ -6366,7 +6366,17 @@ properties.</p>
 <span class="normal">1318</span>
 <span class="normal">1319</span>
 <span class="normal">1320</span>
-<span class="normal">1321</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="normal">1321</span>
+<span class="normal">1322</span>
+<span class="normal">1323</span>
+<span class="normal">1324</span>
+<span class="normal">1325</span>
+<span class="normal">1326</span>
+<span class="normal">1327</span>
+<span class="normal">1328</span>
+<span class="normal">1329</span>
+<span class="normal">1330</span>
+<span class="normal">1331</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModelInfo</span><span class="p">(</span><span class="n">DictClass</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Comprehensive metadata for a Focoos model.</span>
@@ -6398,7 +6408,7 @@ properties.</p>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">model_family</span><span class="p">:</span> <span class="n">ModelFamily</span>
     <span class="n">classes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">im_size</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">im_size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span>
     <span class="n">task</span><span class="p">:</span> <span class="n">Task</span>
     <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span>
     <span class="n">ref</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -6439,12 +6449,22 @@ properties.</p>
                 <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">model_info_json</span><span class="p">[</span><span class="s2">&quot;training_info&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">TrainingInfo</span><span class="o">.</span><span class="n">__dataclass_fields__</span><span class="p">}</span>
             <span class="p">)</span>
 
+        <span class="c1"># Handle im_size: can be int (square) or list/tuple (height, width)</span>
+        <span class="n">im_size_value</span> <span class="o">=</span> <span class="n">model_info_json</span><span class="p">[</span><span class="s2">&quot;im_size&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">im_size_value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="n">im_size</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">im_size_value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">im_size_value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">im_size</span> <span class="o">=</span> <span class="n">im_size_value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Try to convert to int for backward compatibility</span>
+            <span class="n">im_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">im_size_value</span><span class="p">)</span>
+
         <span class="n">model_info</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="n">model_info_json</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span>
             <span class="n">ref</span><span class="o">=</span><span class="n">model_info_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ref&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
             <span class="n">model_family</span><span class="o">=</span><span class="n">ModelFamily</span><span class="p">(</span><span class="n">model_info_json</span><span class="p">[</span><span class="s2">&quot;model_family&quot;</span><span class="p">]),</span>
             <span class="n">classes</span><span class="o">=</span><span class="n">model_info_json</span><span class="p">[</span><span class="s2">&quot;classes&quot;</span><span class="p">],</span>
-            <span class="n">im_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">model_info_json</span><span class="p">[</span><span class="s2">&quot;im_size&quot;</span><span class="p">]),</span>
+            <span class="n">im_size</span><span class="o">=</span><span class="n">im_size</span><span class="p">,</span>
             <span class="n">status</span><span class="o">=</span><span class="n">ModelStatus</span><span class="p">(</span><span class="n">model_info_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">))</span> <span class="k">if</span> <span class="n">model_info_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">task</span><span class="o">=</span><span class="n">Task</span><span class="p">(</span><span class="n">model_info_json</span><span class="p">[</span><span class="s2">&quot;task&quot;</span><span class="p">]),</span>
             <span class="n">focoos_model</span><span class="o">=</span><span class="n">model_info_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;focoos_model&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
@@ -6560,18 +6580,18 @@ properties.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/ports.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1291</span>
-<span class="normal">1292</span>
-<span class="normal">1293</span>
-<span class="normal">1294</span>
-<span class="normal">1295</span>
-<span class="normal">1296</span>
-<span class="normal">1297</span>
-<span class="normal">1298</span>
-<span class="normal">1299</span>
-<span class="normal">1300</span>
-<span class="normal">1301</span>
-<span class="normal">1302</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">dump_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1301</span>
+<span class="normal">1302</span>
+<span class="normal">1303</span>
+<span class="normal">1304</span>
+<span class="normal">1305</span>
+<span class="normal">1306</span>
+<span class="normal">1307</span>
+<span class="normal">1308</span>
+<span class="normal">1309</span>
+<span class="normal">1310</span>
+<span class="normal">1311</span>
+<span class="normal">1312</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">dump_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Serialize ModelInfo to a JSON file.</span>
 
@@ -6729,7 +6749,17 @@ properties.</p>
 <span class="normal">1286</span>
 <span class="normal">1287</span>
 <span class="normal">1288</span>
-<span class="normal">1289</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">1289</span>
+<span class="normal">1290</span>
+<span class="normal">1291</span>
+<span class="normal">1292</span>
+<span class="normal">1293</span>
+<span class="normal">1294</span>
+<span class="normal">1295</span>
+<span class="normal">1296</span>
+<span class="normal">1297</span>
+<span class="normal">1298</span>
+<span class="normal">1299</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">from_json</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Load ModelInfo from a JSON file.</span>
@@ -6754,12 +6784,22 @@ properties.</p>
             <span class="o">**</span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">model_info_json</span><span class="p">[</span><span class="s2">&quot;training_info&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">TrainingInfo</span><span class="o">.</span><span class="n">__dataclass_fields__</span><span class="p">}</span>
         <span class="p">)</span>
 
+    <span class="c1"># Handle im_size: can be int (square) or list/tuple (height, width)</span>
+    <span class="n">im_size_value</span> <span class="o">=</span> <span class="n">model_info_json</span><span class="p">[</span><span class="s2">&quot;im_size&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">im_size_value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="n">im_size</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">im_size_value</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">im_size_value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">im_size</span> <span class="o">=</span> <span class="n">im_size_value</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Try to convert to int for backward compatibility</span>
+        <span class="n">im_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">im_size_value</span><span class="p">)</span>
+
     <span class="n">model_info</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="n">model_info_json</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span>
         <span class="n">ref</span><span class="o">=</span><span class="n">model_info_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ref&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
         <span class="n">model_family</span><span class="o">=</span><span class="n">ModelFamily</span><span class="p">(</span><span class="n">model_info_json</span><span class="p">[</span><span class="s2">&quot;model_family&quot;</span><span class="p">]),</span>
         <span class="n">classes</span><span class="o">=</span><span class="n">model_info_json</span><span class="p">[</span><span class="s2">&quot;classes&quot;</span><span class="p">],</span>
-        <span class="n">im_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">model_info_json</span><span class="p">[</span><span class="s2">&quot;im_size&quot;</span><span class="p">]),</span>
+        <span class="n">im_size</span><span class="o">=</span><span class="n">im_size</span><span class="p">,</span>
         <span class="n">status</span><span class="o">=</span><span class="n">ModelStatus</span><span class="p">(</span><span class="n">model_info_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">))</span> <span class="k">if</span> <span class="n">model_info_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">task</span><span class="o">=</span><span class="n">Task</span><span class="p">(</span><span class="n">model_info_json</span><span class="p">[</span><span class="s2">&quot;task&quot;</span><span class="p">]),</span>
         <span class="n">focoos_model</span><span class="o">=</span><span class="n">model_info_json</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;focoos_model&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
@@ -6803,24 +6843,24 @@ properties.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/ports.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1304</span>
-<span class="normal">1305</span>
-<span class="normal">1306</span>
-<span class="normal">1307</span>
-<span class="normal">1308</span>
-<span class="normal">1309</span>
-<span class="normal">1310</span>
-<span class="normal">1311</span>
-<span class="normal">1312</span>
-<span class="normal">1313</span>
-<span class="normal">1314</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1314</span>
 <span class="normal">1315</span>
 <span class="normal">1316</span>
 <span class="normal">1317</span>
 <span class="normal">1318</span>
 <span class="normal">1319</span>
 <span class="normal">1320</span>
-<span class="normal">1321</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">pprint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">1321</span>
+<span class="normal">1322</span>
+<span class="normal">1323</span>
+<span class="normal">1324</span>
+<span class="normal">1325</span>
+<span class="normal">1326</span>
+<span class="normal">1327</span>
+<span class="normal">1328</span>
+<span class="normal">1329</span>
+<span class="normal">1330</span>
+<span class="normal">1331</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">pprint</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Pretty-print the main model information using the Focoos logger.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -7842,7 +7882,7 @@ including its identification, configuration, performance metrics, and training d
           <tr class="doc-section-item">
             <td><code><span title="focoos.ports.RemoteModelInfo.im_size">im_size</span></code></td>
             <td>
-                  <code><span title="typing.Optional">Optional</span>[<span title="int">int</span>]</code>
+                  <code><span title="typing.Optional">Optional</span>[<span title="typing.Union">Union</span>[<span title="int">int</span>, <span title="typing.Tuple">Tuple</span>[<span title="int">int</span>, <span title="int">int</span>]]]</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7961,7 +8001,7 @@ including its identification, configuration, performance metrics, and training d
 <span class="sd">        metrics (Optional[dict]): Performance metrics of the model (e.g., mAP, accuracy).</span>
 <span class="sd">        latencies (Optional[list[dict]]): Inference latency measurements across different configurations.</span>
 <span class="sd">        classes (Optional[list[str]]): List of class names the model can detect or segment.</span>
-<span class="sd">        im_size (Optional[int]): Input image size the model expects.</span>
+<span class="sd">        im_size (Optional[Union[int, Tuple[int, int]]]): Input image size the model expects.</span>
 <span class="sd">        training_info (Optional[TrainingInfo]): Information about the training process.</span>
 <span class="sd">        location (Optional[str]): Storage location of the model.</span>
 <span class="sd">        dataset (Optional[DatasetPreview]): Information about the dataset used for training.</span>
@@ -7981,7 +8021,7 @@ including its identification, configuration, performance metrics, and training d
     <span class="n">model_family</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">metrics</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">classes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">im_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">im_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">training_info</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TrainingInfo</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">dataset</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DatasetPreview</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">hyperparameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>

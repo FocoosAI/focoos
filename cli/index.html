@@ -2646,8 +2646,14 @@ focoos<span class="w"> </span>gradio
 <span class="normal">28</span>
 <span class="normal">29</span>
 <span class="normal">30</span>
-<span class="normal">31</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Basic training</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Basic training (square image)</span>
 focoos<span class="w"> </span>train<span class="w"> </span>--model<span class="w"> </span>fai-detr-m-coco<span class="w"> </span>--dataset<span class="w"> </span>mydataset.zip<span class="w"> </span>--im-size<span class="w"> </span><span class="m">640</span>
+
+<span class="c1"># Training with non-square resolution</span>
+focoos<span class="w"> </span>train<span class="w"> </span>--model<span class="w"> </span>fai-detr-m-coco<span class="w"> </span>--dataset<span class="w"> </span>mydataset.zip<span class="w"> </span>--im-size<span class="w"> </span><span class="m">640</span>,480
 
 <span class="c1"># Advanced training with custom hyperparameters</span>
 focoos<span class="w"> </span>train<span class="w"> </span><span class="se">\</span>
@@ -2756,8 +2762,14 @@ focoos<span class="w"> </span>predict<span class="w"> </span><span class="se">\<
 <span class="normal">21</span>
 <span class="normal">22</span>
 <span class="normal">23</span>
-<span class="normal">24</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Export to ONNX (default)</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Export to ONNX (default, square image)</span>
 focoos<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--model<span class="w"> </span>fai-detr-m-coco<span class="w"> </span>--im-size<span class="w"> </span><span class="m">640</span>
+
+<span class="c1"># Export to ONNX with non-square resolution</span>
+focoos<span class="w"> </span><span class="nb">export</span><span class="w"> </span>--model<span class="w"> </span>fai-detr-m-coco<span class="w"> </span>--im-size<span class="w"> </span><span class="m">640</span>,480
 
 <span class="c1"># Export to TorchScript</span>
 focoos<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="se">\</span>
@@ -2891,7 +2903,7 @@ focoos<span class="w"> </span>gradio
 <td><code>--im-size</code></td>
 <td>Input image size</td>
 <td>640</td>
-<td>Any positive integer</td>
+<td>Integer (square) or "height,width" or "heightxwidth" (non-square)</td>
 </tr>
 <tr>
 <td><code>--batch-size</code></td>
@@ -3133,14 +3145,36 @@ focoos<span class="w"> </span>gradio
 <span class="normal">24</span>
 <span class="normal">25</span>
 <span class="normal">26</span>
-<span class="normal">27</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.cli.commands</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_command</span><span class="p">,</span> <span class="n">predict_command</span><span class="p">,</span> <span class="n">export_command</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">focoos.cli.commands</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_command</span><span class="p">,</span> <span class="n">predict_command</span><span class="p">,</span> <span class="n">export_command</span>
 
-<span class="c1"># Train a model</span>
+<span class="c1"># Train a model (square image)</span>
 <span class="n">train_command</span><span class="p">(</span>
     <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;fai-detr-m-coco&quot;</span><span class="p">,</span>
     <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;mydataset.zip&quot;</span><span class="p">,</span>
     <span class="n">dataset_layout</span><span class="o">=</span><span class="s2">&quot;roboflow_coco&quot;</span><span class="p">,</span>
     <span class="n">im_size</span><span class="o">=</span><span class="mi">640</span><span class="p">,</span>
+    <span class="n">run_name</span><span class="o">=</span><span class="s2">&quot;my_training&quot;</span><span class="p">,</span>
+    <span class="n">max_iters</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">16</span>
+<span class="p">)</span>
+
+<span class="c1"># Train a model with non-square resolution</span>
+<span class="n">train_command</span><span class="p">(</span>
+    <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;fai-detr-m-coco&quot;</span><span class="p">,</span>
+    <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;mydataset.zip&quot;</span><span class="p">,</span>
+    <span class="n">dataset_layout</span><span class="o">=</span><span class="s2">&quot;roboflow_coco&quot;</span><span class="p">,</span>
+    <span class="n">im_size</span><span class="o">=</span><span class="p">(</span><span class="mi">640</span><span class="p">,</span> <span class="mi">480</span><span class="p">),</span>  <span class="c1"># (height, width)</span>
     <span class="n">run_name</span><span class="o">=</span><span class="s2">&quot;my_training&quot;</span><span class="p">,</span>
     <span class="n">max_iters</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
     <span class="n">batch_size</span><span class="o">=</span><span class="mi">16</span>
@@ -3179,11 +3213,17 @@ focoos<span class="w"> </span>version
 <span class="normal">2</span>
 <span class="normal">3</span>
 <span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Reduce batch size</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="c1"># Reduce batch size</span>
 focoos<span class="w"> </span>train<span class="w"> </span>--model<span class="w"> </span>fai-detr-m-coco<span class="w"> </span>--dataset<span class="w"> </span>data.zip<span class="w"> </span>--batch-size<span class="w"> </span><span class="m">8</span>
 
-<span class="c1"># Use smaller image size</span>
+<span class="c1"># Use smaller image size (square)</span>
 focoos<span class="w"> </span>train<span class="w"> </span>--model<span class="w"> </span>fai-detr-m-coco<span class="w"> </span>--dataset<span class="w"> </span>data.zip<span class="w"> </span>--im-size<span class="w"> </span><span class="m">480</span>
+
+<span class="c1"># Use non-square image size for memory efficiency</span>
+focoos<span class="w"> </span>train<span class="w"> </span>--model<span class="w"> </span>fai-detr-m-coco<span class="w"> </span>--dataset<span class="w"> </span>data.zip<span class="w"> </span>--im-size<span class="w"> </span><span class="m">480</span>,360
 </code></pre></div></td></tr></table></div></p>
 <p><strong>Dataset not found:</strong>
 <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>

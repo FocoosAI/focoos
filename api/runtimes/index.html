@@ -3242,7 +3242,24 @@ and performance benchmarking.</p>
 <span class="normal">199</span>
 <span class="normal">200</span>
 <span class="normal">201</span>
-<span class="normal">202</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ONNXRuntime</span><span class="p">(</span><span class="n">BaseRuntime</span><span class="p">):</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ONNXRuntime</span><span class="p">(</span><span class="n">BaseRuntime</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    ONNX Runtime wrapper for model inference with different execution providers.</span>
 
@@ -3348,8 +3365,16 @@ and performance benchmarking.</p>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_warmup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">im_size</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Warming up model </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">active_provider</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
-        <span class="n">np_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="c1"># Normalize size to tuple format</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">size_tuple</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+            <span class="n">size_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">size_tuple</span> <span class="o">=</span> <span class="n">size</span>
+            <span class="n">size_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Warming up model </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">active_provider</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size_str</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
+        <span class="n">np_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
         <span class="n">input_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
         <span class="n">out_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()]</span>
 
@@ -3389,12 +3414,18 @@ and performance benchmarking.</p>
         <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_device_name</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_provider</span> <span class="o">==</span> <span class="s2">&quot;CPUExecutionProvider&quot;</span><span class="p">:</span>
             <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_cpu_name</span><span class="p">()</span>
+
+        <span class="c1"># Normalize size to tuple format</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-            <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+            <span class="n">size_tuple</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+            <span class="n">size_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">size_tuple</span> <span class="o">=</span> <span class="n">size</span>
+            <span class="n">size_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
 
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Benchmarking latency on </span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Benchmarking latency on </span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size_str</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
 
-        <span class="n">np_input</span> <span class="o">=</span> <span class="p">(</span><span class="mi">255</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">np_input</span> <span class="o">=</span> <span class="p">(</span><span class="mi">255</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
         <span class="n">input_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
         <span class="n">out_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()]</span>
 
@@ -3409,6 +3440,9 @@ and performance benchmarking.</p>
 
         <span class="n">durations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span>
 
+        <span class="c1"># For LatencyMetrics.im_size (int), use height (first dimension) as representative value</span>
+        <span class="c1"># This maintains backward compatibility while supporting non-square images</span>
+        <span class="n">im_size_repr</span> <span class="o">=</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">else</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">metrics</span> <span class="o">=</span> <span class="n">LatencyMetrics</span><span class="p">(</span>
             <span class="n">fps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mi">1000</span> <span class="o">/</span> <span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
             <span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">,</span>
@@ -3416,7 +3450,7 @@ and performance benchmarking.</p>
             <span class="nb">max</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
             <span class="nb">min</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
             <span class="n">std</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
-            <span class="n">im_size</span><span class="o">=</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="c1"># FIXME: this is a hack to get the im_size as int, assuming it&#39;s a square</span>
+            <span class="n">im_size</span><span class="o">=</span><span class="n">im_size_repr</span><span class="p">,</span>
             <span class="n">device</span><span class="o">=</span><span class="n">device_name</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔥 FPS: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2"> Mean latency: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">mean</span><span class="si">}</span><span class="s2"> ms &quot;</span><span class="p">)</span>
@@ -3506,20 +3540,20 @@ and performance benchmarking.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/runtimes/onnx.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">138</span>
-<span class="normal">139</span>
-<span class="normal">140</span>
-<span class="normal">141</span>
-<span class="normal">142</span>
-<span class="normal">143</span>
-<span class="normal">144</span>
-<span class="normal">145</span>
-<span class="normal">146</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">146</span>
 <span class="normal">147</span>
 <span class="normal">148</span>
 <span class="normal">149</span>
 <span class="normal">150</span>
-<span class="normal">151</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">im</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">im</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run inference on the input image.</span>
 
@@ -3632,15 +3666,7 @@ performance metrics like FPS, mean latency, and other statistics.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/runtimes/onnx.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">153</span>
-<span class="normal">154</span>
-<span class="normal">155</span>
-<span class="normal">156</span>
-<span class="normal">157</span>
-<span class="normal">158</span>
-<span class="normal">159</span>
-<span class="normal">160</span>
-<span class="normal">161</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">161</span>
 <span class="normal">162</span>
 <span class="normal">163</span>
 <span class="normal">164</span>
@@ -3681,7 +3707,24 @@ performance metrics like FPS, mean latency, and other statistics.</p>
 <span class="normal">199</span>
 <span class="normal">200</span>
 <span class="normal">201</span>
-<span class="normal">202</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Benchmark the model performance.</span>
 
@@ -3699,12 +3742,18 @@ performance metrics like FPS, mean latency, and other statistics.</p>
     <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_device_name</span><span class="p">()</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_provider</span> <span class="o">==</span> <span class="s2">&quot;CPUExecutionProvider&quot;</span><span class="p">:</span>
         <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_cpu_name</span><span class="p">()</span>
+
+    <span class="c1"># Normalize size to tuple format</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+        <span class="n">size_tuple</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+        <span class="n">size_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">size_tuple</span> <span class="o">=</span> <span class="n">size</span>
+        <span class="n">size_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
 
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Benchmarking latency on </span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Benchmarking latency on </span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size_str</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
 
-    <span class="n">np_input</span> <span class="o">=</span> <span class="p">(</span><span class="mi">255</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">np_input</span> <span class="o">=</span> <span class="p">(</span><span class="mi">255</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
     <span class="n">input_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span>
     <span class="n">out_name</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ort_sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()]</span>
 
@@ -3719,6 +3768,9 @@ performance metrics like FPS, mean latency, and other statistics.</p>
 
     <span class="n">durations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span>
 
+    <span class="c1"># For LatencyMetrics.im_size (int), use height (first dimension) as representative value</span>
+    <span class="c1"># This maintains backward compatibility while supporting non-square images</span>
+    <span class="n">im_size_repr</span> <span class="o">=</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">else</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">metrics</span> <span class="o">=</span> <span class="n">LatencyMetrics</span><span class="p">(</span>
         <span class="n">fps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mi">1000</span> <span class="o">/</span> <span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">()),</span>
         <span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">,</span>
@@ -3726,7 +3778,7 @@ performance metrics like FPS, mean latency, and other statistics.</p>
         <span class="nb">max</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
         <span class="nb">min</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
         <span class="n">std</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="n">im_size</span><span class="o">=</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="c1"># FIXME: this is a hack to get the im_size as int, assuming it&#39;s a square</span>
+        <span class="n">im_size</span><span class="o">=</span><span class="n">im_size_repr</span><span class="p">,</span>
         <span class="n">device</span><span class="o">=</span><span class="n">device_name</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔥 FPS: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2"> Mean latency: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">mean</span><span class="si">}</span><span class="s2"> ms &quot;</span><span class="p">)</span>
@@ -3979,7 +4031,23 @@ device placement, warmup, inference, and performance benchmarking.</p>
 <span class="normal">121</span>
 <span class="normal">122</span>
 <span class="normal">123</span>
-<span class="normal">124</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TorchscriptRuntime</span><span class="p">(</span><span class="n">BaseRuntime</span><span class="p">):</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TorchscriptRuntime</span><span class="p">(</span><span class="n">BaseRuntime</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    TorchScript Runtime wrapper for model inference.</span>
 
@@ -4020,9 +4088,17 @@ device placement, warmup, inference, and performance benchmarking.</p>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">task</span> <span class="ow">in</span> <span class="p">[</span><span class="n">Task</span><span class="o">.</span><span class="n">DETECTION</span><span class="p">,</span> <span class="n">Task</span><span class="o">.</span><span class="n">CLASSIFICATION</span><span class="p">]</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">im_size</span>
                 <span class="k">else</span> <span class="mi">640</span>
             <span class="p">)</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Warming up model </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
+            <span class="c1"># Normalize size to tuple format</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">size_tuple</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+                <span class="n">size_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">size_tuple</span> <span class="o">=</span> <span class="n">size</span>
+                <span class="n">size_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Warming up model </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_info</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size_str</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
             <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-                <span class="n">np_image</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+                <span class="n">np_image</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">warmup_iter</span><span class="p">):</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">np_image</span><span class="p">)</span>
 
@@ -4058,12 +4134,18 @@ device placement, warmup, inference, and performance benchmarking.</p>
             <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_cpu_name</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_device_name</span><span class="p">()</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Benchmarking latency on </span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
 
+        <span class="c1"># Normalize size to tuple format</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-            <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+            <span class="n">size_tuple</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+            <span class="n">size_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">size_tuple</span> <span class="o">=</span> <span class="n">size</span>
+            <span class="n">size_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
 
-        <span class="n">torch_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Benchmarking latency on </span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size_str</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
+
+        <span class="n">torch_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
         <span class="n">durations</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
@@ -4077,6 +4159,8 @@ device placement, warmup, inference, and performance benchmarking.</p>
 
         <span class="n">durations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span>
 
+        <span class="c1"># For LatencyMetrics.im_size (int), use height (first dimension) as representative value</span>
+        <span class="n">im_size_repr</span> <span class="o">=</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">else</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">metrics</span> <span class="o">=</span> <span class="n">LatencyMetrics</span><span class="p">(</span>
             <span class="n">fps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mi">1000</span> <span class="o">/</span> <span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)),</span>
             <span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">,</span>
@@ -4084,7 +4168,7 @@ device placement, warmup, inference, and performance benchmarking.</p>
             <span class="nb">max</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
             <span class="nb">min</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
             <span class="n">std</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
-            <span class="n">im_size</span><span class="o">=</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">im_size</span><span class="o">=</span><span class="n">im_size_repr</span><span class="p">,</span>
             <span class="n">device</span><span class="o">=</span><span class="n">device_name</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔥 FPS: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2"> Mean latency: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">mean</span><span class="si">}</span><span class="s2"> ms &quot;</span><span class="p">)</span>
@@ -4174,19 +4258,19 @@ device placement, warmup, inference, and performance benchmarking.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/runtimes/torchscript.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">62</span>
-<span class="normal">63</span>
-<span class="normal">64</span>
-<span class="normal">65</span>
-<span class="normal">66</span>
-<span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">70</span>
 <span class="normal">71</span>
 <span class="normal">72</span>
 <span class="normal">73</span>
-<span class="normal">74</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">im</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">im</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run inference on the input image.</span>
 
@@ -4282,15 +4366,7 @@ performance metrics like FPS, mean latency, and other statistics.</p>
 
             <details class="quote">
               <summary>Source code in <code>focoos/infer/runtimes/torchscript.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 76</span>
-<span class="normal"> 77</span>
-<span class="normal"> 78</span>
-<span class="normal"> 79</span>
-<span class="normal"> 80</span>
-<span class="normal"> 81</span>
-<span class="normal"> 82</span>
-<span class="normal"> 83</span>
-<span class="normal"> 84</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 84</span>
 <span class="normal"> 85</span>
 <span class="normal"> 86</span>
 <span class="normal"> 87</span>
@@ -4330,7 +4406,23 @@ performance metrics like FPS, mean latency, and other statistics.</p>
 <span class="normal">121</span>
 <span class="normal">122</span>
 <span class="normal">123</span>
-<span class="normal">124</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">benchmark</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">640</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LatencyMetrics</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Benchmark the model performance.</span>
 
@@ -4348,12 +4440,18 @@ performance metrics like FPS, mean latency, and other statistics.</p>
         <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_cpu_name</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">device_name</span> <span class="o">=</span> <span class="n">get_device_name</span><span class="p">()</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Benchmarking latency on </span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
 
+    <span class="c1"># Normalize size to tuple format</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+        <span class="n">size_tuple</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+        <span class="n">size_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">size_tuple</span> <span class="o">=</span> <span class="n">size</span>
+        <span class="n">size_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
 
-    <span class="n">torch_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⏱️ Benchmarking latency on </span><span class="si">{</span><span class="n">device_name</span><span class="si">}</span><span class="s2">, size: </span><span class="si">{</span><span class="n">size_str</span><span class="si">}</span><span class="s2">..&quot;</span><span class="p">)</span>
+
+    <span class="n">torch_input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
     <span class="n">durations</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
@@ -4367,6 +4465,8 @@ performance metrics like FPS, mean latency, and other statistics.</p>
 
     <span class="n">durations</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span>
 
+    <span class="c1"># For LatencyMetrics.im_size (int), use height (first dimension) as representative value</span>
+    <span class="n">im_size_repr</span> <span class="o">=</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">else</span> <span class="n">size_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">metrics</span> <span class="o">=</span> <span class="n">LatencyMetrics</span><span class="p">(</span>
         <span class="n">fps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mi">1000</span> <span class="o">/</span> <span class="n">durations</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)),</span>
         <span class="n">engine</span><span class="o">=</span><span class="n">engine</span><span class="p">,</span>
@@ -4374,7 +4474,7 @@ performance metrics like FPS, mean latency, and other statistics.</p>
         <span class="nb">max</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
         <span class="nb">min</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
         <span class="n">std</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">durations</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span>
-        <span class="n">im_size</span><span class="o">=</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">im_size</span><span class="o">=</span><span class="n">im_size_repr</span><span class="p">,</span>
         <span class="n">device</span><span class="o">=</span><span class="n">device_name</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔥 FPS: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">fps</span><span class="si">}</span><span class="s2"> Mean latency: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">mean</span><span class="si">}</span><span class="s2"> ms &quot;</span><span class="p">)</span>
