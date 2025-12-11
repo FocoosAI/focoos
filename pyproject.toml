@@ -55,6 +55,7 @@ dependencies = [
     "torch~=2.7.1",
     "torchvision~=0.22.0",
     "typer>=0.16.0",
+    "shapely~=2.1.2",
 ]
 
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]
