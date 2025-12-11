@@ -62,7 +62,6 @@ class DETRProcessor(Processor):
         super().__init__(config, image_size)
         self.top_k = config.top_k
         self.threshold = config.threshold
-        self.resolution = config.resolution
 
     def preprocess(
         self,

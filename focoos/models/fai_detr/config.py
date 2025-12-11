@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 from focoos.nn.backbone.base import BackboneConfig
 from focoos.ports import ModelConfig
@@ -11,7 +11,7 @@ class DETRConfig(ModelConfig):
     num_classes: int
 
     num_queries: int = 300
-    resolution: int = 640
+    resolution: Optional[int] = None
 
     # Image detector configuration
     pixel_mean: List[float] = field(default_factory=lambda: [123.675, 116.28, 103.53])

@@ -251,22 +251,23 @@ class FocoosModel:
                 args=(args, data_train, data_val, self.model, self.processor, self.model_info, hub),
             )
 
-            logger.info("Training done, resuming main process.")
-            # here i should restore the best model and config since in DDP it is not updated
-            final_folder = os.path.join(args.output_dir, args.run_name)
-            model_path = os.path.join(final_folder, ArtifactName.WEIGHTS)
-            metadata_path = os.path.join(final_folder, ArtifactName.INFO)
-
-            if not os.path.exists(model_path):
-                raise FileNotFoundError(f"Training did not end correctly, model file not found at {model_path}")
-            if not os.path.exists(metadata_path):
-                raise FileNotFoundError(f"Training did not end correctly, metadata file not found at {metadata_path}")
-            self.model_info = ModelInfo.from_json(metadata_path)
-
-            logger.info(f"Reloading weights from {self.model_info.weights_uri}")
-            self._reload_model()
         else:
             run_train(args, data_train, data_val, self.model, self.processor, self.model_info, hub)
+        logger.info("Training done, resuming main process.")
+        # here i should restore the best model and config since in DDP it is not updated
+        final_folder = os.path.join(args.output_dir, args.run_name)
+        model_path = os.path.join(final_folder, ArtifactName.WEIGHTS)
+        metadata_path = os.path.join(final_folder, ArtifactName.INFO)
+
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"Training did not end correctly, model file not found at {model_path}")
+        if not os.path.exists(metadata_path):
+            raise FileNotFoundError(f"Training did not end correctly, metadata file not found at {metadata_path}")
+        self.model_info = ModelInfo.from_json(metadata_path)
+
+        self._reload_model()
+        self.model.eval()
+        self.processor.eval()
 
     def eval(self, args: TrainerArgs, data_test: MapDataset, save_json: bool = True):
         """evaluate the model on the provided test dataset.

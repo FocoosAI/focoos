@@ -69,7 +69,7 @@ def main():
 
     # Get default augmentations for the specified task
     train_augs, val_augs = get_default_by_task(task, resolution, advanced=args.advanced_aug)
-    valid_dataset = auto_dataset.get_split(augs=val_augs.get_augmentations(), split=DatasetSplitType.VAL)
+    valid_dataset = auto_dataset.get_split(augs=val_augs, split=DatasetSplitType.VAL)
 
     # Initialize model
     model = ModelManager.get(args.model_name)

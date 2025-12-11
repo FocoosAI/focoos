@@ -153,14 +153,24 @@ class DatasetAugmentations:
             augs.append(A.RandomAspectRatio(aspect_ratio=self.aspect_ratio))
 
         ### Add Resizing augmentations based on configuration
-        min_scale, max_scale = 2 ** (-self.scale_ratio), 2**self.scale_ratio
-        augs.append(
-            A.ResizeShortestEdge(
-                short_edge_length=[int(x * resolution_value) for x in [min_scale, max_scale]],
-                sample_style="range",
-                max_size=self.max_size,
+        # For non-square resolutions, use Resize directly to get exact dimensions
+        # For square resolutions, use ResizeShortestEdge with scale augmentation
+        is_non_square = isinstance(self.resolution, tuple) and self.resolution[0] != self.resolution[1]
+
+        if is_non_square:
+            # Non-square resolution: use direct Resize to get exact (height, width)
+            # Note: scale_ratio is ignored for non-square resolutions
+            augs.append(A.Resize(shape=resolution_tuple))
+        else:
+            # Square resolution: use ResizeShortestEdge with scale augmentation
+            min_scale, max_scale = 2 ** (-self.scale_ratio), 2**self.scale_ratio
+            augs.append(
+                A.ResizeShortestEdge(
+                    short_edge_length=[int(x * resolution_value) for x in [min_scale, max_scale]],
+                    sample_style="range",
+                    max_size=self.max_size,
+                )
             )
-        )
 
         ### Add rotation augmentations if configured
         if self.rotation > 0:
@@ -173,7 +183,7 @@ class DatasetAugmentations:
                 crop_range = (self.crop_size, self.crop_size)
             else:
                 crop_range = resolution_tuple
-            augs.append(A.RandomCrop(crop_type="absolute_range", crop_size=crop_range))
+            augs.append(A.RandomCrop(crop_type="absolute", crop_size=crop_range))
 
         return augs
 

@@ -318,7 +318,7 @@ def val_command(
         # Get validation augmentations
         logger.info("🎨 Setting up validation augmentations")
         _, val_augs = get_default_by_task(task=model.model_info.task, resolution=im_size or model.model_info.im_size)
-        valid_dataset = auto_dataset.get_split(augs=val_augs.get_augmentations(), split=DatasetSplitType.VAL)
+        valid_dataset = auto_dataset.get_split(augs=val_augs, split=DatasetSplitType.VAL)
 
         # Configure validation arguments
         logger.info("⚙️ Configuring validation parameters")

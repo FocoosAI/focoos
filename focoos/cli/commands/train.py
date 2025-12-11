@@ -343,8 +343,8 @@ def train_command(
         # Get augmentations
         logger.info("🎨 Setting up data augmentations")
         train_augs, val_augs = get_default_by_task(model.task, resolution=im_size or model.model_info.im_size)
-        train_dataset = auto_dataset.get_split(augs=train_augs.get_augmentations(), split=DatasetSplitType.TRAIN)
-        valid_dataset = auto_dataset.get_split(augs=val_augs.get_augmentations(), split=DatasetSplitType.VAL)
+        train_dataset = auto_dataset.get_split(augs=train_augs, split=DatasetSplitType.TRAIN)
+        valid_dataset = auto_dataset.get_split(augs=val_augs, split=DatasetSplitType.VAL)
 
         # Configure training arguments
         logger.info("⚙️ Configuring training parameters")
