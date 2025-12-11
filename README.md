@@ -69,8 +69,8 @@ layout = DatasetLayout.ROBOFLOW_COCO
 auto_dataset = AutoDataset(dataset_name=ds_name, task=task, layout=layout)
 
 train_augs, val_augs = get_default_by_task(task, 640, advanced=False)
-train_dataset = auto_dataset.get_split(augs=train_augs.get_augmentations(), split=DatasetSplitType.TRAIN)
-valid_dataset = auto_dataset.get_split(augs=val_augs.get_augmentations(), split=DatasetSplitType.VAL)
+train_dataset = auto_dataset.get_split(augs=train_augs, split=DatasetSplitType.TRAIN)
+valid_dataset = auto_dataset.get_split(augs=val_augs, split=DatasetSplitType.VAL)
 
 
 model = ModelManager.get("fai-detr-l-obj365")

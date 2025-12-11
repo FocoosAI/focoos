@@ -1,7 +1,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 import copy
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -44,6 +44,7 @@ class SemanticDatasetMapper(DatasetMapper):
         augmentations,
         image_format="RGB",
         ignore_label=255,
+        resolution: Optional[Union[int, Tuple[int, int]]] = None,
     ):
         """
         Args:
@@ -51,11 +52,13 @@ class SemanticDatasetMapper(DatasetMapper):
             augmentations: a list of augmentations or deterministic transforms to apply
             image_format: an image format supported by :func:`detection_utils.read_image`.
             ignore_label: the label that is ignored to evaluation
+            resolution: Image resolution used for augmentations.
         """
         self.is_train = is_train
         self.augmentations = augmentations
         self.img_format = image_format
         self.ignore_label = ignore_label
+        self.resolution = resolution
 
         logger = get_logger("SemSegMapper")
         mode = "train" if is_train else "val"

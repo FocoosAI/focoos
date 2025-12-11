@@ -174,9 +174,17 @@ class BaseModelNN(ABC, nn.Module):
         else:
             device_name = get_device_name()
 
-        logger.info(f"⏱️ Benchmarking latency on {device_name} ({self.device}), size: {size}x{size}..")
+        # Normalize size to tuple format
+        if isinstance(size, int):
+            size_tuple = (size, size)
+            size_str = f"{size}x{size}"
+        else:
+            size_tuple = size
+            size_str = f"{size[0]}x{size[1]}"
+
+        logger.info(f"⏱️ Benchmarking latency on {device_name} ({self.device}), size: {size_str}..")
         # warmup
-        data = 128 * torch.randn(1, 3, size[0], size[1]).to(self.device)
+        data = 128 * torch.randn(1, 3, size_tuple[0], size_tuple[1]).to(self.device)
         durations = []
         for _ in range(iterations):
             start = torch.cuda.Event(enable_timing=True)
@@ -188,6 +196,9 @@ class BaseModelNN(ABC, nn.Module):
             durations.append(start.elapsed_time(end))
 
         durations = np.array(durations)
+        # For LatencyMetrics.im_size (int), use height (first dimension) as representative value
+        # This maintains backward compatibility while supporting non-square images
+        im_size_repr = size_tuple[0] if isinstance(size, tuple) and size_tuple[0] != size_tuple[1] else size_tuple[0]
         metrics = LatencyMetrics(
             fps=int(1000 / durations.mean()),
             engine=f"torch.{self.device}",
@@ -195,7 +206,7 @@ class BaseModelNN(ABC, nn.Module):
             max=round(durations.max().astype(float), 3),
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
-            im_size=size[0],  # FIXME: this is a hack to get the im_size as int, assuming it's a square
+            im_size=im_size_repr,
             device=device_name,
         )
         logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")

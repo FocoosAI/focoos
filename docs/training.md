@@ -65,7 +65,11 @@ task = dataset.task  # see ports.Task for more information
 layout = dataset.layout  # see ports.DatasetLayout for more information
 auto_dataset = AutoDataset(dataset_name=dataset_path, task=task, layout=layout)
 
-augs = DatasetAugmentations(resolution=512).get_augmentations()
+# Square resolution (512x512)
+augs = DatasetAugmentations(resolution=512)
+
+# Non-square resolution (640x480, height x width)
+augs = DatasetAugmentations(resolution=(640, 480))
 
 train_dataset = auto_dataset.get_split(augs=augs, split=DatasetSplitType.TRAIN)
 valid_dataset = auto_dataset.get_split(augs=augs, split=DatasetSplitType.VAL)

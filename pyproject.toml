@@ -35,7 +35,7 @@ requires-python = ">=3.10,<3.13"
 dependencies = [
     "requests",
     "Pillow~=10.2.0",
-    "supervision~=0.26.0",
+    "supervision~=0.27.0",
     "opencv-python~=4.11.0.86",
     "pydantic~=2.11.4",
     "pydantic-settings~=2.8.1",
@@ -46,16 +46,16 @@ dependencies = [
     "matplotlib~=3.10.1",
     "colorama~=0.4.6",
     "ipython",
-    "shapely~=2.1.0",
     "fvcore~=0.1.4",
     "pycocotools~=2.0.8",
     "faster_coco_eval~=1.6.6",
     "tensorboard~=2.19.0",
-    "orjson~=3.10.18",
+    "orjson~=3.11.5",
     "gradio~=5.31.0",
     "torch~=2.7.1",
     "torchvision~=0.22.0",
     "typer>=0.16.0",
+    "shapely~=2.1.2",
 ]
 
 authors = [{ name = "focoos.ai", email = "info@focoos.ai" }]
@@ -67,19 +67,23 @@ keywords = [
 ]
 
 [project.optional-dependencies]
-tensorrt = ["tensorrt==10.5.0"]
+tensorrt = [
+    "tensorrt==10.5.0",
+    "tensorrt-cu12==10.5.0",
+    "tensorrt-cu12-bindings==10.5.0",
+    "tensorrt-cu12-libs==10.5.0"]
 onnx = [
-    "onnxruntime-gpu==1.22.0",
+    "onnxruntime-gpu==1.23.2",
     "onnx>=1.18.0",
     "onnxscript~=0.5.1",
-    "optimum[onnxruntime]~=1.27.0",
+    "optimum[onnxruntime]~=2.0.0",
     "huggingface-hub>=0.34.0",
 ]
 onnx-cpu = [
-    "onnxruntime==1.22.0",
+    "onnxruntime==1.23.2",
     "onnx>=1.18.0",
     "onnxscript~=0.5.1",
-    "optimum[onnxruntime]~=1.27.0",
+    "optimum[onnxruntime]~=2.0.0",
     "huggingface-hub>=0.34.0",
 ]
 dev = [

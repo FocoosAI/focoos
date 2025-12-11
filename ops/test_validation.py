@@ -34,7 +34,7 @@ def train(model_name: str):
 
     # Get default augmentations for the specified task
     train_augs, val_augs = get_default_by_task(task, resolution)
-    valid_dataset = auto_dataset.get_split(augs=val_augs.get_augmentations(), split=DatasetSplitType.VAL)
+    valid_dataset = auto_dataset.get_split(augs=val_augs, split=DatasetSplitType.VAL)
 
     _temp_dir = tempfile.mkdtemp()
     out_dir = os.path.join(_temp_dir, "output")

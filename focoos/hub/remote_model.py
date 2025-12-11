@@ -44,7 +44,7 @@ from focoos.utils.logger import get_logger
 from focoos.utils.metrics import MetricsVisualizer, parse_metrics
 from focoos.utils.vision import annotate_image, image_loader
 
-logger = get_logger()
+logger = get_logger(name="RemoteModel")
 
 
 class RemoteModel:

@@ -55,7 +55,7 @@ See Also:
     - [`focoos.ports.RuntimeType`][focoos.ports.RuntimeType]: Runtime type configurations
 """
 
-from typing import Literal, Optional
+from typing import Literal, Optional, Tuple, Union
 
 from focoos.model_manager import ModelManager
 from focoos.ports import ExportFormat, RuntimeType
@@ -70,7 +70,7 @@ def export_command(
     output_dir: Optional[str] = None,
     device: Optional[Literal["cuda", "cpu"]] = None,
     onnx_opset: Optional[int] = None,
-    im_size: Optional[int] = None,
+    im_size: Optional[Union[int, Tuple[int, int]]] = None,
     overwrite: Optional[bool] = None,
 ):
     """Export a model to different deployment formats.
@@ -114,7 +114,8 @@ def export_command(
         onnx_opset (Optional[int], optional): ONNX opset version for ONNX exports.
             Higher versions support more operations but may have compatibility issues.
             Common versions: 11, 13, 16, 17. Defaults to 17 if None.
-        im_size (Optional[int], optional): Input image size for the exported model.
+        im_size (Optional[Union[int, Tuple[int, int]]], optional): Input image size for the exported model.
+            If int, treated as square (size, size). If tuple, treated as (height, width).
             Used to define fixed input shapes for optimization.
             If None, uses the model's default input size.
             Defaults to None.

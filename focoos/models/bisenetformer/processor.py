@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -23,7 +23,7 @@ def interpolate_image(image, size):
 
 
 class BisenetFormerProcessor(Processor):
-    def __init__(self, config: BisenetFormerConfig, image_size: Optional[int] = None):
+    def __init__(self, config: BisenetFormerConfig, image_size: Optional[Union[int, Tuple[int, int]]] = None):
         super().__init__(config, image_size)
         self.config = config
         processing_functions = {

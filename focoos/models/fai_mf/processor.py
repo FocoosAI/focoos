@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -26,7 +26,7 @@ class MaskFormerProcessor(Processor):
     def __init__(
         self,
         config: MaskFormerConfig,
-        image_size: Optional[int] = None,
+        image_size: Optional[Union[int, Tuple[int, int]]] = None,
     ):
         super().__init__(config, image_size)
         processing_functions = {

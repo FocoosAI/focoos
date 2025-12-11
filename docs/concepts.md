@@ -120,7 +120,7 @@ model_info = ModelInfo(
     name="custom_detector",
     model_family=ModelFamily.DETR,
     classes=["person", "car", "bicycle"],
-    im_size=640,
+    im_size=640,  # Square image (640x640), or use (640, 480) for non-square (height, width)
     task=Task.DETECTION,
     config={
         "num_classes": 3,
@@ -220,7 +220,7 @@ model.train(train_args, train_dataset, val_dataset, hub=hub)
 Exports the model to different runtime formats for optimized inference. The main function arguments are:
  - `runtime_type`: specify the target runtime and must be one of the supported (see [RuntimeType](/focoos/api/ports/#focoos.ports.RuntimeType))
  - `out_dir`: the destination folder for the exported model
- - `image_size`: the target image size, as an optional integer
+ - `image_size`: the target image size, as an optional integer (square) or tuple (height, width) for non-square images
 
 The function returns an [`InferModel`](#infer-model) instance for the exported model.
 

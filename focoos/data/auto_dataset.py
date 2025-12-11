@@ -1,13 +1,15 @@
 import os
-from typing import List
+from typing import List, Optional, Tuple, Union
 
 from focoos.data.datasets.dict_dataset import DictDataset
 from focoos.data.datasets.map_dataset import MapDataset
+from focoos.data.default_aug import DatasetAugmentations
 from focoos.data.mappers.classification_dataset_mapper import ClassificationDatasetMapper
 from focoos.data.mappers.detection_dataset_mapper import DetectionDatasetMapper
 from focoos.data.mappers.keypoint import KeypointDatasetMapper
 from focoos.data.mappers.mapper import DatasetMapper
 from focoos.data.mappers.semantic_dataset_mapper import SemanticDatasetMapper
+from focoos.data.transforms import augmentation as A
 from focoos.data.transforms import transform as T
 from focoos.ports import (
     DATASETS_DIR,
@@ -83,8 +85,9 @@ class AutoDataset:
 
     def _load_mapper(
         self,
-        augs: List[T.Transform],
+        augs: List[Union[A.Augmentation, T.Transform]],
         is_validation_split: bool,
+        resolution: Optional[Union[int, Tuple[int, int]]] = None,
     ) -> DatasetMapper:
         if self.task == Task.SEMSEG:
             return SemanticDatasetMapper(
@@ -92,12 +95,14 @@ class AutoDataset:
                 ignore_label=255,
                 augmentations=augs,
                 is_train=not is_validation_split,
+                resolution=resolution,
             )
         elif self.task == Task.DETECTION:
             return DetectionDatasetMapper(
                 image_format="RGB",
                 is_train=not is_validation_split,
                 augmentations=augs,
+                resolution=resolution,
             )
         elif self.task == Task.INSTANCE_SEGMENTATION:
             return DetectionDatasetMapper(
@@ -105,18 +110,21 @@ class AutoDataset:
                 is_train=not is_validation_split,
                 augmentations=augs,
                 use_instance_mask=True,
+                resolution=resolution,
             )
         elif self.task == Task.CLASSIFICATION:
             return ClassificationDatasetMapper(
                 image_format="RGB",
                 is_train=not is_validation_split,
                 augmentations=augs,
+                resolution=resolution,
             )
         elif self.task == Task.KEYPOINT:
             return KeypointDatasetMapper(
                 image_format="RGB",
                 augmentations=augs,
                 is_train=not is_validation_split,
+                resolution=resolution,
                 # keypoint_hflip_indices=np.array(keypoint_hflip_indices),
             )
         else:
@@ -142,16 +150,16 @@ class AutoDataset:
 
     def get_split(
         self,
-        augs: List[T.Transform],
+        augs: DatasetAugmentations,
         split: DatasetSplitType = DatasetSplitType.TRAIN,
     ) -> MapDataset:
         """
         Generate a dataset for a given dataset name with optional augmentations.
 
         Parameters:
-            short_edge_length (int): The length of the shorter edge of the images.
-            max_size (int): The maximum size of the images.
-            extra_augs (List[Transform]): Extra augmentations to apply.
+            augs (DatasetAugmentations): Augmentations configuration.
+                Resolution will be automatically extracted from this object.
+            split (DatasetSplitType): Dataset split type (TRAIN or VAL).
 
         Returns:
             MapDataset: A DictDataset with DatasetMapper for training.
@@ -159,10 +167,15 @@ class AutoDataset:
         dict_split = self._load_split(dataset_name=self.dataset_name, split=split)
         assert dict_split.metadata.num_classes > 0, "Number of dataset classes must be greater than 0"
 
+        # Extract resolution and augmentations from DatasetAugmentations
+        resolution = augs.resolution
+        augs_list = augs.get_augmentations()
+
         return MapDataset(
             dataset=dict_split,
             mapper=self._load_mapper(
-                augs=augs,
+                augs=augs_list,
                 is_validation_split=(split == DatasetSplitType.VAL),
+                resolution=resolution,
             ),
         )  # type: ignore

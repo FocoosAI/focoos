@@ -81,8 +81,8 @@ def train(model_name: str, iter: int):
     train_augs.crop_size = resolution
     train_augs.crop = True
 
-    train_dataset = auto_dataset.get_split(augs=train_augs.get_augmentations(), split=DatasetSplitType.TRAIN)
-    valid_dataset = auto_dataset.get_split(augs=val_augs.get_augmentations(), split=DatasetSplitType.VAL)
+    train_dataset = auto_dataset.get_split(augs=train_augs, split=DatasetSplitType.TRAIN)
+    valid_dataset = auto_dataset.get_split(augs=val_augs, split=DatasetSplitType.VAL)
 
     # Get again the model with the correct number of classes
     model = ModelManager.get(model_name, num_classes=train_dataset.dataset.metadata.num_classes)

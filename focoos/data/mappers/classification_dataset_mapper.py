@@ -1,6 +1,6 @@
 import copy
 from dataclasses import dataclass
-from typing import Optional, Sequence, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -40,17 +40,20 @@ class ClassificationDatasetMapper(DatasetMapper):
         *,
         augmentations: Sequence[Union[A.Augmentation, T.Transform]],
         image_format: str = "RGB",
+        resolution: Optional[Union[int, Tuple[int, int]]] = None,
     ):
         """
         Args:
             is_train: Whether it's used in training or inference
             augmentations: A list of augmentations or transforms to apply
             image_format: An image format supported by PIL and OpenCV
+            resolution: Image resolution used for augmentations.
         """
         super().__init__(
             is_train=is_train,
             augmentations=augmentations,  # type: ignore
             image_format=image_format,
+            resolution=resolution,
         )
         self.logger = get_logger("ClassificationDsMapper")
         mode = "train" if is_train else "val"

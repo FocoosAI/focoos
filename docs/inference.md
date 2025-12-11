@@ -151,7 +151,11 @@ runtime = RuntimeType.TORCHSCRIPT_32
 It's time to export the model. We can use the export method of the models.
 
 ```python
+# Export with square resolution (512x512)
 optimized_model = model.export(runtime_type=runtime, image_size=512)
+
+# Export with non-square resolution (640x480, height x width)
+optimized_model = model.export(runtime_type=runtime, image_size=(640, 480))
 ```
 
 Let's visualize the output. As you will see, there are not differences from the model in pure torch.
@@ -183,5 +187,9 @@ optimized_model = model.export(runtime_type=runtime)
 detections = optimized_model(image)
 display(annotate_image(image, detections, task=model.model_info.task, classes=model.model_info.classes))
 
+# Benchmark with square resolution
 optimized_model.benchmark(iterations=10, size=640)
+
+# Benchmark with non-square resolution
+optimized_model.benchmark(iterations=10, size=(640, 480))
 ```

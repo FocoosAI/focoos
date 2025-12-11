@@ -278,9 +278,18 @@ class InferModel:
         else:
             engine = "torchscript"
             device = get_device_name()
-        logger.info(f"⏱️ Benchmarking End-to-End latency on {device}, size: {size}x{size}..")
 
-        np_input = (255 * np.random.random((size[0], size[1], 3))).astype(np.uint8)
+        # Normalize size to tuple format
+        if isinstance(size, int):
+            size_tuple = (size, size)
+            size_str = f"{size}x{size}"
+        else:
+            size_tuple = size
+            size_str = f"{size[0]}x{size[1]}"
+
+        logger.info(f"⏱️ Benchmarking End-to-End latency on {device}, size: {size_str}..")
+
+        np_input = (255 * np.random.random((size_tuple[0], size_tuple[1], 3))).astype(np.uint8)
 
         durations = []
         for step in range(iterations + 5):
@@ -293,6 +302,9 @@ class InferModel:
 
         durations = np.array(durations)
 
+        # For LatencyMetrics.im_size (int), use height (first dimension) as representative value
+        # This maintains backward compatibility while supporting non-square images
+        im_size_repr = size_tuple[0] if isinstance(size, tuple) and size_tuple[0] != size_tuple[1] else size_tuple[0]
         metrics = LatencyMetrics(
             fps=int(1000 / durations.mean()),
             engine=engine,
@@ -300,7 +312,7 @@ class InferModel:
             max=round(durations.max().astype(float), 3),
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
-            im_size=size[0],  # FIXME: this is a hack to get the im_size as int, assuming it's a square
+            im_size=im_size_repr,
             device=device,
         )
         logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")

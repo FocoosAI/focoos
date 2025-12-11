@@ -171,6 +171,7 @@ class FocoosModel:
             device = "mps"
         else:
             device = "cpu"
+
         self.model_info.ref = None
 
         self.model_info.train_args = train_args  # type: ignore
@@ -201,9 +202,19 @@ class FocoosModel:
             self.model_info.config["num_keypoints"] = len(data_train.dataset.metadata.keypoints)
         if data_train.dataset.metadata.keypoints_skeleton is not None:
             self.model_info.config["skeleton"] = data_train.dataset.metadata.keypoints_skeleton
+
+        # Set im_size from resolution in augmentations if available
+        resolution = getattr(data_train, "resolution", None) or getattr(data_val, "resolution", None)
+        if resolution is not None:
+            self.model_info.im_size = resolution
+
         self._reload_model()
         self.model_info.name = train_args.run_name.strip()
-        self.processor = ProcessorManager.get_processor(self.model_info.model_family, self.model_info.config)  # type: ignore
+        self.processor = ProcessorManager.get_processor(
+            self.model_info.model_family,
+            self.model_info.config,  # type: ignore
+            self.model_info.im_size,
+        )
         self.model = self.model.train()
         assert self.model_info.task == data_train.dataset.metadata.task, "Task mismatch between model and dataset."
 
@@ -244,22 +255,23 @@ class FocoosModel:
                 args=(args, data_train, data_val, self.model, self.processor, self.model_info, hub),
             )
 
-            logger.info("Training done, resuming main process.")
-            # here i should restore the best model and config since in DDP it is not updated
-            final_folder = os.path.join(args.output_dir, args.run_name)
-            model_path = os.path.join(final_folder, ArtifactName.WEIGHTS)
-            metadata_path = os.path.join(final_folder, ArtifactName.INFO)
-
-            if not os.path.exists(model_path):
-                raise FileNotFoundError(f"Training did not end correctly, model file not found at {model_path}")
-            if not os.path.exists(metadata_path):
-                raise FileNotFoundError(f"Training did not end correctly, metadata file not found at {metadata_path}")
-            self.model_info = ModelInfo.from_json(metadata_path)
-
-            logger.info(f"Reloading weights from {self.model_info.weights_uri}")
-            self._reload_model()
         else:
             run_train(args, data_train, data_val, self.model, self.processor, self.model_info, hub)
+        logger.info("Training done, resuming main process.")
+        # here i should restore the best model and config since in DDP it is not updated
+        final_folder = os.path.join(args.output_dir, args.run_name)
+        model_path = os.path.join(final_folder, ArtifactName.WEIGHTS)
+        metadata_path = os.path.join(final_folder, ArtifactName.INFO)
+
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"Training did not end correctly, model file not found at {model_path}")
+        if not os.path.exists(metadata_path):
+            raise FileNotFoundError(f"Training did not end correctly, metadata file not found at {metadata_path}")
+        self.model_info = ModelInfo.from_json(metadata_path)
+
+        self._reload_model()
+        self.model.eval()
+        self.processor.eval()
 
     def eval(self, args: TrainerArgs, data_test: MapDataset, save_json: bool = True):
         """evaluate the model on the provided test dataset.
@@ -455,18 +467,15 @@ class FocoosModel:
             input_size=export_image_size,
         )
         os.makedirs(out_dir, exist_ok=True)
-        if image_size is None:
-            data = 128 * torch.randn(1, 3, self.model_info.im_size, self.model_info.im_size).to(device)
+
+        if isinstance(export_image_size, int):
+            height, width = export_image_size, export_image_size
         else:
-            if isinstance(image_size, int):
-                # Square image
-                data = 128 * torch.randn(1, 3, image_size, image_size).to(device)
-                self.model_info.im_size = image_size
-            else:
-                # Tuple (height, width)
-                height, width = image_size
-                data = 128 * torch.randn(1, 3, height, width).to(device)
-                self.model_info.im_size = max(height, width)  # Use max dimension for compatibility
+            height, width = export_image_size
+
+        self.model_info.im_size = export_image_size
+
+        data = 128 * torch.randn(1, 3, height, width).to(device)
 
         export_model_name = ArtifactName.ONNX if format == ExportFormat.ONNX else ArtifactName.PT
         _out_file = os.path.join(out_dir, export_model_name)
@@ -711,7 +720,9 @@ class FocoosModel:
         metrics = model.benchmark(size=size, iterations=iterations)
         return metrics
 
-    def end2end_benchmark(self, iterations: int = 50, size: Optional[int] = None) -> LatencyMetrics:
+    def end2end_benchmark(
+        self, iterations: int = 50, size: Optional[Union[int, Tuple[int, int]]] = None
+    ) -> LatencyMetrics:
         """Benchmark the complete end-to-end inference pipeline.
 
         This method measures the full inference latency including preprocessing,
@@ -727,6 +738,15 @@ class FocoosModel:
         """
         if size is None:
             size = self.model_info.im_size
+        if isinstance(size, (tuple, list)):
+            if len(size) != 2:
+                raise ValueError("Size tuples must be (height, width)")
+            height, width = (int(size[0]), int(size[1]))
+        elif isinstance(size, int):
+            height = width = int(size)
+        else:
+            raise TypeError("size must be an int or tuple/list of two ints")
+        normalized_size = (height, width)
         if self.model.device.type == "cpu":
             device_name = get_cpu_name()
         else:
@@ -735,9 +755,12 @@ class FocoosModel:
             model = self.model.cuda()
         except Exception:
             logger.warning("Unable to use CUDA")
-        logger.info(f"⏱️ Benchmarking End-to-End latency on {device_name} ({self.model.device}), size: {size}x{size}..")
+        logger.info(
+            f"⏱️ Benchmarking End-to-End latency on {device_name} ({self.model.device}), "
+            f"size: {height}x{width}.."
+        )
         # warmup
-        data = 128 * torch.randn(1, 3, size, size).to(model.device)
+        data = 128 * torch.randn(1, 3, height, width).to(model.device)
 
         durations = []
         for _ in range(iterations):
@@ -757,7 +780,7 @@ class FocoosModel:
             max=round(durations.max().astype(float), 3),
             min=round(durations.min().astype(float), 3),
             std=round(durations.std().astype(float), 3),
-            im_size=size,
+            im_size=normalized_size,
             device=str(self.model.device),
         )
         logger.info(f"🔥 FPS: {metrics.fps} Mean latency: {metrics.mean} ms ")

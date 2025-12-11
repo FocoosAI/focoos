@@ -85,8 +85,11 @@ Where:
 ### 🏋️ Training
 
 ```bash
-# Basic training
+# Basic training (square image)
 focoos train --model fai-detr-m-coco --dataset mydataset.zip --im-size 640
+
+# Training with non-square resolution
+focoos train --model fai-detr-m-coco --dataset mydataset.zip --im-size 640,480
 
 # Advanced training with custom hyperparameters
 focoos train \
@@ -157,8 +160,11 @@ focoos predict \
 ### 📤 Model Export
 
 ```bash
-# Export to ONNX (default)
+# Export to ONNX (default, square image)
 focoos export --model fai-detr-m-coco --im-size 640
+
+# Export to ONNX with non-square resolution
+focoos export --model fai-detr-m-coco --im-size 640,480
 
 # Export to TorchScript
 focoos export \
@@ -249,7 +255,7 @@ The interface will automatically open in your default web browser, typically at 
 | `--model`      | Model name or path          | **Required**   | `fai-detr-m-coco`, `path/to/model` |
 | `--dataset`    | Dataset name or path        | **Required**   | `mydataset.zip`, `path/to/data/`   |
 | `--source`     | Input source (predict only) | **Required**   | `image.jpg`                        |
-| `--im-size`    | Input image size            | 640            | Any positive integer               |
+| `--im-size`    | Input image size            | 640            | Integer (square) or "height,width" or "heightxwidth" (non-square) |
 | `--batch-size` | Batch size                  | 16             | Powers of 2 recommended            |
 | `--device`     | Compute device              | `cuda`         | `cuda`, `cpu`               |
 | `--workers`    | Data loading workers        | 4              | 0-16 recommended                   |
@@ -319,12 +325,23 @@ Use CLI commands programmatically in Python:
 ```python
 from focoos.cli.commands import train_command, predict_command, export_command
 
-# Train a model
+# Train a model (square image)
 train_command(
     model_name="fai-detr-m-coco",
     dataset_name="mydataset.zip",
     dataset_layout="roboflow_coco",
     im_size=640,
+    run_name="my_training",
+    max_iters=5000,
+    batch_size=16
+)
+
+# Train a model with non-square resolution
+train_command(
+    model_name="fai-detr-m-coco",
+    dataset_name="mydataset.zip",
+    dataset_layout="roboflow_coco",
+    im_size=(640, 480),  # (height, width)
     run_name="my_training",
     max_iters=5000,
     batch_size=16
@@ -364,8 +381,11 @@ focoos version
 # Reduce batch size
 focoos train --model fai-detr-m-coco --dataset data.zip --batch-size 8
 
-# Use smaller image size
+# Use smaller image size (square)
 focoos train --model fai-detr-m-coco --dataset data.zip --im-size 480
+
+# Use non-square image size for memory efficiency
+focoos train --model fai-detr-m-coco --dataset data.zip --im-size 480,360
 ```
 
 **Dataset not found:**

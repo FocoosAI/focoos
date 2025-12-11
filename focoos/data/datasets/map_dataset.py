@@ -78,6 +78,11 @@ class MapDataset(data.Dataset):
     def task(self):
         return self.dataset.metadata.task
 
+    @property
+    def resolution(self):
+        """Get the resolution from the mapper if available."""
+        return getattr(self.mapper, "resolution", None)
+
     def preview(self, index=None, use_augmentations=True):
         if not use_augmentations:
             current_augmentations = self.mapper.augmentations

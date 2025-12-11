@@ -16,11 +16,12 @@ from focoos.structures import ImageList
 class ClassificationProcessor(Processor):
     """Processor for image classification model inputs and outputs."""
 
-    def __init__(self, config: ClassificationConfig, image_size: Optional[int] = None):
+    def __init__(self, config: ClassificationConfig, image_size: Optional[Union[int, Tuple[int, int]]] = None):
         """Initialize the processor with model configuration.
 
         Args:
             config: Model configuration
+            image_size: Image size. If int, treated as square (size, size). If tuple, treated as (height, width).
         """
         super().__init__(config, image_size)
         self.config = config
@@ -75,7 +76,13 @@ class ClassificationProcessor(Processor):
 
         if self.training:
             raise ValueError("During training, inputs should be a list of DetectionDatasetDict")
-        target_size = (self.image_size, self.image_size) if self.image_size is not None else None
+        if self.image_size is not None:
+            if isinstance(self.image_size, int):
+                target_size = (self.image_size, self.image_size)
+            else:
+                target_size = self.image_size
+        else:
+            target_size = None
         # if target_size is not None:
         # print("Resizing to", target_size)
         images_torch = self.get_torch_batch(
